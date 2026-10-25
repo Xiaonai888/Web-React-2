@@ -9,6 +9,42 @@ const runtimes = new Map()
 const INDEX_PREFIX = 'shadow:story-create:index:'
 const JOB_PREFIX = 'shadow:story-create:job:'
 const POLL_MS = 3000
+const MAX_RETRY_MS = 300000
+const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
+
+function isIdempotentJob(job) {
+  return job?.requestIdVersion === 1 && UUID_PATTERN.test(String(job.id || ''))
+}
+
+function shouldProcessJob(job) {
+  if (['pending', 'waiting_upload'].includes(job.state)) {
+    return !isIdempotentJob(job) || Number(job.retryAt || 0) <= Date.now()
+  }
+  if (!isIdempotentJob(job)) return false
+  if (job.state === 'submitting') return true
+  return job.state === 'retry_wait' && Number(job.retryAt || 0) <= Date.now()
+}
+
+function shouldKeepWorker(job) {
+  return ['pending', 'waiting_upload'].includes(job.state) ||
+    (isIdempotentJob(job) && ['submitting', 'retry_wait'].includes(job.state))
+}
+
+function isRetryableHttp(status) {
+  return [408, 409, 425, 429].includes(status) || status >= 500
+}
+
+async function deferIdempotentJob(job, error) {
+  const attempts = Math.max(0, Number(job.attempts) || 0) + 1
+  const wait = Math.min(MAX_RETRY_MS, 3000 * 2 ** Math.min(7, Math.max(0, attempts - 1)))
+  await saveJob({
+    ...job,
+    state: 'pending',
+    attempts,
+    retryAt: Date.now() + wait,
+    error: String(error || 'Server save will retry automatically'),
+  })
+}
 
 function userFromToken(token) {
   try {
@@ -133,10 +169,12 @@ function runtimeFor(ownerId, getToken, apiBaseUrl) {
 }
 
 async function syncOne(runtime, job) {
-  if (!['pending', 'waiting_upload'].includes(job.state)) return
+  if (!shouldProcessJob(job)) return
   const token = runtime.getToken()
   if (!token || userFromToken(token) !== runtime.ownerId) return
-  const media = await resolveMedia(job, runtime.uploadQueue)
+  const media = job.submittedPayload
+    ? { ready: true, payload: job.submittedPayload }
+    : await resolveMedia(job, runtime.uploadQueue)
   if (media.error) {
     if (job.state !== 'waiting_upload' || job.error !== media.error) {
       await saveJob({ ...job, state: 'waiting_upload', error: media.error })
@@ -144,15 +182,31 @@ async function syncOne(runtime, job) {
     return
   }
   if (!media.ready) {
-    if (job.state !== 'waiting_upload') await saveJob({ ...job, state: 'waiting_upload', error: '' })
+    if (job.state !== 'waiting_upload') {
+      await saveJob({ ...job, state: 'waiting_upload', error: '' })
+    }
     return
   }
-  const submitting = await saveJob({ ...job, state: 'submitting', error: '', submittedAt: Date.now() })
+  const requestId = isIdempotentJob(job) ? job.id : null
+  const payload = requestId
+    ? { ...media.payload, create_request_id: requestId }
+    : media.payload
+  const submitting = await saveJob({
+    ...job,
+    state: requestId ? 'pending' : 'submitting',
+    submittedPayload: media.payload,
+    error: '',
+    submittedAt: Date.now(),
+    retryAt: 0,
+  })
   try {
     const response = await fetch(`${runtime.apiBaseUrl}/api/stories/create`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(media.payload),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
     })
     const data = await response.json().catch(() => ({}))
     const storyId = String(data.story?.id || '').trim()
@@ -160,16 +214,26 @@ async function syncOne(runtime, job) {
       await saveJob({ ...submitting, state: 'created', storyId, error: '', completedAt: Date.now() })
       return
     }
+    const reason = data.message || `Story creation returned HTTP ${response.status}`
+    if (requestId && (isRetryableHttp(response.status) || (response.ok && !storyId))) {
+      await deferIdempotentJob(submitting, reason)
+      return
+    }
     await saveJob({
       ...submitting,
       state: 'needs_review',
-      error: data.message || `Story creation returned HTTP ${response.status}. Check before retrying.`,
+      error: reason,
     })
   } catch (error) {
+    const reason = `Story creation response was not confirmed: ${error?.message || 'Network error'}`
+    if (requestId) {
+      await deferIdempotentJob(submitting, reason)
+      return
+    }
     await saveJob({
       ...submitting,
       state: 'needs_review',
-      error: `Story creation response was not confirmed: ${error?.message || 'Network error'}. Check for an existing story before retrying.`,
+      error: `${reason}. Check for an existing story before retrying.`,
     })
   }
 }
@@ -179,7 +243,7 @@ async function tick(runtime) {
   runtime.busy = true
   try {
     const jobs = await listStoryCreationJobs(runtime.ownerId)
-    if (!jobs.some((job) => ['pending', 'waiting_upload'].includes(job.state))) {
+    if (!jobs.some(shouldKeepWorker)) {
       clearInterval(runtime.timer)
       runtime.timer = null
       runtime.uploadQueue.stop()
@@ -187,13 +251,13 @@ async function tick(runtime) {
       return
     }
     for (const job of jobs) {
-      if (!['pending', 'waiting_upload'].includes(job.state)) continue
+      if (!shouldProcessJob(job)) continue
       const run = () => syncOne(runtime, job)
       if (typeof navigator !== 'undefined' && navigator.locks?.request) {
         await navigator.locks.request(`shadow-story-create:${job.id}`, { ifAvailable: true }, async (lock) => {
           if (!lock) return
           const current = await getStoryCreationJob(job.id, runtime.ownerId)
-          if (current && ['pending', 'waiting_upload'].includes(current.state)) await syncOne(runtime, current)
+          if (current && shouldProcessJob(current)) await syncOne(runtime, current)
         })
       } else {
         await run()
@@ -238,6 +302,8 @@ export async function queueStoryCreation({ userId, draftKey, payload, media, get
     ownerId,
     draftKey: key,
     state: 'pending',
+    requestIdVersion: 1,
+    attempts: 0,
     storyId: '',
     error: '',
     payload: { ...payload },
