@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 import DiamondPurchaseSuccessModal from './DiamondPurchaseSuccessModal'
-import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
+import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -863,13 +863,22 @@ export default function PurchaseSection() {
     if (!selectedPackage || creatingPayment) return
 
     try {
-      setCreatingPayment(true)
-      setToast('')
-      const response = await fetch(`${API_BASE_URL}/api/purchase/manual/create`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
-      })
+  setCreatingPayment(true)
+  setToast('')
+
+  const countryTicket = await getPaymentCountryTicket()
+  if (!countryTicket) {
+    throw new Error(t('purchaseSection.methodsUnavailable'))
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/purchase/manual/create`, {
+    method: 'POST',
+    headers: {
+      ...getHeaders(),
+      'X-Shadow-Country-Ticket': countryTicket,
+    },
+    body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
+  })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data.ok) throw new Error(data.message || t('purchaseSection.failedCreatePayment'))
 
