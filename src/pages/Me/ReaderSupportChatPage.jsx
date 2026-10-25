@@ -89,11 +89,13 @@ export default function ReaderSupportChatPage() {
   const scrollBoxRef = useRef(null)
   const restoreScrollRef = useRef(null)
   const pendingSendRef = useRef(null)
+  const lastMessageKeyRef = useRef('')
 
   const reload = useCallback(async signal => {
     const data = await getMySupportConversation({ signal })
     const item = data.conversation || null
     if (!item) {
+      lastMessageKeyRef.current = ''
       setConversation(null)
       setMessages([])
       setBefore('')
@@ -102,6 +104,7 @@ export default function ReaderSupportChatPage() {
     }
     const history = await getMySupportMessages({ signal })
     if (signal?.aborted) return
+    lastMessageKeyRef.current = `${item.id}:${item.last_message_at || ''}:${item.status || ''}`
     setConversation(item)
     setMessages(history.messages || [])
     setBefore(history.next_before || '')
@@ -123,6 +126,61 @@ export default function ReaderSupportChatPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [reload, refreshIndex, t])
+
+  useEffect(() => {
+    if (loading || loginRequired || sending) return undefined
+    const controller = new AbortController()
+    let checking = false
+    let lastChecked = Date.now()
+
+    const checkIncoming = async () => {
+      if (controller.signal.aborted || checking || document.hidden || Date.now() - lastChecked < 12000) return
+      lastChecked = Date.now()
+      checking = true
+      try {
+        const data = await getMySupportConversation({ signal: controller.signal })
+        if (controller.signal.aborted) return
+        const item = data.conversation || null
+        const key = item ? `${item.id}:${item.last_message_at || ''}:${item.status || ''}` : ''
+        if (key !== lastMessageKeyRef.current) {
+          const sameConversation = Boolean(item && lastMessageKeyRef.current.startsWith(`${item.id}:`))
+          const history = item ? await getMySupportMessages({ signal: controller.signal }) : null
+          if (controller.signal.aborted) return
+          const incoming = Array.isArray(history?.messages) ? history.messages : []
+          if (sameConversation) {
+            setMessages(previous => {
+              const seen = new Set(previous.map(message => message.id))
+              const additions = incoming.filter(message => !seen.has(message.id))
+              return additions.length ? [...previous, ...additions] : previous
+            })
+          } else {
+            setMessages(incoming)
+            setBefore(history?.next_before || '')
+            setHasMore(Boolean(history?.has_more))
+          }
+          lastMessageKeyRef.current = key
+          setConversation(item)
+        }
+        if (item?.unread_for_reader > 0) void markMySupportRead().catch(() => {})
+      } catch (err) {
+        if (!controller.signal.aborted && (err.status === 401 || err.code === 'LOGIN_REQUIRED')) setLoginRequired(true)
+      } finally {
+        checking = false
+      }
+    }
+
+    const onVisibility = () => { if (!document.hidden) void checkIncoming() }
+    const onFocus = () => { void checkIncoming() }
+    const interval = window.setInterval(() => { void checkIncoming() }, 60000)
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      controller.abort()
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [loading, loginRequired, sending])
 
   useLayoutEffect(() => {
     const element = scrollBoxRef.current
