@@ -422,6 +422,9 @@ function mergeUniquePosts(current, incoming) {
 
 async function fetchFollowedPosts(token, cursor = '') {
   const params = new URLSearchParams({ limit: String(DISCOVER_AUTHOR_FEED_INITIAL_LIMIT) })
+  if (typeof IntersectionObserver !== 'undefined') {
+    params.set('boost_book_tracking', '1')
+  }
 
   if (cursor) {
     params.set('cursor', cursor)
@@ -1844,7 +1847,125 @@ function DiscoverBoostPostCard({
   )
 }
 
-function DiscoverBoostBookCard({ book }) {
+async function reportDiscoverBoostBookEngagement(token, book, eventType, details = {}) {
+  if (!token || !book?.id || !book?.boost_receipt || book.boost_delivery_ready !== true) return false
+  if (book.content_type !== 'story' && book.content_type !== 'product') return false
+  if (eventType !== 'impression' && eventType !== 'click') return false
+
+  const payload = {
+    receipt: book.boost_receipt,
+    content_id: book.id,
+    content_type: book.content_type,
+    event_type: eventType,
+  }
+
+  if (eventType === 'impression') {
+    const visibleMs = Number(details.visibleMs)
+    const visibleRatio = Number(details.visibleRatio)
+    if (!Number.isFinite(visibleMs) || visibleMs < 1000
+      || !Number.isFinite(visibleRatio) || visibleRatio < 0.5) return false
+    payload.visible_ms = Math.min(120000, Math.floor(visibleMs))
+    payload.visible_ratio = Math.min(1, visibleRatio)
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/authors/discover/books/boost-engagement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+      cache: 'no-store',
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+function DiscoverBoostBookCard({ book, token }) {
+  const containerRef = useRef(null)
+  const clickedReceiptRef = useRef('')
+
+  useEffect(() => {
+    const element = containerRef.current
+    if (!element || !token || !book?.boost_receipt || book.boost_delivery_ready !== true
+      || typeof IntersectionObserver === 'undefined') return undefined
+
+    let intersectionRatio = 0
+    let visibleSince = 0
+    let impressionReported = false
+    let reportInFlight = false
+    let attempts = 0
+    let timer = null
+    let disposed = false
+
+    const stopTimer = () => {
+      if (timer !== null) window.clearTimeout(timer)
+      timer = null
+      visibleSince = 0
+    }
+
+    const checkVisibility = () => {
+      if (disposed || impressionReported || reportInFlight || attempts >= 3
+        || intersectionRatio < 0.5 || document.hidden) {
+        stopTimer()
+        return
+      }
+      if (!visibleSince) visibleSince = Date.now()
+      if (timer !== null) return
+
+      const remaining = Math.max(0, 1000 - (Date.now() - visibleSince))
+      timer = window.setTimeout(async () => {
+        timer = null
+        if (intersectionRatio < 0.5 || document.hidden || impressionReported) {
+          stopTimer()
+          return
+        }
+        const visibleMs = Date.now() - visibleSince
+        if (visibleMs < 1000) {
+          checkVisibility()
+          return
+        }
+        reportInFlight = true
+        attempts += 1
+        const recorded = await reportDiscoverBoostBookEngagement(token, book, 'impression', {
+          visibleMs,
+          visibleRatio: intersectionRatio,
+        })
+        if (disposed) return
+        reportInFlight = false
+        if (recorded) {
+          impressionReported = true
+        } else if (attempts < 3 && intersectionRatio >= 0.5 && !document.hidden) {
+          timer = window.setTimeout(() => {
+            timer = null
+            checkVisibility()
+          }, 2000)
+        }
+      }, remaining + 30)
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        intersectionRatio = entries[0]?.intersectionRatio || 0
+        checkVisibility()
+      },
+      { threshold: [0, 0.5, 1] }
+    )
+    observer.observe(element)
+    document.addEventListener('visibilitychange', checkVisibility)
+
+    return () => {
+      disposed = true
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', checkVisibility)
+      stopTimer()
+    }
+  }, [book?.id, book?.boost_receipt, book?.boost_delivery_ready, token])
+
   const username = String(book?.author_page?.page_username || '').trim()
   const target = book.content_type === 'story'
     ? `/story/${encodeURIComponent(book.id)}`
@@ -1853,9 +1974,15 @@ function DiscoverBoostBookCard({ book }) {
       : ''
   if (!target) return null
 
+  function handleSponsoredClick() {
+    if (!token || !book?.boost_receipt || clickedReceiptRef.current === book.boost_receipt) return
+    clickedReceiptRef.current = book.boost_receipt
+    void reportDiscoverBoostBookEngagement(token, book, 'click')
+  }
+
   return (
-    <article className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
-      <Link to={target} className="flex gap-4 p-4">
+    <article ref={containerRef} className="overflow-hidden bg-white dark:bg-[var(--shadow-bg-surface)] ring-1 ring-gray-100 dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
+      <Link to={target} onClick={handleSponsoredClick} className="flex gap-4 p-4">
         <img src={book.cover_url} alt={book.title} loading="lazy" decoding="async" className="h-36 w-24 shrink-0 rounded-[8px] object-cover" />
         <div className="flex min-w-0 flex-1 flex-col justify-between">
           <div>
@@ -4647,7 +4774,7 @@ export default function DiscoverPage() {
   }
 
   function renderBoostBook(book) {
-    return <DiscoverBoostBookCard key={`discover-boost-book-${book.boost_campaign_id || book.id}`} book={book} />
+    return <DiscoverBoostBookCard key={`discover-boost-book-${book.boost_campaign_id || book.id}`} book={book} token={token} />
   }
 
   return (
