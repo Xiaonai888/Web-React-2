@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import DiscoverPromotionExpiryNotice, { discoverPromotionExpiryMessage, hasExpiredDiscoverPromotion, isExpiredDiscoverPromotion, useDiscoverPromotionExpiry } from '../../components/discover/DiscoverPromotionExpiryNotice'
 
@@ -920,8 +921,29 @@ export default function AuthorCheckoutPage() {
   let navigationStarted = false
   try {
     paymentSubmissionRef.current = true
-    setSaving(true)
+        setSaving(true)
     setMessage('')
+
+    let countryTicket = null
+
+    if (needsDelivery) {
+      const countrySettings = await loadCountrySettings()
+
+      if (
+        countrySettings?.countryVerified !== true ||
+        countrySettings.country !== 'KH' ||
+        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
+        getCountryFeature(countrySettings, 'payway', false) !== true
+      ) {
+        throw new Error(t('authorCheckout.failedContinuePayment'))
+      }
+
+      countryTicket = await getPaymentCountryTicket()
+
+      if (!countryTicket) {
+        throw new Error(t('authorCheckout.failedContinuePayment'))
+      }
+    }
 
     if (needsDelivery) {
       const savedProfile = await saveBuyerProfile(profile)
@@ -937,9 +959,10 @@ export default function AuthorCheckoutPage() {
 
     const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
       method: 'POST',
-      headers: {
+            headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+        ...(countryTicket ? { 'X-Shadow-Country-Ticket': countryTicket } : {}),
       },
       body: JSON.stringify({
         items,
