@@ -1,5 +1,6 @@
 import {
   Archive,
+  BadgeCheck,
   BookOpen,
   Bookmark,
   Check,
@@ -34,6 +35,7 @@ import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import ReaderReaderMessageRequestModal from '../../components/chat/ReaderReaderMessageRequestModal'
 import { getLightweightChatInbox } from '../../services/chatInboxLightweightApi'
+import { getMySupportConversation } from '../../services/readerSupportChatApi'
 import { useUnreadSenderCount } from '../../services/chatUnreadSenderCount'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -1230,6 +1232,7 @@ export default function ChatInboxPage() {
   const hideReaderFooter = location.state?.hideReaderFooter === true
   const searchRequestRef = useRef(0)
   const [conversations, setConversations] = useState([])
+  const [adminSupportConversation, setAdminSupportConversation] = useState(null)
   const [hasMoreConversations, setHasMoreConversations] = useState(false)
   const [loadingMoreConversations, setLoadingMoreConversations] = useState(false)
   const nextConversationPageRef = useRef(1)
@@ -1377,6 +1380,37 @@ const [soundSettings, setSoundSettings] =
     void loadConversations({ signal: controller.signal })
     return () => controller.abort()
   }, [loadConversations, navigate])
+
+  useEffect(() => {
+    if (!hasReaderSession()) return undefined
+    const controller = new AbortController()
+    let lastCheckedAt = 0
+    let pending = false
+
+    const refreshAdminSupport = async () => {
+      if (controller.signal.aborted || pending || document.visibilityState === 'hidden') return
+      if (Date.now() - lastCheckedAt < 15000) return
+      lastCheckedAt = Date.now()
+      pending = true
+      try {
+        const data = await getMySupportConversation({ signal: controller.signal })
+        if (!controller.signal.aborted) setAdminSupportConversation(data.conversation || null)
+      } catch (error) {
+        if (!controller.signal.aborted && error?.status === 401) setAdminSupportConversation(null)
+      } finally {
+        pending = false
+      }
+    }
+
+    void refreshAdminSupport()
+    window.addEventListener('focus', refreshAdminSupport)
+    document.addEventListener('visibilitychange', refreshAdminSupport)
+    return () => {
+      controller.abort()
+      window.removeEventListener('focus', refreshAdminSupport)
+      document.removeEventListener('visibilitychange', refreshAdminSupport)
+    }
+  }, [])
 
   const normalizedQuery = useMemo(
     () => normalizeSearchValue(query),
@@ -3299,6 +3333,28 @@ activeFilter === 'all' ? (
     </span>
   </button>
 ) : null}
+
+        {!selectionMode && !hasSearch && activeFilter === 'all' && adminSupportConversation && (
+          <button
+            type="button"
+            onClick={() => navigate('/support-chat')}
+            aria-label="Shadow Admin"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[var(--shadow-bg-hover)] active:bg-[var(--shadow-bg-soft)]"
+          >
+            <span className="relative shrink-0">
+              <img src="/assets/Icons/Logo%20Shadow%203.png" alt="" className="h-12 w-12 rounded-full border border-[var(--shadow-border)] object-cover" />
+              <BadgeCheck size={16} className="absolute -bottom-1 -right-1 rounded-full bg-[var(--shadow-bg-surface)] text-blue-500" aria-label="Verified" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <strong className="app-title block truncate text-[15px] font-bold">Shadow Admin</strong>
+              <span className="app-muted mt-1 block truncate text-[13px]">{adminSupportConversation.last_message_preview || t('chatInboxPage.openConversation')}</span>
+            </span>
+            <span className="flex shrink-0 flex-col items-end gap-2">
+              <span className="app-muted text-[10px]">{formatConversationTime(adminSupportConversation.last_message_at || adminSupportConversation.created_at)}</span>
+              {Number(adminSupportConversation.unread_for_reader) > 0 && <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">{Number(adminSupportConversation.unread_for_reader) > 99 ? '99+' : adminSupportConversation.unread_for_reader}</span>}
+            </span>
+          </button>
+        )}
 
         {!selectionMode &&
         !hasSearch &&
