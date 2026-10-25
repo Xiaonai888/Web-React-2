@@ -1,223 +1,53 @@
-import chatConversationManagementRoutes from './chatConversationManagement.routes.js'
-import chatMessageActionsRoutes from './chatMessageActions.routes.js'
-import chatArchivedPageRoutes from './chatArchivedPage.routes.js'
-import authorStoreBookChatRoutes from './authorStoreBookChat.routes.js'
-import express from 'express'
-import { supabase } from '../config/supabase.js'
-import {
-  createReaderAuthorRequestController,
-  createReaderReaderRequestController,
-  decideMessageRequestController,
-  getConversationMessagesController,
-  listMyConversationsController,
-  markConversationReadController,
-  sendConversationMessageController,
-  createGroupConversationController,
-} from '../controllers/chat.controller.js'
-import {
-  blockConversationController,
-  getConversationBlockStatusController,
-  unblockConversationController,
-} from '../controllers/chatBlock.controller.js'
-import {
-  listChatQuickContactsController,
-  touchChatPresenceController,
-} from '../controllers/chatQuickContacts.controller.js'
-import { searchChatUsersController } from '../controllers/chatUserSearch.controller.js'
-import { createRateLimit } from '../middleware/rateLimit.middleware.js'
-import { requireUser } from '../middleware/user.middleware.js'
-import { createSpamGuard } from '../middleware/spamGuard.middleware.js'
+const BACKEND_URL = 'https://shadow-backend-kucw.onrender.com/api/public/country-settings'
+const INVALID_COUNTRIES = new Set(['XX', 'ZZ', 'T1'])
 
-const router = express.Router()
+export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'private, no-store')
+  res.setHeader('Vary', 'Authorization')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
 
-const chatReadGuard = createRateLimit({
-  key: 'chat-read',
-  windowMs: 60 * 1000,
-  max: 180,
-  identity: (req) => req.user?.user_id,
-})
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET')
+    return res.status(405).json({ ok: false, message: 'Method not allowed' })
+  }
 
-const chatWriteGuard = createSpamGuard({
-  scope: 'chat_write',
-  threshold: 30,
-  windowSeconds: 60,
-})
+  const secret = process.env.SHADOW_GEO_PROXY_SECRET
+  if (!secret || secret.length < 32) {
+    return res.status(503).json({ ok: false, message: 'Country settings proxy is not configured' })
+  }
 
-const chatRequestGuard = createSpamGuard({
-  scope: 'chat_request',
-  threshold: 5,
-  windowSeconds: 60,
-})
+  const headerCountry = req.headers['x-vercel-ip-country']
+  const country = typeof headerCountry === 'string' ? headerCountry.trim().toUpperCase() : ''
+  const verifiedCountry = /^[A-Z]{2}$/.test(country) && !INVALID_COUNTRIES.has(country)
+  const upstreamHeaders = { 'x-shadow-geo-secret': secret }
 
-const chatPresenceRateLimit =
-  createRateLimit({
-    key: 'chat-presence',
-    windowMs: 60 * 1000,
-    max: 30,
-    message:
-      'Too many presence updates. Please wait before trying again.',
-    identity: (req) =>
-      req.user?.user_id,
-  })
+  if (verifiedCountry) upstreamHeaders['x-shadow-geo-country'] = country
 
-router.use(authorStoreBookChatRoutes)
-router.use(requireUser)
-router.use(chatArchivedPageRoutes)
-router.use(chatConversationManagementRoutes)
-router.use(chatMessageActionsRoutes)
-
-const inboxSummaryLimit = createRateLimit({
-  key: 'chat-inbox-lightweight',
-  windowMs: 60000,
-  max: 30,
-  identity: (req) => req.user?.user_id,
-})
-
-
-router.get('/conversations/unread-sender-count', inboxSummaryLimit, async (req, res) => {
-  const role = String(req.query?.role || 'reader').trim().toLowerCase()
-
-  if (!['reader', 'author'].includes(role)) {
-    return res.status(400).json({ ok: false, message: 'Invalid chat role' })
+  const auth = req.headers.authorization
+  if (typeof auth === 'string' && /^Bearer [^\s]{1,8192}$/.test(auth)) {
+    upstreamHeaders.Authorization = auth
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_chat_unread_sender_count_v1', {
-      p_user_id: req.user?.user_id,
-      p_role: role,
+    const upstream = await fetch(BACKEND_URL, {
+      method: 'GET',
+      headers: upstreamHeaders,
+      redirect: 'manual',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
     })
 
-    if (error) throw error
-    const count = Number(data)
-    if (!Number.isSafeInteger(count) || count < 0) {
-      throw new Error('Invalid unread sender count')
+    if (upstream.status < 200 || upstream.status >= 500) {
+      return res.status(503).json({ ok: false, message: 'Country settings temporarily unavailable' })
     }
 
-    return res.status(200).json({ ok: true, unread_sender_count: count })
-  } catch (error) {
-    console.error('CHAT_UNREAD_SENDER_COUNT_ERROR', error?.message || error)
-    return res.status(503).json({
-      ok: false,
-      code: 'CHAT_UNREAD_SENDER_COUNT_UNAVAILABLE',
-      message: 'Unread sender count is temporarily unavailable',
-    })
-  }
-})
-
-router.get('/conversations/lightweight-page', inboxSummaryLimit, async (req, res) => {
-  const role = String(req.query?.role || 'reader').trim().toLowerCase()
-  const status = String(req.query?.status || 'all').trim().toLowerCase()
-  const page = Number(req.query?.page || 1)
-  if (!['reader', 'author'].includes(role) ||
-      !['all', 'pending', 'accepted', 'declined', 'blocked'].includes(status) ||
-      !Number.isInteger(page) || page < 1 || page > 1000) {
-    return res.status(400).json({ ok: false, message: 'Invalid inbox query' })
-  }
-  try {
-    const { data, error } = await supabase.rpc('get_chat_inbox_lightweight_v1', {
-      p_user_id: req.user?.user_id,
-      p_role: role,
-      p_page: page,
-      p_limit: 10,
-      p_status: status,
-    })
-    if (error) throw error
-    if (!data || !Array.isArray(data.conversations)) {
-      throw new Error('Invalid inbox response')
+    const payload = await upstream.json().catch(() => null)
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return res.status(502).json({ ok: false, message: 'Invalid country settings response' })
     }
-    return res.status(200).json({ ok: true, ...data })
-  } catch (error) {
-    console.error('CHAT_INBOX_LIGHTWEIGHT_ERROR', error?.message || error)
-    return res.status(503).json({
-      ok: false,
-      code: 'CHAT_INBOX_UNAVAILABLE',
-      message: 'Chat inbox is temporarily unavailable',
-    })
+
+    return res.status(upstream.status).json(payload)
+  } catch {
+    return res.status(503).json({ ok: false, message: 'Country settings temporarily unavailable' })
   }
-})
-
-router.post(
-  '/reader-author/requests',
-  chatRequestGuard,
-  createReaderAuthorRequestController
-)
-
-router.post(
-  '/reader-reader/requests',
-  chatRequestGuard,
-  createReaderReaderRequestController
-)
-
-router.post(
-  '/groups',
-  chatWriteGuard,
-  createGroupConversationController
-)
-
-router.get(
-  '/users/search',
-  chatReadGuard,
-  searchChatUsersController
-)
-
-router.get(
-  '/quick-contacts',
-  chatReadGuard,
-  listChatQuickContactsController
-)
-
-router.patch(
-  '/presence',
-  chatPresenceRateLimit,
-  touchChatPresenceController
-)
-
-router.get(
-  '/conversations',
-  chatReadGuard,
-  listMyConversationsController
-)
-
-router.get(
-  '/conversations/:conversationId/messages',
-  chatReadGuard,
-  getConversationMessagesController
-)
-
-router.get(
-  '/conversations/:conversationId/block',
-  chatReadGuard,
-  getConversationBlockStatusController
-)
-
-router.post(
-  '/conversations/:conversationId/messages',
-  chatWriteGuard,
-  sendConversationMessageController
-)
-
-router.patch(
-  '/conversations/:conversationId/block',
-  chatWriteGuard,
-  blockConversationController
-)
-
-router.delete(
-  '/conversations/:conversationId/block',
-  chatWriteGuard,
-  unblockConversationController
-)
-
-router.patch(
-  '/conversations/:conversationId/request',
-  chatWriteGuard,
-  decideMessageRequestController
-)
-
-router.patch(
-  '/conversations/:conversationId/read',
-  chatWriteGuard,
-  markConversationReadController
-)
-
-export default router
+}
