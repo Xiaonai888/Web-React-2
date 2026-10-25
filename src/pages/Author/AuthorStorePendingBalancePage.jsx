@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AuthorBookEvidencePanel from './AuthorBookEvidencePanel'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -301,7 +302,7 @@ export default function AuthorStorePendingBalancePage() {
 
       {(showComingSoon || activeOrder) && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeModal() }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="pending-balance-dialog-title" className="w-full max-w-sm rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-xl">
+          <div role="dialog" aria-modal="true" aria-labelledby="pending-balance-dialog-title" className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-xl">
             <div className="flex items-center justify-between gap-3">
               <h2 id="pending-balance-dialog-title" className="text-[17px] font-bold">{showComingSoon ? tr('comingSoon') : tr('details')}</h2>
               <button type="button" aria-label={tr('close')} onClick={closeModal} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]">
@@ -320,6 +321,15 @@ export default function AuthorStorePendingBalancePage() {
                 <InfoLine label={tr('status')} value={tr(activeOrder.status === 'under_review' ? 'underReview' : 'awaitingReader')} />
                 <InfoLine label={tr('trackingNumber')} value={activeOrder.trackingNumber || '—'} />
                 <InfoLine label={tr('deliveryProof')} value={activeOrder.proofSent ? tr('proofSent') : tr('notAvailable')} />
+                {!activeOrder.proofSent &&
+  ['awaiting_reader', 'under_review'].includes(activeOrder.status) &&
+  ['shipped', 'completed'].includes(String(activeOrder.orderStatus || '').toLowerCase()) && (
+    <AuthorBookEvidencePanel
+      key={activeOrder.id}
+      order={activeOrder}
+      onSaved={() => { setActiveOrder(null); setPage(1); setRetry((n) => n + 1) }}
+    />
+)}
               </div>
             ) : null}
             <button type="button" onClick={closeModal} className="mt-5 w-full rounded-[15px] bg-violet-600 px-4 py-3 text-sm font-bold text-white">{tr('close')}</button>
