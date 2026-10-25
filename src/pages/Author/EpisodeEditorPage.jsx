@@ -3928,6 +3928,7 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
 function episodeSyncText(key) {
   const labels = {
     en: {
+      storyUnavailable: 'Saved locally. Story details could not be loaded. Reopen this editor after the connection returns before publishing.',
       localFailed: 'Local save failed. Your work was not sent. Check device storage and try again.',
       waiting: 'Saved locally. Media is uploading in the background. Publishing will be available after upload finishes.',
       saving: 'Saved locally. Saving this episode to the server in the background...',
@@ -3937,6 +3938,7 @@ function episodeSyncText(key) {
       uploadFailed: 'One or more uploads failed. Return to the editor and retry them.',
     },
     km: {
+      storyUnavailable: 'បានរក្សាទុក Local រួច។ មិនអាចទាញព័ត៌មាន Story ពី Server បានទេ។ សូមបើក Editor ឡើងវិញពេលភ្ជាប់បាន មុន Publish។',
       localFailed: 'រក្សាទុក Local មិនបាន។ សូមពិនិត្យទំហំផ្ទុកក្នុងឧបករណ៍ រួចសាកម្តងទៀត។',
       waiting: 'រក្សាទុក Local រួច។ រូបភាពកំពុង Upload នៅ Background។ អាច Publish បានក្រោយ Upload ចប់។',
       saving: 'រក្សាទុក Local រួច។ Episode កំពុងរក្សាទុកទៅ Server នៅ Background...',
@@ -3946,6 +3948,7 @@ function episodeSyncText(key) {
       uploadFailed: 'Upload រូបភាពខ្លះបរាជ័យ។ សូមត្រឡប់ទៅ Editor ហើយ Retry។',
     },
     zh: {
+      storyUnavailable: '已在本地保存，但无法加载服务器上的故事信息。恢复连接后请重新打开编辑器再发布。',
       localFailed: '本地保存失败。请检查设备存储空间后重试。',
       waiting: '已在本地保存。媒体正在后台上传，上传完成后才能发布。',
       saving: '已在本地保存。正在后台保存章节到服务器...',
@@ -3955,6 +3958,7 @@ function episodeSyncText(key) {
       uploadFailed: '部分媒体上传失败。请返回编辑器重试。',
     },
     ja: {
+      storyUnavailable: 'ローカルに保存しましたが、サーバーの作品情報を読み込めませんでした。接続回復後にエディターを開き直してから公開してください。',
       localFailed: 'ローカル保存に失敗しました。端末の保存領域を確認して再試行してください。',
       waiting: '端末に保存しました。画像をバックグラウンドでアップロード中です。完了後に公開できます。',
       saving: '端末に保存しました。サーバーにエピソードを保存中です...',
@@ -3964,6 +3968,7 @@ function episodeSyncText(key) {
       uploadFailed: '画像のアップロードに失敗しました。エディターに戻って再試行してください。',
     },
     ko: {
+      storyUnavailable: '로컬 저장은 완료됐지만 서버의 작품 정보를 불러올 수 없습니다. 연결이 복구되면 편집기를 다시 열어 게시해 주세요.',
       localFailed: '로컬 저장에 실패했습니다. 기기 저장 공간을 확인하고 다시 시도하세요.',
       waiting: '로컬에 저장되었습니다. 미디어는 백그라운드에서 업로드 중이며 완료 후 게시할 수 있습니다.',
       saving: '로컬에 저장되었습니다. 서버에 에피소드를 저장 중입니다...',
@@ -4159,7 +4164,6 @@ export default function EpisodeEditorPage() {
     Boolean(episodeTitle.trim()) &&
     !loading &&
     !pageLoading &&
-    Boolean(storyRecord) &&
     (isManga
       ? mangaPages.length >= MANGA_MIN_PUBLISH_PAGES &&
         mangaPages.length <= MANGA_MAX_PAGES &&
@@ -5919,16 +5923,18 @@ const handleEditorCompositionEnd = (event) => {
   }
 
   useEffect(() => {
-    if (!publishSettingsOpen || pageLoading || loading || episodeMediaPending ||
+    if (!publishSettingsOpen || !storyRecord || pageLoading || loading || episodeMediaPending ||
       episodeMediaFailed || episodeSyncPausedRef.current || episodeSyncUncertainRef.current ||
       episodeSyncPromiseRef.current || episodeSyncing ||
       (currentEpisodeId && !hasUnsavedChanges)) return
     void beginEpisodeSync()
-  }, [publishSettingsOpen, pageLoading, loading, episodeMediaPending, episodeMediaFailed,
+  }, [publishSettingsOpen, storyRecord, pageLoading, loading, episodeMediaPending, episodeMediaFailed,
     episodeSyncing, currentEpisodeId, hasUnsavedChanges, content, mangaPages.length])
 
-  const episodeSyncStatus = episodeSyncUncertainRef.current
-    ? episodeSyncText('uncertain')
+  const episodeSyncStatus = !storyRecord
+    ? episodeSyncText('storyUnavailable')
+    : episodeSyncUncertainRef.current
+      ? episodeSyncText('uncertain')
     : episodeMediaFailed
       ? episodeSyncText('uploadFailed')
       : episodeMediaPending
@@ -5943,6 +5949,10 @@ const handleEditorCompositionEnd = (event) => {
 
   const handleSavePublishSettings = async () => {
     if (settingsSaving || episodeSyncing) return
+    if (!storyRecord) {
+      setEpisodeSyncError(episodeSyncText('storyUnavailable'))
+      return
+    }
     if (episodeSyncUncertainRef.current) {
       setEpisodeSyncError(episodeSyncText('uncertain'))
       return
