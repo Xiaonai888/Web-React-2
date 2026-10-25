@@ -107,7 +107,7 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const CACHE_TTL_MS = 45 * 1000
+const CACHE_TTL_MS = 3 * 60 * 1000
 const REQUEST_TIMEOUT_MS = 12 * 1000
 const ERROR_COOLDOWN_MS = 20 * 1000
 const MAX_CACHE_ENTRIES = 64
