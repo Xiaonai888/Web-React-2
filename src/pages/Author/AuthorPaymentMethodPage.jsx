@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import AuthorBinancePayoutForm from './AuthorBinancePayoutForm'
 
 registerTranslationNamespace('authorPaymentMethod', {
   en: {
@@ -13,6 +14,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     bankQr: 'Bank QR',
     bankQrSubtitle: 'Recommended for Cambodia payouts',
     recommended: 'Recommended',
+    binance: 'Binance',
+    binanceSubtitle: 'Receive payouts to your Binance account',
     paypal: 'PayPal',
     paypalSubtitle: 'PayPal transfer fees may apply',
     payFee: 'Pay fee',
@@ -75,6 +78,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     bankQr: 'Bank QR',
     bankQrSubtitle: 'ណែនាំសម្រាប់ការទទួលប្រាក់នៅកម្ពុជា',
     recommended: 'បានណែនាំ',
+    binance: 'Binance',
+    binanceSubtitle: 'ទទួលប្រាក់តាមគណនី Binance របស់អ្នក',
     paypal: 'PayPal',
     paypalSubtitle: 'អាចមានថ្លៃសេវាផ្ទេរ PayPal',
     payFee: 'មានថ្លៃសេវា',
@@ -137,6 +142,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     bankQr: '银行二维码',
     bankQrSubtitle: '推荐用于柬埔寨收款',
     recommended: '推荐',
+    binance: 'Binance',
+    binanceSubtitle: '通过 Binance 账户收款',
     paypal: 'PayPal',
     paypalSubtitle: '可能产生 PayPal 转账费用',
     payFee: '可能收费',
@@ -199,6 +206,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     bankQr: '銀行QR',
     bankQrSubtitle: 'カンボジアでの受取におすすめ',
     recommended: 'おすすめ',
+    binance: 'Binance',
+    binanceSubtitle: 'Binance アカウントで受け取る',
     paypal: 'PayPal',
     paypalSubtitle: 'PayPal の送金手数料がかかる場合があります',
     payFee: '手数料あり',
@@ -261,6 +270,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     bankQr: '은행 QR',
     bankQrSubtitle: '캄보디아 지급에 권장',
     recommended: '권장',
+    binance: 'Binance',
+    binanceSubtitle: 'Binance 계정으로 지급받기',
     paypal: 'PayPal',
     paypalSubtitle: 'PayPal 송금 수수료가 발생할 수 있음',
     payFee: '수수료 있음',
@@ -340,6 +351,15 @@ const METHOD_OPTIONS = [
     icon: 'fa-solid fa-qrcode',
     badgeKey: 'recommended',
     tone: 'purple',
+  },
+  {
+    key: 'binance',
+    title: 'Binance',
+    titleKey: 'binance',
+    subtitleKey: 'binanceSubtitle',
+    icon: 'fa-solid fa-wallet',
+    badgeKey: 'recommended',
+    tone: 'blue',
   },
   {
     key: 'paypal',
@@ -616,28 +636,36 @@ function CurrentMethodCard({ method, onView }) {
   }
 
   const label =
-    method.method_type === 'bank_qr'
+    method.method_type === 'binance'
+      ? t('authorPaymentMethod.binance')
+      : method.method_type === 'bank_qr'
       ? t('authorPaymentMethod.bankQr')
       : method.method_type === 'paypal'
         ? t('authorPaymentMethod.paypal')
         : t('authorPaymentMethod.phoneNumber')
 
   const main =
-    method.method_type === 'bank_qr'
+    method.method_type === 'binance'
+      ? method.account_name
+      : method.method_type === 'bank_qr'
       ? method.account_name
       : method.method_type === 'paypal'
         ? method.paypal_email
         : method.phone_number
 
   const sub =
-    method.method_type === 'bank_qr'
+    method.method_type === 'binance'
+      ? 'Binance Auto'
+      : method.method_type === 'bank_qr'
       ? method.bank_name
       : method.method_type === 'paypal'
         ? method.paypal_name
         : method.phone_provider
 
   const methodIcon =
-    method.method_type === 'bank_qr'
+    method.method_type === 'binance'
+      ? 'fa-solid fa-wallet'
+      : method.method_type === 'bank_qr'
       ? 'fa-solid fa-qrcode'
       : method.method_type === 'paypal'
         ? 'fa-brands fa-paypal'
@@ -974,6 +1002,7 @@ export default function AuthorPaymentMethodPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [methods, setMethods] = useState([])
+  const [binanceMethod, setBinanceMethod] = useState(null)
   const [viewMode, setViewMode] = useState('list')
   const [selectedMethod, setSelectedMethod] = useState('')
 
@@ -988,16 +1017,32 @@ export default function AuthorPaymentMethodPage() {
   const [phoneNumber, setPhoneNumber] = useState('')
 
   const primaryMethod = useMemo(() => {
-    return (
-      methods.find((method) => method.is_primary && method.status === 'active') ||
-      methods.find((method) => method.status === 'active') ||
-      null
-    )
-  }, [methods])
+    const visible = methods.filter((method) => method.status === 'active' && method.method_type !== 'paypal')
+    return visible.find((method) => method.is_primary) || visible[0] ||
+      (binanceMethod?.status === 'active' ? { ...binanceMethod, method_type: 'binance' } : null)
+  }, [methods, binanceMethod])
 
   const selectedOption = METHOD_OPTIONS.find(
     (option) => option.key === selectedMethod
   )
+
+  useEffect(() => {
+    const auth = getAuthToken()
+    if (!auth) return
+    const controller = new AbortController()
+    let active = true
+    fetch(`${API_BASE_URL}/api/authors/me/binance-payout`, {
+      headers: { Authorization: `Bearer ${auth}` },
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => {
+        if (active && result?.ok) setBinanceMethod(result.payment_method || null)
+      })
+      .catch(() => {})
+    return () => { active = false; controller.abort() }
+  }, [])
 
   useEffect(() => {
     let ignore = false
@@ -1055,7 +1100,14 @@ export default function AuthorPaymentMethodPage() {
   }, [navigate, t])
 
   function openMethod(methodType) {
-    if (savingRef.current || qrProcessing) return
+    if (savingRef.current || qrProcessing || methodType === 'paypal') return
+    if (methodType === 'binance') {
+      setSelectedMethod('binance')
+      setViewMode('form')
+      setError('')
+      setSuccess('')
+      return
+    }
     const old = methods.find(
       (method) =>
         method.method_type === methodType && method.status === 'active'
@@ -1230,6 +1282,23 @@ export default function AuthorPaymentMethodPage() {
               }}
             />
 
+            {binanceMethod?.status === 'active' && primaryMethod?.method_type !== 'binance' ? (
+              <button
+                type="button"
+                onClick={() => openMethod('binance')}
+                className="flex w-full items-center gap-3 rounded-[22px] border border-[#c8d6f1] bg-[var(--shadow-bg-surface)] p-4 text-left shadow-[0_5px_16px_rgba(77,54,102,0.05)] transition active:scale-[0.99]"
+              >
+                <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[19px] bg-[#e4edff] text-[#536fbd]">
+                  <i className="fa-solid fa-wallet text-[22px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13.5px] font-black text-[var(--shadow-text-primary)]">{t('authorPaymentMethod.binance')}</span>
+                  <span className="mt-1 block truncate text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{binanceMethod.account_name || t('authorPaymentMethod.noAccountName')} · Binance Auto</span>
+                </span>
+                <i className="fa-solid fa-chevron-right text-[10px] text-[#8c69b2]" />
+              </button>
+            ) : null}
+
             <section
               className="relative overflow-hidden rounded-[29px] border border-[#ddcfeb] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_11px_28px_rgba(86,61,118,0.07)]"
               style={{
@@ -1257,7 +1326,7 @@ export default function AuthorPaymentMethodPage() {
               ) : null}
 
               <div className="mt-4 grid gap-2.5">
-                {METHOD_OPTIONS.map((option) => (
+                {METHOD_OPTIONS.filter((option) => option.key !== 'paypal').map((option) => (
                   <MethodButton
                     key={option.key}
                     option={option}
@@ -1271,7 +1340,20 @@ export default function AuthorPaymentMethodPage() {
           </>
         ) : null}
 
-        {!loading && viewMode === 'form' ? (
+        {!loading && viewMode === 'form' && selectedMethod === 'binance' ? (
+          <AuthorBinancePayoutForm
+            onCancel={backToMethods}
+            onSaved={(method) => {
+              setBinanceMethod(method)
+              setViewMode('list')
+              setSelectedMethod('')
+              setSuccess(t('authorPaymentMethod.saved'))
+              if (backPath === '/author/payout-status') navigate(backPath, { replace: true })
+            }}
+          />
+        ) : null}
+
+        {!loading && viewMode === 'form' && selectedMethod !== 'binance' ? (
           <form
             onSubmit={handleSubmit}
             className="relative overflow-hidden rounded-[29px] border border-[#d8c6e8] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_12px_30px_rgba(86,61,118,0.08)]"
