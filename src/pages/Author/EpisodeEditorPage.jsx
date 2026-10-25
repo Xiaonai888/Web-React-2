@@ -3302,6 +3302,7 @@ export function PublishSettingsSheet({
   scheduleTime,
   onScheduleTimeChange,
   saving,
+  syncStatus = '',
   onClose,
   onSave,
   isChatStory = false,
@@ -3543,6 +3544,11 @@ const canSave =
   >
     {episodeTitle?.trim() || getDisplayText('episodeEditor.untitledEpisode')}
   </div>
+  {syncStatus ? (
+    <div role="status" aria-live="polite" className="mb-4 rounded-[10px] bg-[var(--shadow-bg-soft)] px-3 py-2.5 text-[12px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
+      {syncStatus}
+    </div>
+  ) : null}
 
   {showStorySettings ? (
     <section>
@@ -3918,6 +3924,58 @@ function MangaPageCard({ page, index, total, onMove, onDelete, onReplace, onRetr
   )
 }
 
+
+function episodeSyncText(key) {
+  const labels = {
+    en: {
+      localFailed: 'Local save failed. Your work was not sent. Check device storage and try again.',
+      waiting: 'Saved locally. Media is uploading in the background. Publishing will be available after upload finishes.',
+      saving: 'Saved locally. Saving this episode to the server in the background...',
+      ready: 'Episode saved on the server. Ready to publish.',
+      failed: 'Server save failed. Your local draft is preserved. Tap Publish to retry.',
+      uncertain: 'The server response was interrupted. Check whether this episode already exists before trying again to avoid a duplicate.',
+      uploadFailed: 'One or more uploads failed. Return to the editor and retry them.',
+    },
+    km: {
+      localFailed: 'រក្សាទុក Local មិនបាន។ សូមពិនិត្យទំហំផ្ទុកក្នុងឧបករណ៍ រួចសាកម្តងទៀត។',
+      waiting: 'រក្សាទុក Local រួច។ រូបភាពកំពុង Upload នៅ Background។ អាច Publish បានក្រោយ Upload ចប់។',
+      saving: 'រក្សាទុក Local រួច។ Episode កំពុងរក្សាទុកទៅ Server នៅ Background...',
+      ready: 'Episode បានរក្សាទុកលើ Server រួច។ អាច Publish បាន។',
+      failed: 'រក្សាទុក Server មិនបាន។ Local Draft នៅដដែល។ ចុច Publish ដើម្បីសាកម្តងទៀត។',
+      uncertain: 'ការឆ្លើយតបពី Server បានដាច់។ សូមឆែកថា Episode មានរួចឬនៅ មុនសាកម្ដងទៀត ដើម្បីចៀសវាងស្ទួន។',
+      uploadFailed: 'Upload រូបភាពខ្លះបរាជ័យ។ សូមត្រឡប់ទៅ Editor ហើយ Retry។',
+    },
+    zh: {
+      localFailed: '本地保存失败。请检查设备存储空间后重试。',
+      waiting: '已在本地保存。媒体正在后台上传，上传完成后才能发布。',
+      saving: '已在本地保存。正在后台保存章节到服务器...',
+      ready: '章节已保存到服务器，可以发布。',
+      failed: '服务器保存失败，本地草稿已保留。点击发布以重试。',
+      uncertain: '服务器响应中断。请先检查章节是否已经存在，避免重复创建。',
+      uploadFailed: '部分媒体上传失败。请返回编辑器重试。',
+    },
+    ja: {
+      localFailed: 'ローカル保存に失敗しました。端末の保存領域を確認して再試行してください。',
+      waiting: '端末に保存しました。画像をバックグラウンドでアップロード中です。完了後に公開できます。',
+      saving: '端末に保存しました。サーバーにエピソードを保存中です...',
+      ready: 'エピソードをサーバーに保存しました。公開できます。',
+      failed: 'サーバー保存に失敗しました。ローカル下書きは残っています。公開ボタンで再試行してください。',
+      uncertain: 'サーバーの応答が中断しました。重複作成を防ぐため、既存のエピソードを確認してください。',
+      uploadFailed: '画像のアップロードに失敗しました。エディターに戻って再試行してください。',
+    },
+    ko: {
+      localFailed: '로컬 저장에 실패했습니다. 기기 저장 공간을 확인하고 다시 시도하세요.',
+      waiting: '로컬에 저장되었습니다. 미디어는 백그라운드에서 업로드 중이며 완료 후 게시할 수 있습니다.',
+      saving: '로컬에 저장되었습니다. 서버에 에피소드를 저장 중입니다...',
+      ready: '에피소드가 서버에 저장되었습니다. 게시할 수 있습니다.',
+      failed: '서버 저장에 실패했습니다. 로컬 초안은 보존됩니다. 게시를 눌러 다시 시도하세요.',
+      uncertain: '서버 응답이 중단되었습니다. 중복 생성을 막기 위해 기존 에피소드를 먼저 확인하세요.',
+      uploadFailed: '일부 미디어 업로드에 실패했습니다. 편집기로 돌아가 다시 시도하세요.',
+    },
+  }
+  return (labels[getDisplayLanguageId()] || labels.en)[key] || labels.en[key] || ''
+}
+
 export default function EpisodeEditorPage() {
   useDisplayTranslation()
   const navigate = useNavigate()
@@ -4017,6 +4075,11 @@ export default function EpisodeEditorPage() {
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const [episodeSyncing, setEpisodeSyncing] = useState(false)
+  const [episodeSyncError, setEpisodeSyncError] = useState('')
+  const episodeSyncPromiseRef = useRef(null)
+  const episodeSyncPausedRef = useRef(false)
+  const episodeSyncUncertainRef = useRef(false)
   const { requireAgreement, agreementModal } = useStoryPublishAgreementGate({
   storyId,
   apiBaseUrl: API_BASE_URL,
@@ -4096,15 +4159,13 @@ export default function EpisodeEditorPage() {
     Boolean(episodeTitle.trim()) &&
     !loading &&
     !pageLoading &&
+    Boolean(storyRecord) &&
     (isManga
-      ? completedMangaPages.length >= MANGA_MIN_PUBLISH_PAGES &&
-        completedMangaPages.length <= MANGA_MAX_PAGES &&
-        !mangaUploadPending &&
+      ? mangaPages.length >= MANGA_MIN_PUBLISH_PAGES &&
+        mangaPages.length <= MANGA_MAX_PAGES &&
         mangaErrorCount === 0
       : characterCount >= MIN_CHARACTERS &&
-        characterCount <= MAX_CHARACTERS &&
-        !inlineImageUploading &&
-        countPendingNovelImageMarkers(content) === 0)
+        characterCount <= MAX_CHARACTERS)
 
   const showToast = (text, duration = 2800) => {
     setToast(text)
@@ -5817,37 +5878,93 @@ const handleEditorCompositionEnd = (event) => {
     }
   }
 
-  const handleSavePublishSettings = async () => {
-    if (settingsSaving) return
+  const episodeMediaPending = isManga
+    ? mangaUploadPending || completedMangaPages.length !== mangaPages.length
+    : inlineImageUploading || countPendingNovelImageMarkers(content) > 0
+  const episodeMediaFailed = isManga && mangaErrorCount > 0
 
-    if (!currentEpisodeId) {
-      setMessage(getDisplayText('episodeEditor.missingEpisodeId'))
+  const beginEpisodeSync = () => {
+    if (episodeSyncPromiseRef.current) return episodeSyncPromiseRef.current
+    if (episodeSyncUncertainRef.current) return Promise.resolve(null)
+    const operation = (async () => {
+      setEpisodeSyncing(true)
+      setEpisodeSyncError('')
+      try {
+        const result = await handleSaveEpisode({ goToPublish: true })
+        if (!result) {
+          episodeSyncPausedRef.current = true
+          setEpisodeSyncError(episodeSyncText('failed'))
+          return null
+        }
+        setCurrentEpisodeId(result.episodeId)
+        setCurrentEpisodeNumber(Number(result.episodeNumber || currentEpisodeNumber || 1))
+        return result
+      } catch (error) {
+        const detail = String(error?.message || '')
+        const unknownResult = !(currentEpisodeId || editEpisodeId) &&
+          /failed to fetch|network|created but.*missing|create.*missing.*id|unexpected end of json/i.test(detail)
+        if (unknownResult) episodeSyncUncertainRef.current = true
+        episodeSyncPausedRef.current = true
+        setEpisodeSyncError(episodeSyncText(unknownResult ? 'uncertain' : 'failed'))
+        return null
+      } finally {
+        setEpisodeSyncing(false)
+      }
+    })()
+    episodeSyncPromiseRef.current = operation
+    void operation.finally(() => {
+      if (episodeSyncPromiseRef.current === operation) episodeSyncPromiseRef.current = null
+    })
+    return operation
+  }
+
+  useEffect(() => {
+    if (!publishSettingsOpen || pageLoading || loading || episodeMediaPending ||
+      episodeMediaFailed || episodeSyncPausedRef.current || episodeSyncUncertainRef.current ||
+      episodeSyncPromiseRef.current || episodeSyncing ||
+      (currentEpisodeId && !hasUnsavedChanges)) return
+    void beginEpisodeSync()
+  }, [publishSettingsOpen, pageLoading, loading, episodeMediaPending, episodeMediaFailed,
+    episodeSyncing, currentEpisodeId, hasUnsavedChanges, content, mangaPages.length])
+
+  const episodeSyncStatus = episodeSyncUncertainRef.current
+    ? episodeSyncText('uncertain')
+    : episodeMediaFailed
+      ? episodeSyncText('uploadFailed')
+      : episodeMediaPending
+        ? episodeSyncText('waiting')
+        : episodeSyncing
+          ? episodeSyncText('saving')
+          : episodeSyncError
+            ? episodeSyncError
+            : currentEpisodeId && !hasUnsavedChanges
+              ? episodeSyncText('ready')
+              : episodeSyncText('saving')
+
+  const handleSavePublishSettings = async () => {
+    if (settingsSaving || episodeSyncing) return
+    if (episodeSyncUncertainRef.current) {
+      setEpisodeSyncError(episodeSyncText('uncertain'))
+      return
+    }
+    if (episodeMediaPending || episodeMediaFailed) {
+      setEpisodeSyncError(episodeSyncText(episodeMediaFailed ? 'uploadFailed' : 'waiting'))
       return
     }
 
-    const status =
-      releaseOption === 'schedule'
-        ? 'scheduled'
-        : releaseOption === 'draft'
-          ? 'draft'
-          : 'published'
+    const status = releaseOption === 'schedule'
+      ? 'scheduled' : releaseOption === 'draft' ? 'draft' : 'published'
 
-    if (
-      status !== 'draft' &&
-      legacyStorySettingsBlank &&
-      !storySettings.length
-    ) {
+    if (status !== 'draft' && legacyStorySettingsBlank && !storySettings.length) {
       setMessage(getDisplayText('storySettingSheet.required'))
       return
     }
-
     if (releaseOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
       setMessage(getDisplayText('episodeEditor.chooseSchedule'))
       return
     }
 
     const token = getAuthToken()
-
     if (!token) {
       navigate('/login')
       return
@@ -5856,110 +5973,99 @@ const handleEditorCompositionEnd = (event) => {
     try {
       setSettingsSaving(true)
       setMessage('')
-
+      let episodeIdToPublish = currentEpisodeId || editEpisodeId || ''
+      let episodeNumberToPublish = currentEpisodeNumber
+      if (episodeSyncPromiseRef.current) {
+        const pendingResult = await episodeSyncPromiseRef.current
+        if (!pendingResult) return
+        episodeIdToPublish = pendingResult.episodeId
+        episodeNumberToPublish = pendingResult.episodeNumber
+      }
+      if (!episodeIdToPublish || hasUnsavedChanges) {
+        episodeSyncPausedRef.current = false
+        const saved = await beginEpisodeSync()
+        if (!saved) return
+        episodeIdToPublish = saved.episodeId
+        episodeNumberToPublish = saved.episodeNumber
+      }
+      if (!episodeIdToPublish) {
+        setMessage(getDisplayText('episodeEditor.missingEpisodeId'))
+        return
+      }
       if (legacyStorySettingsBlank && storySettings.length > 0) {
         await saveStorySettings(token)
       }
-
-      const scheduledAt =
-        releaseOption === 'schedule'
-          ? new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
-          : null
-
-      const shouldRequireAgreement =
-        status !== 'draft' &&
-        Number(currentEpisodeNumber || 0) === 1
-
-      if (shouldRequireAgreement) {
+      const scheduledAt = releaseOption === 'schedule'
+        ? new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString() : null
+      if (status !== 'draft' && Number(episodeNumberToPublish || 0) === 1) {
         const accepted = await requireAgreement()
         if (!accepted) return
       }
-
       const publishEpisodeStatus = async () => {
         const response = await fetch(
-          `${API_BASE_URL}/api/stories/${storyId}/episodes/${currentEpisodeId}/status`,
+          `${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeIdToPublish}/status`,
           {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({
-              status,
-              scheduled_at: scheduledAt,
-              is_adult: episodeAdult,
-              is_free_published: episodeFree,
+              status, scheduled_at: scheduledAt,
+              is_adult: episodeAdult, is_free_published: episodeFree,
             }),
           }
         )
-
         const data = await response.json().catch(() => ({}))
         return { response, data }
       }
-
       let { response, data } = await publishEpisodeStatus()
-
-      if (
-        status !== 'draft' &&
-        response.status === 409 &&
-        data.code === 'PUBLISH_AGREEMENT_REQUIRED'
-      ) {
+      if (status !== 'draft' && response.status === 409 && data.code === 'PUBLISH_AGREEMENT_REQUIRED') {
         const accepted = await requireAgreement()
         if (!accepted) return
         const retryResult = await publishEpisodeStatus()
         response = retryResult.response
         data = retryResult.data
       }
-
       if (!response.ok || data.ok === false) {
-        const blockedWords =
-          data.blocked_words_found || data.blockedWordsFound || []
-
+        const blockedWords = data.blocked_words_found || data.blockedWordsFound || []
         if (data.code === 'BLOCKED_WORDS_FOUND' || blockedWords.length) {
           navigate(`/author/story/${storyId}/episode/publish-warning`, {
             replace: true,
-            state: {
-              episodeId: currentEpisodeId,
-              blockedWords,
-            },
+            state: { episodeId: episodeIdToPublish, blockedWords },
           })
           return
         }
-
         throw new Error(data.message || getDisplayText('episodeEditor.failedSavePublish'))
       }
-
       setPublishSettingsOpen(false)
-setOldEpisodeStatus(status)
-setHasUnsavedChanges(false)
-setSaveStatus('Saved')
-setSuccessOpen(true)
+      setOldEpisodeStatus(status)
+      setHasUnsavedChanges(false)
+      setSaveStatus('Saved')
+      setSuccessOpen(true)
     } catch (error) {
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? getDisplayText('episodeEditor.cannotConnect')
-          : error.message || getDisplayText('episodeEditor.failedSavePublish')
-      )
+      setMessage(error.message === 'Failed to fetch'
+        ? getDisplayText('episodeEditor.cannotConnect')
+        : error.message || getDisplayText('episodeEditor.failedSavePublish'))
     } finally {
       setSettingsSaving(false)
     }
   }
 
   const handleNext = async () => {
+    if (loading || pageLoading || !isValidForNext) return
     try {
       setLoading(true)
-      const saved = await handleSaveEpisode({ goToPublish: true })
-      if (!saved) return
-
-      setCurrentEpisodeId(saved.episodeId)
-      setCurrentEpisodeNumber(Number(saved.episodeNumber || currentEpisodeNumber || 1))
+      if (localSavePromiseRef.current) await localSavePromiseRef.current
+      const revision = localDraftRevisionRef.current
+      if (revision !== localSavedRevisionRef.current) {
+        const saved = await saveCurrentLocalDraft()
+        if (!saved || localSavedRevisionRef.current !== localDraftRevisionRef.current) {
+          throw new Error(episodeSyncText('localFailed'))
+        }
+      }
+      episodeSyncPausedRef.current = false
+      setEpisodeSyncError('')
       setPublishSettingsOpen(true)
     } catch (error) {
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? getDisplayText('episodeEditor.cannotConnect')
-          : error.message || (isEditMode ? getDisplayText('episodeEditor.failedUpdateEpisode') : getDisplayText('episodeEditor.failedCreateEpisode'))
-      )
+      setMessage(error?.message || episodeSyncText('localFailed'))
     } finally {
       setLoading(false)
     }
@@ -6082,7 +6188,8 @@ releaseOption={releaseOption}
         onScheduleDateChange={setScheduleDate}
         scheduleTime={scheduleTime}
         onScheduleTimeChange={setScheduleTime}
-        saving={settingsSaving}
+        saving={settingsSaving || episodeSyncing || episodeMediaPending || episodeMediaFailed}
+        syncStatus={message || episodeSyncStatus}
         onClose={() => setPublishSettingsOpen(false)}
         onSave={handleSavePublishSettings}
       />
