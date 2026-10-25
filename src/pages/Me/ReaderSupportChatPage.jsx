@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BadgeCheck, ChevronDown, LoaderCircle, RefreshCw, Send } from 'lucide-react'
 import { PageEmptyState, PageErrorState, PageHeader, PageLoadingState, PageShell } from '../../components/common/PagePrimitives'
@@ -79,13 +79,16 @@ export default function ReaderSupportChatPage() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [loginRequired, setLoginRequired] = useState(false)
   const [sending, setSending] = useState(false)
   const [draft, setDraft] = useState('')
   const [olderLoading, setOlderLoading] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [before, setBefore] = useState('')
   const [refreshIndex, setRefreshIndex] = useState(0)
-  const latestRef = useRef(null)
+  const scrollBoxRef = useRef(null)
+  const restoreScrollRef = useRef(null)
+  const pendingSendRef = useRef(null)
 
   const reload = useCallback(async signal => {
     const data = await getMySupportConversation({ signal })
@@ -110,15 +113,28 @@ export default function ReaderSupportChatPage() {
     const controller = new AbortController()
     setLoading(true)
     setError('')
+    setLoginRequired(false)
     reload(controller.signal)
-      .catch(err => { if (!controller.signal.aborted && err.name !== 'AbortError') setError(err.message || t('readerSupportChatPage.loadError')) })
+      .catch(err => {
+        if (controller.signal.aborted || err.name === 'AbortError') return
+        if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
+        else setError(err.message || t('readerSupportChatPage.loadError'))
+      })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [reload, refreshIndex, t])
 
-  useEffect(() => {
-    if (!loading && !error) latestRef.current?.scrollIntoView({ block:'end' })
-  }, [loading, error, messages.length])
+  useLayoutEffect(() => {
+    const element = scrollBoxRef.current
+    if (!element) return
+    const position = restoreScrollRef.current
+    if (position) {
+      element.scrollTop = position.top + element.scrollHeight - position.height
+      restoreScrollRef.current = null
+    } else {
+      element.scrollTop = element.scrollHeight
+    }
+  }, [messages])
 
   async function loadOlder() {
     if (!hasMore || !before || olderLoading) return
@@ -126,28 +142,38 @@ export default function ReaderSupportChatPage() {
     setError('')
     try {
       const data = await getMySupportMessages({ before })
+      const element = scrollBoxRef.current
+      if (element) restoreScrollRef.current = { top: element.scrollTop, height: element.scrollHeight }
       setMessages(current => {
         const existing = new Set(current.map(message => message.id))
         return [...(data.messages || []).filter(message => !existing.has(message.id)), ...current]
       })
       setHasMore(Boolean(data.has_more))
       setBefore(data.next_before || '')
-    } catch (err) { setError(err.message || t('readerSupportChatPage.loadError')) }
+    } catch (err) { restoreScrollRef.current = null; setError(err.message || t('readerSupportChatPage.loadError')) }
     finally { setOlderLoading(false) }
   }
 
   async function submit(event) {
     event.preventDefault()
     const content = draft.trim()
-    if (!content || content.length > 2000 || sending || conversation?.status === 'archived') return
+    if (!content || content.length > 2000 || sending || loading || loginRequired || conversation?.status === 'archived') return
     setSending(true)
     setError('')
+    const requestId = pendingSendRef.current?.content === content
+      ? pendingSendRef.current.requestId
+      : globalThis.crypto?.randomUUID?.()
+    pendingSendRef.current = { content, requestId }
     try {
-      await sendMySupportMessage(content)
+      await sendMySupportMessage(content, requestId)
+      pendingSendRef.current = null
       setDraft('')
-      await reload()
-    } catch (err) { setError(err.message || t('readerSupportChatPage.sendError')) }
-    finally { setSending(false) }
+      try { await reload() }
+      catch (err) { setError(err.message || t('readerSupportChatPage.loadError')) }
+    } catch (err) {
+      if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
+      setError(err.message || t('readerSupportChatPage.sendError'))
+    } finally { setSending(false) }
   }
 
   const archived = conversation?.status === 'archived'
@@ -163,25 +189,25 @@ export default function ReaderSupportChatPage() {
             <p className="app-muted mt-1 text-[11px]">{t('readerSupportChatPage.onlineNote')}</p>
           </div>
         </header>
-        <div className="app-page min-h-[380px] max-h-[65vh] overflow-y-auto px-3 py-5">
+        <div ref={scrollBoxRef} className="app-page min-h-[380px] max-h-[65vh] overflow-y-auto px-3 py-5">
           {loading && <PageLoadingState label={t('readerSupportChatPage.loading')} rows={3} />}
-          {!loading && error && messages.length === 0 && <PageErrorState title={t('readerSupportChatPage.loadError')} body={error} actionLabel={t('readerSupportChatPage.retry')} onAction={() => setRefreshIndex(count => count + 1)} />}
-          {!loading && !error && messages.length === 0 && <PageEmptyState title={t('readerSupportChatPage.empty')} body={t('readerSupportChatPage.emptyText')} />}
-          {!loading && messages.length > 0 && <div className="space-y-3">
+          {!loading && loginRequired && <div className="flex flex-col items-center gap-3"><PageEmptyState title={t('readerSupportChatPage.signIn')} body={t('readerSupportChatPage.private')} /><button type="button" onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white">{t('readerSupportChatPage.goLogin')}</button></div>}
+          {!loading && !loginRequired && error && messages.length === 0 && <PageErrorState title={t('readerSupportChatPage.loadError')} body={error} actionLabel={t('readerSupportChatPage.retry')} onAction={() => setRefreshIndex(count => count + 1)} />}
+          {!loading && !loginRequired && !error && messages.length === 0 && <PageEmptyState title={t('readerSupportChatPage.empty')} body={t('readerSupportChatPage.emptyText')} />}
+          {!loading && !loginRequired && messages.length > 0 && <div className="space-y-3">
             {hasMore && <div className="text-center"><button type="button" disabled={olderLoading} onClick={loadOlder} className="app-soft inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold"><ChevronDown size={15} />{olderLoading ? t('readerSupportChatPage.loadingOlder') : t('readerSupportChatPage.loadOlder')}</button></div>}
             {messages.map(item => <div key={item.id} className={`flex ${item.sender_kind === 'reader' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[83%] rounded-[16px] border px-3.5 py-2.5 ${item.sender_kind === 'reader' ? 'border-amber-200 bg-amber-50 text-slate-900' : 'app-card'}`}>
               {item.sender_kind === 'admin' && <div className="mb-1.5 flex items-center gap-1 text-[10px] font-extrabold text-amber-700">{t('readerSupportChatPage.waiting')} <BadgeCheck size={13} className="text-blue-500" /></div>}
               <p className="whitespace-pre-wrap break-words text-[13px] leading-6">{item.message_text || ''}</p>
               <div className={`mt-1 text-[10px] ${item.sender_kind === 'reader' ? 'text-slate-500' : 'app-muted'}`}>{displayTime(item.created_at)}</div>
             </div></div>)}
-            <div ref={latestRef} />
           </div>}
         </div>
         {archived && <div className="mx-3 mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">{t('readerSupportChatPage.archived')}</div>}
-        {error && messages.length > 0 && <div role="alert" className="mx-3 mb-2 text-[12px] text-red-600">{error}</div>}
+        {!loginRequired && error && messages.length > 0 && <div role="alert" className="mx-3 mb-2 text-[12px] text-red-600">{error}</div>}
         <form onSubmit={submit} className="app-nav flex items-end gap-2 border-t px-3 py-3">
-          <textarea className="app-input min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-xl border border-[var(--shadow-border)] p-3 text-[13px] outline-none" rows={1} maxLength={2000} value={draft} onChange={event => setDraft(event.target.value)} placeholder={t('readerSupportChatPage.placeholder')} aria-label={t('readerSupportChatPage.placeholder')} disabled={loading || archived || sending} />
-          <button type="submit" disabled={!draft.trim() || sending || loading || archived} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white disabled:opacity-50" aria-label={t('readerSupportChatPage.send')}>{sending ? <LoaderCircle size={19} className="animate-spin" /> : <Send size={19} />}</button>
+          <textarea className="app-input min-h-11 max-h-32 min-w-0 flex-1 resize-y rounded-xl border border-[var(--shadow-border)] p-3 text-[13px] outline-none" rows={1} maxLength={2000} value={draft} onChange={event => setDraft(event.target.value)} placeholder={t('readerSupportChatPage.placeholder')} aria-label={t('readerSupportChatPage.placeholder')} disabled={loading || loginRequired || archived || sending} />
+          <button type="submit" disabled={!draft.trim() || sending || loading || loginRequired || archived} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white disabled:opacity-50" aria-label={t('readerSupportChatPage.send')}>{sending ? <LoaderCircle size={19} className="animate-spin" /> : <Send size={19} />}</button>
         </form>
       </section>
       <p className="app-muted mt-3 text-center text-[11px]">{t('readerSupportChatPage.private')}</p>
