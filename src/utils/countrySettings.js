@@ -72,10 +72,11 @@ export async function loadCountrySettings({ force = false } = {}) {
       })
       const data = response.ok ? await response.json() : null
       const result = parseCountrySettings(data)
-      if (currentGeneration === generation) {
-        cached = result
-        expiresAt = Date.now() + (result ? CACHE_MS : RETRY_MS)
-      }
+if (currentGeneration === generation) {
+  cached = result
+  expiresAt = Date.now() + (result ? CACHE_MS : RETRY_MS)
+  if (result) applyFirstVisitStoryLanguage(result)
+}
       return result
     } catch {
       if (currentGeneration === generation) {
@@ -110,4 +111,25 @@ export function getCountryStoryLanguage(settings, fallback = 'km') {
 export function getCountryShopTarget(settings, fallback = 'shadow_mall') {
   const value = settings?.effective?.shopTarget
   return TARGETS.has(value) ? value : fallback
+}
+
+function applyFirstVisitStoryLanguage(settings) {
+  const language = getCountryStoryLanguage(settings, null)
+  if (!LANGUAGES.has(language)) return
+
+  try {
+    if (localStorage.getItem('shadow_story_language') !== null) return
+    localStorage.setItem('shadow_story_language', language)
+    window.dispatchEvent(new CustomEvent('shadow:story-language-initialized', {
+      detail: { language },
+    }))
+  } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  try {
+    if (localStorage.getItem('shadow_story_language') === null) {
+      void loadCountrySettings()
+    }
+  } catch {}
 }
