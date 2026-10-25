@@ -1163,6 +1163,54 @@ function getAuthToken() {
   )
 }
 
+const EPISODE_CREATE_REQUEST_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function episodeCreateRequestKey(token, storyId) {
+  const middle = String(token || '').split('.')[1]
+  if (!middle) throw new Error('A signed-in account is required to create an episode')
+  let ownerId = ''
+  try {
+    const encoded = middle.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=')))
+    ownerId = String(payload.user_id || payload.sub || '').trim()
+  } catch {
+    throw new Error('Cannot verify the episode draft account. Sign in again.')
+  }
+  if (!ownerId || !storyId) throw new Error('Cannot identify the episode draft account')
+  return `shadow:episode-create-request:${encodeURIComponent(ownerId)}:${encodeURIComponent(storyId)}`
+}
+
+function readEpisodeCreateRequestId(key) {
+  const value = localStorage.getItem(key)
+  if (value && !EPISODE_CREATE_REQUEST_PATTERN.test(value)) {
+    throw new Error('The saved episode request ID is invalid. Review this draft before retrying.')
+  }
+  return value || ''
+}
+
+function episodePayloadVersion(payload) {
+  const input = JSON.stringify(payload)
+  let hash = 2166136261
+  for (let index = 0; index < input.length; index += 1) {
+    hash = Math.imul(hash ^ input.charCodeAt(index), 16777619)
+  }
+  return `${input.length}:${(hash >>> 0).toString(16)}`
+}
+
+function ensureEpisodeCreateRequestId(key) {
+  const existing = readEpisodeCreateRequestId(key)
+  if (existing) return existing
+  if (typeof crypto?.randomUUID !== 'function') {
+    throw new Error('This browser cannot create a safe episode request ID')
+  }
+  const id = crypto.randomUUID()
+  localStorage.setItem(key, id)
+  if (localStorage.getItem(key) !== id) {
+    throw new Error('Could not save the episode request ID on this device')
+  }
+  return id
+}
+
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
   const mimeMatch = header.match(/:(.*?);/)
@@ -4060,6 +4108,7 @@ export default function EpisodeEditorPage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [oldEpisodeStatus, setOldEpisodeStatus] = useState('draft')
   const [currentEpisodeId, setCurrentEpisodeId] = useState(editEpisodeId || '')
+  const confirmedEpisodeIdRef = useRef(editEpisodeId || '')
   const [currentEpisodeNumber, setCurrentEpisodeNumber] = useState(isFirstEpisode ? 1 : null)
   const [storyRecord, setStoryRecord] = useState(null)
   const [genreOptions, setGenreOptions] = useState(FALLBACK_GENRES)
@@ -4202,6 +4251,7 @@ export default function EpisodeEditorPage() {
     )
     localDraftRevisionRef.current = 0
     localSavedRevisionRef.current = 0
+    confirmedEpisodeIdRef.current = editEpisodeId || ''
   }, [storyId, editEpisodeId])
 
   const saveCurrentLocalDraft = useCallback(async () => {
@@ -5534,7 +5584,21 @@ const handleEditorCompositionEnd = (event) => {
       ...mangaPartsPatch(page),
     }))
 
-    const targetEpisodeId = currentEpisodeId || editEpisodeId || ''
+    const targetEpisodeId = confirmedEpisodeIdRef.current || currentEpisodeId || editEpisodeId || ''
+    const createRequestKey = targetEpisodeId ? '' : episodeCreateRequestKey(token, storyId)
+    const createRequestId = createRequestKey ? ensureEpisodeCreateRequestId(createRequestKey) : ''
+    const episodePayload = {
+      title: episodeTitle.trim(),
+      cover_url: episodeCoverUrl,
+      content: isManga ? '' : sanitizeEpisodeHtml(currentNovelHtml),
+      youtube_url: isManga ? '' : youtubeVideo.url,
+      youtube_title: isManga ? '' : youtubeVideo.title,
+      pages: isManga ? pagesPayload : undefined,
+      is_adult: episodeAdult,
+      is_free_published: episodeFree,
+      status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
+      ...(createRequestId ? { create_request_id: createRequestId } : {}),
+    }
 
     const response = await fetch(
       targetEpisodeId
@@ -5546,17 +5610,7 @@ const handleEditorCompositionEnd = (event) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          title: episodeTitle.trim(),
-          cover_url: episodeCoverUrl,
-          content: isManga ? '' : sanitizeEpisodeHtml(currentNovelHtml),
-          youtube_url: isManga ? '' : youtubeVideo.url,
-          youtube_title: isManga ? '' : youtubeVideo.title,
-          pages: isManga ? pagesPayload : undefined,
-          is_adult: episodeAdult,
-          is_free_published: episodeFree,
-          status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
-        }),
+        body: JSON.stringify(episodePayload),
       }
     )
 
@@ -5572,7 +5626,19 @@ const handleEditorCompositionEnd = (event) => {
       throw new Error(targetEpisodeId ? getDisplayText('episodeEditor.updatedMissingId') : getDisplayText('episodeEditor.createdMissingId'))
     }
 
+    confirmedEpisodeIdRef.current = episodeId
     setCurrentEpisodeId(episodeId)
+    if (!targetEpisodeId && data.replayed === true && firstPayloadVersion && firstPayloadVersion !== createPayloadVersion) {
+      const replayResponse = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...episodePayload, status: data.episode?.status || 'draft' }),
+      })
+      const replayData = await replayResponse.json().catch(() => ({}))
+      if (!replayResponse.ok || replayData.ok === false) {
+        throw new Error(replayData.message || getDisplayText('episodeEditor.failedUpdateEpisode'))
+      }
+    }
     setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
     if (localSavePromiseRef.current) await localSavePromiseRef.current.catch(() => {})
     if (localDraftRevisionRef.current !== savingRevision) {
@@ -5586,6 +5652,11 @@ const handleEditorCompositionEnd = (event) => {
     setHasUnsavedChanges(false)
     localSavedRevisionRef.current = savingRevision
     await deleteEpisodeLocalDraft(localDraftKeyRef.current)
+    if (!isEditMode) {
+      const key = episodeCreateRequestKey(token, storyId)
+      if (readEpisodeCreateRequestId(key)) localStorage.removeItem(key)
+      localStorage.removeItem(`${key}:payload-version`)
+    }
 
     if (isManga) {
       const queue = mangaPageQueueRef.current
@@ -5953,10 +6024,6 @@ const handleEditorCompositionEnd = (event) => {
       setEpisodeSyncError(episodeSyncText('storyUnavailable'))
       return
     }
-    if (episodeSyncUncertainRef.current) {
-      setEpisodeSyncError(episodeSyncText('uncertain'))
-      return
-    }
     if (episodeMediaPending || episodeMediaFailed) {
       setEpisodeSyncError(episodeSyncText(episodeMediaFailed ? 'uploadFailed' : 'waiting'))
       return
@@ -5978,6 +6045,23 @@ const handleEditorCompositionEnd = (event) => {
     if (!token) {
       navigate('/login')
       return
+    }
+    if (episodeSyncUncertainRef.current) {
+      try {
+        if (!(confirmedEpisodeIdRef.current || currentEpisodeId || editEpisodeId)) {
+          const key = episodeCreateRequestKey(token, storyId)
+          if (!readEpisodeCreateRequestId(key)) {
+            setEpisodeSyncError(episodeSyncText('uncertain'))
+            return
+          }
+        }
+        episodeSyncUncertainRef.current = false
+        episodeSyncPausedRef.current = false
+        setEpisodeSyncError('')
+      } catch {
+        setEpisodeSyncError(episodeSyncText('uncertain'))
+        return
+      }
     }
 
     try {
