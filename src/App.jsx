@@ -157,6 +157,7 @@ const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
 const AuthorStoreWithdrawalDetailsPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalDetailsPage'))
+const AuthorStorePendingBalancePage = lazy(() => import('./pages/Author/AuthorStorePendingBalancePage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorAdsPage = lazy(() => import('./pages/Author/AuthorAdsPage'))
@@ -1221,6 +1222,11 @@ const shouldShowOpeningAds =
           <Route
   path="/author/page/store/withdrawal-details"
   element={<LazyPage><AuthorStoreWithdrawalDetailsPage /></LazyPage>}
+/>
+
+          <Route
+  path="/author/page/store/pending-balance"
+  element={<LazyPage><AuthorStorePendingBalancePage /></LazyPage>}
 />
 
           <Route path="/apps/pic-to-art" element={
