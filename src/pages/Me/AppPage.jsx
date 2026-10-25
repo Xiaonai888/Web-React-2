@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('appPage', {
@@ -34,7 +35,7 @@ function readCachedApps() {
   return null
 }
 
-export default function AppPage() {
+function AppPageContent() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [settings, setSettings] = useState(readCachedApps)
@@ -160,6 +161,43 @@ export default function AppPage() {
           ))}
         </div>
       </main>
+    </div>
+  )
+}
+
+export default function AppPage() {
+  const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
+  const [status, setStatus] = useState('checking')
+  const [retry, setRetry] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    setStatus('checking')
+
+    loadCountrySettings({ force: retry > 0 }).then(data => {
+      if (!active) return
+      const allowed = getCountryFeature(data, 'app', null)
+      setStatus(allowed === true ? 'allowed' : allowed === false ? 'blocked' : 'unavailable')
+    })
+
+    return () => { active = false }
+  }, [retry])
+
+  if (status === 'allowed') return <AppPageContent />
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#fafafa] px-5 text-center dark:bg-[#0d0f16]">
+      <h1 className="text-xl font-bold text-[#111827] dark:text-white">{t('appPage.app')}</h1>
+      <p role="status" className="text-sm text-[#6b7280] dark:text-white/65">
+        {status === 'checking' ? t('appPage.loading') : status === 'blocked' ? t('appPage.disabled') : t('appPage.failed')}
+      </p>
+      <div className="flex gap-3">
+        {status === 'unavailable' && (
+          <button type="button" onClick={() => setRetry(value => value + 1)} className="rounded-xl bg-[#4f46e5] px-5 py-2.5 text-sm font-semibold text-white">{t('appPage.retry')}</button>
+        )}
+        <button type="button" onClick={() => navigate('/me', { replace: true })} className="rounded-xl border border-[#d1d5db] px-5 py-2.5 text-sm font-semibold text-[#111827] dark:text-white">{t('appPage.back')}</button>
+      </div>
     </div>
   )
 }
