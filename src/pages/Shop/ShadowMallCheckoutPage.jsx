@@ -408,32 +408,8 @@ export default function ShadowMallCheckoutPage() {
         return
       }
 
-          try {
-      setSaving(true)
-      setMessage('')
-
-      const countrySettings = await loadCountrySettings()
-
-      if (
-        countrySettings?.countryVerified !== true ||
-        countrySettings.country !== 'KH' ||
-        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
-        getCountryFeature(countrySettings, 'payway', false) !== true
-      ) {
-        throw new Error(
-          getDisplayLanguageId() === 'km'
-            ? 'ការទិញសៀវភៅពិតអនុញ្ញាតតែក្នុងប្រទេសកម្ពុជា។'
-            : 'Physical book purchases are available only in Cambodia.'
-        )
-      }
-
-      const countryTicket = await getPaymentCountryTicket()
-
-      if (!countryTicket) {
-        throw new Error('Country verification unavailable. Please try again.')
-      }
-
-      const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+      try {
+        const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -622,6 +598,29 @@ export default function ShadowMallCheckoutPage() {
     try {
       setSaving(true)
       setMessage('')
+
+      const countrySettings = await loadCountrySettings()
+      if (
+        countrySettings?.countryVerified !== true ||
+        countrySettings.country !== 'KH' ||
+        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
+        getCountryFeature(countrySettings, 'payway', false) !== true
+      ) {
+        throw new Error(
+          getDisplayLanguageId() === 'km'
+            ? 'ការទិញសៀវភៅពិតអនុញ្ញាតតែក្នុងប្រទេសកម្ពុជា។'
+            : 'Physical book purchases are available only in Cambodia.'
+        )
+      }
+
+      const countryTicket = await getPaymentCountryTicket()
+      if (!countryTicket) {
+        throw new Error(
+          getDisplayLanguageId() === 'km'
+            ? 'មិនអាចផ្ទៀងផ្ទាត់ប្រទេសបានទេ។ សូមព្យាយាមម្តងទៀត។'
+            : 'Country verification unavailable. Please try again.'
+        )
+      }
 
       const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
         method: 'PUT',
