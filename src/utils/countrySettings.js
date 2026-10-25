@@ -36,7 +36,14 @@ function parseCountrySettings(data) {
     countryVerified: data.countryVerified,
     effective: effective || null,
     hasException: data.hasException === true,
-    revision: Number(data.revision) || 0,
+revision: Number(data.revision) || 0,
+paymentCountryTicket:
+  data.countryVerified === true &&
+  typeof data.paymentCountryTicket === 'string' &&
+  data.paymentCountryTicket.length <= 4096 &&
+  /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(data.paymentCountryTicket)
+    ? data.paymentCountryTicket
+    : null,
   }
 }
 
@@ -132,4 +139,17 @@ if (typeof window !== 'undefined') {
       void loadCountrySettings()
     }
   } catch {}
+}
+
+export async function getPaymentCountryTicket({ force = false } = {}) {
+  const token = readerToken()
+  if (!token) return null
+
+  const settings = await loadCountrySettings({ force })
+
+  if (readerToken() !== token || settings?.countryVerified !== true) {
+    return null
+  }
+
+  return settings.paymentCountryTicket || null
 }
