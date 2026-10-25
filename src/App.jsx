@@ -310,6 +310,7 @@ const SavedPostsPage = lazy(() => import('./pages/Me/SavedPostsPage'))
 const AboutUsPage = lazy(() => import('./pages/Me/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('./pages/Me/HelpCenterPage'))
 const FeedbackSupportPage = lazy(() => import('./pages/Me/FeedbackSupportPage'))
+const ReaderSupportChatPage = lazy(() => import('./pages/Me/ReaderSupportChatPage'))
 const ChatInboxShellPage = lazy(() => import('./pages/Chat/ChatInboxShellPage'))
 const ArchivedChatPage = lazy(() => import('./pages/Chat/ArchivedChatPage'))
 const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
@@ -1667,6 +1668,7 @@ const shouldShowOpeningAds =
         <Route path="/chat/:conversationId" element={<LazyPage><ChatRoomPage /></LazyPage>} />
         <Route path="/notifications" element={<NotificationPage mode="page" />} />
         <Route path="/feedback" element={<LazyPage><FeedbackSupportPage /></LazyPage>} />
+        <Route path="/support-chat" element={<LazyPage><ReaderSupportChatPage /></LazyPage>} />
         <Route path="/help" element={<LazyPage><HelpCenterPage /></LazyPage>} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
