@@ -18,6 +18,7 @@ import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getCountryShopTarget, loadCountrySettings } from '../utils/countrySettings'
 
 registerTranslationNamespace('mangaPage', {
   en: {
@@ -753,7 +754,24 @@ export default function MangaPage() {
             )
 
             return (
-              <button key={item.label} type="button" onClick={() => navigate(item.path)}>
+              <button
+  key={item.label}
+  type="button"
+  onClick={async () => {
+    if (item.label !== 'Shop') {
+      navigate(item.path)
+      return
+    }
+
+    const settings = await loadCountrySettings()
+    const target = getCountryShopTarget(settings, 'diamonds')
+
+    navigate(
+      target === 'diamonds' ? '/shop/mall/purchase' : '/shop',
+      target === 'diamonds' ? { state: { returnTo: '/manga' } } : undefined
+    )
+  }}
+>
                 <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
                   <img src={item.icon} alt={displayLabel} className="h-7 w-7 object-contain" />
                 </div>
