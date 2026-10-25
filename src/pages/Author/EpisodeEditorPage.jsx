@@ -5586,6 +5586,7 @@ const handleEditorCompositionEnd = (event) => {
 
     const targetEpisodeId = confirmedEpisodeIdRef.current || currentEpisodeId || editEpisodeId || ''
     const createRequestKey = targetEpisodeId ? '' : episodeCreateRequestKey(token, storyId)
+    const hadCreateRequestId = Boolean(createRequestKey && readEpisodeCreateRequestId(createRequestKey))
     const createRequestId = createRequestKey ? ensureEpisodeCreateRequestId(createRequestKey) : ''
     const episodePayload = {
       title: episodeTitle.trim(),
@@ -5598,6 +5599,19 @@ const handleEditorCompositionEnd = (event) => {
       is_free_published: episodeFree,
       status: forceDraft ? 'draft' : targetEpisodeId ? oldEpisodeStatus : 'draft',
       ...(createRequestId ? { create_request_id: createRequestId } : {}),
+    }
+    const createPayloadVersion = createRequestId ? episodePayloadVersion(episodePayload) : ''
+    const payloadVersionKey = createRequestKey ? `${createRequestKey}:payload-version` : ''
+    let firstPayloadVersion = ''
+    if (payloadVersionKey) {
+      firstPayloadVersion = localStorage.getItem(payloadVersionKey) || ''
+      if (!firstPayloadVersion) {
+        localStorage.setItem(payloadVersionKey, createPayloadVersion)
+        if (localStorage.getItem(payloadVersionKey) !== createPayloadVersion) {
+          throw new Error('Could not save the episode request version on this device')
+        }
+        if (!hadCreateRequestId) firstPayloadVersion = createPayloadVersion
+      }
     }
 
     const response = await fetch(
@@ -5628,7 +5642,7 @@ const handleEditorCompositionEnd = (event) => {
 
     confirmedEpisodeIdRef.current = episodeId
     setCurrentEpisodeId(episodeId)
-    if (!targetEpisodeId && data.replayed === true && firstPayloadVersion && firstPayloadVersion !== createPayloadVersion) {
+    if (!targetEpisodeId && data.replayed === true && firstPayloadVersion !== createPayloadVersion) {
       const replayResponse = await fetch(`${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
