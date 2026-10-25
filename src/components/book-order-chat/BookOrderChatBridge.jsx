@@ -1,26 +1,21 @@
 import { useState } from 'react'
 import useBookOrderChat from '../../hooks/useBookOrderChat'
-import { confirmBookReceived, submitBookShippingEvidence } from '../../services/bookOrderChatApi'
+import { confirmBookReceived } from '../../services/bookOrderChatApi'
+import { submitBookOrderShipment } from '../../services/bookOrderShippingActions'
 import BookOrderChatCard from './BookOrderChatCard'
 import BookOrderPaymentPopup from './BookOrderPaymentPopup'
 import BookOrderShippingForm from './BookOrderShippingForm'
 import BookOrderReceiptConfirmDialog from './BookOrderReceiptConfirmDialog'
 
-export default function BookOrderChatBridge({ conversationId, onUploadShippingProof, onMarkOrderShipped }) {
+export default function BookOrderChatBridge({ conversationId }) {
   const { orders, popupOrder, role, error, refresh, markPopupSeen } = useBookOrderChat(conversationId)
   const [shippingOrder, setShippingOrder] = useState(null)
   const [receiptOrder, setReceiptOrder] = useState(null)
   const [popupError, setPopupError] = useState('')
 
-  async function shippingSubmit({ order, delivery_company, tracking_number, proof_file }) {
-    if (role !== 'author' || typeof onUploadShippingProof !== 'function' || typeof onMarkOrderShipped !== 'function') {
-      throw new Error('Shipping verification is not connected')
-    }
-    const uploaded = await onUploadShippingProof(proof_file, order)
-    const proofUrl = typeof uploaded === 'string' ? uploaded : uploaded?.url
-    if (!/^https:\/\/[^\s<>]+$/i.test(String(proofUrl || ''))) throw new Error('Valid HTTPS shipping proof is required')
-    await onMarkOrderShipped(order)
-    await submitBookShippingEvidence(order.holdId, { delivery_company, tracking_number, proof_url: proofUrl })
+  async function shippingSubmit(details) {
+    if (role !== 'author') throw new Error('Only the author may submit shipping proof')
+    await submitBookOrderShipment(details)
     await refresh()
   }
 
@@ -49,7 +44,7 @@ export default function BookOrderChatBridge({ conversationId, onUploadShippingPr
           key={order.id}
           order={order}
           role={role}
-          onShipping={role === 'author' && onUploadShippingProof && onMarkOrderShipped ? setShippingOrder : undefined}
+          onShipping={role === 'author' && !order.shippingProofReady ? setShippingOrder : undefined}
           onConfirm={role === 'reader' ? setReceiptOrder : undefined}
         />
       ))}
