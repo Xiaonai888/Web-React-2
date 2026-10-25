@@ -1,17 +1,19 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('meSupport', {
-  en: { support: 'Support', title: 'Contact us', close: 'Close support', facebook: 'Facebook Page', telegram: 'Telegram' },
-  km: { support: 'ជំនួយ', title: 'ទំនាក់ទំនង', close: 'បិទជំនួយ', facebook: 'ទំព័រ Facebook', telegram: 'Telegram' },
-  zh: { support: '帮助', title: '联系我们', close: '关闭帮助', facebook: 'Facebook 主页', telegram: 'Telegram' },
-  ja: { support: 'サポート', title: 'お問い合わせ', close: 'サポートを閉じる', facebook: 'Facebookページ', telegram: 'Telegram' },
-  ko: { support: '고객 지원', title: '문의하기', close: '고객 지원 닫기', facebook: 'Facebook 페이지', telegram: 'Telegram' },
+  en: { support: 'Support', title: 'Contact us', close: 'Close support', chat: 'Chat with Shadow Admin', facebook: 'Facebook Page', telegram: 'Telegram' },
+  km: { support: 'ជំនួយ', title: 'ទំនាក់ទំនង', close: 'បិទជំនួយ', chat: 'ឆាតជាមួយ Shadow Admin', facebook: 'ទំព័រ Facebook', telegram: 'Telegram' },
+  zh: { support: '帮助', title: '联系我们', close: '关闭帮助', chat: '与 Shadow Admin 聊天', facebook: 'Facebook 主页', telegram: 'Telegram' },
+  ja: { support: 'サポート', title: 'お問い合わせ', close: 'サポートを閉じる', chat: 'Shadow Admin とチャット', facebook: 'Facebookページ', telegram: 'Telegram' },
+  ko: { support: '고객 지원', title: '문의하기', close: '고객 지원 닫기', chat: 'Shadow Admin과 채팅', facebook: 'Facebook 페이지', telegram: 'Telegram' },
 })
 
 export default function MeSupportButton() {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [open, setOpen] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
@@ -96,6 +98,7 @@ export default function MeSupportButton() {
   }
 
   const contacts = [
+    { name: 'Shadow Admin', label: t('meSupport.chat'), href: '/support-chat', icon: 'fa-regular fa-comments', color: '#B88625', internal: true },
     { name: 'ប្រលោមលោកស្នេហា', label: t('meSupport.facebook'), href: 'https://web.facebook.com/AlphaCentauri12226/', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
     { name: 'Shadow Admin', label: t('meSupport.telegram'), href: 'https://t.me/Shadow12226', icon: 'fa-brands fa-telegram', color: '#229ED9' },
   ]
@@ -152,9 +155,15 @@ export default function MeSupportButton() {
                 <a
                   key={contact.href}
                   href={contact.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
+                  target={contact.internal ? undefined : '_blank'}
+                  rel={contact.internal ? undefined : 'noopener noreferrer'}
+                  onClick={(event) => {
+                    if (contact.internal) {
+                      event.preventDefault()
+                      navigate(contact.href)
+                    }
+                    setOpen(false)
+                  }}
                   className={`flex min-h-[82px] items-center gap-3 px-4 py-4 hover:bg-[var(--shadow-bg-hover)] active:bg-[var(--shadow-bg-soft)] ${index ? 'border-t border-[var(--shadow-border)]' : ''}`}
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundColor: contact.color }}>
