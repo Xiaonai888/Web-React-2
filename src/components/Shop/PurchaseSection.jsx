@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 import DiamondPurchaseSuccessModal from './DiamondPurchaseSuccessModal'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -309,6 +310,33 @@ registerTranslationNamespace('purchaseSection', {
   },
 })
 
+registerTranslationNamespace('purchaseSection', {
+  en: {
+    checkingMethods: 'Checking available payment methods...',
+    methodsUnavailable: 'No payment method is available for your region right now.',
+    retryMethods: 'Try Again',
+  },
+  km: {
+    checkingMethods: 'កំពុងពិនិត្យវិធីទូទាត់...',
+    methodsUnavailable: 'មិនមានវិធីទូទាត់សម្រាប់តំបន់របស់អ្នកនៅពេលនេះទេ។',
+    retryMethods: 'ព្យាយាមម្ដងទៀត',
+  },
+  zh: {
+    checkingMethods: '正在检查可用的付款方式...',
+    methodsUnavailable: '您所在地区目前没有可用的付款方式。',
+    retryMethods: '重试',
+  },
+  ja: {
+    checkingMethods: '利用可能な決済方法を確認中...',
+    methodsUnavailable: '現在、お住まいの地域で利用できる決済方法はありません。',
+    retryMethods: '再試行',
+  },
+  ko: {
+    checkingMethods: '사용 가능한 결제 수단 확인 중...',
+    methodsUnavailable: '현재 해당 지역에서 사용할 수 있는 결제 수단이 없습니다.',
+    retryMethods: '다시 시도',
+  },
+})
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -469,6 +497,29 @@ function PackageCard({ item, onPurchase, t }) {
 }
 
 function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManualPayment, onOpenBinancePage, t }) {
+  const [countryMethods, setCountryMethods] = useState(null)
+  const [retryMethods, setRetryMethods] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    setCountryMethods(null)
+
+    loadCountrySettings({ force: retryMethods > 0 }).then(settings => {
+      if (!active) return
+
+      const verified = settings?.countryVerified === true
+
+      setCountryMethods({
+        payway: verified && getCountryFeature(settings, 'payway', false) === true,
+        binancePay: verified && getCountryFeature(settings, 'binancePay', false) === true,
+      })
+    }).catch(() => {
+      if (active) setCountryMethods({ payway: false, binancePay: false })
+    })
+
+    return () => { active = false }
+  }, [retryMethods])
+
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow
     const htmlOverflow = document.documentElement.style.overflow
@@ -500,7 +551,8 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
         <button
           type="button"
           onClick={onCreateManualPayment}
-          disabled={creating}
+          disabled={creating || !countryMethods?.payway}
+          style={{ display: countryMethods?.payway ? 'flex' : 'none' }}
           className="flex w-full items-center justify-between rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-left active:scale-[0.99] disabled:opacity-60"
         >
           <div className="flex items-center gap-3">
@@ -520,7 +572,8 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
         <button
           type="button"
           onClick={onOpenBinancePage}
-          disabled={creating}
+          disabled={creating || !countryMethods?.binancePay}
+          style={{ display: countryMethods?.binancePay ? 'flex' : 'none' }}
           className="mt-3 flex w-full items-center justify-between gap-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 text-left active:scale-[0.99] disabled:opacity-60"
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -547,6 +600,25 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
           </div>
           <i className="fas fa-chevron-right shrink-0 text-[14px] text-[var(--shadow-text-primary)]" />
         </button>
+
+        {countryMethods === null ? (
+  <p className="my-5 text-center text-sm text-[var(--shadow-text-secondary)]">
+    {t('purchaseSection.checkingMethods')}
+  </p>
+) : !countryMethods.payway && !countryMethods.binancePay ? (
+  <div className="my-5 text-center">
+    <p className="text-sm text-[var(--shadow-text-secondary)]">
+      {t('purchaseSection.methodsUnavailable')}
+    </p>
+    <button
+      type="button"
+      onClick={() => setRetryMethods(value => value + 1)}
+      className="mt-3 rounded-xl bg-[#111111] px-5 py-2.5 text-sm font-semibold text-white"
+    >
+      {t('purchaseSection.retryMethods')}
+    </button>
+  </div>
+) : null}
 
         <p className="mb-2 mt-3 text-center text-[10px] font-semibold text-[var(--shadow-text-tertiary)]">
           {t('purchaseSection.nonRefundable')}
