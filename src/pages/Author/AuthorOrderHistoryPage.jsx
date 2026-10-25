@@ -340,9 +340,10 @@ function ReaderConfirmReceived({ order, localOnly }) {
   const busyRef = useRef(false)
   const uuidPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
   const isPhysicalBook = (order.items || []).some((item) => String(item.product_type || '').toLowerCase() === 'book')
-  const eligible = !localOnly && uuidPattern.test(order.id) && order.payment_status === 'paid' && ['shipped', 'completed'].includes(order.status) && isPhysicalBook
+  const eligible = !localOnly && uuidPattern.test(order.id) && order.payment_status === 'paid' && ['shipped', 'completed'].includes(order.status) && isPhysicalBook && order.book_hold_status === 'awaiting_reader'
+const releasedByReader = order.book_hold_status === 'released' && order.book_hold_release_source === 'reader'
 
-  if (!eligible) return null
+if (!eligible && !releasedByReader) return null
 
   async function submit() {
     if (busyRef.current || confirmed) return
@@ -372,7 +373,7 @@ function ReaderConfirmReceived({ order, localOnly }) {
     }
   }
 
-  if (confirmed) return <p role="status" className="mt-3 rounded-[14px] bg-emerald-500/10 px-3 py-3 text-center text-[12px] font-bold text-emerald-600">{tr('confirmed')}</p>
+  if (confirmed || releasedByReader) return <p role="status" className="mt-3 rounded-[14px] bg-emerald-500/10 px-3 py-3 text-center text-[12px] font-bold text-emerald-600">{tr('confirmed')}</p>
 
   return (
     <>
@@ -458,6 +459,35 @@ export default function AuthorOrderHistoryPage() {
       if (requestId !== requestIdRef.current || controller.signal.aborted) return
 
       const incoming = data.orders.map(normalizeOrder)
+const bookOrders = incoming.filter((order) =>
+  order.payment_status === 'paid' &&
+  ['shipped', 'completed'].includes(order.status) &&
+  (order.items || []).some((item) => String(item.product_type || '').toLowerCase() === 'book') &&
+  /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(order.id)
+)
+if (bookOrders.length) {
+  try {
+    const holdParams = new URLSearchParams({ ids: bookOrders.map((order) => order.id).join(',') })
+    const holdResponse = await fetch(`${API_BASE_URL}/api/author-store/orders/book-holds/my?${holdParams}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+    const holdData = await holdResponse.json().catch(() => ({}))
+    if (!holdResponse.ok || holdData.ok !== true || !Array.isArray(holdData.holds)) {
+      throw new Error('BOOK_HOLDS_UNAVAILABLE')
+    }
+    const byOrder = new Map(holdData.holds.map((hold) => [String(hold.order_id), hold]))
+    bookOrders.forEach((order) => {
+      const hold = byOrder.get(order.id)
+      order.book_hold_status = String(hold?.status || '')
+      order.book_hold_release_source = String(hold?.release_source || '')
+    })
+  } catch {
+    if (controller.signal.aborted) return
+  }
+}
+
       const count = Math.max(0, Number(data.total) || 0)
       const more = typeof data.has_next === 'boolean'
         ? data.has_next
