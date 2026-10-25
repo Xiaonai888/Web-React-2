@@ -27,6 +27,7 @@ import {
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
+import { getCountryShopTarget, loadCountrySettings } from '../utils/countrySettings'
 
 registerTranslationNamespace('forYouPage', {
   en: {
@@ -1431,11 +1432,24 @@ useEffect(() => {
         key={item.label}
         type="button"
         className="group cursor-pointer"
-        onClick={() => {
-           if (!item.path) return
-           saveHomeReturnPosition()
-           navigate(item.path)
-         }}
+onClick={async () => {
+  if (!item.path) return
+  saveHomeReturnPosition()
+
+  if (item.label !== 'Shop') {
+    navigate(item.path)
+    return
+  }
+
+  const settings = await loadCountrySettings()
+  const target = getCountryShopTarget(settings, 'diamonds')
+
+  if (target === 'diamonds') {
+    navigate('/shop/mall/purchase', { state: { returnTo: '/' } })
+  } else {
+    navigate('/shop')
+  }
+}}
       >
         <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center transition-all">
           <img
