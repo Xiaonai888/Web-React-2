@@ -1,3 +1,5 @@
+import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../utils/countrySettings'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -23,6 +25,19 @@ export class BinanceCheckoutApiError extends Error {
 async function request(path, { method = 'GET', body, signal } = {}) {
   const token = readerToken()
   if (!token) throw new BinanceCheckoutApiError('Please sign in to continue.', 'UNAUTHORIZED', 401)
+
+  let countryTicket = null
+  if (path === '/checkout' && method === 'POST') {
+    const settings = await loadCountrySettings()
+    if (settings?.countryVerified !== true || getCountryFeature(settings, 'binancePay', false) !== true) {
+      throw new BinanceCheckoutApiError('Binance Pay is unavailable in your country.', 'PAYMENT_METHOD_UNAVAILABLE', 403)
+    }
+    countryTicket = await getPaymentCountryTicket()
+    if (!countryTicket) {
+      throw new BinanceCheckoutApiError('Country verification is unavailable. Please try again.', 'PAYMENT_COUNTRY_REQUIRED', 403)
+    }
+  }
+
   let response
   try {
     response = await fetch(`${API_BASE_URL}/api/purchase/binance${path}`, {
@@ -31,6 +46,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(countryTicket ? { 'X-Shadow-Country-Ticket': countryTicket } : {}),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       cache: 'no-store',
