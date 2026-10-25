@@ -6,6 +6,7 @@ import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import MeSupportButton from '../../components/Me/MeSupportButton'
 import DiamondPurchaseSuccessModal from '../../components/Shop/DiamondPurchaseSuccessModal'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -769,6 +770,14 @@ export default function Me() {
   const [diamondCreditNotice, setDiamondCreditNotice] = useState(null)
   const diamondCreditNoticeAckRef = useRef(null)
   const [activeProfileFrame, setActiveProfileFrame] = useState(null)
+const [appAllowed, setAppAllowed] = useState(true)
+useEffect(() => {
+  let active = true
+  loadCountrySettings().then(data => {
+    if (active) setAppAllowed(getCountryFeature(data, 'app', true))
+  })
+  return () => { active = false }
+}, [token])
 
   useEffect(() => {
     if (!token) { setActiveProfileFrame(null); return undefined }
@@ -1466,12 +1475,14 @@ const handleOpenProfileSwitcher = (event) => {
   title={tx('mePage.game')}
   divider
 />
-            <MenuRow
-  to="/app"
-  customIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" /></svg>}
-  title={tx('mePage.app')}
-  divider
-/>
+           {appAllowed && (
+  <MenuRow
+    to="/app"
+    customIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" /></svg>}
+    title={tx('mePage.app')}
+    divider
+  />
+)}
             <MenuRow to="/saved-posts" icon="far fa-bookmark" title={tx('mePage.savedPosts')} divider />
             <MenuRow to="/feedback" icon="far fa-pen-to-square" title={tx('feedback')} divider />
             <MenuRow to="/help" icon="far fa-circle-question" title={tx('helpCenter')} divider />
