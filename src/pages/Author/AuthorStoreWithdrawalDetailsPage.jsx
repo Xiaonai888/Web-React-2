@@ -47,6 +47,45 @@ function DetailRow({ label, value }) {
   return <div className="flex items-center justify-between gap-3 py-1 text-[12px]"><span className="text-[var(--shadow-text-secondary)]">{label}</span><span className="text-right font-semibold text-[var(--shadow-text-primary)]">{value}</span></div>
 }
 
+function PendingBalanceEntry({ onOpen }) {
+  const language = getDisplayLanguageId()
+  const labels = {
+    en: { title: 'Pending Balance', note: 'Physical-book payments awaiting receipt confirmation.', preview: 'Preview only · Live balance not connected', open: 'View Pending Orders', book: 'Book only' },
+    km: { title: 'ប្រាក់កំពុងបង្កក', note: 'ប្រាក់លក់សៀវភៅក្រដាសកំពុងរង់ចាំការបញ្ជាក់ទទួល។', preview: 'គំរូ UI · មិនទាន់ភ្ជាប់សមតុល្យពិត', open: 'មើលការបញ្ជាទិញ', book: 'សៀវភៅប៉ុណ្ណោះ' },
+    zh: { title: '待结算余额', note: '纸质书销售款项等待确认收货。', preview: '仅界面预览 · 尚未连接实际余额', open: '查看待处理订单', book: '仅纸质书' },
+    ja: { title: '保留残高', note: '紙の書籍の売上は受取確認を待っています。', preview: 'UIプレビュー · 実残高は未接続', open: '保留注文を見る', book: '書籍のみ' },
+    ko: { title: '보류 잔액', note: '실물 도서 판매 대금이 수령 확인을 기다리고 있습니다.', preview: 'UI 미리보기 · 실제 잔액 미연결', open: '보류 주문 보기', book: '도서만' },
+  }
+  const copy = labels[language] || labels.en
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="mt-4 block w-full rounded-[24px] bg-[var(--shadow-bg-surface)] p-5 text-left shadow-sm ring-1 ring-[var(--shadow-border)] transition hover:ring-violet-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-600"
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2 text-sm font-bold text-[var(--shadow-text-primary)]">
+          <i className="fa-solid fa-lock text-violet-500" aria-hidden="true" />
+          {copy.title}
+        </span>
+        <i className="fa-solid fa-chevron-right text-[var(--shadow-text-secondary)]" aria-hidden="true" />
+      </span>
+      <span className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-[28px] font-black text-[var(--shadow-text-primary)]">—</span>
+        <span className="rounded-full bg-[var(--shadow-bg-soft)] px-3 py-1 text-xs font-semibold text-[var(--shadow-text-secondary)]">{copy.book}</span>
+      </span>
+      <span className="mt-1 block text-xs text-[var(--shadow-text-secondary)]">{copy.note}</span>
+      <span className="mt-2 block text-xs text-[var(--shadow-text-tertiary)]">{copy.preview}</span>
+      <span className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-violet-500">
+        {copy.open}
+        <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+      </span>
+    </button>
+  )
+}
+
+
 export default function AuthorStoreWithdrawalDetailsPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -167,7 +206,8 @@ export default function AuthorStoreWithdrawalDetailsPage() {
           {loading && <p className="mt-2 text-xs text-[var(--shadow-text-secondary)]">{translate('pending')}</p>}
           {loadError && <p role="alert" className="mt-2 text-xs text-red-600">{translate('failed')}</p>}
           <button type="button" disabled={!canRequest} onClick={() => navigate('/author/page/finance/withdrawal?back=store-withdrawal')} className="mt-5 w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{translate('request')}</button>
-        </section>
+                </section>
+        <PendingBalanceEntry onOpen={() => navigate('/author/page/store/pending-balance')} />
         <section className="mt-5">
           <div className="flex gap-2 rounded-2xl bg-[var(--shadow-bg-surface)] p-1 ring-1 ring-[var(--shadow-border)]">
             {['all', 'book', 'pdf'].map((type) => <button key={type} type="button" aria-pressed={filter === type} onClick={() => setFilter(type)} className={`min-w-0 flex-1 rounded-xl px-3 py-2 text-sm font-bold ${filter === type ? 'bg-violet-600 text-white' : 'text-[var(--shadow-text-secondary)]'}`}>{translate(type)}</button>)}
