@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
+import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('shadowMallCheckoutPage', {
@@ -407,10 +408,32 @@ export default function ShadowMallCheckoutPage() {
         return
       }
 
-      try {
-        setProfileLoading(true)
+          try {
+      setSaving(true)
+      setMessage('')
 
-        const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
+      const countrySettings = await loadCountrySettings()
+
+      if (
+        countrySettings?.countryVerified !== true ||
+        countrySettings.country !== 'KH' ||
+        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
+        getCountryFeature(countrySettings, 'payway', false) !== true
+      ) {
+        throw new Error(
+          getDisplayLanguageId() === 'km'
+            ? 'ការទិញសៀវភៅពិតអនុញ្ញាតតែក្នុងប្រទេសកម្ពុជា។'
+            : 'Physical book purchases are available only in Cambodia.'
+        )
+      }
+
+      const countryTicket = await getPaymentCountryTicket()
+
+      if (!countryTicket) {
+        throw new Error('Country verification unavailable. Please try again.')
+      }
+
+      const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -623,6 +646,7 @@ export default function ShadowMallCheckoutPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'X-Shadow-Country-Ticket': countryTicket,
         },
         body: JSON.stringify({
           items,
