@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 
@@ -23,6 +24,13 @@ registerTranslationNamespace('authorBinancePayout', {
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 const IDENTIFIER = /^[A-Za-z0-9_-]{4,64}$/
+const BINANCE_ONE_ACCOUNT = {
+  en: 'One Binance UID or Pay ID can be linked to only one author payout account.',
+  km: 'Binance UID ឬ Pay ID មួយអាចភ្ជាប់បានតែគណនីទទួលប្រាក់អ្នកនិពន្ធមួយប៉ុណ្ណោះ។',
+  zh: '一个 Binance UID 或 Pay ID 只能绑定一个作者收款账户。',
+  ja: 'Binance UID または Pay ID は、作者の受取口座1つにのみ紐付けできます。',
+  ko: 'Binance UID 또는 Pay ID 하나는 작가 수령 계정 하나에만 연결할 수 있습니다.',
+}
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const token = () => localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
 
@@ -141,6 +149,9 @@ export default function AuthorBinancePayoutForm({ onSaved, onCancel }) {
         body: JSON.stringify({ account_name: name, binance_uid: binanceUid || null, binance_pay_id: binancePayId || null, qr_image_url: qr })
       })
       const data = await response.json().catch(() => ({}))
+      if (response.status === 409) {
+  throw new Error(BINANCE_ONE_ACCOUNT[getDisplayLanguageId()] || BINANCE_ONE_ACCOUNT.en)
+}
       if (!response.ok || data.ok === false || !data.payment_method) throw new Error(data.message || t('authorBinancePayout.saveError'))
       setQr(data.payment_method.qr_image_url || qr)
       setSuccess(t('authorBinancePayout.saved'))
@@ -183,6 +194,9 @@ export default function AuthorBinancePayoutForm({ onSaved, onCancel }) {
         {qr ? <button type="button" onClick={() => { setQr(''); setSuccess('') }} disabled={saving || processing} className="mt-2 text-[11px] font-bold text-[#cd557b]">{t('authorBinancePayout.remove')}</button> : null}
       </div>
       <div className="rounded-[17px] border border-[#ead5a2] bg-[#fff9e9] p-3 text-[11px] font-semibold leading-5 text-[#926d23]">{t('authorBinancePayout.notice')}</div>
+      <p className="text-[11px] font-semibold leading-5 text-[var(--shadow-text-secondary)]">
+  {BINANCE_ONE_ACCOUNT[getDisplayLanguageId()] || BINANCE_ONE_ACCOUNT.en}
+</p>
       <button type="submit" disabled={loading || saving || processing} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#8058b8_0%,#a568d0_100%)] text-[13px] font-black text-white disabled:opacity-60">
         {saving || processing ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-check" />}
         {saving ? t('authorBinancePayout.saving') : t('authorBinancePayout.save')}
