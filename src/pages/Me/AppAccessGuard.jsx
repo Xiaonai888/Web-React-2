@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 
 registerTranslationNamespace('appAccessGuard', {
   en: {
@@ -61,6 +62,16 @@ registerTranslationNamespace('appAccessGuard', {
   },
 })
 
+
+registerTranslationNamespace('appAccessGuard', {
+  en: { region: 'App unavailable in your country', regionBody: 'This app is not available in your country.', backMe: 'Back to Me' },
+  km: { region: 'កម្មវិធីនេះមិនមានក្នុងប្រទេសរបស់អ្នក', regionBody: 'មុខងារនេះមិនត្រូវបានអនុញ្ញាតឱ្យប្រើក្នុងប្រទេសរបស់អ្នកទេ។', backMe: 'ត្រឡប់ទៅ Me' },
+  zh: { region: '此应用在您所在的国家不可用', regionBody: '此功能在您所在的国家不可用。', backMe: '返回个人页面' },
+  ja: { region: 'このアプリはお住まいの国では利用できません', regionBody: 'この機能はお住まいの国では利用できません。', backMe: 'マイページに戻る' },
+  ko: { region: '이 국가에서는 앱을 사용할 수 없습니다', regionBody: '이 기능은 해당 국가에서 사용할 수 없습니다.', backMe: '내 페이지로 돌아가기' },
+})
+
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
@@ -81,7 +92,7 @@ function readStatus(appKey, freshOnly = false) {
   }
 }
 
-export default function AppAccessGuard({ appKey, children }) {
+function ExistingAppAccessGuard({ appKey, children }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [result, setResult] = useState(() => ({
@@ -215,6 +226,62 @@ export default function AppAccessGuard({ appKey, children }) {
           className="rounded-xl border border-[#ded8e9] px-5 py-3 text-sm font-semibold dark:border-white/20"
         >
           {t('appAccessGuard.back')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
+export default function AppAccessGuard({ appKey, children }) {
+  const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
+  const [status, setStatus] = useState('checking')
+  const [retry, setRetry] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    setStatus('checking')
+
+    loadCountrySettings({ force: retry > 0 }).then(settings => {
+      if (!active) return
+      const allowed = getCountryFeature(settings, 'app', null)
+      setStatus(allowed === true ? 'allowed' : allowed === false ? 'blocked' : 'unavailable')
+    })
+
+    return () => { active = false }
+  }, [retry])
+
+  if (status === 'allowed') {
+    return <ExistingAppAccessGuard appKey={appKey}>{children}</ExistingAppAccessGuard>
+  }
+
+  const blocked = status === 'blocked'
+  const unavailable = status === 'unavailable'
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#faf9fc] px-5 text-center text-[#252139] dark:bg-[#11121c] dark:text-white">
+      <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[#efe8ff] text-3xl text-[#6d4bb9]">
+        {status === 'checking' ? '…' : '×'}
+      </div>
+
+      <h1 className="text-xl font-bold">
+        {t(blocked ? 'appAccessGuard.region' : unavailable ? 'appAccessGuard.offline' : 'appAccessGuard.checking')}
+      </h1>
+
+      <p className="max-w-sm text-sm leading-6 text-[#777189] dark:text-white/65">
+        {t(blocked ? 'appAccessGuard.regionBody' : unavailable ? 'appAccessGuard.offlineBody' : 'appAccessGuard.checkingBody')}
+      </p>
+
+      <div className="flex gap-3">
+        {unavailable && (
+          <button type="button" onClick={() => setRetry(value => value + 1)} className="rounded-xl bg-[#7150ba] px-5 py-3 text-sm font-semibold text-white">
+            {t('appAccessGuard.retry')}
+          </button>
+        )}
+
+        <button type="button" onClick={() => navigate('/me', { replace: true })} className="rounded-xl border border-[#ded8e9] px-5 py-3 text-sm font-semibold dark:border-white/20">
+          {t('appAccessGuard.backMe')}
         </button>
       </div>
     </div>
