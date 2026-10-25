@@ -667,12 +667,15 @@ function getProfileOptionLabel(action, t) {
 
 function AvatarImage({ profile, sizeClass = 'h-[92px] w-[92px] md:h-[96px] md:w-[96px]' }) {
   return (
-    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[34px] font-extrabold text-white ${sizeClass}`}>
-      {profile.avatarUrl ? (
-        <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
-      ) : (
-        profile.avatarLetter
-      )}
+    <div className={`relative shrink-0 ${sizeClass}`}>
+      <div className={`absolute ${profile.frameUrl ? 'inset-[17%]' : 'inset-0'} flex items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[34px] font-extrabold text-white`}>
+        {profile.avatarUrl ? (
+          <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
+        ) : (
+          profile.avatarLetter
+        )}
+      </div>
+      {profile.frameUrl ? <img src={profile.frameUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" /> : null}
     </div>
   )
 }
@@ -1231,6 +1234,14 @@ export default function ProfilePage() {
         (isOwnProfile ? avatarPreview : '') ||
         viewedUser?.avatar_url ||
         '',
+      frameUrl: (() => {
+        try {
+          const url = new URL(viewedUser?.profile_frame?.image_url)
+          return url.protocol === 'https:' ? url.href : ''
+        } catch {
+          return ''
+        }
+      })(),
       posts: viewedUser ? String(readerPostCount) : '0',
       followers: String(viewedUser?.followers_count || 0),
       following: String(viewedUser?.following_count || 0),
