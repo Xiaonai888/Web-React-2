@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
+import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from '../utils/countrySettings'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
@@ -67,18 +68,47 @@ export default function ShopPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
+  const [mallAccess, setMallAccess] = useState({ ready: false, enabled: false, allowed: true, local: true })
   const purchaseReturnTo = location.state?.returnTo || location.state?.from || ''
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
 
   useEffect(() => {
-    if (location.state?.activeTab) setActiveTab(location.state.activeTab)
-  }, [location.state])
+    let active = true
+    loadCountrySettings().then(settings => {
+      if (!active) return
+      const enabled = isCountryPolicyEnabled(settings)
+      setMallAccess({
+        ready: true,
+        enabled,
+        allowed: !enabled || (
+          settings.countryVerified === true &&
+          getCountryFeature(settings, 'shadowMall', false) === true
+        ),
+        local: !enabled || settings.country === 'KH',
+      })
+    }).catch(() => {
+      if (active) setMallAccess({ ready: true, enabled: false, allowed: true, local: true })
+    })
+    return () => { active = false }
+  }, [location.key])
 
-  const showMall = activeTab === 'Shadow Mall'
-  const purchaseMode = activeTab === 'Purchase'
-  const setAvailableTab = setActiveTab
+  useEffect(() => {
+    if (!mallAccess.ready) return
+    const requestedTab = location.state?.activeTab
+    if (requestedTab === 'Purchase' || requestedTab === 'Plans') {
+      setActiveTab(requestedTab)
+    } else if (requestedTab === 'Shadow Mall' && mallAccess.allowed) {
+      setActiveTab('Shadow Mall')
+    } else {
+      setActiveTab(mallAccess.enabled && (!mallAccess.allowed || !mallAccess.local) ? 'Purchase' : 'Shadow Mall')
+    }
+  }, [mallAccess, location.key])
+
+  const showMall = mallAccess.allowed && activeTab === 'Shadow Mall'
+  const purchaseMode = activeTab === 'Purchase' || (activeTab === 'Shadow Mall' && !mallAccess.allowed)
+  const setAvailableTab = (next) => setActiveTab(next === 'Shadow Mall' && !mallAccess.allowed ? 'Purchase' : next)
 
   useEffect(() => {
     const refreshCartCount = () => {
@@ -106,6 +136,10 @@ export default function ShopPage() {
     }
   }, [])
 
+  if (!mallAccess.ready) {
+    return <div role="status" className="flex min-h-screen items-center justify-center bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">Loading…</div>
+  }
+
   return (
     <div className="app-page min-h-screen pb-24">
       <header
@@ -121,6 +155,11 @@ export default function ShopPage() {
             onClick={() => {
               if (purchaseMode && purchaseReturnTo && !purchaseReturnTo.startsWith('/shop')) {
                 navigate(purchaseReturnTo, { replace: true })
+                return
+              }
+
+              if (purchaseMode && mallAccess.enabled && (!mallAccess.local || !mallAccess.allowed)) {
+                navigate('/', { replace: true })
                 return
               }
 
