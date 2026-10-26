@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
-import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
+import { getCountryFeature, getPaymentCountryTicket, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('shadowMallCheckoutPage', {
@@ -600,26 +600,29 @@ export default function ShadowMallCheckoutPage() {
       setMessage('')
 
       const countrySettings = await loadCountrySettings()
-      if (
-        countrySettings?.countryVerified !== true ||
-        countrySettings.country !== 'KH' ||
-        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
-        getCountryFeature(countrySettings, 'payway', false) !== true
-      ) {
-        throw new Error(
-          getDisplayLanguageId() === 'km'
-            ? 'ការទិញសៀវភៅពិតអនុញ្ញាតតែក្នុងប្រទេសកម្ពុជា។'
-            : 'Physical book purchases are available only in Cambodia.'
-        )
-      }
+      let countryTicket = null
+      if (isCountryPolicyEnabled(countrySettings)) {
+        if (
+          countrySettings.countryVerified !== true ||
+          countrySettings.country !== 'KH' ||
+          getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
+          getCountryFeature(countrySettings, 'payway', false) !== true
+        ) {
+          throw new Error(
+            getDisplayLanguageId() === 'km'
+              ? 'ការទិញសៀវភៅពិតអនុញ្ញាតតែក្នុងប្រទេសកម្ពុជា។'
+              : 'Physical book purchases are available only in Cambodia.'
+          )
+        }
 
-      const countryTicket = await getPaymentCountryTicket()
-      if (!countryTicket) {
-        throw new Error(
-          getDisplayLanguageId() === 'km'
-            ? 'មិនអាចផ្ទៀងផ្ទាត់ប្រទេសបានទេ។ សូមព្យាយាមម្តងទៀត។'
-            : 'Country verification unavailable. Please try again.'
-        )
+        countryTicket = await getPaymentCountryTicket()
+        if (!countryTicket) {
+          throw new Error(
+            getDisplayLanguageId() === 'km'
+              ? 'មិនអាចផ្ទៀងផ្ទាត់ប្រទេសបានទេ។ សូមព្យាយាមម្តងទៀត។'
+              : 'Country verification unavailable. Please try again.'
+          )
+        }
       }
 
       const response = await fetch(`${API_URL}/api/shadow-mall/buyer-profile`, {
@@ -645,7 +648,7 @@ export default function ShadowMallCheckoutPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'X-Shadow-Country-Ticket': countryTicket,
+          ...(countryTicket ? { 'X-Shadow-Country-Ticket': countryTicket } : {}),
         },
         body: JSON.stringify({
           items,
