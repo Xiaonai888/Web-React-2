@@ -31,7 +31,7 @@ export default function MeSupportButton() {
     document.body.classList.add('me-support-sheet-open')
     const dialog = dialogRef.current
     const focusable = () => Array.from(dialog.querySelectorAll('a[href], button:not([disabled])'))
-    focusable()[0]?.focus({ preventScroll: true })
+    dialog?.focus({ preventScroll: true })
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
@@ -129,12 +129,13 @@ export default function MeSupportButton() {
         <div className="fixed inset-0 z-[100010] flex items-end justify-center">
           <style>{'body.me-support-sheet-open footer.app-nav { visibility: hidden !important; }'}</style>
           <div className="absolute inset-0 bg-[var(--shadow-overlay)]" onClick={() => setOpen(false)} aria-hidden="true" />
-          <section
-            ref={dialogRef}
-            id={dialogId}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
+         <section
+  ref={dialogRef}
+  id={dialogId}
+  role="dialog"
+  tabIndex={-1}
+  aria-modal="true"
+  aria-labelledby={titleId}
             onTouchStart={onSwipeStart}
             onTouchMove={onSwipeMove}
             onTouchEnd={onSwipeEnd}
