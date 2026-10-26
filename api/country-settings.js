@@ -1,5 +1,4 @@
 const BACKEND_URL = 'https://shadow-backend-kucw.onrender.com/api/public/country-settings'
-const INVALID_COUNTRIES = new Set(['XX', 'ZZ', 'T1'])
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-store')
@@ -11,18 +10,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, message: 'Method not allowed' })
   }
 
-  const secret = process.env.SHADOW_GEO_PROXY_SECRET
-  if (!secret || secret.length < 32) {
-    return res.status(503).json({ ok: false, message: 'Country settings proxy is not configured' })
-  }
-
-  const headerCountry = req.headers['x-vercel-ip-country']
-  const country = typeof headerCountry === 'string' ? headerCountry.trim().toUpperCase() : ''
-  const verifiedCountry = /^[A-Z]{2}$/.test(country) && !INVALID_COUNTRIES.has(country)
-  const upstreamHeaders = { 'x-shadow-geo-secret': secret }
-
-  if (verifiedCountry) upstreamHeaders['x-shadow-geo-country'] = country
-
+  const upstreamHeaders = { Accept: 'application/json' }
   const auth = req.headers.authorization
   if (typeof auth === 'string' && /^Bearer [^\s]{1,8192}$/.test(auth)) {
     upstreamHeaders.Authorization = auth
