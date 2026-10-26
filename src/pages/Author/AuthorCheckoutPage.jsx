@@ -924,28 +924,28 @@ export default function AuthorCheckoutPage() {
         setSaving(true)
     setMessage('')
 
-    let countryTicket = null
+        let countryTicket = null
 
     if (needsDelivery) {
       const countrySettings = await loadCountrySettings()
 
-      if (
-        countrySettings?.countryVerified !== true ||
-        countrySettings.country !== 'KH' ||
-        getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
-        getCountryFeature(countrySettings, 'payway', false) !== true
-      ) {
-        throw new Error(t('authorCheckout.failedContinuePayment'))
-      }
+      if (countrySettings?.countryPolicyEnabled === true) {
+        if (
+          countrySettings.countryVerified !== true ||
+          countrySettings.country !== 'KH' ||
+          getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
+          getCountryFeature(countrySettings, 'payway', false) !== true
+        ) {
+          throw new Error(t('authorCheckout.failedContinuePayment'))
+        }
 
-      countryTicket = await getPaymentCountryTicket()
+        countryTicket = await getPaymentCountryTicket()
 
-      if (!countryTicket) {
-        throw new Error(t('authorCheckout.failedContinuePayment'))
+        if (!countryTicket) {
+          throw new Error(t('authorCheckout.failedContinuePayment'))
+        }
       }
     }
-
-    if (needsDelivery) {
       const savedProfile = await saveBuyerProfile(profile)
       setBuyerProfile(current => ({ ...current, ...savedProfile }))
     }
