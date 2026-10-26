@@ -5,11 +5,11 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('meSupport', {
-  en: { support: 'Support', title: 'Contact us', close: 'Close support', chat: 'Chat with Shadow Admin', facebook: 'Facebook Page', telegram: 'Telegram' },
-  km: { support: 'ជំនួយ', title: 'ទំនាក់ទំនង', close: 'បិទជំនួយ', chat: 'ឆាតជាមួយ Shadow Admin', facebook: 'ទំព័រ Facebook', telegram: 'Telegram' },
-  zh: { support: '帮助', title: '联系我们', close: '关闭帮助', chat: '与 Shadow Admin 聊天', facebook: 'Facebook 主页', telegram: 'Telegram' },
-  ja: { support: 'サポート', title: 'お問い合わせ', close: 'サポートを閉じる', chat: 'Shadow Admin とチャット', facebook: 'Facebookページ', telegram: 'Telegram' },
-  ko: { support: '고객 지원', title: '문의하기', close: '고객 지원 닫기', chat: 'Shadow Admin과 채팅', facebook: 'Facebook 페이지', telegram: 'Telegram' },
+  en: { support: 'Support', title: 'Contact us', close: 'Close support', chat: 'Chat with Shadow Admin', facebook: 'Facebook Page', telegram: 'Telegram', recommended: 'Recommended', globalReader: 'For global reader' },
+  km: { support: 'ជំនួយ', title: 'ទំនាក់ទំនង', close: 'បិទជំនួយ', chat: 'ឆាតជាមួយ Shadow Admin', facebook: 'ទំព័រ Facebook', telegram: 'Telegram', recommended: 'ណែនាំ', globalReader: 'សម្រាប់អ្នកអានអន្តរជាតិ' },
+  zh: { support: '帮助', title: '联系我们', close: '关闭帮助', chat: '与 Shadow Admin 聊天', facebook: 'Facebook 主页', telegram: 'Telegram', recommended: '推荐', globalReader: '面向全球读者' },
+  ja: { support: 'サポート', title: 'お問い合わせ', close: 'サポートを閉じる', chat: 'Shadow Admin とチャット', facebook: 'Facebookページ', telegram: 'Telegram', recommended: 'おすすめ', globalReader: '海外の読者向け' },
+  ko: { support: '고객 지원', title: '문의하기', close: '고객 지원 닫기', chat: 'Shadow Admin과 채팅', facebook: 'Facebook 페이지', telegram: 'Telegram', recommended: '추천', globalReader: '글로벌 독자용' },
 })
 
 export default function MeSupportButton() {
@@ -98,8 +98,8 @@ export default function MeSupportButton() {
   }
 
   const contacts = [
-    { name: 'Shadow Admin', label: t('meSupport.chat'), href: '/support-chat', icon: 'fa-regular fa-comments', color: '#B88625', internal: true },
-    { name: 'Shadow', label: t('meSupport.facebook'), href: 'https://www.facebook.com/profile.php?id=61595012230891', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
+    { name: 'Shadow Admin', label: t('meSupport.chat'), note: t('meSupport.globalReader'), recommended: true, href: '/support-chat', icon: 'fa-regular fa-comments', color: '#B88625', internal: true },
+    { name: 'Shadow Admin', label: t('meSupport.globalReader'), recommended: true, href: 'https://www.facebook.com/profile.php?id=61595012230891', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
     { name: 'ប្រលោមលោកស្នេហា', label: t('meSupport.facebook'), href: 'https://web.facebook.com/AlphaCentauri12226/', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
     { name: 'Shadow Admin', label: t('meSupport.telegram'), href: 'https://t.me/Shadow12226', icon: 'fa-brands fa-telegram', color: '#229ED9' },
   ]
@@ -171,8 +171,21 @@ export default function MeSupportButton() {
                     <i className={`${contact.icon} text-[24px]`} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block break-words text-[15px] font-semibold leading-6">{contact.name}</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="break-words text-[15px] font-semibold leading-6">{contact.name}</span>
+                      {contact.recommended && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFF2C9] px-2 py-0.5 text-[10px] font-semibold leading-4 text-[#9A6700]">
+                          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden="true">
+                            <path d="m12 2 3.1 6.3 7 1-5.1 5 .9 7-5.9-3.3-5.9 3.3.9-7-5.1-5 7-1z" />
+                          </svg>
+                          {t('meSupport.recommended')}
+                        </span>
+                      )}
+                    </span>
                     <span className="mt-0.5 block text-[12px] text-[var(--shadow-text-secondary)]">{contact.label}</span>
+                    {contact.note && (
+                      <span className="block text-[12px] text-[var(--shadow-text-secondary)]">{contact.note}</span>
+                    )}
                   </span>
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-[var(--shadow-text-tertiary)]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="m9 5 7 7-7 7" />
