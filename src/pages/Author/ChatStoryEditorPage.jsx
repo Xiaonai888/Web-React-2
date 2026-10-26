@@ -7,6 +7,7 @@ import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount, chatStoryQueueUserId } from '../../utils/chatStoryInlineUploadQueue'
 import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { encryptChatGalleryDraft, decryptChatGalleryDraft } from '../../utils/secureChatGalleryDraft'
+import { ChatStoryNotificationSettings, normalizeChatNotification } from '../../components/chat-story/ChatStoryNotification'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
@@ -1143,6 +1144,38 @@ function AsideMessage({
   )
 }
 
+function NotificationAvatarChoice({ active, onClick }) {
+  return (
+    <button type="button" onClick={onClick} aria-label="Add notification"
+      className={`w-[56px] shrink-0 rounded-[10px] py-1 text-center transition active:scale-[0.97] ${active ? 'bg-[var(--shadow-bg-hover)]' : ''}`}>
+      <span className={`mx-auto flex h-[40px] w-[40px] items-center justify-center rounded-full ${active ? 'text-[#7c3aed] ring-[3px] ring-inset ring-[#7c3aed]' : 'text-[var(--shadow-text-secondary)] ring-1 ring-inset ring-[var(--shadow-border)]'} bg-[var(--shadow-bg-soft)]`}>
+        <i className="fa-regular fa-bell text-[16px]" />
+      </span>
+      <span className="mt-1 block truncate text-[8px] font-semibold text-[var(--shadow-text-secondary)]">Notification</span>
+    </button>
+  )
+}
+
+function NotificationTimelineMessage({ message, character, active, onEdit, onElementRef }) {
+  return (
+    <div ref={(node) => onElementRef(message.id, node)} data-message-id={message.id}
+      className="mx-auto my-2 w-full max-w-[480px] px-2">
+      <button type="button" onClick={() => onEdit(message.id)}
+        className={`w-full rounded-[16px] border px-3 py-3 text-left shadow-sm ${active ? 'border-[#7c3aed] bg-[#f3eeff] text-[#1b1736]' : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'}`}>
+        <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-semibold text-[#7c3aed]">
+          <span><i className="fa-regular fa-bell mr-2" />Notification</span>
+          <span className="text-[10px] font-normal text-[var(--shadow-text-secondary)]">{message.notification?.dismissMode === 'duration' ? `${message.notification?.durationSeconds || 4}s` : message.notification?.dismissMode === 'next' ? 'Until next' : 'Swipe'}</span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          {character?.image ? <img src={safeChatCharacterImageUrl(character.image)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e9e2ff] text-[#7546dc]"><i className="fa-solid fa-user" /></span>}
+          <span className="min-w-0 flex-1"><strong className="block truncate text-[12px]">{character?.nickname || 'Character'}</strong><span className="mt-0.5 block whitespace-pre-wrap break-words text-[12px] font-normal [overflow-wrap:anywhere]">{message.text}</span></span>
+          <i className="fa-solid fa-ellipsis-vertical text-[13px] text-[var(--shadow-text-secondary)]" />
+        </div>
+      </button>
+    </div>
+  )
+}
+
 async function uploadChatStoryVoice(file, token, storyId, duration, signal, onProgress) {
   const mimeByExtension = { mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', webm: 'audio/webm' }
   const extension = String(file.name || '').split('.').pop().toLowerCase()
@@ -1518,7 +1551,11 @@ const bubbleClass = singleEmoji
 function ToolbarIcon({ name, className = 'h-[19px] w-[19px]' }) {
   const iconClass = className
 
-  if (name === 'above') {
+  if (name === 'settings') {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={iconClass}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l-1.9 1.9a1.6 1.6 0 0 0-1.8-.3l-1.1.4-.4 2.2h-2.7l-.4-2.2-1.1-.4a1.6 1.6 0 0 0-1.8.3l-1.9-1.9a1.6 1.6 0 0 0 .3-1.8l-.4-1.1L4 13.5v-2.7l2.2-.4.4-1.1a1.6 1.6 0 0 0-.3-1.8l1.9-1.9a1.6 1.6 0 0 0 1.8.3l1.1-.4.4-2.2h2.7l.4 2.2 1.1.4a1.6 1.6 0 0 0 1.8-.3l1.9 1.9a1.6 1.6 0 0 0-.3 1.8l.4 1.1 2.2.4v2.7l-2.2.4z"/></svg>
+}
+
+if (name === 'above') {
     return (
       <svg
         viewBox="0 0 24 24"
@@ -1680,6 +1717,7 @@ function MessageEditToolbar({
   onMoveUp,
   onMoveDown,
   onDelete,
+  onSettings,
 }) {
   if (
     !message ||
@@ -1689,9 +1727,10 @@ function MessageEditToolbar({
     return null
   }
 
-  const canMakeLead =
-    message.type === 'chat' &&
-    !isLead
+  const canMakeLead = message.type === 'chat' && !isLead
+  const canModify = !['image', 'audio', 'voice'].includes(message.type)
+  const toolbarActionCount = 3 + Number(canModify) + Number(canMakeLead) + Number(canMoveUp) + Number(canMoveDown) + Number(message.type === 'notification')
+  const compact = toolbarActionCount > 7
 
   return (
     <div
@@ -1701,7 +1740,7 @@ function MessageEditToolbar({
     top: `${position.top}px`,
   }}
 >
-      <div className="inline-flex min-h-[64px] w-max max-w-full items-stretch gap-[3px] rounded-[8px] bg-[#303033] px-2 py-1.5">
+      <div className={`${compact ? 'grid grid-cols-2' : 'inline-flex'} min-h-[64px] w-max max-w-full items-stretch gap-[3px] rounded-[8px] bg-[#303033] px-2 py-1.5`}>
         <MessageToolbarAction
           icon="above"
           label={getDisplayText('chatStoryEditor.above')}
@@ -1714,7 +1753,7 @@ function MessageEditToolbar({
           onClick={onBelow}
         />
 
-        {!['image', 'audio', 'voice'].includes(message.type) ? (
+        {canModify ? (
   <MessageToolbarAction
     icon="modify"
     label={getDisplayText('chatStoryEditor.modify')}
@@ -1745,6 +1784,9 @@ function MessageEditToolbar({
           />
         ) : null}
 
+        {message.type === 'notification' ? (
+          <MessageToolbarAction icon="settings" label="Settings" onClick={onSettings} />
+        ) : null}
         <MessageToolbarAction
           icon="delete"
           label={getDisplayText('chatStoryEditor.delete')}
@@ -2570,6 +2612,8 @@ export default function ChatStoryEditorPage() {
   const [messageToolbarPosition, setMessageToolbarPosition] =
     useState(null)
   const [messageEditMode, setMessageEditMode] = useState(null)
+  const [notificationSettingsTarget, setNotificationSettingsTarget] = useState(null)
+  const [notificationMaxVisible, setNotificationMaxVisible] = useState(2)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
   const [draftSaveStatus, setDraftSaveStatus] = useState('local')
@@ -2855,7 +2899,13 @@ useEffect(() => {
     const rect =
       element.getBoundingClientRect()
 
-    const toolbarHeight = 64
+    const toolbarActions = 3 +
+      Number(!['image', 'audio', 'voice'].includes(activeMessage?.type)) +
+      Number(activeMessage?.type === 'chat' && !activeMessageIsLead) +
+      Number(canMoveActiveMessageUp) +
+      Number(canMoveActiveMessageDown) +
+      Number(activeMessage?.type === 'notification')
+    const toolbarHeight = toolbarActions > 7 ? Math.ceil(toolbarActions / 2) * 60 : 64
     const gap = 8
     const topSafeArea = 62
     const bottomSafeArea = 170
@@ -3084,6 +3134,7 @@ restoredDraftCharactersRef.current = false
   setMessageEditMode(parsed.messageEditMode || null)
   setAuthorNoteDraft(String(parsed.authorNoteDraft || ''))
   setTitleDraft(String(parsed.titleDraft || ''))
+  setNotificationMaxVisible(Math.min(3, Math.max(1, Number(parsed.notificationMaxVisible || 2))))
   const restoredMessages =
     Array.isArray(parsed.messages)
       ? parsed.messages.map((message) => message?.type === 'image' &&
@@ -3198,6 +3249,7 @@ restoredDraftCharactersRef.current = false
     leadCharacterId: snapshot.leadCharacterId,
     characters: snapshot.characters.map((character) => character.id),
     messages: snapshot.messages,
+    notificationMaxVisible: snapshot.messages.some((message) => message.type === 'notification') ? snapshot.notificationMaxVisible : undefined,
   })
 
   const flushLocalDraft = () => {
@@ -3544,12 +3596,22 @@ restoredDraftCharactersRef.current = false
             title: snapshot.episodeTitle.trim(),
             lead_character_id: snapshot.leadCharacterId || null,
             character_ids: snapshot.characters.map((character) => character.id),
+            ...(snapshot.messages.some((item) => item.type === 'notification')
+              ? { notification_settings: { max_visible: snapshot.notificationMaxVisible || 2 } }
+              : {}),
             messages: snapshot.messages.map((message) => ({
               id: message.id,
               type: message.type,
               character_id: message.characterId || null,
               text: message.text || '',
-              image_url: message.type === 'image' ? message.imageUrl || message.image_url || null : null,
+              image_url: ['image', 'notification'].includes(message.type) ? message.imageUrl || message.image_url || null : null,
+              ...(message.type === 'notification' ? {
+                notification: {
+                  dismiss_mode: message.notification?.dismissMode || 'duration',
+                  duration_seconds: Number(message.notification?.durationSeconds || 4),
+                  swipe_to_dismiss: message.notification?.swipeToDismiss !== false,
+                },
+              } : {}),
               ...(['audio', 'voice'].includes(message.type) ? {
                 audio_url: message.audioUrl || message.audio_url || null,
                 audio_duration: Number(message.audioDuration || message.audio_duration || 0),
@@ -3566,6 +3628,49 @@ restoredDraftCharactersRef.current = false
         }
         if (!response.ok || data.ok === false || !data.episode?.id) {
           throw new Error(data.message || getDisplayText('chatStoryEditor.failedSaveEpisode'))
+        }
+        if (snapshot.messages.some((item) => item.type === 'notification')) {
+          let saved = null
+          let savedContent = data.episode.content
+          if (!savedContent) {
+            const verifyResponse = await fetch(
+              `${API_BASE_URL}/api/stories/${storyId}/episodes/${data.episode.id}`,
+              { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal }
+            )
+            const verified = await verifyResponse.json().catch(() => ({}))
+            if (verifyResponse.ok && verified?.episode) savedContent = verified.episode.content
+          }
+          try {
+            saved = typeof savedContent === 'string' ? JSON.parse(savedContent) : savedContent
+          } catch {
+            saved = null
+          }
+          const expected = snapshot.messages
+            .filter((item) => item.type === 'notification')
+            .map((item) => ({
+              id: String(item.id),
+              characterId: String(item.characterId || ''),
+              text: String(item.text || ''),
+              dismissMode: item.notification?.dismissMode || 'duration',
+              durationSeconds: Number(item.notification?.durationSeconds || 4),
+              swipeToDismiss: item.notification?.swipeToDismiss !== false,
+              imageUrl: String(item.imageUrl || ''),
+            }))
+          const accepted = Array.isArray(saved?.messages)
+            ? saved.messages.filter((item) => item.type === 'notification').map((item) => ({
+                id: String(item.id),
+                characterId: String(item.character_id || item.characterId || ''),
+                text: String(item.text || ''),
+                dismissMode: item.notification?.dismiss_mode || item.notification?.dismissMode || 'duration',
+                durationSeconds: Number(item.notification?.duration_seconds || item.notification?.durationSeconds || 4),
+                swipeToDismiss: item.notification?.swipe_to_dismiss !== false && item.notification?.swipeToDismiss !== false,
+                imageUrl: String(item.image_url || item.imageUrl || ''),
+              }))
+            : []
+          if (JSON.stringify(accepted) !== JSON.stringify(expected) ||
+            Number(saved?.notification_settings?.max_visible) !== Number(snapshot.notificationMaxVisible || 2)) {
+            throw new Error('Notification data could not be verified on the server. Your local draft remains saved; Backend support is required before publishing.')
+          }
         }
         serverVersionRef.current = data.episode.updated_at
         serverEpisodeIdRef.current = data.episode.id
@@ -3599,6 +3704,7 @@ restoredDraftCharactersRef.current = false
       leadCharacterId: effectiveLeadCharacterId,
       characters,
       messages,
+      notificationMaxVisible,
       draft,
       selectedCharacterId,
       composerMode,
@@ -3613,7 +3719,7 @@ restoredDraftCharactersRef.current = false
     }
     if (!serverDueRef.current) serverDueRef.current = Date.now() + 10 * 60 * 1000
     if (previous) setDraftSaveStatus('unsaved')
-  }, [draftHydrated, loading, episodeTitle, episodeId, effectiveLeadCharacterId, characters, messages, draft, selectedCharacterId, composerMode, messageEditMode, authorNoteDraft, titleDraft])
+  }, [draftHydrated, loading, episodeTitle, episodeId, effectiveLeadCharacterId, characters, messages, notificationMaxVisible, draft, selectedCharacterId, composerMode, messageEditMode, authorNoteDraft, titleDraft])
 
   const draftActionsRef = useRef({})
   draftActionsRef.current = { flushLocalDraft, persistServerDraft, canCheckpoint: !saving && !settingsSaving && !imageUploading && !chatHasPendingImages && !loading && !publishSettingsOpen }
@@ -3934,10 +4040,11 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
                   : message.type ===
                       'author_note'
                     ? 'author_note'
-                    : message.type ===
-                        'image'
+                    : message.type === 'image'
                       ? 'image'
-                      : 'aside',
+                      : message.type === 'notification'
+                        ? 'notification'
+                        : 'aside',
               characterId:
                 message.character_id ||
                 null,
@@ -3947,6 +4054,11 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
                 message.image_url ||
                 message.imageUrl ||
                 '',
+              notification: message.type === 'notification' ? {
+                dismissMode: message.notification?.dismiss_mode || message.notification?.dismissMode || 'duration',
+                durationSeconds: Number(message.notification?.duration_seconds || message.notification?.durationSeconds || 4),
+                swipeToDismiss: message.notification?.swipe_to_dismiss !== false && message.notification?.swipeToDismiss !== false,
+              } : undefined,
               audioUrl: message.audio_url || message.audioUrl || '',
               audioDuration: Number(message.audio_duration || message.audioDuration || 0),
               createdAt:
@@ -3955,6 +4067,9 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
             })
           )
 
+        if (!restoredEditorDraftRef.current) {
+          setNotificationMaxVisible(Math.min(3, Math.max(1, Number(parsed.notification_settings?.max_visible || 2))))
+        }
         setEpisodeId(
           data.episode.id
         )
@@ -4244,6 +4359,40 @@ const moveActiveMessage = (direction) => {
       ? [...nextMessages, authorNote]
       : nextMessages
   })
+}
+
+const openNotificationSettings = (target = null) => {
+  setActiveMessageId('')
+  setSymbolPanelOpen(false)
+  setNotificationSettingsTarget(target || { mode: 'new', insertion: messageEditMode })
+}
+
+const saveNotificationSettings = (value, maximum) => {
+  const next = normalizeChatNotification(value)
+  if (!next.characterId || !next.text.trim()) return
+  const item = {
+    type: 'notification', characterId: next.characterId, text: next.text,
+    imageUrl: next.imageUrl,
+    notification: { dismissMode: next.dismissMode, durationSeconds: next.durationSeconds, swipeToDismiss: next.swipeToDismiss },
+  }
+  setNotificationMaxVisible(maximum)
+  if (notificationSettingsTarget?.mode === 'edit') {
+    commitMessages((current) => current.map((message) => message.id === notificationSettingsTarget.targetId ? { ...message, ...item } : message))
+  } else {
+    const insertion = notificationSettingsTarget?.insertion
+    commitMessages((current) => {
+      const note = current.find((message) => message.type === 'author_note')
+      const story = current.filter((message) => message.type !== 'author_note')
+      const index = ['insert_above', 'insert_below'].includes(insertion?.type)
+        ? story.findIndex((message) => message.id === insertion.targetId) : -1
+      const position = index < 0 ? story.length : index + Number(insertion.type === 'insert_below')
+      story.splice(position, 0, { ...item, id: makeId(), createdAt: new Date().toISOString() })
+      return note ? [...story, note] : story
+    })
+  }
+  setMessageEditMode(null)
+  setNotificationSettingsTarget(null)
+  setActiveMessageId('')
 }
 
 const sendMessage = () => {
@@ -5671,6 +5820,17 @@ setPublishSettingsOpen(true)
 }}
 />
 
+      <ChatStoryNotificationSettings
+        open={Boolean(notificationSettingsTarget)}
+        characters={characters}
+        maxVisible={notificationMaxVisible}
+        value={notificationSettingsTarget?.mode === 'edit'
+          ? messages.find((message) => message.id === notificationSettingsTarget.targetId)
+          : { characterId: selectedCharacterId || characters[0]?.id || '', text: '' }}
+        onClose={() => setNotificationSettingsTarget(null)}
+        onSave={saveNotificationSettings}
+      />
+
       <MorePopup
         open={morePopupOpen}
         onClose={() => setMorePopupOpen(false)}
@@ -5898,6 +6058,15 @@ setPublishSettingsOpen(true)
       }
       onRetry={retryChatImage}
     />
+  ) : message.type === 'notification' ? (
+    <NotificationTimelineMessage
+      key={message.id}
+      message={message}
+      character={characterMap[message.characterId]}
+      active={activeMessageId === message.id}
+      onEdit={openMessageToolbar}
+      onElementRef={registerMessageElement}
+    />
   ) : message.type === 'aside' ? (
     <AsideMessage
   key={message.id}
@@ -5955,10 +6124,13 @@ setPublishSettingsOpen(true)
   onMoveDown={() =>
     moveActiveMessage('down')
   }
-  onDelete={() => {
+    onDelete={() => {
     if (activeMessage?.id) {
       deleteMessage(activeMessage.id)
     }
+  }}
+  onSettings={() => {
+    if (activeMessage?.type === 'notification') openNotificationSettings({ mode: 'edit', targetId: activeMessage.id })
   }}
 />
 
@@ -5998,6 +6170,8 @@ setPublishSettingsOpen(true)
           setComposerMode('message')
         }}
       />
+
+      <NotificationAvatarChoice active={Boolean(notificationSettingsTarget)} onClick={() => openNotificationSettings()} />
 
       {characters.map((character) => (
         <CharacterAvatar
