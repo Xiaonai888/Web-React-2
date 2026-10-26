@@ -176,6 +176,7 @@ registerTranslationNamespace('episodeEditor', {
     createdMissingId: "Episode created but episode id was missing",
     cannotConnect: "Cannot connect to backend. Make sure backend is deployed or running.",
     failedSaveDraft: "Failed to save draft",
+    latestEditsPending: "Your latest edits are still being saved. Please try again.",
     storyLoading: "Story information is still loading.",
     failedUpdateStoryInfo: "Failed to update story information.",
     missingEpisodeId: "Missing episode id. Close this popup and click Next again.",
@@ -371,6 +372,7 @@ registerTranslationNamespace('episodeEditor', {
     createdMissingId: "បានបង្កើតភាគ ប៉ុន្តែបាត់លេខសម្គាល់ភាគ",
     cannotConnect: "មិនអាចភ្ជាប់ទៅ Backend បានទេ។ សូមពិនិត្យការដាក់ឱ្យដំណើរការ។",
     failedSaveDraft: "មិនអាចរក្សាទុកព្រាងបានទេ",
+    latestEditsPending: "ការកែប្រែថ្មីកំពុងរក្សាទុក។ សូមសាកម្ដងទៀត។",
     storyLoading: "ព័ត៌មានរឿងកំពុងផ្ទុក។",
     failedUpdateStoryInfo: "មិនអាចអាប់ដេតព័ត៌មានរឿងបានទេ។",
     missingEpisodeId: "បាត់លេខសម្គាល់ភាគ។ បិទផ្ទាំងនេះ ហើយចុច បន្ទាប់ ម្ដងទៀត។",
@@ -566,6 +568,7 @@ registerTranslationNamespace('episodeEditor', {
     createdMissingId: "章节已创建，但缺少章节 ID",
     cannotConnect: "无法连接后端，请确认后端已部署或正在运行。",
     failedSaveDraft: "无法保存草稿",
+    latestEditsPending: "最新修改仍在保存，请重试。",
     storyLoading: "故事信息仍在加载。",
     failedUpdateStoryInfo: "无法更新故事信息。",
     missingEpisodeId: "缺少章节 ID。关闭此窗口后再次点击“下一步”。",
@@ -761,6 +764,7 @@ registerTranslationNamespace('episodeEditor', {
     createdMissingId: "作成しましたがエピソード ID がありません",
     cannotConnect: "バックエンドに接続できません。デプロイまたは稼働状態を確認してください。",
     failedSaveDraft: "下書きを保存できませんでした",
+    latestEditsPending: "最新の変更を保存中です。もう一度お試しください。",
     storyLoading: "ストーリー情報を読み込み中です。",
     failedUpdateStoryInfo: "ストーリー情報を更新できませんでした。",
     missingEpisodeId: "エピソード ID がありません。この画面を閉じてもう一度「次へ」を押してください。",
@@ -956,6 +960,7 @@ registerTranslationNamespace('episodeEditor', {
     createdMissingId: "에피소드가 생성되었지만 ID가 없습니다",
     cannotConnect: "백엔드에 연결할 수 없습니다. 배포 또는 실행 상태를 확인해 주세요.",
     failedSaveDraft: "초안을 저장하지 못했습니다",
+    latestEditsPending: "최신 변경 사항을 저장하는 중입니다. 다시 시도해 주세요.",
     storyLoading: "스토리 정보를 불러오는 중입니다.",
     failedUpdateStoryInfo: "스토리 정보를 업데이트하지 못했습니다.",
     missingEpisodeId: "에피소드 ID가 없습니다. 창을 닫고 다시 다음을 눌러 주세요.",
@@ -4084,6 +4089,9 @@ export default function EpisodeEditorPage() {
   const localSaveInFlightRef = useRef(false)
   const localSavePromiseRef = useRef(null)
   const localDraftSnapshotRef = useRef(null)
+  const serverSavedRevisionRef = useRef(0)
+  const lastServerSaveResultRef = useRef(null)
+  const serverSaveQueueRef = useRef(Promise.resolve())
   const [serverCheckpointMinutes, setServerCheckpointMinutes] = useState(
     SERVER_CHECKPOINT_MINUTES
   )
@@ -4251,6 +4259,8 @@ export default function EpisodeEditorPage() {
     )
     localDraftRevisionRef.current = 0
     localSavedRevisionRef.current = 0
+    serverSavedRevisionRef.current = 0
+    lastServerSaveResultRef.current = null
     confirmedEpisodeIdRef.current = editEpisodeId || ''
   }, [storyId, editEpisodeId])
 
@@ -4852,6 +4862,7 @@ return true
     undoHistoryRef.current = []
     redoHistoryRef.current = []
     lastHistoryInputRef.current = { type: '', at: 0 }
+    serverSavedRevisionRef.current = -1
     setServerCheckpointMinutes(SERVER_CHECKPOINT_MINUTES)
     setHasUnsavedChanges(true)
     setSaveStatus('Saved locally')
@@ -5495,12 +5506,13 @@ const handleEditorCompositionEnd = (event) => {
     markUnsaved()
   }
 
-  const handleSaveEpisode = async ({
+  const persistEpisodeSave = async ({
   goToPublish = false,
   forceDraft = false,
   stayOnPage = false,
+  background = false,
 } = {}) => {
-    setMessage('')
+    if (!background) setMessage('')
 
     if (localSavePromiseRef.current) {
       await localSavePromiseRef.current.catch(() => {})
@@ -5511,43 +5523,43 @@ const handleEditorCompositionEnd = (event) => {
     if (!isManga && (inlineImageUploading ||
       countPendingNovelImageMarkers(currentNovelHtml) ||
       countPendingNovelImageMarkers(content))) {
-      setMessage(getDisplayText('episodeEditor.pagesStillUploading'))
+      if (!background) setMessage(getDisplayText('episodeEditor.pagesStillUploading'))
       return null
     }
 
     if (!episodeTitle.trim()) {
-      setMessage(getDisplayText('episodeEditor.enterEpisodeTitle'))
+      if (!background) setMessage(getDisplayText('episodeEditor.enterEpisodeTitle'))
       return null
     }
 
     if (isManga) {
       if (mangaUploadPending) {
-        setMessage(getDisplayText('episodeEditor.waitMangaUploads'))
+        if (!background) setMessage(getDisplayText('episodeEditor.waitMangaUploads'))
         return null
       }
 
       if (mangaErrorCount) {
-        setMessage(getDisplayText('episodeEditor.retryFailedPages'))
+        if (!background) setMessage(getDisplayText('episodeEditor.retryFailedPages'))
         return null
       }
 
       if (goToPublish && completedMangaPages.length < MANGA_MIN_PUBLISH_PAGES) {
-        setMessage(`Manga episodes need at least ${MANGA_MIN_PUBLISH_PAGES} pages.`)
+        if (!background) setMessage(`Manga episodes need at least ${MANGA_MIN_PUBLISH_PAGES} pages.`)
         return null
       }
     } else {
       if (goToPublish && !hasEpisodeContent(content)) {
-        setMessage(getDisplayText('episodeEditor.writeContent'))
+        if (!background) setMessage(getDisplayText('episodeEditor.writeContent'))
         return null
       }
 
       if (goToPublish && characterCount < MIN_CHARACTERS) {
-        setMessage(getDisplayText('episodeEditor.minimumCharacters'))
+        if (!background) setMessage(getDisplayText('episodeEditor.minimumCharacters'))
         return null
       }
 
       if (characterCount > MAX_CHARACTERS) {
-        setMessage(getDisplayText('episodeEditor.maximumCharacters'))
+        if (!background) setMessage(getDisplayText('episodeEditor.maximumCharacters'))
         return null
       }
     }
@@ -5655,12 +5667,26 @@ const handleEditorCompositionEnd = (event) => {
     }
     setCurrentEpisodeNumber(Number(data.episode?.episode_number || currentEpisodeNumber || 1))
     if (localSavePromiseRef.current) await localSavePromiseRef.current.catch(() => {})
+    serverSavedRevisionRef.current = savingRevision
+    lastServerSaveResultRef.current = {
+      episodeId,
+      episodeNumber: Number(data.episode?.episode_number || currentEpisodeNumber || 1),
+    }
     if (localDraftRevisionRef.current !== savingRevision) {
-      setSaveStatus('Unsaved')
       setHasUnsavedChanges(true)
-      await saveCurrentLocalDraft()
-      setMessage('New changes were made while saving. Save this episode again.')
-      return null
+      if (localDraftRevisionRef.current !== localSavedRevisionRef.current) {
+        await saveCurrentLocalDraft()
+      }
+      setSaveStatus(
+        localDraftRevisionRef.current === localSavedRevisionRef.current
+          ? 'Saved locally'
+          : 'Unsaved'
+      )
+      return {
+        episodeId,
+        episodeNumber: data.episode?.episode_number || 1,
+        needsSync: true,
+      }
     }
     setSaveStatus('Saved')
     setHasUnsavedChanges(false)
@@ -5700,6 +5726,33 @@ const handleEditorCompositionEnd = (event) => {
       episodeId,
       episodeNumber: data.episode?.episode_number || 1,
     }
+  }
+
+  const handleSaveEpisode = (options = {}) => {
+    const operation = serverSaveQueueRef.current.then(async () => {
+      const attempts = options.background ? 1 : 3
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (
+          confirmedEpisodeIdRef.current &&
+          !options.forceDraft &&
+          serverSavedRevisionRef.current === localDraftRevisionRef.current
+        ) {
+          return lastServerSaveResultRef.current || {
+            episodeId: confirmedEpisodeIdRef.current,
+            episodeNumber: currentEpisodeNumber || 1,
+          }
+        }
+        const result = await persistEpisodeSave(options)
+        if (!result?.needsSync) return result
+        if (options.background) return result
+      }
+      if (!options.background) {
+        setMessage(getDisplayText('episodeEditor.latestEditsPending'))
+      }
+      return null
+    })
+    serverSaveQueueRef.current = operation.catch(() => {})
+    return operation
   }
 
   useEffect(() => {
@@ -5767,9 +5820,17 @@ const handleEditorCompositionEnd = (event) => {
       const saved = await handleSaveEpisode({
         forceDraft: false,
         stayOnPage: true,
+        background: true,
       })
 
-      setSaveStatus(saved ? 'Saved' : 'Saved locally')
+      setSaveStatus(
+        saved?.needsSync || !saved ||
+        serverSavedRevisionRef.current !== localDraftRevisionRef.current
+          ? localDraftRevisionRef.current === localSavedRevisionRef.current
+            ? 'Saved locally'
+            : 'Unsaved'
+          : 'Saved'
+      )
     } catch {
       setSaveStatus('Saved locally')
     } finally {
@@ -6089,7 +6150,11 @@ const handleEditorCompositionEnd = (event) => {
         episodeIdToPublish = pendingResult.episodeId
         episodeNumberToPublish = pendingResult.episodeNumber
       }
-      if (!episodeIdToPublish || hasUnsavedChanges) {
+      if (
+        !episodeIdToPublish ||
+        hasUnsavedChanges ||
+        serverSavedRevisionRef.current !== localDraftRevisionRef.current
+      ) {
         episodeSyncPausedRef.current = false
         const saved = await beginEpisodeSync()
         if (!saved) return
@@ -6671,7 +6736,6 @@ releaseOption={releaseOption}
   return
 }
                       setEditorFocused(false)
-                      setSaveStatus('Saved')
                     }, 220)
                   }}
                   onKeyUp={saveEditorSelection}
