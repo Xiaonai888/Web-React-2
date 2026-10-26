@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
+import { getCountryFeature, loadCountrySettings } from '../utils/countrySettings'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
@@ -67,17 +68,49 @@ export default function ShopPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
+  const [mallAccess, setMallAccess] = useState(null)
+  const [countryRetry, setCountryRetry] = useState(0)
   const purchaseReturnTo = location.state?.returnTo || location.state?.from || ''
-  const isPurchaseMode = activeTab === 'Purchase'
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
 
   useEffect(() => {
-    if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab)
+    let active = true
+    loadCountrySettings({ force: countryRetry > 0 }).then(settings => {
+      if (!active) return
+      if (!settings) {
+        setMallAccess({ available: false, allowed: false, local: false })
+        return
+      }
+      setMallAccess({
+        available: true,
+        allowed: settings.countryVerified === true && getCountryFeature(settings, 'shadowMall', false) === true,
+        local: settings.countryVerified === true && settings.country === 'KH',
+      })
+    }).catch(() => {
+      if (active) setMallAccess({ available: false, allowed: false, local: false })
+    })
+    return () => { active = false }
+  }, [countryRetry])
+
+  useEffect(() => {
+    if (!mallAccess?.available) return
+    const requested = location.state?.activeTab
+    if (requested === 'Purchase' || requested === 'Plans') {
+      setActiveTab(requested)
+    } else if (requested === 'Shadow Mall' && mallAccess.allowed) {
+      setActiveTab('Shadow Mall')
+    } else {
+      setActiveTab(mallAccess.local && mallAccess.allowed ? 'Shadow Mall' : 'Purchase')
     }
-  }, [location.state])
+  }, [location.state, mallAccess])
+
+  const showMall = mallAccess?.allowed === true && activeTab === 'Shadow Mall'
+  const purchaseMode = activeTab === 'Purchase' || (activeTab === 'Shadow Mall' && !showMall)
+  const setAvailableTab = (next) => {
+    setActiveTab(next === 'Shadow Mall' && !mallAccess?.allowed ? 'Purchase' : next)
+  }
 
   useEffect(() => {
     const refreshCartCount = () => {
@@ -105,11 +138,22 @@ export default function ShopPage() {
     }
   }, [])
 
+  if (!mallAccess) {
+    return <div role="status" className="flex min-h-screen items-center justify-center bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">Loading…</div>
+  }
+
+  if (!mallAccess.available && activeTab !== 'Purchase') {
+    return <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--shadow-bg-page)] px-6 text-center text-[var(--shadow-text-primary)]">
+      <p role="alert">{getDisplayLanguageId() === 'km' ? 'មិនអាចពិនិត្យការកំណត់ប្រទេសបានទេ។' : 'Country settings are temporarily unavailable.'}</p>
+      <button type="button" className="rounded-xl bg-[#4f46e5] px-5 py-3 font-semibold text-white" onClick={() => { setMallAccess(null); setCountryRetry(value => value + 1) }}>{getDisplayLanguageId() === 'km' ? 'សាកល្បងម្តងទៀត' : 'Retry'}</button>
+    </div>
+  }
+
   return (
     <div className="app-page min-h-screen pb-24">
       <header
         className={`sticky top-0 z-40 ${
-          isPurchaseMode
+          purchaseMode
             ? 'bg-[#FFE66A] text-[#111827]'
             : 'border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] text-[var(--shadow-text-primary)]'
         }`}
@@ -118,20 +162,25 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => {
-              if (isPurchaseMode && purchaseReturnTo) {
+              if (purchaseMode && purchaseReturnTo && !purchaseReturnTo.startsWith('/shop')) {
                 navigate(purchaseReturnTo, { replace: true })
                 return
               }
 
+              if (purchaseMode && (!mallAccess.allowed || !mallAccess.local)) {
+                navigate('/', { replace: true })
+                return
+              }
+
               if (activeTab !== 'Shadow Mall') {
-                setActiveTab('Shadow Mall')
+                setAvailableTab('Shadow Mall')
                 return
               }
 
               navigate(location.state?.returnTo || '/')
             }}
             className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-              isPurchaseMode
+              purchaseMode
                 ? 'hover:bg-black/5'
                 : 'hover:bg-[var(--shadow-bg-hover)]'
             }`}
@@ -139,7 +188,7 @@ export default function ShopPage() {
           >
             <i
               className={`fas fa-chevron-left text-[18px] ${
-                isPurchaseMode
+                purchaseMode
                   ? 'text-[#374151]'
                   : 'text-[var(--shadow-text-primary)]'
               }`}
@@ -148,15 +197,15 @@ export default function ShopPage() {
 
           <h1
             className={`text-[18px] font-extrabold tracking-tight ${
-              isPurchaseMode
+              purchaseMode
                 ? 'text-[#111827]'
                 : 'text-[var(--shadow-text-primary)]'
             }`}
           >
-            {isPurchaseMode ? t('shopPage.purchase') : 'Shadow Mall'}
+            {purchaseMode ? t('shopPage.purchase') : 'Shadow Mall'}
           </h1>
 
-          {!isPurchaseMode ? (
+          {!purchaseMode ? (
             <>
               <button
                 type="button"
@@ -209,18 +258,18 @@ export default function ShopPage() {
 
       <main
         className={`px-4 pt-4 ${
-          isPurchaseMode
+          purchaseMode
             ? 'bg-[#FFE66A]'
             : 'bg-[var(--shadow-bg-page)]'
         }`}
       >
         {activeTab === 'Plans' && <PlanSection />}
-        {activeTab === 'Purchase' && <PurchaseSection />}
-        {activeTab === 'Shadow Mall' && (
+        {purchaseMode && <PurchaseSection />}
+        {showMall && (
           <ShadowMallSection
             tabs={tabs}
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={setAvailableTab}
             showSearch={mallSearchOpen}
           />
         )}
