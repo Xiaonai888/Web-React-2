@@ -13,6 +13,7 @@ registerTranslationNamespace('authorPostComposerSheet', {
     author: 'Author',
     failedLoadImage: 'Failed to load image',
     photoStillTooLarge: 'Photo is still too large after compression. Selected: {{selected}} / Limit: {{limit}}.',
+    photoSourceTooLarge: 'Original photo is too large. Selected: {{selected}} / Limit: {{limit}}.',
     loginFirst: 'Please login first',
     missingEnv: ' Missing: {{value}}',
     failedUploadPhoto: 'Failed to upload photo',
@@ -61,6 +62,7 @@ registerTranslationNamespace('authorPostComposerSheet', {
     author: 'អ្នកនិពន្ធ',
     failedLoadImage: 'មិនអាចផ្ទុករូបភាពបានទេ',
     photoStillTooLarge: 'រូបភាពនៅតែធំពេកក្រោយបង្រួម។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។',
+    photoSourceTooLarge: 'រូបដើមមានទំហំធំពេក។ បានជ្រើស: {{selected}} / កំណត់: {{limit}}។',
     loginFirst: 'សូមចូលគណនីជាមុន',
     missingEnv: ' ខ្វះ: {{value}}',
     failedUploadPhoto: 'មិនអាចផ្ទុករូបភាពឡើងបានទេ',
@@ -109,6 +111,7 @@ registerTranslationNamespace('authorPostComposerSheet', {
     author: '作者',
     failedLoadImage: '无法加载图片',
     photoStillTooLarge: '压缩后图片仍然过大。已选择：{{selected}} / 限制：{{limit}}。',
+    photoSourceTooLarge: '原始图片过大。已选择：{{selected}} / 限制：{{limit}}。',
     loginFirst: '请先登录',
     missingEnv: ' 缺少：{{value}}',
     failedUploadPhoto: '图片上传失败',
@@ -157,6 +160,7 @@ registerTranslationNamespace('authorPostComposerSheet', {
     author: '作者',
     failedLoadImage: '画像を読み込めませんでした',
     photoStillTooLarge: '圧縮後も画像サイズが大きすぎます。選択済み: {{selected}} / 上限: {{limit}}。',
+    photoSourceTooLarge: '元の画像サイズが大きすぎます。選択済み: {{selected}} / 上限: {{limit}}。',
     loginFirst: '先にログインしてください',
     missingEnv: ' 不足: {{value}}',
     failedUploadPhoto: '画像をアップロードできませんでした',
@@ -205,6 +209,7 @@ registerTranslationNamespace('authorPostComposerSheet', {
     author: '작가',
     failedLoadImage: '이미지를 불러오지 못했습니다',
     photoStillTooLarge: '압축 후에도 이미지가 너무 큽니다. 선택됨: {{selected}} / 제한: {{limit}}.',
+    photoSourceTooLarge: '원본 사진이 너무 큽니다. 선택됨: {{selected}} / 제한: {{limit}}.',
     loginFirst: '먼저 로그인해 주세요',
     missingEnv: ' 누락: {{value}}',
     failedUploadPhoto: '이미지를 업로드하지 못했습니다',
@@ -259,8 +264,14 @@ const API_BASE_URL =
 
 const MAX_POST_PHOTOS = 5
 const MAX_POST_LENGTH = 10000
-const HARD_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_SOURCE_IMAGE_BYTES = 10 * 1024 * 1024
+const TARGET_IMAGE_BYTES = 1024 * 1024
+const SOFT_MAX_IMAGE_BYTES = Math.round(1.5 * 1024 * 1024)
+const HARD_MAX_IMAGE_BYTES = 2 * 1024 * 1024
 const MAX_POST_IMAGE_BYTES = MAX_POST_PHOTOS * HARD_MAX_IMAGE_BYTES
+const POST_IMAGE_QUALITIES = [0.9, 0.85, 0.8, 0.75]
+const POST_IMAGE_SCALES = [1, 0.84, 0.72, 0.6, 0.5]
+const POST_SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 function getAuthToken() {
   return (
@@ -298,16 +309,133 @@ function isAuthorPostImage(file) {
   ))
 }
 
+function loadPostImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => resolve({ image, url })
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('IMAGE_DECODE_FAILED'))
+    }
+    image.src = url
+  })
+}
+
+function encodePostCanvas(canvas, type, quality) {
+  return new Promise((resolve) => {
+    if (typeof canvas.toBlob !== 'function') {
+      resolve(null)
+      return
+    }
+    try {
+      canvas.toBlob((blob) => resolve(blob?.type === type && blob.size ? blob : null), type, quality)
+    } catch {
+      resolve(null)
+    }
+  })
+}
+
+async function adaptiveCompressPostImage(file) {
+  const { image, url } = await loadPostImage(file)
+  const originalWidth = image.naturalWidth || image.width
+  const originalHeight = image.naturalHeight || image.height
+  let best = file
+  let mimeType = 'image/webp'
+
+  try {
+    if (!originalWidth || !originalHeight) return file
+
+    for (const scale of POST_IMAGE_SCALES) {
+      const ratio = Math.min(1, 1920 / originalWidth, 2400 / originalHeight) * scale
+      const width = Math.max(1, Math.round(originalWidth * ratio))
+      const height = Math.max(1, Math.round(originalHeight * ratio))
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      try {
+        const context = canvas.getContext('2d')
+        if (!context) break
+        context.drawImage(image, 0, 0, width, height)
+
+        for (const quality of POST_IMAGE_QUALITIES) {
+          let blob = await encodePostCanvas(canvas, mimeType, quality)
+          if (!blob && mimeType === 'image/webp') {
+            mimeType = 'image/jpeg'
+            context.fillStyle = '#ffffff'
+            context.fillRect(0, 0, width, height)
+            context.drawImage(image, 0, 0, width, height)
+            blob = await encodePostCanvas(canvas, mimeType, quality)
+          }
+          if (!blob) break
+
+          if (blob.size < best.size) {
+            const extension = mimeType === 'image/webp' ? 'webp' : 'jpg'
+            best = new File([blob], `${(file.name || 'image').replace(/\.[^.]+$/, '')}.${extension}`, {
+              type: mimeType,
+              lastModified: Date.now(),
+            })
+          }
+
+          if (blob.size <= TARGET_IMAGE_BYTES || (blob.size <= SOFT_MAX_IMAGE_BYTES && blob.size <= file.size * 0.9)) {
+            return best
+          }
+        }
+      } finally {
+        canvas.width = 0
+        canvas.height = 0
+      }
+    }
+
+    return best
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 async function compressImageFile(file, t) {
   if (!isAuthorPostImage(file)) return null
-  const optimized = await optimizeImageForUpload(file, { preset: 'post' })
-  const prepared = optimized?.file
-  if (!prepared?.size || !String(prepared.type || '').startsWith('image/') || prepared.size > HARD_MAX_IMAGE_BYTES) {
+
+  if (!file.size || file.size > MAX_SOURCE_IMAGE_BYTES) {
+    throw new Error(t('authorPostComposerSheet.photoSourceTooLarge', {
+      selected: formatBytes(file.size),
+      limit: formatBytes(MAX_SOURCE_IMAGE_BYTES),
+    }))
+  }
+
+  const optimized = await optimizeImageForUpload(file, {
+    preset: 'post',
+    maxSourceBytes: MAX_SOURCE_IMAGE_BYTES,
+  })
+  let prepared = optimized?.file
+
+  if (!prepared?.size || !POST_SUPPORTED_TYPES.has(prepared.type)) {
+    throw new Error(t('authorPostComposerSheet.couldNotPreparePhotos'))
+  }
+
+  if (prepared.size > SOFT_MAX_IMAGE_BYTES) {
+    try {
+      const adaptive = await adaptiveCompressPostImage(prepared)
+      if (adaptive?.size && POST_SUPPORTED_TYPES.has(adaptive.type) && (
+        prepared.size > HARD_MAX_IMAGE_BYTES || adaptive.size <= prepared.size * 0.9
+      )) {
+        prepared = adaptive
+      }
+    } catch {
+      if (prepared.size > HARD_MAX_IMAGE_BYTES) {
+        throw new Error(t('authorPostComposerSheet.couldNotPreparePhotos'))
+      }
+    }
+  }
+
+  if (prepared.size > HARD_MAX_IMAGE_BYTES) {
     throw new Error(t('authorPostComposerSheet.photoStillTooLarge', {
-      selected: formatBytes(prepared?.size || file.size),
+      selected: formatBytes(prepared.size),
       limit: formatBytes(HARD_MAX_IMAGE_BYTES),
     }))
   }
+
   return prepared
 }
 
