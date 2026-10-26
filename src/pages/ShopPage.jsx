@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
-import { getCountryFeature, loadCountrySettings } from '../utils/countrySettings'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
@@ -68,49 +67,18 @@ export default function ShopPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
-  const [mallAccess, setMallAccess] = useState(null)
-  const [countryRetry, setCountryRetry] = useState(0)
   const purchaseReturnTo = location.state?.returnTo || location.state?.from || ''
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
   const [wishlistCount, setWishlistCount] = useState(() => getShadowMallWishlistCount())
 
   useEffect(() => {
-    let active = true
-    loadCountrySettings({ force: countryRetry > 0 }).then(settings => {
-      if (!active) return
-      if (!settings) {
-        setMallAccess({ available: false, allowed: false, local: false })
-        return
-      }
-      setMallAccess({
-        available: true,
-        allowed: settings.countryVerified === true && getCountryFeature(settings, 'shadowMall', false) === true,
-        local: settings.countryVerified === true && settings.country === 'KH',
-      })
-    }).catch(() => {
-      if (active) setMallAccess({ available: false, allowed: false, local: false })
-    })
-    return () => { active = false }
-  }, [countryRetry])
+    if (location.state?.activeTab) setActiveTab(location.state.activeTab)
+  }, [location.state])
 
-  useEffect(() => {
-    if (!mallAccess?.available) return
-    const requested = location.state?.activeTab
-    if (requested === 'Purchase' || requested === 'Plans') {
-      setActiveTab(requested)
-    } else if (requested === 'Shadow Mall' && mallAccess.allowed) {
-      setActiveTab('Shadow Mall')
-    } else {
-      setActiveTab(mallAccess.local && mallAccess.allowed ? 'Shadow Mall' : 'Purchase')
-    }
-  }, [location.state, mallAccess])
-
-  const showMall = mallAccess?.allowed === true && activeTab === 'Shadow Mall'
-  const purchaseMode = activeTab === 'Purchase' || (activeTab === 'Shadow Mall' && !showMall)
-  const setAvailableTab = (next) => {
-    setActiveTab(next === 'Shadow Mall' && !mallAccess?.allowed ? 'Purchase' : next)
-  }
+  const showMall = activeTab === 'Shadow Mall'
+  const purchaseMode = activeTab === 'Purchase'
+  const setAvailableTab = setActiveTab
 
   useEffect(() => {
     const refreshCartCount = () => {
@@ -138,17 +106,6 @@ export default function ShopPage() {
     }
   }, [])
 
-  if (!mallAccess) {
-    return <div role="status" className="flex min-h-screen items-center justify-center bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]">Loading…</div>
-  }
-
-  if (!mallAccess.available && activeTab !== 'Purchase') {
-    return <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--shadow-bg-page)] px-6 text-center text-[var(--shadow-text-primary)]">
-      <p role="alert">{getDisplayLanguageId() === 'km' ? 'មិនអាចពិនិត្យការកំណត់ប្រទេសបានទេ។' : 'Country settings are temporarily unavailable.'}</p>
-      <button type="button" className="rounded-xl bg-[#4f46e5] px-5 py-3 font-semibold text-white" onClick={() => { setMallAccess(null); setCountryRetry(value => value + 1) }}>{getDisplayLanguageId() === 'km' ? 'សាកល្បងម្តងទៀត' : 'Retry'}</button>
-    </div>
-  }
-
   return (
     <div className="app-page min-h-screen pb-24">
       <header
@@ -164,11 +121,6 @@ export default function ShopPage() {
             onClick={() => {
               if (purchaseMode && purchaseReturnTo && !purchaseReturnTo.startsWith('/shop')) {
                 navigate(purchaseReturnTo, { replace: true })
-                return
-              }
-
-              if (purchaseMode && (!mallAccess.allowed || !mallAccess.local)) {
-                navigate('/', { replace: true })
                 return
               }
 
