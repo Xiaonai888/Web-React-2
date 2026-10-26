@@ -6,6 +6,7 @@ const FooterVisibilityContext = createContext(null)
 const MAIN_PATHS = new Set([
   '/author/page',
   '/author/page/dashboard',
+  '/author/page/ads',
   '/author/page/store',
   '/author/page/notifications',
 ])
