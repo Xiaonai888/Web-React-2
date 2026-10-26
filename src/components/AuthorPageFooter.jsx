@@ -171,11 +171,9 @@ function AuthorPageFooter() {
               type="button"
               onClick={item.action}
               className={`flex min-w-0 flex-col items-center justify-center gap-1 font-extrabold transition active:scale-95 ${
-                isBoost
-                  ? 'text-[#c08b00] dark:text-[#f6b800]'
-                  : isActive
-                    ? 'text-[#8b5cf6] dark:text-[#a78bfa]'
-                    : 'text-[#9aa1ad] dark:text-white/45'
+                isActive
+  ? 'text-[#8b5cf6] dark:text-[#a78bfa]'
+  : 'text-[#9aa1ad] dark:text-white/45'
               }`}
             >
               <span className="relative flex">
