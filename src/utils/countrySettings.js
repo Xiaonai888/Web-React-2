@@ -1,7 +1,9 @@
 const ENDPOINT = '/api/country-settings'
 const CACHE_MS = 5 * 60 * 1000
 const RETRY_MS = 20 * 1000
-const FLAGS = new Set(['app', 'physicalBooks', 'binancePay', 'payway'])
+const LEGACY_FLAGS = new Set(['app', 'physicalBooks', 'binancePay', 'payway'])
+const NEW_FLAGS = new Set(['shadowMall', 'readerMall'])
+const FLAGS = new Set([...LEGACY_FLAGS, ...NEW_FLAGS])
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ja', 'ko'])
 const TARGETS = new Set(['shadow_mall', 'diamonds'])
 
@@ -27,23 +29,29 @@ function parseCountrySettings(data) {
   const effective = data.effective
   if (effective !== null && effective !== undefined) {
     if (!effective || typeof effective !== 'object' || Array.isArray(effective)) return null
-    if (![...FLAGS].every(key => typeof effective[key] === 'boolean')) return null
+    if (![...LEGACY_FLAGS].every(key => typeof effective[key] === 'boolean')) return null
+    if ([...NEW_FLAGS].some(key => effective[key] !== undefined && typeof effective[key] !== 'boolean')) return null
     if (!LANGUAGES.has(effective.storyLanguage) || !TARGETS.has(effective.shopTarget)) return null
   }
+  const normalizedEffective = effective ? {
+    ...effective,
+    shadowMall: typeof effective.shadowMall === 'boolean' ? effective.shadowMall : data.region === 'kh',
+    readerMall: typeof effective.readerMall === 'boolean' ? effective.readerMall : data.region === 'kh',
+  } : null
   return {
     country: typeof data.country === 'string' ? data.country : 'unknown',
     region: data.region,
     countryVerified: data.countryVerified,
-    effective: effective || null,
+    effective: normalizedEffective,
     hasException: data.hasException === true,
-revision: Number(data.revision) || 0,
-paymentCountryTicket:
-  data.countryVerified === true &&
-  typeof data.paymentCountryTicket === 'string' &&
-  data.paymentCountryTicket.length <= 4096 &&
-  /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(data.paymentCountryTicket)
-    ? data.paymentCountryTicket
-    : null,
+    revision: Number(data.revision) || 0,
+    paymentCountryTicket:
+      data.countryVerified === true &&
+      typeof data.paymentCountryTicket === 'string' &&
+      data.paymentCountryTicket.length <= 4096 &&
+      /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(data.paymentCountryTicket)
+        ? data.paymentCountryTicket
+        : null,
   }
 }
 
@@ -79,11 +87,11 @@ export async function loadCountrySettings({ force = false } = {}) {
       })
       const data = response.ok ? await response.json() : null
       const result = parseCountrySettings(data)
-if (currentGeneration === generation) {
-  cached = result
-  expiresAt = Date.now() + (result ? CACHE_MS : RETRY_MS)
-  if (result) applyFirstVisitStoryLanguage(result)
-}
+      if (currentGeneration === generation) {
+        cached = result
+        expiresAt = Date.now() + (result ? CACHE_MS : RETRY_MS)
+        if (result) applyFirstVisitStoryLanguage(result)
+      }
       return result
     } catch {
       if (currentGeneration === generation) {
