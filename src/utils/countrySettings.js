@@ -26,6 +26,7 @@ function parseCountrySettings(data) {
   if (!data || data.ok !== true) return null
   if (!['kh', 'international', 'unknown'].includes(data.region)) return null
   if (typeof data.countryVerified !== 'boolean') return null
+  const policyEnabled = data.countryPolicyEnabled === true && data.countrySource === 'reader_classification'
   const effective = data.effective
   if (effective !== null && effective !== undefined) {
     if (!effective || typeof effective !== 'object' || Array.isArray(effective)) return null
@@ -42,6 +43,8 @@ function parseCountrySettings(data) {
     country: typeof data.country === 'string' ? data.country : 'unknown',
     region: data.region,
     countryVerified: data.countryVerified,
+    countryPolicyEnabled: policyEnabled,
+    countrySource: data.countrySource === 'reader_classification' ? 'reader_classification' : 'pending',
     effective: normalizedEffective,
     hasException: data.hasException === true,
     revision: Number(data.revision) || 0,
@@ -112,23 +115,32 @@ export async function loadCountrySettings({ force = false } = {}) {
   }
 }
 
+export function isCountryPolicyEnabled(settings) {
+  return settings?.countryPolicyEnabled === true && settings?.countrySource === 'reader_classification'
+}
+
 export function getCountryFeature(settings, feature, fallback = null) {
   if (!FLAGS.has(feature)) return fallback
+  if (!isCountryPolicyEnabled(settings)) return true
+  if (settings?.countryVerified !== true) return fallback
   const value = settings?.effective?.[feature]
   return typeof value === 'boolean' ? value : fallback
 }
 
 export function getCountryStoryLanguage(settings, fallback = 'km') {
+  if (!isCountryPolicyEnabled(settings)) return fallback
   const value = settings?.effective?.storyLanguage
   return LANGUAGES.has(value) ? value : fallback
 }
 
 export function getCountryShopTarget(settings, fallback = 'shadow_mall') {
+  if (!isCountryPolicyEnabled(settings)) return fallback
   const value = settings?.effective?.shopTarget
   return TARGETS.has(value) ? value : fallback
 }
 
 function applyFirstVisitStoryLanguage(settings) {
+  if (!isCountryPolicyEnabled(settings) || settings.countryVerified !== true) return
   const language = getCountryStoryLanguage(settings, null)
   if (!LANGUAGES.has(language)) return
 
@@ -154,6 +166,7 @@ export async function getPaymentCountryTicket({ force = false } = {}) {
   if (!token) return null
 
   const settings = await loadCountrySettings({ force })
+  if (!isCountryPolicyEnabled(settings)) return null
 
   if (readerToken() !== token || settings?.countryVerified !== true) {
     return null
