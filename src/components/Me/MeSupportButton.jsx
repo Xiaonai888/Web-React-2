@@ -99,6 +99,7 @@ export default function MeSupportButton() {
 
   const contacts = [
     { name: 'Shadow Admin', label: t('meSupport.chat'), href: '/support-chat', icon: 'fa-regular fa-comments', color: '#B88625', internal: true },
+    { name: 'Shadow', label: t('meSupport.facebook'), href: 'https://www.facebook.com/profile.php?id=61595012230891', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
     { name: 'ប្រលោមលោកស្នេហា', label: t('meSupport.facebook'), href: 'https://web.facebook.com/AlphaCentauri12226/', icon: 'fa-brands fa-facebook-f', color: '#1877F2' },
     { name: 'Shadow Admin', label: t('meSupport.telegram'), href: 'https://t.me/Shadow12226', icon: 'fa-brands fa-telegram', color: '#229ED9' },
   ]
