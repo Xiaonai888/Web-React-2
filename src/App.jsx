@@ -438,6 +438,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/profile',
     '/library',
     '/chat',
+    '/support-chat',
     '/event',
     '/event/writer-wednesday',
     '/event/daily-author-boost',
