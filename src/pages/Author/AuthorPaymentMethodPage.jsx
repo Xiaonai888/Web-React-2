@@ -46,6 +46,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saved: 'Payment method saved successfully.',
     choosePayout: 'Choose payout method',
     choosePayoutBody: 'Choose one method first. Then fill in the required payout details.',
+    methodDisabled: 'This payout method is currently unavailable.',
+    noPayoutMethods: 'No payout methods are currently available.',
     accountHolderName: 'Account Holder Name',
     accountHolderExample: 'Example: KEO DARIYA',
     bankName: 'Bank Name',
@@ -110,6 +112,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saved: 'បានរក្សាទុកវិធីទទួលប្រាក់ដោយជោគជ័យ។',
     choosePayout: 'ជ្រើសវិធីទទួលប្រាក់',
     choosePayoutBody: 'ជ្រើសវិធីមួយជាមុន បន្ទាប់មកបំពេញព័ត៌មានដែលត្រូវការ។',
+    methodDisabled: 'វិធីទទួលប្រាក់នេះមិនអាចប្រើបានជាបណ្ដោះអាសន្ន។',
+    noPayoutMethods: 'បច្ចុប្បន្នមិនមានវិធីទទួលប្រាក់ដែលអាចប្រើបានទេ។',
     accountHolderName: 'ឈ្មោះម្ចាស់គណនី',
     accountHolderExample: 'ឧទាហរណ៍៖ KEO DARIYA',
     bankName: 'ឈ្មោះធនាគារ',
@@ -174,6 +178,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saved: '收款方式保存成功。',
     choosePayout: '选择收款方式',
     choosePayoutBody: '先选择一种方式，然后填写所需的收款信息。',
+    methodDisabled: '此收款方式目前不可用。',
+    noPayoutMethods: '目前没有可用的收款方式。',
     accountHolderName: '账户持有人姓名',
     accountHolderExample: '示例：KEO DARIYA',
     bankName: '银行名称',
@@ -238,6 +244,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saved: '受取方法を保存しました。',
     choosePayout: '受取方法を選択',
     choosePayoutBody: 'まず1つの方法を選び、必要な受取情報を入力してください。',
+    methodDisabled: 'この受取方法は現在ご利用いただけません。',
+    noPayoutMethods: '現在利用可能な受取方法がありません。',
     accountHolderName: '口座名義',
     accountHolderExample: '例：KEO DARIYA',
     bankName: '銀行名',
@@ -302,6 +310,8 @@ registerTranslationNamespace('authorPaymentMethod', {
     saved: '지급 방법을 저장했습니다.',
     choosePayout: '지급 방법 선택',
     choosePayoutBody: '먼저 한 가지 방법을 선택한 뒤 필요한 지급 정보를 입력하세요.',
+    methodDisabled: '이 지급 방법은 현재 사용할 수 없습니다.',
+    noPayoutMethods: '현재 이용 가능한 지급 방법이 없습니다.',
     accountHolderName: '계정 소유자 이름',
     accountHolderExample: '예: KEO DARIYA',
     bankName: '은행 이름',
@@ -596,7 +606,7 @@ function MethodButton({ option, onClick }) {
   )
 }
 
-function CurrentMethodCard({ method, onView }) {
+function CurrentMethodCard({ method, onView, allowEdit = true }) {
   const { t } = useDisplayTranslation()
 
   if (!method) {
@@ -714,14 +724,18 @@ function CurrentMethodCard({ method, onView }) {
             {sub || t('authorPaymentMethod.noExtraDetail')}
           </div>
 
-          <button
-            type="button"
-            onClick={onView}
-            className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#8259ba_0%,#a56ad0_100%)] px-4 text-[10px] font-black text-white shadow-[0_7px_15px_rgba(115,76,166,0.2)] active:scale-95"
-          >
-            {t('authorPaymentMethod.viewDetails')}
-            <i className="fa-solid fa-star text-[7px] text-[#ffdf78]" />
-          </button>
+          {allowEdit ? (
+            <button
+              type="button"
+              onClick={onView}
+              className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#8259ba_0%,#a56ad0_100%)] px-4 text-[10px] font-black text-white shadow-[0_7px_15px_rgba(115,76,166,0.2)] active:scale-95"
+            >
+              {t('authorPaymentMethod.viewDetails')}
+              <i className="fa-solid fa-star text-[7px] text-[#ffdf78]" />
+            </button>
+          ) : (
+            <p className="mt-4 text-[11px] font-bold text-[#b36d39]">{t('authorPaymentMethod.methodDisabled')}</p>
+          )}
         </div>
       </div>
     </section>
@@ -1003,6 +1017,8 @@ export default function AuthorPaymentMethodPage() {
   const [success, setSuccess] = useState('')
   const [methods, setMethods] = useState([])
   const [binanceMethod, setBinanceMethod] = useState(null)
+  const [payoutMethods, setPayoutMethods] = useState(null)
+  const [payoutLoading, setPayoutLoading] = useState(true)
   const [viewMode, setViewMode] = useState('list')
   const [selectedMethod, setSelectedMethod] = useState('')
 
@@ -1025,6 +1041,44 @@ export default function AuthorPaymentMethodPage() {
   const selectedOption = METHOD_OPTIONS.find(
     (option) => option.key === selectedMethod
   )
+
+  useEffect(() => {
+    const token = getAuthToken()
+    if (!token) {
+      setPayoutLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    let active = true
+    fetch(`${API_BASE_URL}/api/public/country-settings/payout`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+      .then(async response => {
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok || result?.ok !== true || !result.payoutMethods) throw new Error('PAYOUT_SETTINGS_UNAVAILABLE')
+        return result.payoutMethods
+      })
+      .then(available => {
+        if (!active) return
+        setPayoutMethods({
+          bank_qr: available.bank_qr === true,
+          binance: available.binance === true,
+          phone: available.phone === true,
+        })
+      })
+      .catch(error => {
+        if (active && error?.name !== 'AbortError') {
+          setPayoutMethods(null)
+          setError(t('authorPaymentMethod.loadFailed'))
+        }
+      })
+      .finally(() => {
+        if (active) setPayoutLoading(false)
+      })
+    return () => { active = false; controller.abort() }
+  }, [t])
 
   useEffect(() => {
     const auth = getAuthToken()
@@ -1100,7 +1154,7 @@ export default function AuthorPaymentMethodPage() {
   }, [navigate, t])
 
   function openMethod(methodType) {
-    if (savingRef.current || qrProcessing || methodType === 'paypal') return
+    if (savingRef.current || qrProcessing || methodType === 'paypal' || payoutMethods?.[methodType] !== true) return
     if (methodType === 'binance') {
       setSelectedMethod('binance')
       setViewMode('form')
@@ -1149,6 +1203,10 @@ export default function AuthorPaymentMethodPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     if (savingRef.current || qrProcessing) return
+    if (payoutMethods?.[selectedMethod] !== true) {
+      setError(t('authorPaymentMethod.methodDisabled'))
+      return
+    }
 
     const token = getAuthToken()
     if (!token) {
@@ -1269,12 +1327,13 @@ export default function AuthorPaymentMethodPage() {
       <ErrorPopup message={error} onClose={() => setError('')} />
 
       <main className="mx-auto max-w-[760px] space-y-4 px-3 pt-4 sm:px-4">
-        {loading ? <LoadingPage /> : null}
+        {loading || payoutLoading ? <LoadingPage /> : null}
 
-        {!loading && viewMode === 'list' ? (
+        {!loading && !payoutLoading && viewMode === 'list' ? (
           <>
             <CurrentMethodCard
               method={primaryMethod}
+              allowEdit={payoutMethods?.[primaryMethod?.method_type] === true}
               onView={() => {
                 if (primaryMethod?.method_type) {
                   openMethod(primaryMethod.method_type)
@@ -1282,7 +1341,7 @@ export default function AuthorPaymentMethodPage() {
               }}
             />
 
-            {binanceMethod?.status === 'active' && primaryMethod?.method_type !== 'binance' ? (
+            {payoutMethods?.binance === true && binanceMethod?.status === 'active' && primaryMethod?.method_type !== 'binance' ? (
               <button
                 type="button"
                 onClick={() => openMethod('binance')}
@@ -1326,13 +1385,16 @@ export default function AuthorPaymentMethodPage() {
               ) : null}
 
               <div className="mt-4 grid gap-2.5">
-                {METHOD_OPTIONS.filter((option) => option.key !== 'paypal').map((option) => (
+                {METHOD_OPTIONS.filter((option) => option.key !== 'paypal' && payoutMethods?.[option.key] === true).map((option) => (
                   <MethodButton
                     key={option.key}
                     option={option}
                     onClick={() => openMethod(option.key)}
                   />
                 ))}
+                {!METHOD_OPTIONS.some((option) => option.key !== 'paypal' && payoutMethods?.[option.key] === true) && (
+                  <p className="py-3 text-center text-[12px] font-semibold text-[var(--shadow-text-secondary)]">{t('authorPaymentMethod.noPayoutMethods')}</p>
+                )}
               </div>
             </section>
 
@@ -1340,7 +1402,7 @@ export default function AuthorPaymentMethodPage() {
           </>
         ) : null}
 
-        {!loading && viewMode === 'form' && selectedMethod === 'binance' ? (
+        {!loading && !payoutLoading && payoutMethods?.binance === true && viewMode === 'form' && selectedMethod === 'binance' ? (
           <AuthorBinancePayoutForm
             onCancel={backToMethods}
             onSaved={(method) => {
@@ -1353,7 +1415,7 @@ export default function AuthorPaymentMethodPage() {
           />
         ) : null}
 
-        {!loading && viewMode === 'form' && selectedMethod !== 'binance' ? (
+        {!loading && !payoutLoading && payoutMethods?.[selectedMethod] === true && viewMode === 'form' && selectedMethod !== 'binance' ? (
           <form
             onSubmit={handleSubmit}
             className="relative overflow-hidden rounded-[29px] border border-[#d8c6e8] bg-[var(--shadow-bg-surface)] p-4 shadow-[0_12px_30px_rgba(86,61,118,0.08)]"
