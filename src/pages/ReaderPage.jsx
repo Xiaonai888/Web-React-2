@@ -889,7 +889,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 
 function getReaderToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
 function readerAuthHeaders() {
