@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'r
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
 import { getDisplayLanguageId, useDisplayTranslation } from './utils/displayLanguage'
-import { getCountryFeature, loadCountrySettings } from './utils/countrySettings'
+import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from './utils/countrySettings'
 import './i18n/appTranslations'
 import Footer from './components/Footer'
 import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
@@ -364,16 +364,24 @@ function LazyPage({ children }) {
 }
 
 function CountryLocalAppGuard({ children }) {
-  const [status, setStatus] = useState('checking')
+    const [status, setStatus] = useState('allowed')
   const [retry, setRetry] = useState(0)
 
   useEffect(() => {
     let active = true
-    setStatus('checking')
+    setStatus('allowed')
     loadCountrySettings({ force: retry > 0 }).then(settings => {
       if (!active) return
-      const allowed = getCountryFeature(settings, 'app', null)
+      if (!isCountryPolicyEnabled(settings)) {
+        setStatus('allowed')
+        return
+      }
+      const allowed = settings?.countryVerified === true
+        ? getCountryFeature(settings, 'app', null)
+        : null
       setStatus(allowed === true ? 'allowed' : allowed === false ? 'blocked' : 'unavailable')
+    }).catch(() => {
+      if (active) setStatus('allowed')
     })
     return () => { active = false }
   }, [retry])
