@@ -1799,10 +1799,16 @@ export default function DiscoverStorySection() {
   const deepLinkHandledRef =
     useRef(false)
 
-    const token = useMemo(
-    () => getAuthToken(),
-    []
-  )
+  const [token, setToken] = useState(() => getAuthToken())
+  useEffect(() => {
+    const updateToken = () => setToken(getAuthToken())
+    window.addEventListener('focus', updateToken)
+    window.addEventListener('storage', updateToken)
+    return () => {
+      window.removeEventListener('focus', updateToken)
+      window.removeEventListener('storage', updateToken)
+    }
+  }, [])
 
   const requestHeaders = useMemo(
     () =>
@@ -1866,6 +1872,15 @@ export default function DiscoverStorySection() {
     let requestRunning = false
 
     async function loadStories() {
+      // The feed requires a signed-in reader. Never request it as a guest.
+      if (!token) {
+        if (alive) {
+          setGroups([])
+          setActiveGroup(null)
+          setLoading(false)
+        }
+        return
+      }
       if (requestRunning) return
       requestRunning = true
       let hasCachedGroups = false
@@ -2008,6 +2023,7 @@ export default function DiscoverStorySection() {
   }, [
     requestHeaders,
     storyCacheKey,
+    token,
   ])
 
   const handleViewed = useCallback(
