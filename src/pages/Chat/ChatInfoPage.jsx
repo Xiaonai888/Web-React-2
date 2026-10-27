@@ -862,6 +862,11 @@ function Sheet({ title, children, onClose }) {
 function ChatInfoThemeBridge() {
   return (
     <style>{`
+      html:not(.dark) .chat-info-page,
+      html:not(.dark) .chat-info-page > header {
+        background: #ffffff !important;
+      }
+
       html.dark .chat-info-page {
         background: var(--shadow-bg-page);
         color: var(--shadow-text-primary);
