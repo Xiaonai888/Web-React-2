@@ -271,10 +271,10 @@ function themeError(code, status = 0) {
 export function chatThemeToken() {
   try {
     return (
-      localStorage.getItem("shadow_reader_token") ||
-      sessionStorage.getItem("shadow_reader_token") ||
-      ""
-    );
+  sessionStorage.getItem("shadow_reader_token") ||
+  localStorage.getItem("shadow_reader_token") ||
+  ""
+);
   } catch {
     return "";
   }
