@@ -1,0 +1,82 @@
+name: Create Shared Chat Theme from Chat Story
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  copy-shared-theme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Clone original theme without changing it
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          src = Path('src/pages/ChatStoryThemePage.jsx')
+          dest = Path('src/pages/SharedChatThemePage.jsx')
+          if dest.exists():
+              raise SystemExit('SharedChatThemePage.jsx already exists; refusing to overwrite it')
+          original = src.read_text(encoding='utf-8')
+          result = original
+          changes = [
+              (
+                  '  saveChatTheme,\n  useChatStoryTheme,\n',
+                  '  normalizeChatTheme,\n  chatThemeAccount,\n',
+              ),
+              (
+                  'export default function ChatStoryThemePage({ onBack, onApply } = {}) {',
+                  'export default function SharedChatThemePage({ onBack, onApply, themeSelection, onSaveTheme } = {}) {',
+              ),
+              (
+                  '  const saved = useChatStoryTheme();',
+                  '  // Isolated Reader/Author theme selection; never write Chat Story preferences.\n'
+                  '  const account = chatThemeAccount();\n'
+                  '  const saved = useMemo(() => ({ account, selection: normalizeChatTheme(themeSelection) }), [account, themeSelection]);',
+              ),
+              (
+                  '      const result = saveChatTheme(selection, accountRef.current);',
+                  '      if (typeof onSaveTheme !== "function" || chatThemeAccount() !== accountRef.current) throw new Error("saveFailed");\n'
+                  '      onSaveTheme(selection, accountRef.current);\n'
+                  '      const result = selection;',
+              ),
+              (
+                  '        saveChatTheme(\n'
+                  '          {\n'
+                  '            source: "preset",\n'
+                  '            id: DEFAULT_CHAT_THEME.id,\n'
+                  '            paletteId: DEFAULT_CHAT_THEME.id,\n'
+                  '          },\n'
+                  '          accountRef.current,\n'
+                  '        );',
+                  '        onSaveTheme?.({ source: "preset", id: DEFAULT_CHAT_THEME.id, paletteId: DEFAULT_CHAT_THEME.id }, accountRef.current);',
+              ),
+          ]
+          for before, after in changes:
+              if result.count(before) != 1:
+                  raise SystemExit(f'Source has changed: expected exactly one occurrence of {before!r}')
+              result = result.replace(before, after, 1)
+          if 'saveChatTheme(' in result or 'useChatStoryTheme(' in result:
+              raise SystemExit('Unsafe Chat Story preference call remains in shared version')
+          if original != src.read_text(encoding='utf-8'):
+              raise SystemExit('Original Chat Story file changed unexpectedly')
+          dest.write_text(result, encoding='utf-8')
+          print(f'Created {dest}: {len(result.splitlines())} lines; original unchanged')
+          PY
+
+      - name: Commit only the new Shared Theme file
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/SharedChatThemePage.jsx
+          git commit -m "Add isolated Shared Chat Theme copied from Chat Story"
+          git push
