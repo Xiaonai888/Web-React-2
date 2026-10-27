@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, BookOpen, Check, ChevronRight, Languages } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -106,6 +106,16 @@ export default function ReaderLanguagePage() {
   const currentLanguage = selectedSection === 'app' ? displayLanguage : storyLanguage
   const languageName = (id) => LANGUAGES.find((item) => item.id === id)?.label || LANGUAGES[0].label
   const tr = (key) => t(`readerLanguage.${key}`)
+
+  useEffect(() => {
+    const syncStoryLanguage = () => setStoryLanguage(getStoryLanguageId())
+    window.addEventListener('shadow:story-language-initialized', syncStoryLanguage)
+    window.addEventListener('storage', syncStoryLanguage)
+    return () => {
+      window.removeEventListener('shadow:story-language-initialized', syncStoryLanguage)
+      window.removeEventListener('storage', syncStoryLanguage)
+    }
+  }, [])
 
   const handleBack = () => {
     if (selectedSection) {
