@@ -512,7 +512,7 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
 
       setCountryMethods({
         payway: !policyEnabled || (verified && getCountryFeature(settings, 'payway', false) === true),
-        binancePay: policyEnabled && verified && getCountryFeature(settings, 'binancePay', false) === true,
+        binancePay: !policyEnabled || (verified && getCountryFeature(settings, 'binancePay', false) === true),
       })
     }).catch(() => {
       if (active) setCountryMethods({ payway: true, binancePay: false })
