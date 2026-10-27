@@ -946,6 +946,7 @@ export default function AuthorCheckoutPage() {
         }
       }
     }
+    if (needsDelivery) {
       const savedProfile = await saveBuyerProfile(profile)
       setBuyerProfile(current => ({ ...current, ...savedProfile }))
     }
