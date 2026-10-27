@@ -28,6 +28,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatBridge'
 import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
+import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
+import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 
 registerTranslationNamespace('authorChatRoom', {
   "en": {
@@ -196,9 +198,13 @@ function getLatestMessageCursor(
   return latestValue || String(fallback || '')
 }
 
+// Disable this to restore the original Author Chat appearance without removing legacy code.
+const ENABLE_AUTHOR_CHAT_APPEARANCE = true
+
 export default function AuthorChatRoomPage() {
   useDisplayTranslation()
   const { conversationId } = useParams()
+  const chatAppearance = useConversationAppearance(conversationId, 'author')
   const navigate = useNavigate()
   const bottomRef = useRef(null)
   const bookOrdersRef = useRef(null)
@@ -643,7 +649,9 @@ export default function AuthorChatRoomPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[var(--shadow-bg-page)]">
+    <div className="flex min-h-[100dvh] flex-col bg-[var(--shadow-bg-page)]"
+      data-author-chat-appearance={ENABLE_AUTHOR_CHAT_APPEARANCE ? 'on' : undefined}>
+      {ENABLE_AUTHOR_CHAT_APPEARANCE ? <style>{CHAT_THEME_STYLE_CSS}</style> : null}
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur-xl">
         <div className="mx-auto flex h-[64px] max-w-[720px] items-center gap-2 px-3 pt-[env(safe-area-inset-top)]">
           <button
@@ -763,7 +771,14 @@ export default function AuthorChatRoomPage() {
         </section>
       ) : null}
 
-      <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-3 pb-28 pt-4">
+      <main
+        className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-3 pb-28 pt-4"
+        data-chat-style={ENABLE_AUTHOR_CHAT_APPEARANCE ? chatAppearance.theme.styleId : undefined}
+        style={ENABLE_AUTHOR_CHAT_APPEARANCE ? {
+          ...chatAppearance.themeStyle,
+          fontFamily: chatAppearance.font.family,
+          backgroundAttachment: 'fixed',
+        } : undefined}>
         {!loading && nextBefore ? (
           <div className="mb-4 flex justify-center">
             <button
@@ -796,11 +811,23 @@ export default function AuthorChatRoomPage() {
                 }`}
               >
                 <div
+                  data-side={ENABLE_AUTHOR_CHAT_APPEARANCE ? (message.is_mine ? 'right' : 'left') : undefined}
                   className={`max-w-[82%] rounded-[18px] px-4 py-2.5 ${
                     message.is_mine
                       ? 'rounded-br-[6px] bg-[#7c3aed] text-white'
                       : 'rounded-bl-[6px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]'
-                  }`}
+                  } ${ENABLE_AUTHOR_CHAT_APPEARANCE && chatAppearance.theme.extendedStyle ? 'cs-style-bubble' : ''}`}
+                  style={ENABLE_AUTHOR_CHAT_APPEARANCE ? {
+                    color: message.is_mine ? chatAppearance.theme.outgoingText : chatAppearance.theme.text,
+                    backgroundColor: message.is_mine ? chatAppearance.theme.outgoing : chatAppearance.theme.incoming,
+                    backgroundImage: message.is_mine
+                      ? `linear-gradient(135deg, ${chatAppearance.theme.outgoing}, ${chatAppearance.theme.outgoingEnd})`
+                      : 'none',
+                    border: chatAppearance.theme.bubbleBorder,
+                    borderRadius: chatAppearance.theme.radius,
+                    boxShadow: chatAppearance.theme.bubbleShadow,
+                    fontFamily: chatAppearance.font.family,
+                  } : undefined}
                 >
                   <div className="whitespace-pre-wrap break-words text-[13px] leading-5">
                     {message.body}
@@ -811,6 +838,10 @@ export default function AuthorChatRoomPage() {
                         ? 'text-white/70'
                         : 'text-[var(--shadow-text-tertiary)]'
                     }`}
+                    style={ENABLE_AUTHOR_CHAT_APPEARANCE ? {
+                      color: message.is_mine ? chatAppearance.theme.outgoingText : chatAppearance.theme.muted,
+                      opacity: message.is_mine ? 0.75 : 1,
+                    } : undefined}
                   >
                     {formatTime(message.created_at)}
                   </div>
@@ -852,6 +883,7 @@ export default function AuthorChatRoomPage() {
                 : getDisplayText('authorChatRoom.acceptToReply')
             }
             className="max-h-28 min-h-[44px] flex-1 resize-none rounded-[20px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] leading-5 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)] disabled:opacity-60"
+            style={ENABLE_AUTHOR_CHAT_APPEARANCE ? { fontFamily: chatAppearance.font.family } : undefined}
           />
 
           <button
