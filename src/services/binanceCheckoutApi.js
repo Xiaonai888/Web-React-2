@@ -29,12 +29,16 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   let countryTicket = null
   if (path === '/checkout' && method === 'POST') {
     const settings = await loadCountrySettings()
-    if (settings?.countryVerified !== true || getCountryFeature(settings, 'binancePay', false) !== true) {
-      throw new BinanceCheckoutApiError('Binance Pay is unavailable in your country.', 'PAYMENT_METHOD_UNAVAILABLE', 403)
-    }
-    countryTicket = await getPaymentCountryTicket()
-    if (!countryTicket) {
-      throw new BinanceCheckoutApiError('Country verification is unavailable. Please try again.', 'PAYMENT_COUNTRY_REQUIRED', 403)
+    // Country restrictions are enforced by the Backend only when its policy is enabled.
+    // If the settings request fails, let the Backend make the final security decision.
+    if (settings?.countryPolicyEnabled === true) {
+      if (settings.countryVerified !== true || getCountryFeature(settings, 'binancePay', false) !== true) {
+        throw new BinanceCheckoutApiError('Binance Pay is unavailable in your country.', 'PAYMENT_METHOD_UNAVAILABLE', 403)
+      }
+      countryTicket = await getPaymentCountryTicket()
+      if (!countryTicket) {
+        throw new BinanceCheckoutApiError('Country verification is unavailable. Please try again.', 'PAYMENT_COUNTRY_REQUIRED', 403)
+      }
     }
   }
 
