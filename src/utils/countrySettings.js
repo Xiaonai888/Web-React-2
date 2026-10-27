@@ -1,3 +1,5 @@
+import { changeDisplayLanguage } from '../i18n'
+
 const ENDPOINT = '/api/country-settings'
 const CACHE_MS = 5 * 60 * 1000
 const RETRY_MS = 20 * 1000
@@ -93,7 +95,7 @@ export async function loadCountrySettings({ force = false } = {}) {
       if (currentGeneration === generation) {
         cached = result
         expiresAt = Date.now() + (result ? CACHE_MS : RETRY_MS)
-        if (result) applyFirstVisitStoryLanguage(result)
+        if (result) applyFirstVisitLanguages(result)
       }
       return result
     } catch {
@@ -128,7 +130,7 @@ export function getCountryFeature(settings, feature, fallback = null) {
 }
 
 export function getCountryStoryLanguage(settings, fallback = 'km') {
-  if (!isCountryPolicyEnabled(settings)) return fallback
+  if (settings?.countryVerified !== true || settings?.countrySource !== 'reader_classification') return fallback
   const value = settings?.effective?.storyLanguage
   return LANGUAGES.has(value) ? value : fallback
 }
@@ -139,23 +141,28 @@ export function getCountryShopTarget(settings, fallback = 'shadow_mall') {
   return TARGETS.has(value) ? value : fallback
 }
 
-function applyFirstVisitStoryLanguage(settings) {
-  if (!isCountryPolicyEnabled(settings) || settings.countryVerified !== true) return
-  const language = getCountryStoryLanguage(settings, null)
+function applyFirstVisitLanguages(settings) {
+  if (settings.countryVerified !== true || settings.countrySource !== 'reader_classification') return
+  if (!['kh', 'international'].includes(settings.region)) return
+  const language = getCountryStoryLanguage(settings, settings.region === 'kh' ? 'km' : 'en')
   if (!LANGUAGES.has(language)) return
 
   try {
-    if (localStorage.getItem('shadow_story_language') !== null) return
-    localStorage.setItem('shadow_story_language', language)
-    window.dispatchEvent(new CustomEvent('shadow:story-language-initialized', {
-      detail: { language },
-    }))
+    if (localStorage.getItem('shadow_story_language') === null) {
+      localStorage.setItem('shadow_story_language', language)
+      window.dispatchEvent(new CustomEvent('shadow:story-language-initialized', {
+        detail: { language },
+      }))
+    }
+    if (localStorage.getItem('shadow_display_language') === null) {
+      changeDisplayLanguage(language)
+    }
   } catch {}
 }
 
 if (typeof window !== 'undefined') {
   try {
-    if (localStorage.getItem('shadow_story_language') === null) {
+    if (localStorage.getItem('shadow_story_language') === null || localStorage.getItem('shadow_display_language') === null) {
       void loadCountrySettings()
     }
   } catch {}
