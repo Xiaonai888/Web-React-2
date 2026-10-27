@@ -485,7 +485,7 @@ export default function ChatStoryReader({
   const chatTheme = useChatStoryTheme()
   const { settings: tapIndicatorSettings } = useChatTapIndicator()
   const parsedContent = useMemo(() => parseChatStoryContent(content), [content])
-  const initialCount = parsedContent.messages.length && !isChatVoiceMessage(parsedContent.messages[0]) ? 1 : 0
+  const initialCount = parsedContent.messages.length && !isChatVoiceMessage(parsedContent.messages[0]) && parsedContent.messages[0]?.type !== 'notification' ? 1 : 0
   const [reading, setReading] = useState(() => ({
     content,
     count: initialCount,
@@ -546,6 +546,7 @@ export default function ChatStoryReader({
     () => visibleMessages.filter((message) => message.type !== 'notification'),
     [visibleMessages]
   )
+  const lastInlineMessage = visibleChatMessages[visibleChatMessages.length - 1] || null
   const nextMessage = parsedContent.messages[visibleCount]
   const currentMessage = parsedContent.messages[visibleCount - 1]
   const currentNotification = currentMessage?.type === 'notification'
@@ -870,7 +871,7 @@ export default function ChatStoryReader({
                 <div
                   key={`${message.id || message.type || 'message'}-${index}`}
                   ref={
-                    index === visibleMessages.length - 1 ? lastMessageRef : null
+                    message === lastInlineMessage ? lastMessageRef : null
                   }
                   data-grouped={groupedBefore ? 'true' : 'false'}
                   className="cs-style-row animate-[fadeIn_180ms_ease-out]"
