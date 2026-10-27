@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 
 export const CHAT_NOTIFICATION_DEFAULTS = Object.freeze({
   dismissMode: 'duration',
@@ -20,8 +22,9 @@ export function normalizeChatNotification(value = {}) {
   const settings = source.notification && typeof source.notification === 'object'
     ? source.notification
     : source
-  const dismissMode = validDismissModes.has(settings.dismissMode)
-    ? settings.dismissMode
+  const requestedMode = settings.dismissMode ?? settings.dismiss_mode
+  const dismissMode = validDismissModes.has(requestedMode)
+    ? requestedMode
     : CHAT_NOTIFICATION_DEFAULTS.dismissMode
 
   return {
@@ -29,8 +32,8 @@ export function normalizeChatNotification(value = {}) {
     text: String(source.text || '').slice(0, 500),
     imageUrl: String(source.imageUrl || source.image_url || ''),
     dismissMode,
-    durationSeconds: limitedNumber(settings.durationSeconds, 4, 1, 30),
-    swipeToDismiss: dismissMode === 'swipe' ? true : settings.swipeToDismiss !== false,
+    durationSeconds: limitedNumber(settings.durationSeconds ?? settings.duration_seconds, 4, 1, 30),
+    swipeToDismiss: dismissMode === 'swipe' || (settings.swipeToDismiss !== false && settings.swipe_to_dismiss !== false),
   }
 }
 
@@ -151,6 +154,11 @@ export function ChatStoryNotificationOverlay({
   useEffect(() => {
     setItems([])
     lastTrigger.current = null
+    if (previewRef.current) {
+      previewRef.current = false
+      setPreviewUrl('')
+      pauseCallbackRef.current?.(false)
+    }
   }, [scopeId])
 
   useEffect(() => {
@@ -237,17 +245,76 @@ export function ChatStoryNotificationSettings({
   const [form, setForm] = useState(() => normalizeChatNotification(value))
   const [maximum, setMaximum] = useState(() => limitedNumber(maxVisible, 2, 1, 3))
   const [previewSequence, setPreviewSequence] = useState(0)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageProgress, setImageProgress] = useState(0)
+  const [imageError, setImageError] = useState('')
+  const uploadRef = useRef(null)
+  const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    return () => uploadRef.current?.abort()
+  }, [])
+
+  useEffect(() => {
+    if (!open) uploadRef.current?.abort()
+  }, [open])
+
+  const uploadImage = async (file) => {
+    if (!file || uploadingImage) return
+    if (file.size > 8 * 1024 * 1024 || !(/image\//i.test(file.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name))) {
+      setImageError('Choose an image no larger than 8 MB.')
+      return
+    }
+    const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
+    if (!token) {
+      setImageError('Please sign in before uploading an image.')
+      return
+    }
+    const controller = new AbortController()
+    uploadRef.current = controller
+    setUploadingImage(true)
+    setImageError('')
+    setImageProgress(0)
+    try {
+      const optimized = await optimizeImageForUpload(file, { preset: 'post', maxSourceBytes: 8 * 1024 * 1024, signal: controller.signal })
+      if (controller.signal.aborted) return
+      if (!optimized?.file?.size || optimized.file.size > 5 * 1024 * 1024) {
+        throw new Error('The optimized image is larger than 5 MB. Try another image.')
+      }
+      const result = await uploadMediaWithFallback({
+        file: optimized.file,
+        category: 'chat_story_episode',
+        token,
+        signal: controller.signal,
+        onProgress: (value) => setImageProgress(Math.max(0, Math.min(100, Math.round(Number(value) || 0)))),
+      })
+      if (controller.signal.aborted) return
+      const imageUrl = String(result?.image_url || result?.imageUrl || '')
+      if (!/^https:\/\/[^\s]+$/i.test(imageUrl)) throw new Error('The image upload did not return a secure image link.')
+      setForm((current) => ({ ...current, imageUrl }))
+      setImageProgress(100)
+    } catch (error) {
+      if (!controller.signal.aborted) setImageError(error?.message || 'Image upload failed. Please try again.')
+    } finally {
+      if (uploadRef.current === controller) {
+        uploadRef.current = null
+        setUploadingImage(false)
+      }
+    }
+  }
 
   useEffect(() => {
     if (!open) return
     setForm(normalizeChatNotification(value))
     setMaximum(limitedNumber(maxVisible, 2, 1, 3))
     setPreviewSequence(0)
+    setImageError('')
+    setImageProgress(0)
   }, [open])
 
   const selected = characters.find((character) => String(character.id) === form.characterId)
   const set = (name, nextValue) => setForm((current) => ({ ...current, [name]: nextValue }))
-  const valid = Boolean(form.characterId && form.text.trim())
+  const valid = Boolean(form.characterId && form.text.trim() && !uploadingImage)
 
   if (!open || typeof document === 'undefined') return null
 
@@ -279,6 +346,29 @@ export function ChatStoryNotificationSettings({
               className="w-full resize-none rounded-[12px] border border-[var(--shadow-border,#dedee5)] bg-[var(--shadow-bg-soft,#f8f8fa)] p-3 text-[14px] outline-none focus:border-[#8b5cf6]" />
           </label>
           <div className="space-y-2">
+            <p className="text-[13px] font-semibold">Notification image · Optional</p>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+              className="hidden" onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void uploadImage(file)
+              }} />
+            {form.imageUrl ? (
+              <div className="flex items-center gap-3 rounded-xl border border-[var(--shadow-border,#e5e7eb)] p-2">
+                <img src={form.imageUrl} alt="Notification attachment preview" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                <span className="min-w-0 flex-1 text-[12px] text-[var(--shadow-text-secondary,#6b7280)]">Image attached</span>
+                <button type="button" disabled={uploadingImage} onClick={() => set('imageUrl', '')}
+                  className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[#d92d20] disabled:opacity-50">Remove</button>
+              </div>
+            ) : null}
+            <button type="button" disabled={uploadingImage} onClick={() => fileInputRef.current?.click()}
+              className="w-full rounded-xl border border-dashed border-[#a78bfa] px-3 py-3 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-50">
+              {uploadingImage ? `Uploading image... ${imageProgress}%` : form.imageUrl ? 'Change image' : 'Choose image from device'}
+            </button>
+            {uploadingImage ? <div className="h-1.5 overflow-hidden rounded-full bg-[#e5e7eb]"><div className="h-full bg-[#7c3aed] transition-all" style={{ width: `${imageProgress}%` }} /></div> : null}
+            {imageError ? <p role="alert" className="text-[12px] text-[#d92d20]">{imageError}</p> : null}
+          </div>
+          <div className="space-y-2">
             <p className="text-[13px] font-semibold">Live preview</p>
             <div className="rounded-[17px] border border-[#e9eaf0] bg-[#f2f5fa] p-3 text-[#171827] shadow-sm">
               <div className="flex items-center gap-3">
@@ -287,6 +377,7 @@ export function ChatStoryNotificationSettings({
                   <p className="truncate text-[13px] font-semibold">{selected ? characterLabel(selected) : 'Character'}</p>
                   <p className="whitespace-pre-wrap break-words text-[12px] text-[#404451]">{form.text || 'Notification message'}</p>
                 </div>
+                {form.imageUrl ? <img src={form.imageUrl} alt="Attachment" className="h-11 w-11 shrink-0 rounded-lg object-cover" /> : null}
                 <span className="self-start text-[10px] text-[#8991a3]">now</span>
               </div>
             </div>
