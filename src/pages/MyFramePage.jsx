@@ -13,6 +13,7 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('myFramePage', {
   en: {
+    generalFolder: 'General',
     title: 'My Frame', back: 'Back', subtitle: 'Choose a frame for your profile photo',
     myFrame: 'My Frame', free: 'Free Frames', premium: 'Premium Frames', freeLabel: 'Free', premiumLabel: 'Premium',
     noFrame: 'No frame selected', preview: 'Preview with your profile photo',
@@ -38,6 +39,7 @@ registerTranslationNamespace('myFramePage', {
     validUntil: 'Valid until', unavailable: 'This frame is unavailable.',
   },
   km: {
+    generalFolder: 'ទូទៅ',
     title: 'ស៊ុមរបស់ខ្ញុំ', back: 'ត្រឡប់ក្រោយ', subtitle: 'ជ្រើសរើសស៊ុមសម្រាប់រូបប្រវត្តិរូបរបស់អ្នក',
     myFrame: 'ស៊ុមរបស់ខ្ញុំ', free: 'ស៊ុមឥតគិតថ្លៃ', premium: 'ស៊ុម Premium', freeLabel: 'ឥតគិតថ្លៃ', premiumLabel: 'Premium',
     noFrame: 'មិនទាន់ជ្រើសរើសស៊ុម', preview: 'មើលស៊ុមជាមួយរូបប្រវត្តិរូបរបស់អ្នក',
@@ -63,6 +65,7 @@ registerTranslationNamespace('myFramePage', {
     validUntil: 'មានសុពលភាពដល់', unavailable: 'ស៊ុមនេះមិនអាចទិញបានទេ។',
   },
   zh: {
+    generalFolder: '常规',
     title: '我的头像框', back: '返回', subtitle: '为你的头像选择装饰框',
     myFrame: '我的头像框', free: '免费头像框', premium: 'Premium 头像框', freeLabel: '免费', premiumLabel: 'Premium',
     noFrame: '尚未选择头像框', preview: '使用你的头像预览',
@@ -88,6 +91,7 @@ registerTranslationNamespace('myFramePage', {
     validUntil: '有效期至', unavailable: '此头像框不可购买。',
   },
   ja: {
+    generalFolder: '一般',
     title: 'マイフレーム', back: '戻る', subtitle: 'プロフィール画像のフレームを選択',
     myFrame: 'マイフレーム', free: '無料フレーム', premium: 'Premium フレーム', freeLabel: '無料', premiumLabel: 'Premium',
     noFrame: 'フレームが選択されていません', preview: 'プロフィール画像でプレビュー',
@@ -113,6 +117,7 @@ registerTranslationNamespace('myFramePage', {
     validUntil: '有効期限', unavailable: 'このフレームは購入できません。',
   },
   ko: {
+    generalFolder: '일반',
     title: '내 프레임', back: '뒤로', subtitle: '프로필 사진에 사용할 프레임을 선택하세요',
     myFrame: '내 프레임', free: '무료 프레임', premium: 'Premium 프레임', freeLabel: '무료', premiumLabel: 'Premium',
     noFrame: '선택된 프레임 없음', preview: '프로필 사진으로 미리보기',
@@ -171,7 +176,7 @@ function safeImageUrl(value) {
 }
 
 function catalogCacheKey(page) {
-  return `shadow_profile_frames_catalog_v2_${page}`
+  return `shadow_profile_frames_catalog_v3_${page}`
 }
 
 function getCachedCatalog(page) {
@@ -216,6 +221,32 @@ async function loadPurchasesPage(page, token, signal) {
   const data = await response.json()
   if (data.ok !== true || !Array.isArray(data.items)) throw new Error('Invalid purchases response')
   return { items: data.items, hasMore: data.pagination?.has_more === true }
+}
+
+function groupFramesByFolder(frames) {
+  const groups = new Map()
+  for (const frame of frames) {
+    if (!frame?.id) continue
+    const folderId = typeof frame.folder_id === 'string' && frame.folder_id ? frame.folder_id : null
+    const details = frame.folder && typeof frame.folder === 'object' ? frame.folder : null
+    const key = folderId || 'general'
+    if (!groups.has(key)) {
+      const folderName = typeof details?.name === 'string' ? details.name.trim().slice(0, 80) : ''
+      const order = Number(details?.sort_order)
+      groups.set(key, {
+        id: folderId,
+        name: folderName || 'General',
+        order: Number.isSafeInteger(order) ? order : 0,
+        items: [],
+      })
+    }
+    groups.get(key).items.push(frame)
+  }
+  return [...groups.values()].sort((a, b) => {
+    if (a.id === null) return -1
+    if (b.id === null) return 1
+    return a.order - b.order || a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
+  })
 }
 
 function newPurchaseKey() {
@@ -462,9 +493,9 @@ export default function MyFramePage() {
 
   const shownFrame = previewFrame || selectedFrame
   const freeFrames = catalog.items.filter(item => item.access_tier === 'free')
-  const coinFrames = catalog.items.filter(item => item.access_tier === 'coins')
-  const diamondFrames = catalog.items.filter(item => item.access_tier === 'diamonds')
-  const premiumFrames = catalog.items.filter(item => item.access_tier === 'premium')
+  const folderGroups = useMemo(() => groupFramesByFolder(
+    catalog.items.filter(item => activeTab === 'premium' ? item.access_tier === 'premium' : item.access_tier !== 'premium')
+  ), [catalog.items, activeTab])
   const purchaseValid = item => item.valid && (item.currency === 'diamonds' || (item.expires_at && Date.parse(item.expires_at) > Date.now()))
   const validPurchases = purchases.items.filter(item => item.frame && purchaseValid(item))
   const expiredPurchases = purchases.items.filter((item, index, items) => item.frame && !purchaseValid(item) && !items.some(other => other.frame_id === item.frame_id && purchaseValid(other)) && items.findIndex(other => other.frame_id === item.frame_id) === index)
@@ -575,10 +606,31 @@ export default function MyFramePage() {
         ) : null}
         {activeTab !== 'valid' && !catalog.loading && !catalog.error && catalog.items.length > 0 ? (
           <>
-            {activeTab === 'all' && freeFrames.length ? <section><h2 className="app-title mb-3 text-[16px] font-bold">{t('myFramePage.free')}</h2>{renderFrames(freeFrames)}</section> : null}
-            {activeTab === 'all' && coinFrames.length ? <section><h2 className="app-title mb-3 text-[16px] font-bold">{t('myFramePage.coins')}</h2>{renderFrames(coinFrames)}</section> : null}
-            {activeTab === 'all' && diamondFrames.length ? <section><h2 className="app-title mb-3 text-[16px] font-bold">{t('myFramePage.diamonds')}</h2>{renderFrames(diamondFrames)}</section> : null}
-            {activeTab === 'premium' && premiumFrames.length ? <section><h2 className="app-title mb-3 text-[16px] font-bold">{t('myFramePage.premium')}</h2>{renderFrames(premiumFrames)}</section> : null}
+            {folderGroups.map(group => (
+              <section key={group.id || 'general'} className="space-y-3">
+                <h2 className="app-title border-b border-[var(--shadow-border)] pb-2 text-[16px] font-bold">
+                  {group.id === null ? t('myFramePage.generalFolder') : group.name}
+                </h2>
+                {activeTab === 'premium' ? renderFrames(group.items) : (
+                  <div className="space-y-5">
+                    {[
+                      ['free', 'free'],
+                      ['coins', 'coins'],
+                      ['diamonds', 'diamonds'],
+                    ].map(([tier, label]) => {
+                      const items = group.items.filter(frame => frame.access_tier === tier)
+                      return items.length ? (
+                        <div key={tier}>
+                          <h3 className="app-muted mb-3 text-[12px] font-semibold">{t(`myFramePage.${label}`)}</h3>
+                          {renderFrames(items)}
+                        </div>
+                      ) : null
+                    })}
+                  </div>
+                )}
+              </section>
+            ))}
+            {!folderGroups.length && !catalog.hasMore && !catalog.loadingMore ? <PageEmptyState title={t('myFramePage.emptyTitle')} body={t('myFramePage.emptyBody')} /> : null}
             {catalog.loadingMore ? <PageLoadingState rows={1} label={t('myFramePage.loadingMore')} /> : null}
             {catalog.moreError ? <PageErrorState title={t('myFramePage.failed')} actionLabel={t('myFramePage.retry')} onAction={loadMore} /> : null}
             {token && catalog.hasMore && catalog.page < AUTO_PAGE_LIMIT && !catalog.moreError ? <div ref={sentinelRef} className="h-4" aria-hidden="true" /> : null}
