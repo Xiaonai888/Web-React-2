@@ -13,6 +13,7 @@ import GiftPopup from '../components/reader/GiftPopup'
 import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
+import ChatAppearanceSettings from '../components/chat/ChatAppearanceSettings'
 import ChatStoryThemePage from './ChatStoryThemePage'
 import ChatStoryTapIndicatorPage from './ChatStoryTapIndicatorPage'
 import ChatStoryTapIndicator, { TAP_INDICATOR_STYLES } from '../components/chat-story/ChatStoryTapIndicator'
@@ -4389,6 +4390,9 @@ function ChatStoryReadingPreferences({
   )
 }
 
+const USE_SHARED_CHAT_STORY_APPEARANCE = true
+
+
 function ReaderSettingsDrawer({
   open,
   onClose,
@@ -4843,8 +4847,24 @@ const handleDragEnd = () => {
             </div>
           </SettingSection>
 
-          {isChatStory ? (
-            <SettingSection theme={readerTheme} title={
+                    {isChatStory && USE_SHARED_CHAT_STORY_APPEARANCE ? (
+            <div className="px-2 py-2">
+              <ChatAppearanceSettings
+                themeSelection={chatTheme.selection}
+                selectedFontKey={fontKey}
+                onChangeTheme={(selection) =>
+                  saveChatTheme(selection, chatTheme.account)
+                }
+                onChangeFont={setFontKey}
+                onOpenThemePage={() => setChatThemePageOpen(true)}
+                darkMode={chatTheme.theme.group === 'dark'}
+              />
+            </div>
+          ) : (
+            <>
+              {isChatStory ? (
+                <SettingSection theme={readerTheme} title={
+                  
   <button type="button" onClick={() => setChatThemePageOpen(true)}
     className="flex w-full items-center justify-between bg-transparent text-left font-bold">
     <span>{t('chatStoryThemes.title')}</span>
@@ -4910,6 +4930,8 @@ const handleDragEnd = () => {
               <i className={`fa-solid fa-chevron-right text-[12px] ${readerTheme.muted}`} />
             </button>
           </SettingSection>
+                </>
+          )}
 
          <section className="px-2 py-3 text-center">
   <button
