@@ -30,6 +30,7 @@ import {
 } from '../../services/authorChatApi'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ChatAppearanceInfoRow from '../../components/chat/ChatAppearanceInfoRow'
 
 registerTranslationNamespace('authorChatInfo', {
   "en": {
@@ -422,6 +423,10 @@ export default function AuthorChatInfoPage() {
             </section>
 
             <section className="mt-3 bg-[var(--shadow-bg-surface)]">
+              <ChatAppearanceInfoRow
+                conversationId={conversationId}
+                scope="author"
+              />
               <Action
                 icon={<BellOff size={20} />}
                 title={muted ? getDisplayText('authorChatInfo.unmute') : getDisplayText('authorChatInfo.mute')}
