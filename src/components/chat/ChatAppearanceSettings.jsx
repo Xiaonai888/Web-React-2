@@ -101,7 +101,13 @@ function FontPicker({ selectedFontKey, onSelect, onClose, darkMode }) {
   const muted = darkMode ? 'text-[#b9c0cf]' : 'text-[#686c76]'
 
   return (
-    <div className="fixed inset-0 z-[190]" role="presentation">
+    <div className="fixed inset-0 z-[190]" role="presentation"
+  onTouchStart={(e) => e.stopPropagation()}
+  onTouchMove={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+  onMouseDown={(e) => e.stopPropagation()}
+  onMouseMove={(e) => e.stopPropagation()}
+  onMouseUp={(e) => e.stopPropagation()}>
       <button type="button" className="absolute inset-0 w-full bg-black/40" onClick={onClose}
         aria-label={t('sharedChatAppearance.close')} />
       <section role="dialog" aria-modal="true" aria-label={t('sharedChatAppearance.selectFont')}
