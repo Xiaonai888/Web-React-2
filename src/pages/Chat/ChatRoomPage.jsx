@@ -61,6 +61,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatBridge'
 import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
+import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
+import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 
 registerTranslationNamespace('chatRoomPage', {
   en: {
@@ -1736,6 +1738,8 @@ function MessageBubble({
   onOpenMenu,
   onToggleSelection,
   onJumpToReply,
+  appearanceEnabled = false,
+  appearanceExtended = false,
 }) {
   const { t } = useDisplayTranslation()
   const longPressTimerRef = useRef(null)
@@ -1868,7 +1872,9 @@ function MessageBubble({
         ) : null}
 
         <div
-          className={`min-w-0 max-w-full rounded-[20px] px-4 py-2.5 shadow-sm ${
+          data-chat-bubble={message.is_deleted ? 'deleted' : message.is_mine ? 'outgoing' : 'incoming'}
+          data-side={message.is_mine ? 'right' : 'left'}
+          className={`min-w-0 max-w-full rounded-[20px] px-4 py-2.5 shadow-sm ${appearanceEnabled && appearanceExtended && !message.is_deleted ? 'cs-style-bubble' : ''} ${
             message.is_mine
               ? 'rounded-br-[6px] bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white'
               : 'rounded-bl-[6px] bg-white text-[#24242c]'
@@ -1996,11 +2002,43 @@ function MessageBubble({
   )
 }
 
+// Rollback switch: set to false to restore the original Reader Chat visuals.
+// Message sending, requests, selection, pinning and other chat features stay unchanged.
+const ENABLE_READER_CHAT_APPEARANCE = true
+
+const CHAT_ROOM_APPEARANCE_CSS = `
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble] {
+  font-family: var(--conversation-font, inherit) !important;
+  border: var(--cs-bubble-border, none) !important;
+  border-radius: var(--cs-radius, 20px) !important;
+  box-shadow: var(--cs-bubble-shadow, none) !important;
+}
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble="incoming"] {
+  color: var(--cs-text, #24242c) !important;
+  border-bottom-left-radius: var(--cs-corner, 6px) !important;
+}
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble="outgoing"] {
+  color: var(--cs-outgoing-text, #fff) !important;
+  border-bottom-right-radius: var(--cs-corner, 6px) !important;
+}
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble="incoming"]:not(.cs-style-bubble) {
+  background: var(--cs-soft, #fff) !important;
+}
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble="outgoing"]:not(.cs-style-bubble) {
+  background: linear-gradient(115deg, var(--cs-outgoing, #7c3aed), var(--cs-outgoing-end, #9b6df2)) !important;
+}
+.chat-room-page[data-chat-appearance="on"] [data-chat-bubble="outgoing"] [class*="text-white/"] {
+  color: var(--cs-outgoing-text, #fff) !important;
+  opacity: 0.75;
+}
+`
+
 export default function ChatRoomPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { conversationId } = useParams()
+  const chatAppearance = useConversationAppearance(conversationId, 'reader')
   const bottomRef = useRef(null)
   const bookOrdersRef = useRef(null)
   const textareaRef = useRef(null)
@@ -3223,7 +3261,16 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="app-page chat-room-page min-h-screen">
+    <div
+      className="app-page chat-room-page min-h-screen"
+      data-chat-appearance={ENABLE_READER_CHAT_APPEARANCE ? 'on' : undefined}
+      data-chat-style={ENABLE_READER_CHAT_APPEARANCE ? chatAppearance.theme.styleId : undefined}
+      style={ENABLE_READER_CHAT_APPEARANCE ? {
+        ...chatAppearance.themeStyle,
+        '--conversation-font': chatAppearance.font.family,
+        backgroundAttachment: 'fixed',
+      } : undefined}
+    >
 
       <style>{`
         html.dark .chat-room-page {
@@ -3391,6 +3438,9 @@ export default function ChatRoomPage() {
           color: var(--shadow-text-primary);
         }
       `}</style>
+      {ENABLE_READER_CHAT_APPEARANCE ? (
+        <style>{CHAT_THEME_STYLE_CSS + '\n' + CHAT_ROOM_APPEARANCE_CSS}</style>
+      ) : null}
       <header className="sticky top-0 z-[80] border-b border-[#e9e9ed] bg-white/95 backdrop-blur-xl">
         <div className="relative mx-auto flex h-[64px] max-w-[620px] items-center gap-3 px-3">
           {selectionMode ? (
@@ -3656,6 +3706,8 @@ export default function ChatRoomPage() {
                     onOpenMenu={openMessageMenu}
                     onToggleSelection={toggleSelection}
                     onJumpToReply={scrollToMessage}
+                    appearanceEnabled={ENABLE_READER_CHAT_APPEARANCE}
+                    appearanceExtended={Boolean(chatAppearance.theme.extendedStyle)}
                   />
                 ))
               ) : (
@@ -3729,7 +3781,11 @@ export default function ChatRoomPage() {
         ? t('chatRoomPage.waitingApproval')
         : t('chatRoomPage.messagesUnavailable')
   }
-  style={{ fontFamily: "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif" }}
+  style={{
+    fontFamily: ENABLE_READER_CHAT_APPEARANCE
+      ? chatAppearance.font.family
+      : "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif",
+  }}
   className="block max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
 />
 
