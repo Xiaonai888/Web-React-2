@@ -130,7 +130,7 @@ export function getCountryFeature(settings, feature, fallback = null) {
 }
 
 export function getCountryStoryLanguage(settings, fallback = 'km') {
-  if (!isCountryPolicyEnabled(settings) || settings?.countryVerified !== true) return fallback
+  if (settings?.countryVerified !== true || settings?.countrySource !== 'reader_classification') return fallback
   const value = settings?.effective?.storyLanguage
   return LANGUAGES.has(value) ? value : fallback
 }
@@ -142,7 +142,7 @@ export function getCountryShopTarget(settings, fallback = 'shadow_mall') {
 }
 
 function applyFirstVisitLanguages(settings) {
-  if (!isCountryPolicyEnabled(settings) || settings.countryVerified !== true) return
+  if (settings.countryVerified !== true || settings.countrySource !== 'reader_classification') return
   if (!['kh', 'international'].includes(settings.region)) return
   const language = getCountryStoryLanguage(settings, settings.region === 'kh' ? 'km' : 'en')
   if (!LANGUAGES.has(language)) return
