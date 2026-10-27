@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 import DiamondPurchaseSuccessModal from './DiamondPurchaseSuccessModal'
-import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
+import { getCountryFeature, getPaymentCountryTicket, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -507,14 +507,15 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
     loadCountrySettings({ force: retryMethods > 0 }).then(settings => {
       if (!active) return
 
+      const policyEnabled = isCountryPolicyEnabled(settings)
       const verified = settings?.countryVerified === true
 
       setCountryMethods({
-        payway: verified && getCountryFeature(settings, 'payway', false) === true,
-        binancePay: verified && getCountryFeature(settings, 'binancePay', false) === true,
+        payway: !policyEnabled || (verified && getCountryFeature(settings, 'payway', false) === true),
+        binancePay: policyEnabled && verified && getCountryFeature(settings, 'binancePay', false) === true,
       })
     }).catch(() => {
-      if (active) setCountryMethods({ payway: false, binancePay: false })
+      if (active) setCountryMethods({ payway: true, binancePay: false })
     })
 
     return () => { active = false }
@@ -866,8 +867,10 @@ export default function PurchaseSection() {
   setCreatingPayment(true)
   setToast('')
 
-  const countryTicket = await getPaymentCountryTicket()
-  if (!countryTicket) {
+  const settings = await loadCountrySettings()
+  const policyEnabled = isCountryPolicyEnabled(settings)
+  const countryTicket = policyEnabled ? await getPaymentCountryTicket() : null
+  if (policyEnabled && !countryTicket) {
     throw new Error(t('purchaseSection.methodsUnavailable'))
   }
 
@@ -875,7 +878,7 @@ export default function PurchaseSection() {
     method: 'POST',
     headers: {
       ...getHeaders(),
-      'X-Shadow-Country-Ticket': countryTicket,
+      ...(countryTicket ? { 'X-Shadow-Country-Ticket': countryTicket } : {}),
     },
     body: JSON.stringify({ package_usd: selectedPackage.package_usd }),
   })
