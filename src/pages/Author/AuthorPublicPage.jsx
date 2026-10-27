@@ -4430,11 +4430,13 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 </div>
     </section>
 
-    <AuthorPostsSection
-      author={displayAuthor}
-      onCountChange={setAuthorPostsCount}
-      onMessage={setMessage}
-    />
+    {!loading && author ? (
+  <AuthorPostsSection
+    author={author}
+    onCountChange={setAuthorPostsCount}
+    onMessage={setMessage}
+  />
+) : null}
   </div>
 ) : null}
 
