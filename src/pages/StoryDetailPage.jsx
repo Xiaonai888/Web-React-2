@@ -18,6 +18,9 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 import { enableReaderStoryPush } from '../services/readerOneSignal.service'
 
+const isValidStoryUuid = (value) =>
+  /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(String(value || '').trim())
+
 registerTranslationNamespace('storyDetailPage', {
   en: {
     adultRestrictedTitle: '18+ content',
@@ -566,7 +569,7 @@ export default function StoryDetailPage() {
     let ignore = false
 
     async function loadGiftTopFans() {
-      if (!realStoryId) {
+      if (!isValidStoryUuid(realStoryId)) {
         setGiftTopFans([])
         return
       }
@@ -626,6 +629,13 @@ export default function StoryDetailPage() {
       setAuthorFollowing(false)
       setAuthorFollowerCount(0)
       setAuthorIsOwnerPage(false)
+      if (!isValidStoryUuid(realStoryId)) {
+        setErrorCode('INVALID_STORY_ID')
+        setMessage(t('storyDetailPage.storyNotFound'))
+        setLoading(false)
+        setEpisodesLoading(false)
+        return
+      }
       const episodesPromise = fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`, {
   headers: authHeaders(),
   cache: 'no-store',
