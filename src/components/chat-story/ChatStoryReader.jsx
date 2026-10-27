@@ -11,6 +11,7 @@ import {
 } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ChatStoryTapIndicator from './ChatStoryTapIndicator'
+import { ChatStoryNotificationOverlay } from './ChatStoryNotification'
 import { useChatTapIndicator } from '../../services/chatStoryTapIndicator'
 
 registerTranslationNamespace('chatStoryReader', {
@@ -91,6 +92,9 @@ function parseChatStoryContent(content) {
       .filter((message) => {
         if (!message) return false
 
+        if (message.type === 'notification') {
+          return Boolean((message.character_id || message.characterId) && String(message.text || '').trim())
+        }
         if (message.type === 'audio' || message.type === 'voice') return isChatVoiceMessage(message)
 
         if (message.type === 'image' || message.type === 'sticker') {
@@ -109,6 +113,7 @@ function parseChatStoryContent(content) {
       characters,
       messages,
       leadCharacterId: parsed.lead_character_id || parsed.leadCharacterId || '',
+      notificationMaxVisible: Math.min(3, Math.max(1, Number(parsed.notification_settings?.max_visible || 2) || 2)),
     }
   } catch {
     return {
@@ -490,6 +495,7 @@ export default function ChatStoryReader({
   const voiceSession = useMemo(() => ({ positions: new WeakMap() }), [parsedContent])
   const [voiceSettled, setVoiceSettled] = useState({ source: null, index: -1 })
   const [userPaused, setUserPaused] = useState(false)
+  const [notificationPreviewOpen, setNotificationPreviewOpen] = useState(false)
   const [finishedSource, setFinishedSource] = useState(null)
   const [pageVisible, setPageVisible] = useState(
     () =>
@@ -536,8 +542,24 @@ export default function ChatStoryReader({
     () => parsedContent.messages.slice(0, visibleCount),
     [parsedContent, visibleCount]
   )
+  const visibleChatMessages = useMemo(
+    () => visibleMessages.filter((message) => message.type !== 'notification'),
+    [visibleMessages]
+  )
   const nextMessage = parsedContent.messages[visibleCount]
   const currentMessage = parsedContent.messages[visibleCount - 1]
+  const currentNotification = currentMessage?.type === 'notification'
+    ? {
+        eventId: `${visibleCount - 1}:${currentMessage.id || 'notification'}`,
+        characterId: currentMessage.character_id || currentMessage.characterId || '',
+        text: currentMessage.text || '',
+        imageUrl: currentMessage.image_url || currentMessage.imageUrl || '',
+        dismissMode: currentMessage.notification?.dismiss_mode || currentMessage.notification?.dismissMode || 'duration',
+        durationSeconds: currentMessage.notification?.duration_seconds ?? currentMessage.notification?.durationSeconds ?? 4,
+        swipeToDismiss: currentMessage.notification?.swipe_to_dismiss !== false &&
+          currentMessage.notification?.swipeToDismiss !== false,
+      }
+    : null
   const voiceFinished = voiceSettled.source === parsedContent && voiceSettled.index === visibleCount - 1
   const voiceWaiting = isChatVoiceMessage(currentMessage) && !voiceFinished
   const finishVoice = (message) => {
@@ -556,12 +578,13 @@ export default function ChatStoryReader({
     (!completed || finishedSource !== parsedContent) &&
     !parsedContent.errorKey &&
     parsedContent.messages.length > 0
+  const autoAdvancing = active && !notificationPreviewOpen
   const timing = useMemo(() => {
     const base = createChatTiming(currentMessage, nextMessage, autoTapDelay)
     const recording = isChatVoiceMessage(nextMessage)
     return {
       ...base,
-      reading: !currentMessage || isChatVoiceMessage(currentMessage) ? 0 : base.reading,
+      reading: !currentMessage || isChatVoiceMessage(currentMessage) ? 0 : currentMessage.type === 'notification' ? 350 : base.reading,
       typing: recording ? getChatRecordingDelay(nextMessage) : base.typing,
     }
   }, [currentMessage, nextMessage, autoTapDelay])
@@ -619,7 +642,7 @@ export default function ChatStoryReader({
   }, [parsedContent, visibleCount, completed, voiceWaiting, readMode, userPaused])
 
   useEffect(() => {
-    if (!active || voiceWaiting) return undefined
+    if (!autoAdvancing || voiceWaiting) return undefined
     if (
       cycleRef.current.source !== parsedContent ||
       cycleRef.current.index !== visibleCount
@@ -677,7 +700,7 @@ export default function ChatStoryReader({
       }
     }
   }, [
-    active,
+    autoAdvancing,
     voiceWaiting,
     parsedContent,
     visibleCount,
@@ -833,6 +856,7 @@ export default function ChatStoryReader({
         >
           <div className="mx-auto max-w-[680px]">
             {visibleMessages.map((message, index) => {
+              if (message.type === 'notification') return null
               const groupedBefore = isSameCharacterGroup(
                 visibleMessages[index - 1],
                 message
@@ -892,13 +916,14 @@ export default function ChatStoryReader({
           storyTitle={storyTitle}
           coverUrl={coverUrl}
           characters={parsedContent.characters}
-          messages={visibleMessages}
+          messages={visibleChatMessages}
           leadCharacterId={leadCharacterId}
           typingMessage={typingMessage}
           draft={draft}
           recordingMessage={recordingMessage}
           recordingElapsed={typingElapsed}
-          voicePlaybackIndex={voiceWaiting ? visibleCount - 1 : -1}
+          voicePlaybackIndex={voiceWaiting ? visibleChatMessages.length - 1 : -1}
+          voicePaused={notificationPreviewOpen}
           onVoiceEnded={finishVoice}
           onVoiceError={failVoice}
           onPause={pausePhone}
@@ -909,6 +934,13 @@ export default function ChatStoryReader({
           brightnessOpacity={brightnessOpacity}
         />
       ) : null}
+      <ChatStoryNotificationOverlay
+        notification={currentNotification}
+        characters={parsedContent.characters}
+        maxVisible={parsedContent.notificationMaxVisible || 2}
+        scopeId={parsedContent}
+        onPauseAutoChange={setNotificationPreviewOpen}
+      />
     </ChatVoiceSessionContext.Provider>
   )
 }
