@@ -52,6 +52,7 @@ import {
   setChatAutoDelete,
 } from '../../services/chatAutoDeleteApi'
 import ChatGroupCreateSheet from '../../components/chat/ChatGroupCreateSheet'
+import ChatAppearanceInfoRow from '../../components/chat/ChatAppearanceInfoRow'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -2034,8 +2035,12 @@ setAutoDeleteStatus({
         </section>
 
         <section className="mt-8 border-t border-[#ececf0] pt-2">
-          <Row
-            icon={Clock3}
+  <ChatAppearanceInfoRow
+    conversationId={conversationId}
+    scope="reader"
+  />
+  <Row
+    icon={Clock3}
             title={t('chatInfoPage.disappearingMessages')}
             subtitle={formatAutoDeleteDuration(
               autoDeleteStatus.auto_delete_seconds
