@@ -1895,8 +1895,8 @@ setAutoDeleteStatus({
   return (
     <div className="app-page chat-info-page min-h-screen">
       <ChatInfoThemeBridge />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[58px] max-w-[560px] items-center justify-between px-3">
+      <header className="sticky top-0 z-40 bg-[var(--shadow-bg-page)]">
+        <div className="mx-auto flex h-[52px] max-w-[560px] items-center justify-between px-3">
           <button
             type="button"
             onClick={() => navigate(`/chat/${conversationId}`)}
@@ -1916,7 +1916,7 @@ setAutoDeleteStatus({
           </div>
         ) : null}
 
-        <section className="flex flex-col items-center pt-6 text-center">
+        <section className="flex flex-col items-center pt-4 text-center">
           <Avatar person={person} />
           <h1 className="mt-4 max-w-full truncate text-[22px] font-semibold">
             {name}
