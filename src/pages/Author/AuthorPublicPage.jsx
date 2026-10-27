@@ -1137,7 +1137,7 @@ function normalizeAuthor(page, pageUsername, myPage = null, forceOwner = false) 
     id: author.id || '',
     user_id: author.user_id || '',
     page_name: author.page_name || author.name || getDisplayText('authorPublicPage.authorPage'),
-    page_username: author.page_username || author.username || pageUsername || 'author',
+    page_username: author.page_username || pageUsername || '',
     page_slug: author.page_slug || author.page_username || pageUsername || 'author',
     bio: author.bio || getDisplayText('authorPublicPage.noBio'),
     avatar_url: author.avatar_url || author.profile_image_url || '',
@@ -4430,7 +4430,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 </div>
     </section>
 
-    {!loading && author ? (
+    {!loading && author?.page_username ? (
   <AuthorPostsSection
     author={author}
     onCountChange={setAuthorPostsCount}
