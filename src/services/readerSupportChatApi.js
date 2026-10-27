@@ -48,6 +48,26 @@ export function sendMySupportMessage(message, requestId) {
   })
 }
 
+export function replyMySupportMessage(messageId, message, requestId) {
+  return request(`/mine/messages/${encodeURIComponent(messageId)}/reply`, {
+    method: 'POST',
+    body: { message, ...(requestId ? { request_id: requestId } : {}) },
+  })
+}
+
+export function editMySupportMessage(messageId, message) {
+  return request(`/mine/messages/${encodeURIComponent(messageId)}`, {
+    method: 'PATCH',
+    body: { message },
+  })
+}
+
+export function deleteMySupportMessage(messageId) {
+  return request(`/mine/messages/${encodeURIComponent(messageId)}`, {
+    method: 'DELETE',
+  })
+}
+
 export function markMySupportRead() {
   return request('/mine/read', { method: 'PATCH' })
 }
