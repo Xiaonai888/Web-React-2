@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { hasPendingStoryLanguageOnboarding } from './components/StoryLanguageOnboardingGate'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
@@ -416,6 +417,11 @@ function CountryLocalAppGuard({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  const skipOnboardingAdsRef = useRef(false)
+
+  if (hasPendingStoryLanguageOnboarding()) {
+    skipOnboardingAdsRef.current = true
+  }
     useEffect(() => {
     const sync = () => { void syncReaderOneSignalIdentity().catch(() => {}) }
     sync()
@@ -554,6 +560,7 @@ const readerToken =
 
 const shouldShowOpeningAds =
   Boolean(readerToken) &&
+  !skipOnboardingAdsRef.current &&
   location.pathname !== '/login' &&
   location.pathname !== '/register' &&
   location.pathname !== '/forgot-password' &&
