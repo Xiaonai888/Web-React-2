@@ -36,6 +36,7 @@ import {
   runRewardedEpisodeUnlock,
 } from '../services/rewardedAds'
 import { Share2 } from 'lucide-react'
+import SharedChatThemePage from './SharedChatThemePage'
 
 registerTranslationNamespace('readerPage', {
   "en": {
@@ -4499,8 +4500,20 @@ const handleDragEnd = () => {
   if (!open) return null
 
   if (isChatStory && chatThemePageOpen) {
-    return <ChatStoryThemePage onBack={() => setChatThemePageOpen(false)} onApply={() => setChatThemePageOpen(false)} />
-  }
+  return USE_SHARED_CHAT_STORY_APPEARANCE ? (
+    <SharedChatThemePage
+      themeSelection={chatTheme.selection}
+      onSaveTheme={(selection, account) => saveChatTheme(selection, account)}
+      onBack={() => setChatThemePageOpen(false)}
+      onApply={() => setChatThemePageOpen(false)}
+    />
+  ) : (
+    <ChatStoryThemePage
+      onBack={() => setChatThemePageOpen(false)}
+      onApply={() => setChatThemePageOpen(false)}
+    />
+  )
+}
 
   if (isChatStory && chatTapIndicatorPageOpen) {
   return (
