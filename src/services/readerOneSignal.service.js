@@ -148,3 +148,32 @@ export async function enableReaderStoryPush() {
   if (enabled) rememberPushDevice()
   return enabled
 }
+
+// Chat Push uses the existing OneSignal app, identity and web push subscription.
+// Call enableReaderChatPush only from a deliberate Reader/Author UI action.
+// Push permission is browser-wide, not a separate Chat-only OS permission.
+export async function getReaderChatPushStatus() {
+  if (!getReaderId()) return 'login_required'
+  if (typeof window === 'undefined' || !window.isSecureContext ||
+      typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    return 'unsupported'
+  }
+  if (Notification.permission === 'denied') return 'blocked'
+  if (Notification.permission !== 'granted') return 'not_enabled'
+
+  try {
+    const oneSignal = await prepareReaderStoryPush()
+    if (!oneSignal) return 'unsupported'
+    return oneSignal.Notifications.permission && oneSignal.User.PushSubscription.optedIn
+      ? 'enabled'
+      : 'not_enabled'
+  } catch {
+    return 'unavailable'
+  }
+}
+
+export async function enableReaderChatPush() {
+  // optIn requests browser permission when needed, using the existing SDK.
+  // Never initializes another OneSignal app or creates in-app notifications.
+  return enableReaderStoryPush()
+}
