@@ -417,7 +417,10 @@ function CountryLocalAppGuard({ children }) {
 
 function AppShell() {
   const location = useLocation()
-  const skipOnboardingAdsRef = useRef(false)
+  const skipOnboardingAdsRef = useRef(
+  location.pathname === '/me' &&
+  new URLSearchParams(location.search).get('language') === 'story'
+)
 
   if (hasPendingStoryLanguageOnboarding()) {
     skipOnboardingAdsRef.current = true
