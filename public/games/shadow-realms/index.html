@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
   <meta name="color-scheme" content="dark">
-  <title>Shadow Realms — Farming, Wood & Construction</title>
+  <title>Shadow Realms — Farming, Construction & Combat</title>
   <style>
     :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
     * { box-sizing:border-box }
@@ -50,6 +50,19 @@
     .sr-ui-shell .sr-wood-tool {flex:1 1 60px;min-width:0;padding:9px 5px;border-radius:9px;
       border:1px solid #71936b;background:#294934;color:#e8f5d6;font-size:11px;font-weight:750}
     body.sr-wood-targeting #game {cursor:crosshair}
+    body.sr-combat-targeting #game {cursor:crosshair}
+    .sr-ui-shell .sr-combat-tools {display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+    .sr-ui-shell .sr-combat-tools:not(.is-open) {display:none}
+    .sr-ui-shell .sr-combat-toggle {border:1px solid #a47f6e;background:#4e3435;color:#ffeadd;
+      border-radius:9px;font-weight:750;font-size:11px;padding:9px 12px;min-height:34px;margin-top:7px;width:100%}
+    .sr-ui-shell .sr-farm-mobile-actions:not(.is-combat-open) [data-combat-action] {display:none}
+    .sr-ui-shell .sr-combat-tool {flex:1 1 65px;min-width:0;min-height:34px;padding:7px 5px;
+      border:1px solid #a37969;background:#4e3435;color:#ffeadd;border-radius:9px;
+      font-size:11px;font-weight:750;touch-action:manipulation}
+    .sr-ui-shell .sr-combat-tool.is-active {background:#986045;border-color:#ebc27c}
+    .combat-stats {color:#ffd9be;border-color:rgba(235,141,96,.34)}
+    .sr-ui-shell .sr-ui-footer .sr-combat-tool:active {background:#86524a}
+    @media(max-width:760px){.combat-stats{font-size:10px}.status{max-width:calc(100% - 135px)}}
     /* Build management reuses the existing Footer. No second control system. */
     .sr-ui-shell .sr-build-tools { display:flex;flex-wrap:wrap;gap:5px;margin-top:8px }
     .sr-ui-shell .sr-build-tool { flex:1 1 68px;padding:8px 7px;border-radius:9px;border:1px solid #947b56;
@@ -113,7 +126,7 @@
     <header class="top">
       <div class="brand">
         <strong>Shadow Realms</strong>
-        <span class="stage" id="stage-label">FARM + BUILD • STAGE 1</span>
+        <span class="stage" id="stage-label">FARM • BUILD • COMBAT</span>
       </div>
       <a href="/game" class="back" id="back-link">‹ Games</a>
     </header>
@@ -122,6 +135,7 @@
       <div class="status" aria-live="polite">
         <div class="status-line" id="map-status">Choose a farmer and harvest a field.</div>
         <div class="status-line farm-stats" id="farm-stats">Fields: 6 • Ripe crops: ...</div>
+        <div class="status-line combat-stats" id="combat-stats">Combat ready · wave preparing</div>
       </div>
       <nav class="zoom-panel" aria-label="Camera controls">
         <button class="control" id="zoom-in" type="button" aria-label="Zoom in">+</button>
@@ -140,7 +154,7 @@
     // UI labels only. All gameplay state stays in this browser's memory.
     const gameText = {
       km: {
-        back:'‹ ហ្គេម',stage:'កសិកម្ម និងសំណង់',welcome:'ជ្រើសកសិករ រួចចុច Harvest និងចុចលើស្រែ',
+        back:'‹ ហ្គេម',stage:'កសិកម្ម • សំណង់ • ប្រយុទ្ធ',welcome:'ជ្រើសកសិករ រួចចុច Harvest និងចុចលើស្រែ',
         fields:'ស្រែ',ripe:'ស្រូវទុំ',carrying:'កំពុងដឹក',help:'PC: ជ្រើសកសិករ → Harvest → ចុចលើស្រែ | Mobile: Harvest → ចុចស្រែ',
         auto:'ច្រូតស្វ័យប្រវត្តិ',home:'ត្រឡប់មូលដ្ឋាន',harvest:'ច្រូត',select:'ជ្រើស',move:'ដើរ',
         noSelected:'សូមជ្រើសកសិករមុន',noField:'រកស្រែមិនឃើញ។ សូមចុចលើស្រែ',
@@ -158,9 +172,10 @@
         disabled:'សូមជ្រើសទីតាំងសាងសង់',fail:'មិនអាចបើកហ្គេមបាន',
         serve:'បើកហ្គេមតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។',
         woodChop:'កាប់ឈើ',woodAuto:'កាប់ស្វ័យប្រវត្តិ',woodHelp:'ជ្រើសកសិករ → ចុច កាប់ឈើ → ចុចលើដើមឈើ',woodAssigned:'កសិករកំពុងកាប់ឈើ',woodDelivered:'បានដឹកឈើមកមូលដ្ឋាន',woodNotFound:'រកដើមឈើមិនឃើញនៅទីនេះ',woodNoPath:'មិនអាចទៅកាប់ឈើទីនោះបាន',woodTrees:'ដើមឈើ',woodWorkers:'កំពុងកាប់',woodCarry:'ឈើកំពុងដឹក',
+        combat:'ប្រយុទ្ធ',attack:'វាយសត្រូវ',attackMove:'ដើរវាយ',guard:'ការពារមូលដ្ឋាន',stopFight:'ឈប់',guardTrain:'បំពាក់អាវុធ',archerTrain:'ធ្នូ',nextWave:'វគ្គបន្ទាប់',attackHelp:'ចុចលើសត្រូវពណ៌ក្រហម',attackMoveHelp:'ចុចលើដីដើម្បីដើរវាយ',combatSent:'បានបញ្ជាឱ្យវាយ',combatGuard:'កំពុងការពារមូលដ្ឋាន',combatStop:'បានបញ្ឈប់',combatPoor:'ស្រូវ ឬឈើមិនគ្រប់',combatTrain:'បានបំពាក់អាវុធ',combatAlready:'បានបំពាក់រួច',combatWave:'រលកសត្រូវ',combatVictory:'ឈ្នះហើយ!',combatDefeat:'ចាញ់ហើយ — កសិករស្លាប់អស់',combatPending:'វគ្គកំពុងដំណើរការ',combatNoEnemy:'រកសត្រូវមិនឃើញ',combatNoUnit:'សូមជ្រើសកសិករដែលនៅរស់',
       },
       en: {
-        back:'‹ Games',stage:'FARM + BUILD • STAGE 1',welcome:'Select a farmer → Harvest → click a rice field',
+        back:'‹ Games',stage:'FARM • BUILD • COMBAT',welcome:'Select a farmer → Harvest → click a rice field',
         fields:'Fields',ripe:'Ripe',carrying:'Carrying',help:'PC: select farmer → Harvest → click field | Mobile: Harvest → tap field',
         auto:'Auto Harvest',home:'Return Home',harvest:'Harvest',select:'Select',move:'Move',
         noSelected:'Select a farmer first',noField:'No rice field here — click on a field',
@@ -177,9 +192,10 @@
         houses:'Houses',barns:'Barns',sites:'Building',capacity:'Capacity',disabled:'Choose where to build',fail:'Unable to start the game',
         serve:'Open the game over HTTP/HTTPS, not directly as a file:// URL.',
         woodChop:'Chop Tree',woodAuto:'Auto Wood',woodHelp:'Select farmer → Chop Tree → click a tree',woodAssigned:'Farmers gathering wood',woodDelivered:'Wood delivered to base',woodNotFound:'No tree at that point',woodNoPath:'No reachable tree for the selected farmer',woodTrees:'Trees',woodWorkers:'Woodcutters',woodCarry:'Logs carried',
+        combat:'Combat',attack:'Attack',attackMove:'Attack Move',guard:'Guard Base',stopFight:'Stop',guardTrain:'Train Guard',archerTrain:'Train Archer',nextWave:'Next Wave',attackHelp:'Click a red enemy to attack',attackMoveHelp:'Click ground to attack-move',combatSent:'Attack order issued',combatGuard:'Guarding base',combatStop:'Stopped',combatPoor:'Not enough rice or wood',combatTrain:'Unit upgraded',combatAlready:'Already trained',combatWave:'Wave',combatVictory:'VICTORY!',combatDefeat:'DEFEAT — all farmers lost',combatPending:'Wave already in progress',combatNoEnemy:'No enemy at this point',combatNoUnit:'Select living farmers',
       },
       zh: {
-        back:'‹ 游戏',stage:'稻田与建造',welcome:'选择农民 → 收割 → 点击稻田',
+        back:'‹ 游戏',stage:'农业 • 建造 • 战斗',welcome:'选择农民 → 收割 → 点击稻田',
         fields:'稻田',ripe:'成熟',carrying:'携带',help:'选择农民后点击收割并点选稻田',
         auto:'自动收割',home:'返回基地',harvest:'收割',select:'选择',move:'移动',
         noSelected:'请先选择农民',noField:'此处没有稻田，请点击稻田',
@@ -196,9 +212,10 @@
         houses:'房屋',barns:'仓库',sites:'施工中',capacity:'人口上限',disabled:'请选择建造位置',fail:'游戏启动失败',
         serve:'请使用网站的 HTTP/HTTPS 地址打开，不能直接使用 file://。',
         woodChop:'砍树',woodAuto:'自动伐木',woodHelp:'选择农民 → 砍树 → 点击树木',woodAssigned:'农民开始伐木',woodDelivered:'木材已运回基地',woodNotFound:'这里没有树木',woodNoPath:'没有可到达的树木',woodTrees:'树木',woodWorkers:'伐木工',woodCarry:'携带木材',
+        combat:'战斗',attack:'攻击',attackMove:'进攻移动',guard:'守卫基地',stopFight:'停止',guardTrain:'训练卫兵',archerTrain:'训练弓手',nextWave:'下一波',attackHelp:'点击红色敌人',attackMoveHelp:'点击地面进攻',combatSent:'攻击命令已发出',combatGuard:'正在守卫基地',combatStop:'已停止',combatPoor:'粮食或木材不足',combatTrain:'训练完成',combatAlready:'已训练',combatWave:'敌人波次',combatVictory:'胜利！',combatDefeat:'失败，所有农民已阵亡',combatPending:'当前波次进行中',combatNoEnemy:'没有敌人',combatNoUnit:'选择存活的农民',
       },
       ja: {
-        back:'‹ ゲーム',stage:'農業と建築',welcome:'農民を選択 → 収穫 → 水田をクリック',
+        back:'‹ ゲーム',stage:'農業 • 建築 • 戦闘',welcome:'農民を選択 → 収穫 → 水田をクリック',
         fields:'田んぼ',ripe:'成熟',carrying:'運搬中',help:'農民を選択し、収穫を押して水田をクリック',
         auto:'自動収穫',home:'拠点へ戻る',harvest:'収穫',select:'選択',move:'移動',
         noSelected:'最初に農民を選択してください',noField:'ここには田んぼがありません',
@@ -215,9 +232,10 @@
         houses:'家',barns:'倉庫',sites:'建築中',capacity:'人数上限',disabled:'建築場所を選んでください',fail:'ゲームを起動できません',
         serve:'file:// ではなく、HTTP/HTTPS のサイトURLから開いてください。',
         woodChop:'木を伐る',woodAuto:'自動伐採',woodHelp:'農民を選択 → 木を伐る → 木をクリック',woodAssigned:'木材を集めています',woodDelivered:'木材を拠点に運びました',woodNotFound:'ここに木がありません',woodNoPath:'到達できる木がありません',woodTrees:'木',woodWorkers:'伐採中',woodCarry:'運搬中の木材',
+        combat:'戦闘',attack:'攻撃',attackMove:'攻撃移動',guard:'拠点防衛',stopFight:'停止',guardTrain:'衛兵訓練',archerTrain:'弓兵訓練',nextWave:'次の波',attackHelp:'赤い敵を選択して攻撃',attackMoveHelp:'地面を選んで攻撃移動',combatSent:'攻撃命令を出しました',combatGuard:'拠点を防衛中',combatStop:'停止しました',combatPoor:'米か木材が不足',combatTrain:'訓練完了',combatAlready:'訓練済み',combatWave:'敵の波',combatVictory:'勝利！',combatDefeat:'敗北：農民が全滅',combatPending:'ウェーブ進行中',combatNoEnemy:'敵が見つかりません',combatNoUnit:'生存中の農民を選択',
       },
       ko: {
-        back:'‹ 게임',stage:'농사와 건설',welcome:'농부 선택 → 수확 → 논 클릭',
+        back:'‹ 게임',stage:'농업 • 건설 • 전투',welcome:'농부 선택 → 수확 → 논 클릭',
         fields:'논',ripe:'익은 벼',carrying:'운반',help:'농부를 선택하고 수확 버튼을 누른 뒤 논을 누르세요',
         auto:'자동 수확',home:'기지 복귀',harvest:'수확',select:'선택',move:'이동',
         noSelected:'농부를 먼저 선택하세요',noField:'여기에는 논이 없습니다',
@@ -234,6 +252,7 @@
         houses:'집',barns:'창고',sites:'건설 중',capacity:'인구 상한',disabled:'건설할 위치를 선택하세요',fail:'게임을 시작할 수 없습니다',
         serve:'file:// 대신 HTTP/HTTPS 웹사이트 URL에서 실행하세요.',
         woodChop:'나무 베기',woodAuto:'자동 벌목',woodHelp:'농부 선택 → 나무 베기 → 나무 터치',woodAssigned:'나무를 베고 있습니다',woodDelivered:'목재를 기지로 운반했습니다',woodNotFound:'여기에 나무가 없습니다',woodNoPath:'갈 수 있는 나무가 없습니다',woodTrees:'나무',woodWorkers:'벌목 중',woodCarry:'운반 목재',
+        combat:'전투',attack:'공격',attackMove:'공격 이동',guard:'기지 수비',stopFight:'정지',guardTrain:'경비 훈련',archerTrain:'궁수 훈련',nextWave:'다음 웨이브',attackHelp:'빨간 적을 선택하세요',attackMoveHelp:'이동할 지점을 선택하세요',combatSent:'공격 명령을 내렸습니다',combatGuard:'기지 방어 중',combatStop:'중지했습니다',combatPoor:'쌀 또는 목재 부족',combatTrain:'훈련 완료',combatAlready:'이미 훈련됨',combatWave:'적 웨이브',combatVictory:'승리!',combatDefeat:'패배 — 농부 전멸',combatPending:'웨이브 진행 중',combatNoEnemy:'적이 없습니다',combatNoUnit:'살아있는 농부를 선택하세요',
       }
     };
     const shortLang = (navigator.language || 'km').toLowerCase().split('-')[0];
@@ -254,7 +273,7 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -263,6 +282,11 @@
         import('./world/RiceSystem.js'),
         import('./buildings/ConstructionSystem.js'),
         import('./world/WoodSystem.js'),
+        import('./combat/HealthSystem.js'),
+        import('./combat/ProjectileSystem.js'),
+        import('./combat/CombatSystem.js'),
+        import('./combat/EnemyAI.js'),
+        import('./combat/WaveSystem.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -272,6 +296,11 @@
       const { RiceSystem } = riceLib;
       const { ConstructionSystem, BUILDING_TYPES } = constructionLib;
       const { WoodSystem } = woodLib;
+      const { HealthSystem } = healthLib;
+      const { ProjectileSystem } = projectileLib;
+      const { CombatSystem } = combatLib;
+      const { EnemyAI } = enemyLib;
+      const { WaveSystem } = waveLib;
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -301,6 +330,27 @@
           if (event==='deposited') message(`${tr.woodDelivered}: +${detail.amount}`);
         },
       });
+      // One shared unit roster: farmers + enemy Chibi. All combat stays in RAM.
+      let enemyAI = null;
+      let battleOver = null;
+      let combatTargeting = null;
+      const allUnits = () => [...farmers, ...(enemyAI?.getUnits() || [])];
+      const health = new HealthSystem({getUnits:allUnits,onEvent:(event,info)=>{
+        if (event === 'death' && info.unit?.team === 'blue') {
+          jobs.delete(info.unit.id);
+          wood.cancel(info.unit.id,{stop:false});
+          construction.removeBuilderFromAll(info.unit.id);
+        }
+      }});
+      const projectiles = new ProjectileSystem({health,map,getUnits:allUnits});
+      const combat = new CombatSystem({health,projectiles,navigation:route,getUnits:allUnits,autoDefend:true});
+      enemyAI = new EnemyAI({map,navigation:route,combat,getPlayerUnits:()=>farmers.filter(f=>f.alive)});
+      const waves = new WaveSystem({enemyAI,totalWaves:6,firstDelay:23,restSeconds:14,
+        baseEnemies:3,extraPerWave:2,maxConcurrent:20,
+        onEvent:(event,info)=>{
+          if (event==='wave_started') message(`${tr.combatWave} ${info.wave}/${info.totalWaves}`);
+          if (event==='victory') {battleOver='victory';message(tr.combatVictory);}
+        }});
       let woodTargeting = false;
       let selectedBuildingId = null;
       const buildingAt = point => construction.getBuildingAt(point);
@@ -308,6 +358,7 @@
 
       const statusNode = document.getElementById('map-status');
       const farmStats = document.getElementById('farm-stats');
+      const battleStats = document.getElementById('combat-stats');
       const footer = new CommandFooter({ root:document.body }).mount();
       let farmerNumber = 0;
       let selection;
@@ -333,6 +384,27 @@
         for (const [action,label] of [['chopWood',tr.woodChop],['autoWood',tr.woodAuto]]) {
           const button=document.createElement('button');
           button.type='button';button.dataset.action=action;button.className='sr-wood-tool';
+          button.textContent=label;tools.appendChild(button);
+        }
+        farmerGroup.appendChild(tools);
+      }
+
+      // Combat uses the SAME CommandFooter as farming/construction.
+      if (farmerGroup) {
+        const toggle=document.createElement('button');toggle.type='button';
+        toggle.dataset.action='combatMenu';toggle.className='sr-combat-toggle';
+        toggle.textContent=`⚔ ${tr.combat}`;farmerGroup.appendChild(toggle);
+      }
+      if (farmerGroup) {
+        const tools=document.createElement('div');
+        tools.className='sr-combat-tools';
+        for (const [action,label] of [
+          ['attackTarget',tr.attack],['attackMove',tr.attackMove],['guardBase',tr.guard],
+          ['stopFight',tr.stopFight],['trainGuard',`${tr.guardTrain} (10🌾 10🪵)`],
+          ['trainArcher',`${tr.archerTrain} (15🌾 15🪵)`],['nextWave',tr.nextWave],
+        ]) {
+          const button=document.createElement('button');button.type='button';
+          button.dataset.action=action;button.className='sr-combat-tool';
           button.textContent=label;tools.appendChild(button);
         }
         farmerGroup.appendChild(tools);
@@ -379,7 +451,10 @@
         for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer'],
           ['ghostHouse',tr.house],['ghostBarn',tr.barn],['cancelBuild',tr.cancel],
           ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish],
-          ['chopWood',tr.woodChop],['autoWood',tr.woodAuto]]) {
+          ['chopWood',tr.woodChop],['autoWood',tr.woodAuto],
+          ['combatMenu',`⚔ ${tr.combat}`],['attackTarget',tr.attack],['attackMove',tr.attackMove],['guardBase',tr.guard],
+          ['stopFight',tr.stopFight],['trainGuard',tr.guardTrain],['trainArcher',tr.archerTrain],
+          ['nextWave',tr.nextWave]]) {
           const button = document.createElement('button');
           button.type = 'button';
           button.dataset.action = action;
@@ -400,12 +475,19 @@
         }
         const buildings=construction.getSummary();
         const lumber=wood.getSummary();
+        const battle=waves.getSummary();
+        const allyAlive=farmers.filter(f=>f.alive).length;
         const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total}` +
           ` · ${tr.carrying}: ${carry} · ${tr.houses}: ${buildings.houses}` +
           ` · ${tr.barns}: ${buildings.barns} · ${tr.sites}: ${buildings.sites}` +
           ` · ${tr.capacity}: ${farmers.length}/${resources.populationCapacity}` +
           ` · ${tr.woodTrees}: ${lumber.alive}/${lumber.trees}` +
           ` · ${tr.woodWorkers}: ${lumber.workers} · ${tr.woodCarry}: ${lumber.carried}`;
+        const status = battleOver==='defeat' ? tr.combatDefeat :
+          battleOver==='victory' ? tr.combatVictory :
+          `${tr.combatWave} ${battle.wave}/${battle.totalWaves} · ${battle.state==='preparing'?`${battle.countdown}s`:
+          battle.state} · Enemies: ${enemyAI.getUnits().length} · Allies: ${allyAlive}`;
+        if (battleStats.textContent !== status) battleStats.textContent=status;
         if (line !== lastSummary) {
           farmStats.textContent = line;
           lastSummary = line;
@@ -437,12 +519,96 @@
           if (job) { job.phase='seek';job.plantId=null;job.timer=1.5; }
           message(tr.noRoute);
         };
+        farmer.isCivilian = true;
         farmers.push(farmer);
         syncHud();
         return farmer;
       }
 
+      const stopCombatTarget = () => {
+        combatTargeting=null;
+        document.body.classList.remove('sr-combat-targeting');
+        for (const btn of footer.nodes.shell.querySelectorAll('.sr-combat-tool')) btn.classList.remove('is-active');
+      };
+      const releaseForCombat = units => {
+        for (const unit of units) {
+          wood.cancel(unit.id,{stop:false});
+          jobs.delete(unit.id);
+          construction.removeBuilderFromAll(unit.id);
+          unit.setHarvestAnimation(false);
+          combat.orderStop([unit.id]);
+        }
+      };
+      // Simple reusable chibi guard/archer painter. Does not mutate Farmer.js.
+      function renderFighter(ctx,unit) {
+        const archer=unit.attackType==='ranged';
+        const motion=unit.state==='walking'?Math.sin(unit.motionTime)*4:0;
+        ctx.save();ctx.translate(0,unit.state==='walking'?-Math.abs(motion)*.24:0);
+        ctx.strokeStyle='#38362d';ctx.lineWidth=6;ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(-6,-15);ctx.lineTo(-6+motion,-1);
+        ctx.moveTo(6,-15);ctx.lineTo(6-motion,-1);ctx.stroke();
+        ctx.fillStyle=archer?'#507b50':'#4577a5';ctx.fillRect(-12,-37,24,24);
+        ctx.fillStyle='#d9b57e';ctx.fillRect(-12,-17,24,5);
+        ctx.fillStyle='#f1c491';ctx.beginPath();ctx.arc(0,-47,15,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#2e3639';ctx.fillRect(-6,-49,3,4);ctx.fillRect(4,-49,3,4);
+        ctx.fillStyle=archer?'#4c6138':'#777b83';
+        ctx.fillRect(-17,-63,34,7);ctx.fillRect(-12,-69,24,8);
+        ctx.strokeStyle=archer?'#c6944e':'#d0d5d8';ctx.lineWidth=3;
+        ctx.beginPath();if (archer) ctx.arc(18,-31,17,-1.5,1.5);
+        else {ctx.moveTo(16,-22);ctx.lineTo(19,-54);}
+        ctx.stroke();ctx.restore();
+      }
+      function trainSelected(kind) {
+        const chosen=selectedFarmers().filter(f=>f.alive && !f.combatTraining);
+        if (!chosen.length) {message(tr.combatAlready);return;}
+        const cost=kind==='ranged'?{rice:15,wood:15}:{rice:10,wood:10};
+        const available=construction.getResources();
+        let count=Math.min(chosen.length,Math.floor(available.rice/cost.rice),Math.floor(available.wood/cost.wood));
+        if (!count) {message(tr.combatPoor);return;}
+        if (battleOver) {message(tr.combatPending);return;}
+        const riceBefore=available.rice,woodBefore=available.wood;
+        if (!rice.setStorageRice(riceBefore-count*cost.rice)) {message(tr.combatPoor);return;}
+        if (!construction.setWood(woodBefore-count*cost.wood)) {
+          rice.setStorageRice(riceBefore);message(tr.combatPoor);return;
+        }
+        for (const farmer of chosen.slice(0,count)) {
+          farmer.combatTraining=kind;
+          farmer.isCivilian=false;
+          farmer.attackType=kind;
+          farmer.attackRange=kind==='ranged'?240:45;
+          farmer.attackDamage=kind==='ranged'?17:17;
+          farmer.attackCooldown=kind==='ranged'?1.35:.83;
+          farmer.aggroRange=kind==='ranged'?280:155;
+          farmer.name=(kind==='ranged'?'Archer ':'Guard ')+farmer.id.split('-').pop();
+          farmer.renderer=renderFighter;
+        }
+        selection.syncFooter();syncHud();message(`${tr.combatTrain}: ${count}`);
+      }
+      function orderCombat(type,units,point=null,targetId=null) {
+        const eligible=units.filter(f=>f.alive);
+        if (!eligible.length) {message(tr.combatNoUnit);return false;}
+        releaseForCombat(eligible);
+        const ids=eligible.map(f=>f.id);
+        const count=type==='attack' ? combat.orderAttack(ids,targetId):
+          type==='attackMove' ? combat.orderAttackMove(ids,point):
+          combat.orderGuard(ids,home,{radius:340});
+        message(count?type==='guard'?tr.combatGuard:tr.combatSent:tr.combatNoEnemy);
+        return count>0;
+      }
+      const enemyAtScreen=point=>{
+        let best=null,bestDistance=Infinity;
+        for (const unit of enemyAI.getUnits()) {
+          const p=camera.worldToScreen(unit.x,unit.y);
+          const d=dist(p,point);
+          if (d<Math.max(22,unit.radius*camera.zoom+13) && d<bestDistance) {
+            best=unit;bestDistance=d;
+          }
+        }
+        return best;
+      };
       function manualMove(units,point) {
+        stopCombatTarget();
+        combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return;}
         let success=0;
         const cols=Math.ceil(Math.sqrt(units.length));
@@ -548,6 +714,7 @@
       }
 
       function startHarvest(farmersToSend,point) {
+        stopCombatTarget();combat.orderStop(farmersToSend.map(u=>u.id));
         if (!farmersToSend.length) {message(tr.noSelected);return;}
         const field=chooseField(point,false);
         if (!field) {message(tr.noField);return;}
@@ -565,6 +732,7 @@
       }
 
       function autoHarvest(units) {
+        stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return;}
         const viable=rice.getFields().filter(field=>
           field.x<map.width*.5 && field.plants.some(p=>rice.isRipe(p)));
@@ -582,6 +750,7 @@
       }
 
       function runJob(farmer,dt) {
+        if (!farmer.alive) return;
         const job=jobs.get(farmer.id);
         if (!job) {
           if (farmer.woodCarry>0 && dist(farmer,home)<=wood.config.depositRange && !wood.jobs.has(farmer.id)) {
@@ -632,6 +801,7 @@
 
       // Only one placement preview exists; construction/harvest/move never overlap.
       function beginBuild(type) {
+        stopCombatTarget();
         woodTargeting=false;document.body.classList.remove('sr-wood-targeting');
         if (!selectedFarmers().length) {message(tr.needBuilder);return;}
         if (!construction.canAfford(type)) {message(tr.buildPoor);return;}
@@ -658,6 +828,7 @@
           return;
         }
         if (!construction.canAfford(construction.preview.type)) {message(tr.buildPoor);return;}
+        combat.orderStop(units.map(u=>u.id));
         const result=construction.confirmPlacement(units.map(u=>u.id));
         if (!result.ok) {message(constructionError(result.reason));return;}
         for (const unit of units) {
@@ -688,6 +859,7 @@
         if (!site || site.state!=='construction') {message(tr.needBuilding);return;}
         const chosen=selectedFarmers();
         if (!chosen.length) {message(tr.needBuilder);return;}
+        combat.orderStop(chosen.map(u=>u.id));
         const result=construction.assignBuilders(site.id,chosen.map(u=>u.id));
         if (!result.ok) {message(constructionError(result.reason));return;}
         for (const unit of chosen) {wood.cancel(unit.id,{stop:false});jobs.delete(unit.id);}
@@ -710,6 +882,7 @@
       }
 
       function orderWood(units, point=null) {
+        stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return false;}
         const ids=units.map(unit=>unit.id);
         const result=wood.assign(ids,point,{auto:true});
@@ -718,6 +891,37 @@
       }
 
       function actionHandler(action) {
+        if (action==='combatMenu') {
+          footer.nodes.shell.querySelector('.sr-combat-tools')?.classList.toggle('is-open');
+          mobilePad?.querySelector('.sr-farm-mobile-actions')?.classList.toggle('is-combat-open');
+          return;
+        }
+        if (action==='attackTarget'||action==='attackMove') {
+          if (!selectedFarmers().some(f=>f.alive)) {message(tr.combatNoUnit);return;}
+          if (construction.preview) stopBuild();
+          stopWoodTarget();
+          combatTargeting=action==='attackTarget'?'attack':'attackMove';
+          selection.setMode('select');selection.setTouchMode('select');
+          document.body.classList.add('sr-combat-targeting');
+          for (const btn of footer.nodes.shell.querySelectorAll('.sr-combat-tool'))
+            btn.classList.toggle('is-active',btn.dataset.action===action);
+          message(combatTargeting==='attack'?tr.attackHelp:tr.attackMoveHelp);
+          return;
+        }
+        if (action==='guardBase') {stopCombatTarget();orderCombat('guard',selectedFarmers());return;}
+        if (action==='stopFight') {
+          stopCombatTarget();const chosen=selectedFarmers();
+          if (!chosen.length) {message(tr.combatNoUnit);return;}
+          releaseForCombat(chosen);message(tr.combatStop);return;
+        }
+        if (action==='trainGuard'||action==='trainArcher') {
+          trainSelected(action==='trainArcher'?'ranged':'melee');return;
+        }
+        if (action==='nextWave') {
+          if (battleOver) {message(tr.combatPending);return;}
+          if (!waves.startNextWave()) {message(tr.combatPending);return;}
+          message(`${tr.combatWave} ${waves.wave}/${waves.totalWaves}`);return;
+        }
         if (action==='chopWood') {
           if (!selectedFarmers().length) {message(tr.noSelected);return;}
           if (construction.preview) stopBuild();
@@ -751,6 +955,7 @@
           const chosen=selectedFarmers();
           if (!chosen.length) {message(tr.noSelected);return;}
           stopWoodTarget();
+          combat.orderStop(chosen.map(u=>u.id));
           for (const farmer of chosen) {
             wood.cancel(farmer.id,{stop:false});
             jobs.delete(farmer.id);construction.removeBuilderFromAll(farmer.id);
@@ -771,6 +976,14 @@
         }
         construction.update(dt);
         wood.update(dt);
+        enemyAI.update(dt);
+        combat.update(dt);
+        projectiles.update(dt);
+        health.update(dt);
+        waves.update(dt);
+        if (!battleOver && !farmers.some(f=>f.alive)) {
+          battleOver='defeat';waves.stop();message(tr.combatDefeat);
+        }
         hudElapsed+=dt;
         if (hudElapsed>=.25) {hudElapsed=0;syncHud();}
       };
@@ -780,7 +993,10 @@
         rice.drawCrops(ctx,currentCamera);
         construction.drawBuildings(ctx,currentCamera);
         wood.draw(ctx,currentCamera);
-        for (const farmer of [...farmers].sort((a,b)=>a.y-b.y)) farmer.draw(ctx,currentCamera);
+        for (const unit of allUnits().filter(u=>u.alive).sort((a,b)=>a.y-b.y)) unit.draw(ctx,currentCamera);
+        projectiles.draw(ctx,currentCamera);
+        health.draw(ctx,currentCamera,{showFull:false});
+        combat.draw(ctx,currentCamera);
         construction.drawPreview(ctx,currentCamera);
       };
 
@@ -797,7 +1013,7 @@
       game.onWorldPointer=event=>{
         const isSelect=event.kind==='select' && selection?.mode==='select';
         const isTap=event.kind==='tap' && selection?.touchMode==='select';
-        if (!isSelect && !isTap || woodTargeting) return;
+        if ((!isSelect && !isTap) || woodTargeting || combatTargeting) return;
         const site=buildingAt(event.world);
         if (site) {
           selectedBuildingId=site.id;
@@ -822,6 +1038,21 @@
       // selection without changing any independent, existing module.
       const normalWorldPointer=selection.handleWorldPointer.bind(selection);
       selection.handleWorldPointer=event=>{
+        if (combatTargeting && ['select','tap','command'].includes(event.kind)) {
+          const selected=selectedFarmers();
+          const enemy=enemyAtScreen(event.screen);
+          if (combatTargeting==='attack' && !enemy) {message(tr.combatNoEnemy);return;}
+          if (combatTargeting==='attackMove' && !map.isWalkable(event.world.x,event.world.y,14)) {
+            message(tr.noRoute);return;
+          }
+          if (orderCombat(combatTargeting,selected,event.world,enemy?.id)) stopCombatTarget();
+          return;
+        }
+        if (event.kind==='command') {
+          const enemy=enemyAtScreen(event.screen);
+          const units=selectedFarmers();
+          if (enemy && units.length) {orderCombat('attack',units,event.world,enemy.id);return;}
+        }
         if (woodTargeting && (event.kind==='select'||event.kind==='tap')) {
           const chosen=selectedFarmers();
           const tree=wood.getNearestTree(event.world,{maxDistance:70});
@@ -837,6 +1068,7 @@
       const onFooterAction=footer.onAction;
       footer.onAction=(action,payload)=>{
         if ((action==='mode'||action==='touchMode') && woodTargeting) stopWoodTarget();
+        if (action==='mode'||action==='touchMode') stopCombatTarget();
         if ((action==='mode'||action==='touchMode') && payload?.mode==='build' &&
             !construction.preview) beginBuild('house');
         if ((action==='mode'||action==='touchMode') && payload?.mode!=='build' &&
@@ -846,6 +1078,7 @@
 
       // ESC cancels an unfinished placement; never spends resources.
       const onEscape=event=>{
+        if (event.key==='Escape' && combatTargeting) {stopCombatTarget();message(tr.help);return;}
         if (event.key==='Escape' && woodTargeting) {
           stopWoodTarget();message(tr.help);return;
         }
@@ -856,6 +1089,8 @@
       window.addEventListener('keydown',onEscape);
 
       for (let i=0;i<3;i++) spawnFarmer();
+      // Starts automatically; no extra Start button or network calls.
+      waves.start();
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
       syncHud();
       footer.setResources({hint:tr.help});
@@ -874,12 +1109,15 @@
         document.removeEventListener('visibilitychange',visibility);
         canvas.removeEventListener('pointermove',onPreviewMove);
         window.removeEventListener('keydown',onEscape);
-        stopWoodTarget();selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
+        stopCombatTarget();stopWoodTarget();waves.stop();combat.reset();
+        projectiles.reset();enemyAI.reset();health.reset();
+        selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
       },{once:true});
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
       window.shadowRealmsConstruction=construction;
       window.shadowRealmsWood=wood;
+      window.shadowRealmsCombat={health,projectiles,combat,enemyAI,waves};
       game.start();
     } catch(error) {
       window.showGameError(error);
