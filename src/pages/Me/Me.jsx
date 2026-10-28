@@ -8,6 +8,7 @@ import MeSupportButton from '../../components/Me/MeSupportButton'
 import DiamondPurchaseSuccessModal from '../../components/Shop/DiamondPurchaseSuccessModal'
 import StoryLanguageOnboardingModal from '../../components/StoryLanguageOnboardingModal'
 import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
+import { getStoryLanguageId, saveStoryLanguagePreference, loadStoryLanguageFromAccount } from '../../utils/storyLanguage'
 
 registerTranslationNamespace('mePage', {
   en: {
@@ -617,9 +618,24 @@ function SettingsSheet({ open, onClose, isLoggedIn }) {
     applyTheme(darkMode ? 'dark' : 'light')
   }, [darkMode])
 
+    useEffect(() => {
+    if (!open) return
+    let active = true
+    setStoryLanguage(getStoryLanguageId())
+    if (isLoggedIn) {
+      loadStoryLanguageFromAccount()
+        .then(() => {
+          if (active) setStoryLanguage(getStoryLanguageId())
+        })
+        .catch(error => console.warn('STORY_LANGUAGE_LOAD_FAILED', error))
+    }
+    return () => { active = false }
+  }, [open, isLoggedIn])
+
   const handleStoryLanguageChange = (languageId) => {
-    localStorage.setItem(STORY_LANGUAGE_STORAGE_KEY, languageId)
     setStoryLanguage(languageId)
+    saveStoryLanguagePreference(languageId)
+      .catch(error => console.warn('STORY_LANGUAGE_SYNC_FAILED', error))
   }
 
   const handleDisplayLanguageChange = (languageId) => {
