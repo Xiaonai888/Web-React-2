@@ -326,7 +326,6 @@ const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorP
 const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
 const PicToArtCreationsPage = lazy(() => import('./pages/PicToArt/PicToArtCreationsPage'))
 const InstallPage = lazy(() => import('./pages/Install/InstallPage'))
-const AuthorChatInboxShellPage = lazy(() => import('./pages/AuthorChat/AuthorChatInboxShellPage'))
 
 function ComingSoon({ titleKey }) {
   const { t } = useDisplayTranslation()
