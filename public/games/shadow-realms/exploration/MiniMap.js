@@ -17,8 +17,14 @@ export class MiniMap {
     const size = camera.viewportWidth < 500 ? .73 : camera.viewportWidth < 700 ? .85 : 1;
     const width = Math.min(this.width*size,Math.max(95,camera.viewportWidth-22));
     const height = this.height*size;
-    const x = camera.viewportWidth-width-this.margin;
-    const y = clamp(this.y,camera.viewportHeight>height+18?4:0,Math.max(4,camera.viewportHeight-height-12));
+    // On phones the existing CommandFooter occupies the right edge, while
+    // zoom buttons occupy the upper left. Keep the Canvas minimap tappable:
+    // place it bottom-left, clear of both control groups.
+    const phone = camera.viewportWidth < 500;
+    const x = phone ? this.margin : camera.viewportWidth-width-this.margin;
+    const y = phone
+      ? clamp(this.y + 125, 245, Math.max(245, camera.viewportHeight-height-150))
+      : clamp(this.y,camera.viewportHeight>height+18?4:0,Math.max(4,camera.viewportHeight-height-12));
     this.bounds={x,y,width,height};return this.bounds;
   }
   hitTest(screen,camera) {
