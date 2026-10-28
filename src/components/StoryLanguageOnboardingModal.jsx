@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { BookOpen, Check, X } from 'lucide-react'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { getStoryLanguageId } from '../utils/storyLanguage'
@@ -62,10 +61,11 @@ const COPY = {
   },
 }
 
-// Mount this modal ONLY after a successful NEW account registration.
-// Do not mount it from login, Mine, or the shared application shell.
-export default function StoryLanguageOnboardingModal({ open = false }) {
-  const navigate = useNavigate()
+// Show only on Mine when a newly registered reader has pending onboarding.
+export default function StoryLanguageOnboardingModal({
+  open = false,
+  onFinish,
+}) {
   const { language: displayLanguage } = useDisplayTranslation()
   const [selectedLanguage, setSelectedLanguage] = useState(() => getStoryLanguageId())
   const copy = COPY[displayLanguage] || COPY.en
@@ -86,19 +86,26 @@ export default function StoryLanguageOnboardingModal({ open = false }) {
   if (!open) return null
 
   const complete = () => {
-    try {
-      localStorage.setItem(STORY_LANGUAGE_KEY, selectedLanguage)
-      window.dispatchEvent(new CustomEvent('shadow:story-language-initialized', {
+  try {
+    localStorage.setItem(STORY_LANGUAGE_KEY, selectedLanguage)
+    window.dispatchEvent(
+      new CustomEvent('shadow:story-language-initialized', {
         detail: { language: selectedLanguage },
-      }))
-    } catch {
-      // A private-browser storage error must not trap the new reader.
-    }
-    navigate('/me', { replace: true })
-  }
+      })
+    )
+  } catch {}
 
-  const openSettings = () => navigate('/me?settings=1&language=story', { replace: true })
-  const skip = () => navigate('/me', { replace: true })
+  onFinish?.()
+}
+
+const skip = () => {
+  onFinish?.()
+}
+
+const openSettings = () => {
+  onFinish?.()
+  window.location.assign('/me?settings=1&language=story')
+}
 
   return (
     <div
