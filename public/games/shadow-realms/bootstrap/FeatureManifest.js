@@ -47,11 +47,36 @@ defineGameFeature({
   },
 });
 
+
+
+/** New feature modules. Ordered so game overlays draw below fog/minimap. */
+defineGameFeature({
+  id:'base-defenses', dependsOn:['runtime-clock'],
+  load:()=>import('../defense/DefenseFeature.js'),
+});
+defineGameFeature({
+  id:'world-tactics', dependsOn:['runtime-clock'],
+  load:()=>import('../tactics/TacticsFeature.js'),
+});
+defineGameFeature({
+  id:'unit-progression', dependsOn:['runtime-clock'],
+  load:()=>import('../progression/ProgressionFeature.js'),
+});
+defineGameFeature({
+  id:'enemy-strategy', dependsOn:['unit-progression'],
+  load:()=>import('../ai/EnemyStrategyFeature.js'),
+});
 /** Exploratory overlays and discovery events use the existing WorldMap/Camera. */
 defineGameFeature({
   id: 'world-exploration',
   dependsOn: ['runtime-clock'],
   load: () => import('../exploration/ExplorationFeature.js'),
+});
+
+defineGameFeature({
+  id:'field-controls',
+  dependsOn:['base-defenses','world-tactics','unit-progression','enemy-strategy','world-exploration'],
+  load:()=>import('./FeatureControls.js'),
 });
 
 export function getFeatureManifest() { return [...catalog]; }
