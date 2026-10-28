@@ -589,7 +589,10 @@ function LanguageSheet({
 
 function SettingsSheet({ open, onClose, isLoggedIn }) {
   const [darkMode, setDarkMode] = useState(() => getStoredTheme() === 'dark')
-  const [languageOpen, setLanguageOpen] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('language') === 'story'
+)
+  onClick={() => window.location.assign('/me?settings=1&language=story')}
   const [storyLanguage, setStoryLanguage] = useState(() => getStoredStoryLanguage())
   const { t: tx, language: displayLanguage } = useDisplayTranslation()
 
