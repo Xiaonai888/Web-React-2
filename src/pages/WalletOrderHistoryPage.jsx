@@ -375,11 +375,42 @@ function OrderCard({ item }) {
                 })}
               </h2>
               <p className="mt-0.5 text-[12px] font-normal text-[var(--shadow-text-secondary)]">
-                {formatMoney(item.amount_usd)} <span className="px-1">·</span>{' '}
-                {t('walletOrderHistoryPage.bonusGems', {
-                  count: formatNumber(item.bonus_gems),
-                })}
-              </p>
+  {formatMoney(item.amount_usd)} <span className="px-1">·</span>{' '}
+  {t('walletOrderHistoryPage.bonusGems', {
+    count: formatNumber(item.bonus_gems),
+  })}
+</p>
+
+<p className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+  {(() => {
+    const premium =
+      item.purchase_type === 'premium' ||
+      item.payment_method === 'premium_aba_payment_link'
+
+    const labels = {
+      en: ['Source: Shadow Premium', 'Source: Diamond Store'],
+      km: ['ប្រភព៖ Shadow Premium', 'ប្រភព៖ ទិញពេជ្រ'],
+      zh: ['来源：Shadow Premium', '来源：钻石商城'],
+      ja: ['購入元：Shadow Premium', '購入元：ダイヤモンドストア'],
+      ko: ['구매 출처: Shadow Premium', '구매 출처: 다이아몬드 상점'],
+    }
+
+    const source = (labels[language] || labels.en)[premium ? 0 : 1]
+
+    const methods = {
+      premium_aba_payment_link: 'ABA / PayWay',
+      aba_payment_link: 'ABA / PayWay',
+      aba_khqr: 'ABA KHQR',
+    }
+
+    const method =
+      methods[item.payment_method] ||
+      item.payment_method ||
+      'Unknown'
+
+    return `${source} · ${method}`
+  })()}
+</p>
             </div>
 
             <StatusBadge status={item.status} />
