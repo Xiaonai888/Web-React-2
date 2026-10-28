@@ -52,6 +52,10 @@ export function createFeature(scope){
     render(ctx,camera){if(!disposed)defense.draw(ctx,camera);},
     onPointer(event){
       if(disposed||!armed||!['tap','select'].includes(event?.kind))return false;
+      // Mini-map overlays the world Canvas. Its visible hit area must pan the
+      // camera, never place a paid defense on terrain underneath the overlay.
+      const miniMap=scope.get('exploration')?.miniMap;
+      if(miniMap?.enabled && miniMap.hitTest?.(event.screen,scope.camera))return false;
       const result=defense.place(armed,event.world);
       scope.emit('defense:placement-result',{type:armed,result});
       if(result.ok)armed=null;
