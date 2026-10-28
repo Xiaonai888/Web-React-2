@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
   <meta name="color-scheme" content="dark">
-  <title>Shadow Realms — Farming, Construction & Combat</title>
+  <title>Shadow Realms — Chibi Combat & Farming</title>
   <style>
     :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
     * { box-sizing:border-box }
@@ -273,7 +273,7 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -287,6 +287,7 @@
         import('./combat/CombatSystem.js'),
         import('./combat/EnemyAI.js'),
         import('./combat/WaveSystem.js'),
+        import('./visual/VisualSystem.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -301,6 +302,7 @@
       const { CombatSystem } = combatLib;
       const { EnemyAI } = enemyLib;
       const { WaveSystem } = waveLib;
+      const { VisualSystem } = visualLib;
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -335,15 +337,24 @@
       let battleOver = null;
       let combatTargeting = null;
       const allUnits = () => [...farmers, ...(enemyAI?.getUnits() || [])];
+      // Presentation-only: preserve combat AI, input, farming and building logic.
+      const visual = new VisualSystem({
+        map, getUnits:allUnits,
+        reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+        replaceExisting:true,
+      });
       const health = new HealthSystem({getUnits:allUnits,onEvent:(event,info)=>{
+        visual.onHealthEvent(event,info);
         if (event === 'death' && info.unit?.team === 'blue') {
           jobs.delete(info.unit.id);
           wood.cancel(info.unit.id,{stop:false});
           construction.removeBuilderFromAll(info.unit.id);
         }
       }});
-      const projectiles = new ProjectileSystem({health,map,getUnits:allUnits});
-      const combat = new CombatSystem({health,projectiles,navigation:route,getUnits:allUnits,autoDefend:true});
+      const projectiles = new ProjectileSystem({health,map,getUnits:allUnits,
+        onEvent:(event,info)=>visual.onProjectileEvent(event,info)});
+      const combat = new CombatSystem({health,projectiles,navigation:route,getUnits:allUnits,
+        autoDefend:true,onEvent:(event,info)=>visual.onCombatEvent(event,info)});
       enemyAI = new EnemyAI({map,navigation:route,combat,getPlayerUnits:()=>farmers.filter(f=>f.alive)});
       const waves = new WaveSystem({enemyAI,totalWaves:6,firstDelay:23,restSeconds:14,
         baseEnemies:3,extraPerWave:2,maxConcurrent:20,
@@ -981,6 +992,7 @@
         projectiles.update(dt);
         health.update(dt);
         waves.update(dt);
+        visual.update(dt);
         if (!battleOver && !farmers.some(f=>f.alive)) {
           battleOver='defeat';waves.stop();message(tr.combatDefeat);
         }
@@ -993,9 +1005,11 @@
         rice.drawCrops(ctx,currentCamera);
         construction.drawBuildings(ctx,currentCamera);
         wood.draw(ctx,currentCamera);
+        visual.drawAtmosphere(ctx,currentCamera);
         for (const unit of allUnits().filter(u=>u.alive).sort((a,b)=>a.y-b.y)) unit.draw(ctx,currentCamera);
         projectiles.draw(ctx,currentCamera);
         health.draw(ctx,currentCamera,{showFull:false});
+        visual.drawOverlay(ctx,currentCamera);
         combat.draw(ctx,currentCamera);
         construction.drawPreview(ctx,currentCamera);
       };
@@ -1089,6 +1103,7 @@
       window.addEventListener('keydown',onEscape);
 
       for (let i=0;i<3;i++) spawnFarmer();
+      visual.syncUnits(); // First rendered frame uses new chibi art, not the old placeholder.
       // Starts automatically; no extra Start button or network calls.
       waves.start();
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
@@ -1111,13 +1126,14 @@
         window.removeEventListener('keydown',onEscape);
         stopCombatTarget();stopWoodTarget();waves.stop();combat.reset();
         projectiles.reset();enemyAI.reset();health.reset();
-        selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
+        visual.destroy();selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
       },{once:true});
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
       window.shadowRealmsConstruction=construction;
       window.shadowRealmsWood=wood;
       window.shadowRealmsCombat={health,projectiles,combat,enemyAI,waves};
+      window.shadowRealmsVisual=visual; // Browser debug only.
       game.start();
     } catch(error) {
       window.showGameError(error);
