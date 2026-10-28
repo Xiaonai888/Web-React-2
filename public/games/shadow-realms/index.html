@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
   <meta name="color-scheme" content="dark">
-  <title>Shadow Realms — Chibi Combat & Farming</title>
+  <title>Shadow Realms — Chibi Combat, Farming & Missions</title>
   <style>
     :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
     * { box-sizing:border-box }
@@ -31,6 +31,16 @@
       border:1px solid rgba(255,255,255,.12);color:#fff0c6;font-size:11px;
       line-height:1.4;box-shadow:0 4px 12px #0002 }
     .farm-stats { color:#daedbf }
+    .mission-stats {color:#f8e9b9;border-color:rgba(250,215,118,.36);line-height:1.55}
+    .mission-stats .mission-progress {color:#dbeaa9;font-size:10px}
+    .sr-ui-shell .sr-mission-toggle {margin-top:8px;width:100%;padding:8px;border:1px solid #ab955c;
+      background:#55452e;color:#fff1c8;border-radius:9px;font-size:11px;font-weight:800}
+    .sr-ui-shell .sr-mission-tools {display:none;gap:5px;flex-wrap:wrap;margin-top:5px}
+    .sr-ui-shell .sr-mission-tools.is-open {display:flex}
+    .sr-ui-shell .sr-mission-tools button {flex:1 1 75px;padding:8px 4px;background:#485138;
+      border:1px solid #819363;color:#f0f5d7;border-radius:9px;font-size:11px}
+    @media(max-width:650px){.mission-stats{font-size:10px;max-height:101px;overflow:auto}}
+
     .zoom-panel { position:absolute;right:12px;top:10px;z-index:3;display:flex;flex-direction:column;gap:7px }
     .control { width:41px;height:41px;border:1px solid #b3ac81;border-radius:11px;
       background:rgba(28,43,30,.92);color:#fff4cf;font-weight:800;font-size:21px;
@@ -56,6 +66,7 @@
     .sr-ui-shell .sr-combat-toggle {border:1px solid #a47f6e;background:#4e3435;color:#ffeadd;
       border-radius:9px;font-weight:750;font-size:11px;padding:9px 12px;min-height:34px;margin-top:7px;width:100%}
     .sr-ui-shell .sr-farm-mobile-actions:not(.is-combat-open) [data-combat-action] {display:none}
+    .sr-ui-shell .sr-farm-mobile-actions:not(.is-mission-open) [data-mission-action] {display:none}
     .sr-ui-shell .sr-combat-tool {flex:1 1 65px;min-width:0;min-height:34px;padding:7px 5px;
       border:1px solid #a37969;background:#4e3435;color:#ffeadd;border-radius:9px;
       font-size:11px;font-weight:750;touch-action:manipulation}
@@ -136,6 +147,7 @@
         <div class="status-line" id="map-status">Choose a farmer and harvest a field.</div>
         <div class="status-line farm-stats" id="farm-stats">Fields: 6 • Ripe crops: ...</div>
         <div class="status-line combat-stats" id="combat-stats">Combat ready · wave preparing</div>
+        <div class="status-line mission-stats" id="mission-stats" aria-live="polite">Mission preparing…</div>
       </div>
       <nav class="zoom-panel" aria-label="Camera controls">
         <button class="control" id="zoom-in" type="button" aria-label="Zoom in">+</button>
@@ -258,6 +270,23 @@
     const shortLang = (navigator.language || 'km').toLowerCase().split('-')[0];
     const language = gameText[shortLang] ? shortLang : 'km';
     const tr = gameText[language];
+    const missionLocales = {
+      km:{mission:'បេសកកម្ម',find:'រកគោលដៅ',next:'វគ្គបន្ទាប់',cancel:'បញ្ឈប់បេសកកម្ម',select:'ជ្រើសកសិករមុន',
+        target:'ចុចអ្នកភូមិ ឬប្រអប់',walk:'កំពុងទៅគោលដៅ',rescue:'បានសង្គ្រោះ',collected:'បានប្រមូល',completed:'បេសកកម្មសម្រេច',
+        locked:'វគ្គបន្ទាប់មិនទាន់ដោះសោ',unreachable:'មិនមានផ្លូវទៅគោលដៅ',all:'គ្រប់វគ្គរួចរាល់'},
+      en:{mission:'Mission',find:'Find Target',next:'Next Stage',cancel:'Cancel Task',select:'Select a farmer first',
+        target:'Tap a captive or supply cache',walk:'Heading to mission target',rescue:'Villager rescued',collected:'Supplies collected',
+        completed:'Mission complete',locked:'Next stage is locked',unreachable:'No path to objective',all:'All stages completed'},
+      zh:{mission:'任务',find:'寻找目标',next:'下一关',cancel:'取消任务',select:'请先选择农民',target:'点击村民或补给箱',walk:'正在前往目标',
+        rescue:'救援成功',collected:'资源已收集',completed:'任务完成',locked:'下一关未解锁',unreachable:'无可用路径',all:'全部关卡完成'},
+      ja:{mission:'ミッション',find:'目標を探す',next:'次のステージ',cancel:'作業中止',select:'農民を選択',target:'村人か補給箱をタップ',
+        walk:'目的地に移動中',rescue:'救助成功',collected:'補給品を回収',completed:'任務達成',locked:'次のステージは未解放',
+        unreachable:'移動経路なし',all:'全ステージ完了'},
+      ko:{mission:'미션',find:'목표 찾기',next:'다음 스테이지',cancel:'작업 취소',select:'농부를 선택하세요',target:'주민 또는 보급품 터치',
+        walk:'목표로 이동 중',rescue:'구출 성공',collected:'보급품 수집',completed:'미션 완료',locked:'다음 단계 잠김',
+        unreachable:'이동 경로 없음',all:'모든 스테이지 완료'},
+    };
+    const mt = missionLocales[language] || missionLocales.en;
     document.documentElement.lang = language;
     document.getElementById('back-link').textContent = tr.back;
     document.getElementById('stage-label').textContent = tr.stage;
@@ -273,7 +302,7 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib, missionLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -288,6 +317,7 @@
         import('./combat/EnemyAI.js'),
         import('./combat/WaveSystem.js'),
         import('./visual/VisualSystem.js'),
+        import('./missions/MissionDirector.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -303,6 +333,7 @@
       const { EnemyAI } = enemyLib;
       const { WaveSystem } = waveLib;
       const { VisualSystem } = visualLib;
+      const { MissionDirector } = missionLib;
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -312,6 +343,7 @@
       const home = map.getSpawnPoint('blue');
       const farmers = [];
       const jobs = new Map();
+      const missionTasks = new Map();
       const MAX_FARMERS = 24;
       // One local resource ledger: ConstructionSystem debits RiceSystem in place.
       const construction = new ConstructionSystem(map, {
@@ -334,6 +366,7 @@
       });
       // One shared unit roster: farmers + enemy Chibi. All combat stays in RAM.
       let enemyAI = null;
+      let missions = null;
       let battleOver = null;
       let combatTargeting = null;
       const allUnits = () => [...farmers, ...(enemyAI?.getUnits() || [])];
@@ -345,6 +378,7 @@
       });
       const health = new HealthSystem({getUnits:allUnits,onEvent:(event,info)=>{
         visual.onHealthEvent(event,info);
+        missions?.onHealthEvent(event,info);
         if (event === 'death' && info.unit?.team === 'blue') {
           jobs.delete(info.unit.id);
           wood.cancel(info.unit.id,{stop:false});
@@ -362,6 +396,15 @@
           if (event==='wave_started') message(`${tr.combatWave} ${info.wave}/${info.totalWaves}`);
           if (event==='victory') {battleOver='victory';message(tr.combatVictory);}
         }});
+      missions = new MissionDirector({map,navigation:route,getUnits:()=>farmers,home,rice,construction,
+        onEvent:(event,info)=>{
+          if (event==='mission_completed') {
+            missionTasks.clear();message(`${mt.completed}: ${info.stage.title}`);
+          }
+          if (event==='rescue_rescued') message(`${mt.rescue}: ${info.captive.name}`);
+          if (event==='loot_collected') message(`${mt.collected}: +${info.reward.rice}🌾 +${info.reward.wood}🪵`);
+        },
+      });
       let woodTargeting = false;
       let selectedBuildingId = null;
       const buildingAt = point => construction.getBuildingAt(point);
@@ -370,6 +413,7 @@
       const statusNode = document.getElementById('map-status');
       const farmStats = document.getElementById('farm-stats');
       const battleStats = document.getElementById('combat-stats');
+      const missionStats = document.getElementById('mission-stats');
       const footer = new CommandFooter({ root:document.body }).mount();
       let farmerNumber = 0;
       let selection;
@@ -421,6 +465,20 @@
         farmerGroup.appendChild(tools);
       }
 
+      // Missions share the SAME Footer: collapse controls to preserve mobile space.
+      if (farmerGroup) {
+        const toggle=document.createElement('button');
+        toggle.type='button';toggle.dataset.action='missionMenu';
+        toggle.className='sr-mission-toggle';toggle.textContent=`📜 ${mt.mission}`;
+        farmerGroup.appendChild(toggle);
+        const tools=document.createElement('div');tools.className='sr-mission-tools';
+        for(const [action,label] of [['missionFind',mt.find],['missionNext',mt.next],['missionCancel',mt.cancel]]){
+          const button=document.createElement('button');button.type='button';
+          button.dataset.action=action;button.textContent=label;tools.appendChild(button);
+        }
+        farmerGroup.appendChild(tools);
+      }
+
       // Existing build/house/barn/cancel buttons are now functional.
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostHouse"]')) {
         button.textContent = `${tr.house} (30🌾 45🪵)`;
@@ -465,10 +523,15 @@
           ['chopWood',tr.woodChop],['autoWood',tr.woodAuto],
           ['combatMenu',`⚔ ${tr.combat}`],['attackTarget',tr.attack],['attackMove',tr.attackMove],['guardBase',tr.guard],
           ['stopFight',tr.stopFight],['trainGuard',tr.guardTrain],['trainArcher',tr.archerTrain],
-          ['nextWave',tr.nextWave]]) {
+          ['nextWave',tr.nextWave],['missionMenu',`📜 ${mt.mission}`],
+          ['missionFind',mt.find],['missionNext',mt.next],['missionCancel',mt.cancel]]) {
           const button = document.createElement('button');
           button.type = 'button';
           button.dataset.action = action;
+          if(['attackTarget','attackMove','guardBase','stopFight','trainGuard','trainArcher','nextWave'].includes(action))
+            button.dataset.combatAction='';
+          if(['missionFind','missionNext','missionCancel'].includes(action))
+            button.dataset.missionAction='';
           button.textContent = title;
           actions.appendChild(button);
         }
@@ -498,6 +561,16 @@
           battleOver==='victory' ? tr.combatVictory :
           `${tr.combatWave} ${battle.wave}/${battle.totalWaves} · ${battle.state==='preparing'?`${battle.countdown}s`:
           battle.state} · Enemies: ${enemyAI.getUnits().length} · Allies: ${allyAlive}`;
+        const mission=missions.getSummary();
+        const active=mission.stage;
+        const goalText=mission.objectives.objectives.map(o=>
+          `${o.completed?'✓':'•'} ${o.title}: ${o.count}/${o.target}`).join(' · ');
+        const upcoming=mission.stages.stages.find(s=>s.status==='unlocked');
+        const missionLine=active
+          ? `📜 ${active.title} (${mission.stages.completed}/${mission.stages.total}) | ${goalText}`
+          : mission.stages.finished ? `✓ ${mt.all}` :
+          upcoming ? `✓ ${mt.completed} · ${mt.next}: ${upcoming.title}` : mt.locked;
+        if(missionStats.textContent!==missionLine)missionStats.textContent=missionLine;
         if (battleStats.textContent !== status) battleStats.textContent=status;
         if (line !== lastSummary) {
           farmStats.textContent = line;
@@ -596,6 +669,7 @@
         selection.syncFooter();syncHud();message(`${tr.combatTrain}: ${count}`);
       }
       function orderCombat(type,units,point=null,targetId=null) {
+        releaseMission(units);
         const eligible=units.filter(f=>f.alive);
         if (!eligible.length) {message(tr.combatNoUnit);return false;}
         releaseForCombat(eligible);
@@ -618,6 +692,7 @@
         return best;
       };
       function manualMove(units,point) {
+        releaseMission(units);
         stopCombatTarget();
         combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return;}
@@ -725,6 +800,7 @@
       }
 
       function startHarvest(farmersToSend,point) {
+        releaseMission(farmersToSend);
         stopCombatTarget();combat.orderStop(farmersToSend.map(u=>u.id));
         if (!farmersToSend.length) {message(tr.noSelected);return;}
         const field=chooseField(point,false);
@@ -743,6 +819,7 @@
       }
 
       function autoHarvest(units) {
+        releaseMission(units);
         stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return;}
         const viable=rice.getFields().filter(field=>
@@ -829,6 +906,7 @@
       }
 
       function confirmBuild(point, units) {
+        releaseMission(units);
         if (!construction.preview) {
           message(tr.buildHelp);
           return;
@@ -866,6 +944,7 @@
       }
 
       function assignBuilders() {
+        releaseMission(selectedFarmers());
         const site=selectedBuilding();
         if (!site || site.state!=='construction') {message(tr.needBuilding);return;}
         const chosen=selectedFarmers();
@@ -893,6 +972,7 @@
       }
 
       function orderWood(units, point=null) {
+        releaseMission(units);
         stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return false;}
         const ids=units.map(unit=>unit.id);
@@ -901,7 +981,108 @@
         return Boolean(result.ok);
       }
 
+      // Mission work never overlaps harvest/wood/build/combat jobs for one unit.
+      function releaseMission(units=[]) {
+        for(const unit of units) if(unit?.id!=null) missionTasks.delete(unit.id);
+      }
+      function missionObjectAt(point) {
+        if(!missions.progression.activeId)return null;
+        const c=missions.rescues.getNearest(point,{maxDistance:46});
+        if(c)return {kind:'captive',id:c.id,x:c.x,y:c.y};
+        const d=missions.loot.getNearestDrop(point,{maxDistance:46});
+        if(d)return {kind:'drop',id:d.id,x:d.x,y:d.y};
+        const b=missions.loot.getNearestCache(point,{maxDistance:50});
+        return b?{kind:'cache',id:b.id,x:b.x,y:b.y}:null;
+      }
+      function missionObjectById(job) {
+        if(job.kind==='captive')return missions.rescues.byId.get(job.id);
+        return missions.loot.byId.get(job.id);
+      }
+      function missionGiveOrder(unit,obj) {
+        if(!unit?.alive){message(mt.select);return false;}
+        if(!obj){message(mt.target);return false;}
+        combat.orderStop([unit.id]);
+        wood.cancel(unit.id,{stop:false});jobs.delete(unit.id);
+        construction.removeBuilderFromAll(unit.id);
+        unit.setHarvestAnimation(false);
+        unit.stop();
+        const far=dist(unit,obj)>56;
+        if(far&&!route.moveUnit(unit,{x:obj.x,y:obj.y})){
+          message(mt.unreachable);return false;
+        }
+        const plan={id:obj.id,kind:obj.kind,phase:'approach',retry:0};
+        missionTasks.set(unit.id,plan);
+        message(mt.walk);
+        return true;
+      }
+      function missionJobTick(unit,dt) {
+        const job=missionTasks.get(unit.id);
+        if(!job)return;
+        if(!unit.alive || !missions.progression.activeId){missionTasks.delete(unit.id);return;}
+        if(job.phase==='escort') {
+          const c=missions.rescues.byId.get(job.id);
+          if(!c || c.state==='rescued') {missionTasks.delete(unit.id);return;}
+          if(dist(unit,home)>48 && unit.state!=='walking' && job.retry<=0){
+            route.moveUnit(unit,home);job.retry=.75;
+          }
+          job.retry=Math.max(0,job.retry-dt);
+          return;
+        }
+        const target=missionObjectById(job);
+        if(!target || target.state==='rescued' || target.state==='collected'){
+          missionTasks.delete(unit.id);return;
+        }
+        if(job.kind==='cache' && target.state==='broken'){
+          const drop=missions.loot.getDrops().find(d=>d.sourceId===target.id);
+          if(!drop){missionTasks.delete(unit.id);return;}
+          job.kind='drop';job.id=drop.id;return;
+        }
+        if(dist(unit,target)>56){
+          if(unit.state!=='walking' && job.retry<=0){
+            route.moveUnit(unit,target);job.retry=.85;
+          }
+          job.retry=Math.max(0,job.retry-dt);
+          return;
+        }
+        job.retry-=dt;
+        if(job.retry>0)return;
+        const result=missions.interact(unit,target,{damage:20});
+        job.retry=.48;
+        if(result.ok && job.kind==='captive') {
+          job.phase='escort';job.retry=0;
+          if(!route.moveUnit(unit,home)) job.retry=.75;
+        } else if(result.ok && job.kind==='drop') missionTasks.delete(unit.id);
+        else if(!result.ok && !['too_far','out_of_range'].includes(result.reason)) {
+          missionTasks.delete(unit.id);
+        }
+      }
+      function focusMission() {
+        if(!missions.progression.activeId){message(mt.locked);return;}
+        const remaining=[...missions.rescues.getCaptives(),...missions.loot.getDrops(),...missions.loot.getCaches()];
+        const nearest=remaining.sort((a,b)=>dist(a,home)-dist(b,home))[0];
+        if(nearest){camera.centerOn(nearest.x,nearest.y+camera.visibleHeight*.24);message(mt.target);}
+        else message(mt.mission);
+      }
+
       function actionHandler(action) {
+        if(action==='missionMenu') {
+          footer.nodes.shell.querySelector('.sr-mission-tools')?.classList.toggle('is-open');
+          mobilePad?.querySelector('.sr-farm-mobile-actions')?.classList.toggle('is-mission-open');
+          return;
+        }
+        if(action==='missionFind'){focusMission();return;}
+        if(action==='missionNext'){
+          if(missions.progression.activeId){message(mt.locked);return;}
+          const result=missions.startNextStage();
+          if(!result.ok){message(missions.getSummary().stages.finished?mt.all:mt.locked);return;}
+          missionTasks.clear();syncHud();message(`${mt.mission}: ${result.stage.title}`);return;
+        }
+        if(action==='missionCancel'){
+          const chosen=selectedFarmers();
+          releaseMission(chosen);
+          for(const unit of chosen)unit.stop();
+          message(mt.cancel);return;
+        }
         if (action==='combatMenu') {
           footer.nodes.shell.querySelector('.sr-combat-tools')?.classList.toggle('is-open');
           mobilePad?.querySelector('.sr-farm-mobile-actions')?.classList.toggle('is-combat-open');
@@ -964,6 +1145,7 @@
         if (action==='demolishBuilding') {demolishBuilding();return;}
         if (action==='returnHome') {
           const chosen=selectedFarmers();
+          releaseMission(chosen);
           if (!chosen.length) {message(tr.noSelected);return;}
           stopWoodTarget();
           combat.orderStop(chosen.map(u=>u.id));
@@ -984,6 +1166,7 @@
         for (const farmer of farmers) {
           farmer.update(dt,map);
           runJob(farmer,dt);
+          missionJobTick(farmer,dt);
         }
         construction.update(dt);
         wood.update(dt);
@@ -992,6 +1175,7 @@
         projectiles.update(dt);
         health.update(dt);
         waves.update(dt);
+        missions.update(dt);
         visual.update(dt);
         if (!battleOver && !farmers.some(f=>f.alive)) {
           battleOver='defeat';waves.stop();message(tr.combatDefeat);
@@ -1005,6 +1189,7 @@
         rice.drawCrops(ctx,currentCamera);
         construction.drawBuildings(ctx,currentCamera);
         wood.draw(ctx,currentCamera);
+        missions.draw(ctx,currentCamera);
         visual.drawAtmosphere(ctx,currentCamera);
         for (const unit of allUnits().filter(u=>u.alive).sort((a,b)=>a.y-b.y)) unit.draw(ctx,currentCamera);
         projectiles.draw(ctx,currentCamera);
@@ -1067,6 +1252,18 @@
           const units=selectedFarmers();
           if (enemy && units.length) {orderCombat('attack',units,event.world,enemy.id);return;}
         }
+        // Clicking a marked captive/cache automatically assigns the selected farmer.
+        // Do not swallow clicks on normal terrain, buildings or units.
+        if(!woodTargeting&&!combatTargeting&&!construction.preview&&
+           ['select','tap','command'].includes(event.kind)) {
+          const missionObject=missionObjectAt(event.world);
+          if(missionObject){
+            const chosen=selectedFarmers().filter(unit=>unit.alive);
+            if(chosen.length)missionGiveOrder(chosen[0],missionObject);
+            else message(mt.select);
+            return;
+          }
+        }
         if (woodTargeting && (event.kind==='select'||event.kind==='tap')) {
           const chosen=selectedFarmers();
           const tree=wood.getNearestTree(event.world,{maxDistance:70});
@@ -1106,6 +1303,8 @@
       visual.syncUnits(); // First rendered frame uses new chibi art, not the old placeholder.
       // Starts automatically; no extra Start button or network calls.
       waves.start();
+      const firstMission=missions.startStage('stage-1');
+      if(!firstMission.ok)message(`Mission setup: ${firstMission.reason}`);
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
       syncHud();
       footer.setResources({hint:tr.help});
@@ -1124,7 +1323,7 @@
         document.removeEventListener('visibilitychange',visibility);
         canvas.removeEventListener('pointermove',onPreviewMove);
         window.removeEventListener('keydown',onEscape);
-        stopCombatTarget();stopWoodTarget();waves.stop();combat.reset();
+        stopCombatTarget();stopWoodTarget();waves.stop();missionTasks.clear();missions.destroy();combat.reset();
         projectiles.reset();enemyAI.reset();health.reset();
         visual.destroy();selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
       },{once:true});
@@ -1133,6 +1332,7 @@
       window.shadowRealmsConstruction=construction;
       window.shadowRealmsWood=wood;
       window.shadowRealmsCombat={health,projectiles,combat,enemyAI,waves};
+      window.shadowRealmsMissions=missions;
       window.shadowRealmsVisual=visual; // Browser debug only.
       game.start();
     } catch(error) {
