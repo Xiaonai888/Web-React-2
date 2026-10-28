@@ -1,4 +1,12 @@
 import { changeDisplayLanguage } from '../i18n'
+const RECOVERY_KEY = 'shadow_story_km_recovery_20261028_v1'
+try {
+  if (localStorage.getItem(RECOVERY_KEY) !== 'done') {
+    localStorage.setItem('shadow_story_language', 'km')
+    localStorage.setItem(RECOVERY_KEY, 'done')
+    window.dispatchEvent(new CustomEvent('shadow:story-language-initialized', { detail: { language: 'km' } }))
+  }
+} catch {}
 
 const ENDPOINT = '/api/country-settings'
 const CACHE_MS = 5 * 60 * 1000
