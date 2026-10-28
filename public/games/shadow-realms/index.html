@@ -1,107 +1,122 @@
 <!doctype html>
 <html lang="km">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#17251a" />
-  <title>Shadow Realms — Farmer Navigation Test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#17251a">
+  <meta name="color-scheme" content="dark">
+  <title>Shadow Realms — Living Rice Farm</title>
   <style>
-    :root { color-scheme:dark; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-    * { box-sizing:border-box; }
-    html,body { width:100%; height:100%; overflow:hidden; margin:0; background:#0e1d14; }
-    button,a { font:inherit; }
-    button { cursor:pointer; }
-    button:focus-visible,a:focus-visible { outline:2px solid #ffd15a; outline-offset:2px; }
-    .app { height:100vh; height:100dvh; display:flex; flex-direction:column; }
-    .top { flex:none; height:52px; position:relative; z-index:3; padding:6px 14px;
-      background:linear-gradient(180deg,#2b3e2d,#17261c); border-bottom:2px solid #6a774e;
-      display:flex; align-items:center; justify-content:space-between; gap:12px; color:#ffefd1; }
-    .brand { min-width:0; display:flex; align-items:center; gap:11px; }
-    .brand strong { font-size:clamp(14px,2.2vw,19px); white-space:nowrap; }
-    .tag { padding:4px 8px; font-size:10px; font-weight:800; border:1px solid #81936c;
-      color:#d7ddb8; border-radius:999px; white-space:nowrap; }
-    .top-actions { display:flex; gap:8px; align-items:center; }
-    .back { text-decoration:none; color:#fff0c9; padding:7px 10px; border:1px solid #7b8a65;
-      border-radius:9px; font-size:12px; white-space:nowrap; }
-    .map-area { flex:1; min-height:0; overflow:hidden; position:relative; background:#91b46b; }
-    #game { width:100%; height:100%; display:block; outline:none; touch-action:none; }
-    .map-badge { position:absolute; top:12px; left:12px; background:rgba(18,30,22,.82);
-      color:#fff1c7; padding:8px 12px; border-radius:11px; font-size:11px;
-      border:1px solid rgba(255,255,255,.12); pointer-events:none; z-index:1; }
-    .zoom-panel { position:absolute; top:12px; right:12px; display:flex; flex-direction:column;
-      gap:7px; z-index:2; }
-    .control { border:1px solid #b8a77b; border-radius:11px; min-width:40px; min-height:40px;
-      background:rgba(25,45,28,.9); color:#fff0c6; font-size:21px; font-weight:800;
-      box-shadow:0 3px 10px #0004; touch-action:manipulation; }
-    .control:active { background:#556c45; }
-    .control.home { font-size:18px; }
-    .error { position:absolute; inset:0; z-index:6; display:none; align-items:center;
-      justify-content:center; flex-direction:column; padding:20px; text-align:center;
-      background:rgba(14,27,20,.96); color:#fff1d6; gap:10px; }
-    .error.show { display:flex; }
-    .error strong { font-size:18px; }
-    .error p { max-width:520px; line-height:1.6; font-size:13px; }
-    .error pre { max-width:95%; white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; }
+    :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
+    * { box-sizing:border-box }
+    html,body { height:100%;margin:0;overflow:hidden;background:#101e14 }
+    button,a { font:inherit }
+    button { cursor:pointer }
+    button:focus-visible,a:focus-visible { outline:2px solid #ffcd57;outline-offset:2px }
+    .app { height:100vh;height:100dvh;display:flex;flex-direction:column }
+    .top { height:51px;flex:none;position:relative;z-index:3;display:flex;align-items:center;
+      justify-content:space-between;gap:12px;padding:7px 14px;color:#fceecb;
+      background:linear-gradient(#293b2b,#192a1c);border-bottom:2px solid #72845d }
+    .brand { display:flex;gap:9px;align-items:center;min-width:0 }
+    .brand strong { font-size:clamp(15px,2vw,20px);white-space:nowrap }
+    .stage { font-size:10px;font-weight:800;white-space:nowrap;color:#e4d5aa;
+      border:1px solid #83906b;border-radius:99px;padding:4px 9px }
+    .back { color:#f8eac9;text-decoration:none;border:1px solid #8c9878;padding:7px 12px;
+      border-radius:9px;white-space:nowrap;font-size:12px }
+    .map-area { position:relative;flex:1;min-height:0;overflow:hidden;background:#91b46b }
+    #game { display:block;width:100%;height:100%;outline:0;touch-action:none }
+    .status { position:absolute;top:10px;left:12px;z-index:2;pointer-events:none;
+      max-width:min(560px,calc(100% - 136px));display:flex;flex-direction:column;gap:5px }
+    .status-line { padding:7px 10px;border-radius:10px;background:rgba(18,32,24,.87);
+      border:1px solid rgba(255,255,255,.12);color:#fff0c6;font-size:11px;
+      line-height:1.4;box-shadow:0 4px 12px #0002 }
+    .farm-stats { color:#daedbf }
+    .zoom-panel { position:absolute;right:12px;top:10px;z-index:3;display:flex;flex-direction:column;gap:7px }
+    .control { width:41px;height:41px;border:1px solid #b3ac81;border-radius:11px;
+      background:rgba(28,43,30,.92);color:#fff4cf;font-weight:800;font-size:21px;
+      box-shadow:0 2px 9px #0005;touch-action:manipulation }
+    .control:active { background:#526942 }
+    .control.home { font-size:17px }
+    .error { position:absolute;inset:0;z-index:60;display:none;align-items:center;
+      justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:24px;
+      background:rgba(10,23,16,.96);color:#fff4d6 }
+    .error.show { display:flex }
+    .error strong { font-size:18px }
+    .error p { line-height:1.6;max-width:510px;font-size:13px }
+    .error pre { max-width:95vw;overflow-wrap:anywhere;white-space:pre-wrap;font-size:11px }
 
-    /* CommandFooter is deliberately independent; these overrides fit the game stage. */
-    .sr-ui-shell .sr-ui-topbar { display:none; }
-    .sr-ui-shell .sr-ui-hint { display:none; }
-    .sr-ui-shell .sr-ui-footer { z-index:2; }
+    /* Integrate existing CommandFooter without a duplicate heading. */
+    .sr-ui-shell .sr-ui-topbar,.sr-ui-shell .sr-ui-hint { display:none }
+    .sr-ui-shell .sr-ui-footer { z-index:2 }
     .sr-ui-shell .sr-ui-square-btn:disabled,
     .sr-ui-shell .sr-ui-mode-chip:disabled,
-    .sr-ui-shell .sr-ui-mobile-btn:disabled { opacity:.42; cursor:not-allowed; filter:none; }
-    @media(max-width:980px) {
-      .sr-ui-shell .sr-ui-footer { grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-        padding:7px; gap:7px; }
-      .sr-ui-shell .sr-ui-panel--center { display:none; }
-      .sr-ui-shell .sr-ui-panel { min-width:0; min-height:0; padding:9px; }
-      .sr-ui-shell .sr-ui-panel--left { order:1; }
-      .sr-ui-shell .sr-ui-panel--right { order:2; }
-      .sr-ui-shell .sr-ui-resource-card { padding:5px 8px; gap:6px; }
-      .sr-ui-shell .sr-ui-resource-grid { gap:5px; }
-      .sr-ui-shell .sr-ui-resource-value { font-size:14px; }
-      .sr-ui-shell .sr-ui-title { font-size:10px; margin-bottom:5px; }
-      .sr-ui-shell .sr-ui-minimap { height:46px; margin-top:6px; }
-      .sr-ui-shell .sr-ui-selected-card { padding:8px; }
-      .sr-ui-shell .sr-ui-selected-name { font-size:14px; }
-      .sr-ui-shell .sr-ui-selected-sub { font-size:10px; }
-      .sr-ui-shell .sr-ui-zoom-row { margin-top:5px; }
+    .sr-ui-shell .sr-ui-mobile-btn:disabled { opacity:.37;cursor:not-allowed;filter:none }
+    .sr-ui-shell .sr-ui-resource-card { padding:7px 10px }
+    .sr-ui-shell .sr-ui-resource-grid { gap:5px }
+    .sr-ui-shell .sr-ui-action-list { grid-template-columns:repeat(3,minmax(0,1fr)) }
+    .sr-ui-shell .sr-ui-square-btn { padding:10px 5px }
+    .sr-ui-shell .sr-ui-mobile-pad .sr-farm-mobile-actions { display:grid;gap:6px;margin-top:9px;
+      padding-top:8px;border-top:1px solid #fff2 }
+    .sr-ui-shell .sr-ui-mobile-pad .sr-farm-mobile-actions button { background:#36543e;
+      color:#fff3d2;border:1px solid #648669;border-radius:10px;padding:9px 5px;
+      font-size:11px;font-weight:750 }
+    @media (max-width:980px) {
+      .sr-ui-shell .sr-ui-footer { grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:6px;gap:6px }
+      .sr-ui-shell .sr-ui-panel--center { display:none }
+      .sr-ui-shell .sr-ui-panel--left { order:1 }
+      .sr-ui-shell .sr-ui-panel--right { order:2 }
+      .sr-ui-shell .sr-ui-panel { min-height:0;min-width:0;padding:7px }
+      .sr-ui-shell .sr-ui-title { font-size:10px;margin-bottom:4px }
+      .sr-ui-shell .sr-ui-resource-card { padding:4px 6px;gap:5px }
+      .sr-ui-shell .sr-ui-resource-grid { gap:3px }
+      .sr-ui-shell .sr-ui-resource-icon { font-size:15px }
+      .sr-ui-shell .sr-ui-resource-label { font-size:10px }
+      .sr-ui-shell .sr-ui-resource-value { font-size:13px }
+      .sr-ui-shell .sr-ui-selected-card { padding:6px }
+      .sr-ui-shell .sr-ui-selected-name { font-size:12px }
+      .sr-ui-shell .sr-ui-selected-sub { display:none }
+      .sr-ui-shell .sr-ui-minimap { height:34px;margin-top:5px }
+      .sr-ui-shell .sr-ui-zoom-row { margin-top:4px }
+      .sr-ui-shell .sr-ui-zoom-btn { width:27px;height:27px }
     }
-    @media(max-width:760px) {
-      .tag { display:none; }
-      .zoom-panel { left:12px; right:auto; top:50px; }
-      .map-badge { top:10px; font-size:10px; }
-      .sr-ui-shell .sr-ui-footer { padding-right:7px; }
-      .sr-ui-shell .sr-ui-mobile-pad { top:66px; right:8px; width:118px; padding:8px; }
-      .sr-ui-shell .sr-ui-mobile-btn { padding:8px 5px; }
+    @media (max-width:760px) {
+      .stage { display:none }
+      .status { max-width:calc(100% - 140px);left:8px;top:9px }
+      .status-line { padding:6px 8px;font-size:10px }
+      .zoom-panel { left:8px;right:auto;top:95px }
+      .sr-ui-shell .sr-ui-footer { padding-right:6px }
+      .sr-ui-shell .sr-ui-mobile-pad { right:8px;top:64px;width:122px;padding:8px }
+      .sr-ui-shell .sr-ui-mobile-btn { padding:7px 3px }
     }
-    @media(max-height:650px) {
-      .sr-ui-shell .sr-ui-minimap { display:none; }
-      .sr-ui-shell .sr-ui-panel { padding:7px; }
-      .sr-ui-shell .sr-ui-resource-card { padding:4px 7px; }
-      .sr-ui-shell .sr-ui-zoom-btn { width:30px; height:30px; }
+    @media (max-height:650px) {
+      .sr-ui-shell .sr-ui-minimap { display:none }
+      .sr-ui-shell .sr-ui-panel { padding:5px }
+      .sr-ui-shell .sr-ui-resource-card { padding:3px 5px }
     }
   </style>
 </head>
 <body>
-  <main class="app" aria-label="Shadow Realms browser strategy game">
+  <main class="app" aria-label="Shadow Realms local strategy game">
     <header class="top">
       <div class="brand">
         <strong>Shadow Realms</strong>
-        <span class="tag" id="stage-label">STAGE 1 · FARMER DEMO</span>
+        <span class="stage" id="stage-label">LIVING RICE • FARM TEST</span>
       </div>
-      <div class="top-actions"><a class="back" href="/game" id="back-link">‹ Games</a></div>
+      <a href="/game" class="back" id="back-link">‹ Games</a>
     </header>
     <section class="map-area" aria-label="Battlefield">
-      <canvas id="game" aria-label="2D strategy battlefield"></canvas>
-      <div class="map-badge" id="map-status" aria-live="polite">Farmer navigation test</div>
+      <canvas id="game" aria-label="Three-quarter-view rice farming world"></canvas>
+      <div class="status" aria-live="polite">
+        <div class="status-line" id="map-status">Choose a farmer and harvest a field.</div>
+        <div class="status-line farm-stats" id="farm-stats">Fields: 6 • Ripe crops: ...</div>
+      </div>
       <nav class="zoom-panel" aria-label="Camera controls">
         <button class="control" id="zoom-in" type="button" aria-label="Zoom in">+</button>
         <button class="control" id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button class="control home" id="reset-camera" type="button" aria-label="Reset camera">⌂</button>
       </nav>
       <div class="error" id="game-error" role="alert">
-        <strong id="error-title">Unable to open Shadow Realms</strong>
+        <strong id="error-title">Unable to start Shadow Realms</strong>
         <p id="error-message"></p>
         <pre id="error-details"></pre>
       </div>
@@ -109,261 +124,440 @@
   </main>
 
   <script>
-    // No API or backend dependencies: all game entities live only in browser memory.
-    const gameLabels = {
+    // UI labels only. All gameplay state stays in this browser's memory.
+    const gameText = {
       km: {
-        back:'‹ ហ្គេម', stage:'វគ្គសាកល្បងកសិករ', status:'ចុចកសិករ ហើយចុច Mouse ស្តាំដើម្បីបញ្ជាដើរ',
-        help:'PC: ចុចឆ្វេងជ្រើស · ចុចស្តាំបញ្ជាដើរ · WASD រំកិលផែនទី',
-        moved:'បានបញ្ជាកសិករឱ្យដើរ', blocked:'រកផ្លូវមិនឃើញ ឬទីតាំងត្រូវបានរារាំង',
-        field:'កសិករកំពុងដើរទៅទីតាំងស្រែសាកល្បង', home:'កសិករកំពុងត្រឡប់មូលដ្ឋាន',
-        spawn:'បានបន្ថែមកសិករ', max:'មានកសិករសាកល្បងគ្រប់កំណត់ហើយ',
-        select:'សូមជ្រើសកសិករមុន', disabled:'មុខងារនេះនឹងបង្កើតនៅជំហាន Rice / Construction',
-        fail:'មិនអាចបើកហ្គេមបាន', serve:'សូមបើកតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។'
+        back:'‹ ហ្គេម',stage:'សាកល្បងស្រែរស់',welcome:'ជ្រើសកសិករ រួចចុច Harvest និងចុចលើស្រែ',
+        fields:'ស្រែ',ripe:'ស្រូវទុំ',carrying:'កំពុងដឹក',help:'PC: ជ្រើសកសិករ → Harvest → ចុចលើស្រែ | Mobile: Harvest → ចុចស្រែ',
+        auto:'ច្រូតស្វ័យប្រវត្តិ',home:'ត្រឡប់មូលដ្ឋាន',harvest:'ច្រូត',select:'ជ្រើស',move:'ដើរ',
+        noSelected:'សូមជ្រើសកសិករមុន',noField:'រកស្រែមិនឃើញ។ សូមចុចលើស្រែ',
+        noRoute:'រកផ្លូវមិនឃើញ ឬមានឧបសគ្គ',harvesting:'កសិករកំពុងច្រូតស្រូវ',
+        returning:'កសិករកំពុងដឹកស្រូវទៅមូលដ្ឋាន',deposited:'បានទម្លាក់ស្រូវនៅមូលដ្ឋាន',
+        spawned:'បានបន្ថែមកសិករ',maximum:'កសិករគ្រប់ចំនួនសាកល្បងហើយ',
+        disabled:'សំណង់នឹងធ្វើនៅជំហានបន្ទាប់',fail:'មិនអាចបើកហ្គេមបាន',
+        serve:'បើកហ្គេមតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។'
       },
       en: {
-        back:'‹ Games', stage:'Farmer movement test', status:'Select a farmer, then right-click the ground to move',
-        help:'PC: left click select · right click move · WASD pan',
-        moved:'Farmer movement ordered', blocked:'No valid route or the destination is blocked',
-        field:'Farmer walking to the planned field', home:'Farmer returning home',
-        spawn:'Farmer spawned', max:'Maximum number of test farmers reached',
-        select:'Select a farmer first', disabled:'Coming in the rice / construction stage',
-        fail:'Unable to open the game', serve:'Open the game using its HTTP/HTTPS website URL, not file://.'
+        back:'‹ Games',stage:'LIVING RICE • FARM TEST',welcome:'Select a farmer → Harvest → click a rice field',
+        fields:'Fields',ripe:'Ripe',carrying:'Carrying',help:'PC: select farmer → Harvest → click field | Mobile: Harvest → tap field',
+        auto:'Auto Harvest',home:'Return Home',harvest:'Harvest',select:'Select',move:'Move',
+        noSelected:'Select a farmer first',noField:'No rice field here — click on a field',
+        noRoute:'No route to the target',harvesting:'Farmer harvesting rice',
+        returning:'Farmer taking rice home',deposited:'Rice delivered to storage',
+        spawned:'Farmer spawned',maximum:'Maximum test farmers reached',
+        disabled:'Buildings will arrive in the next stage',fail:'Unable to start the game',
+        serve:'Open the game over HTTP/HTTPS, not directly as a file:// URL.'
       },
       zh: {
-        back:'‹ 游戏', stage:'农民移动测试', status:'选择农民后右键点击地面移动',
-        help:'左键选择 · 右键移动 · WASD 平移',
-        moved:'已下达移动指令', blocked:'没有可用路径或目标被阻挡',
-        field:'农民正在前往计划农田', home:'农民正在返回基地',
-        spawn:'已添加农民', max:'已达到测试人数上限',
-        select:'请先选择农民', disabled:'种植与建造功能将在后续阶段提供',
-        fail:'无法启动游戏', serve:'请通过 HTTP/HTTPS 网站地址打开游戏，不要直接打开 file://。'
+        back:'‹ 游戏',stage:'稻田生长测试',welcome:'选择农民 → 收割 → 点击稻田',
+        fields:'稻田',ripe:'成熟',carrying:'携带',help:'选择农民后点击收割并点选稻田',
+        auto:'自动收割',home:'返回基地',harvest:'收割',select:'选择',move:'移动',
+        noSelected:'请先选择农民',noField:'此处没有稻田，请点击稻田',
+        noRoute:'找不到可达路线',harvesting:'农民正在收割',
+        returning:'农民正在送回稻米',deposited:'稻米已入库',
+        spawned:'已添加农民',maximum:'已达到人数上限',
+        disabled:'建筑功能将在下一阶段加入',fail:'游戏启动失败',
+        serve:'请使用网站的 HTTP/HTTPS 地址打开，不能直接使用 file://。'
       },
       ja: {
-        back:'‹ ゲーム', stage:'農民の移動テスト', status:'農民を選択し、地面を右クリックして移動',
-        help:'左クリックで選択 · 右クリックで移動 · WASDで移動',
-        moved:'移動指示を出しました', blocked:'移動できる経路がないか目的地が塞がれています',
-        field:'予定された畑へ移動中', home:'拠点へ戻っています',
-        spawn:'農民を追加しました', max:'テスト人数の上限です',
-        select:'最初に農民を選択してください', disabled:'収穫と建築は後のステージで対応',
-        fail:'ゲームを起動できません', serve:'file:// ではなく HTTP/HTTPS のゲームURLから開いてください。'
+        back:'‹ ゲーム',stage:'稲作テスト',welcome:'農民を選択 → 収穫 → 水田をクリック',
+        fields:'田んぼ',ripe:'成熟',carrying:'運搬中',help:'農民を選択し、収穫を押して水田をクリック',
+        auto:'自動収穫',home:'拠点へ戻る',harvest:'収穫',select:'選択',move:'移動',
+        noSelected:'最初に農民を選択してください',noField:'ここには田んぼがありません',
+        noRoute:'通行可能な経路が見つかりません',harvesting:'農民が収穫中',
+        returning:'農民が稲を拠点へ運搬中',deposited:'稲が倉庫に入りました',
+        spawned:'農民を追加しました',maximum:'テスト人数の上限です',
+        disabled:'建築は次の段階で追加されます',fail:'ゲームを起動できません',
+        serve:'file:// ではなく、HTTP/HTTPS のサイトURLから開いてください。'
       },
       ko: {
-        back:'‹ 게임', stage:'농부 이동 테스트', status:'농부를 선택하고 바닥을 우클릭하면 이동합니다',
-        help:'왼쪽 클릭 선택 · 오른쪽 클릭 이동 · WASD 카메라 이동',
-        moved:'이동 명령을 내렸습니다', blocked:'경로가 없거나 목적지가 막혔습니다',
-        field:'예정된 밭으로 이동 중', home:'기지로 복귀 중',
-        spawn:'농부를 추가했습니다', max:'테스트 농부 수가 최대입니다',
-        select:'농부를 먼저 선택하세요', disabled:'수확 및 건설은 다음 단계에서 지원',
-        fail:'게임을 시작할 수 없습니다', serve:'file:// 대신 HTTP/HTTPS 사이트 URL로 열어 주세요.'
-      },
+        back:'‹ 게임',stage:'벼농사 테스트',welcome:'농부 선택 → 수확 → 논 클릭',
+        fields:'논',ripe:'익은 벼',carrying:'운반',help:'농부를 선택하고 수확 버튼을 누른 뒤 논을 누르세요',
+        auto:'자동 수확',home:'기지 복귀',harvest:'수확',select:'선택',move:'이동',
+        noSelected:'농부를 먼저 선택하세요',noField:'여기에는 논이 없습니다',
+        noRoute:'이동할 수 있는 길이 없습니다',harvesting:'농부가 수확 중입니다',
+        returning:'농부가 벼를 기지로 운반 중입니다',deposited:'벼를 창고에 보관했습니다',
+        spawned:'농부 추가 완료',maximum:'테스트 농부 수가 최대입니다',
+        disabled:'건설 기능은 다음 단계에서 추가됩니다',fail:'게임을 시작할 수 없습니다',
+        serve:'file:// 대신 HTTP/HTTPS 웹사이트 URL에서 실행하세요.'
+      }
     };
-    const requested = (navigator.language || 'km').toLowerCase().split('-')[0];
-    const language = gameLabels[requested] ? requested : 'km';
-    const tr = gameLabels[language];
+    const shortLang = (navigator.language || 'km').toLowerCase().split('-')[0];
+    const language = gameText[shortLang] ? shortLang : 'km';
+    const tr = gameText[language];
     document.documentElement.lang = language;
     document.getElementById('back-link').textContent = tr.back;
     document.getElementById('stage-label').textContent = tr.stage;
-    document.getElementById('map-status').textContent = tr.status;
+    document.getElementById('map-status').textContent = tr.welcome;
     document.getElementById('error-title').textContent = tr.fail;
     window.showGameError = error => {
-      document.getElementById('game-error').classList.add('show');
+      const overlay = document.getElementById('game-error');
+      overlay.classList.add('show');
       document.getElementById('error-message').textContent = location.protocol === 'file:' ? tr.serve : tr.fail;
       document.getElementById('error-details').textContent = String(error?.message || error || '');
     };
     if (location.protocol === 'file:') window.showGameError(tr.serve);
   </script>
-
   <script type="module">
     try {
-      const [engineModule, farmerModule, navigationModule, selectionModule, footerModule] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
         import('./ui/SelectionController.js'),
         import('./ui/CommandFooter.js'),
+        import('./world/RiceSystem.js'),
       ]);
-      const { GameEngine } = engineModule;
-      const { Farmer } = farmerModule;
-      const { Pathfinding } = navigationModule;
-      const { SelectionController } = selectionModule;
-      const { CommandFooter } = footerModule;
+      const { GameEngine } = engineLib;
+      const { Farmer } = farmerLib;
+      const { Pathfinding } = routeLib;
+      const { SelectionController } = selectionLib;
+      const { CommandFooter } = footerLib;
+      const { RiceSystem } = riceLib;
 
       const canvas = document.getElementById('game');
-      const status = document.getElementById('map-status');
-      const engine = new GameEngine({ canvas });
-      const { camera, map } = engine;
-      const navigation = new Pathfinding(map);
-      const farmers = [];
-      const MAX_FARMERS = 12;
+      const game = new GameEngine({ canvas });
+      const { map, camera } = game;
+      const rice = new RiceSystem(map);
+      const route = new Pathfinding(map);
       const home = map.getSpawnPoint('blue');
-      const footer = new CommandFooter({ root: document.body }).mount();
-      let selection = null;
-      let number = 0;
-      let hudTime = 0;
-      let lastZoom = -1;
+      const farmers = [];
+      const jobs = new Map();
+      const MAX_FARMERS = 12;
+      const statusNode = document.getElementById('map-status');
+      const farmStats = document.getElementById('farm-stats');
+      const footer = new CommandFooter({ root:document.body }).mount();
+      let farmerNumber = 0;
+      let selection;
+      let hudElapsed = 0;
+      let lastSummary = '';
+      let currentMessage = '';
 
-      function message(text) {
-        status.textContent = text;
-        footer.setResources({ hint: text });
+      const dist = (a,b) => Math.hypot(a.x - b.x, a.y - b.y);
+      const reserveOf = id => [...jobs.values()].some(job => job.plantId === id && job.phase !== 'seek');
+      const selectedFarmers = () => selection ? selection.selectedUnits() : [];
+      const message = text => {
+        if (text === currentMessage) return;
+        currentMessage = text;
+        statusNode.textContent = text;
+        footer.setResources({ hint:text });
+      };
+
+      // Construction remains inactive until there is a real BuildingSystem.
+      for (const selector of [
+        '[data-mode="build"]','[data-touch="build"]',
+        '[data-action="ghostHouse"]','[data-action="ghostBarn"]','[data-action="cancelBuild"]',
+      ]) {
+        for (const button of footer.nodes.shell.querySelectorAll(selector)) {
+          button.disabled = true;
+          button.title = tr.disabled;
+        }
+      }
+      // Use existing, functional command buttons rather than inventing a parallel UI.
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="sendToField"]')) button.textContent = tr.auto;
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="returnHome"]')) button.textContent = tr.home;
+      for (const button of footer.nodes.shell.querySelectorAll('[data-mode="harvest"],[data-touch="harvest"]')) button.textContent = tr.harvest;
+      for (const button of footer.nodes.shell.querySelectorAll('[data-mode="select"],[data-touch="select"]')) button.textContent = tr.select;
+      for (const button of footer.nodes.shell.querySelectorAll('[data-mode="move"],[data-touch="move"]')) button.textContent = tr.move;
+
+      // Mobile has no center command panel; expose genuine actions on the right.
+      const mobilePad = footer.nodes.shell.querySelector('.sr-ui-mobile-pad');
+      if (mobilePad) {
+        const actions = document.createElement('div');
+        actions.className = 'sr-farm-mobile-actions';
+        for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer']]) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.action = action;
+          button.textContent = title;
+          actions.appendChild(button);
+        }
+        mobilePad.appendChild(actions);
       }
 
-      // Farming and building need their own real systems; do not pretend they work.
-      for (const selector of [
-        '[data-mode="harvest"]', '[data-mode="build"]',
-        '[data-touch="harvest"]', '[data-touch="build"]',
-        '[data-action="ghostHouse"]', '[data-action="ghostBarn"]',
-        '[data-action="cancelBuild"]',
-      ]) {
-        for (const item of footer.nodes.shell.querySelectorAll(selector)) {
-          item.disabled = true;
-          item.title = tr.disabled;
+      function syncHud() {
+        const stats = rice.getSummary();
+        const carry = farmers.reduce((total,farmer)=> total + (farmer.carry || 0),0);
+        footer.setResources({rice:stats.rice,wood:0,villagers:farmers.length,zoom:camera.zoom});
+        const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total} · ${tr.carrying}: ${carry}`;
+        if (line !== lastSummary) {
+          farmStats.textContent = line;
+          lastSummary = line;
         }
       }
 
-      function openPosition(origin, spacing = 35) {
-        for (let ring = 0; ring <= 8; ring++) {
-          const radius = ring === 0 ? 0 : ring * spacing;
-          const count = ring === 0 ? 1 : Math.max(12, ring * 10);
-          for (let i = 0; i < count; i++) {
-            const theta = 2 * Math.PI * i / count;
-            const x = origin.x + Math.cos(theta) * radius;
-            const y = origin.y + Math.sin(theta) * radius;
-            if (!map.isWalkable(x, y, 14)) continue;
-            if (farmers.some(f => Math.hypot(f.x - x, f.y - y) < 36)) continue;
-            return { x, y };
+      function freePosition(origin, spacing=39) {
+        for (let ring=0; ring<8; ring++) {
+          const count = ring ? Math.max(12,ring*12) : 1;
+          for (let i=0;i<count;i++) {
+            const angle = 2*Math.PI*i/count;
+            const x = origin.x + Math.cos(angle)*spacing*ring;
+            const y = origin.y + Math.sin(angle)*spacing*ring;
+            if (!map.isWalkable(x,y,14)) continue;
+            if (farmers.some(f=>dist(f,{x,y})<37)) continue;
+            return {x,y};
           }
         }
         return null;
       }
 
       function spawnFarmer() {
-        if (farmers.length >= MAX_FARMERS) {
-          message(tr.max);
-          return null;
-        }
-        const position = openPosition(home);
-        if (!position) {
-          message(tr.blocked);
-          return null;
-        }
-        number++;
-        const farmer = new Farmer({ id: `farmer-${number}`, name: `Farmer ${number}`, team:'blue', ...position });
-        farmer.onBlocked = () => message(tr.blocked);
+        if (farmers.length >= MAX_FARMERS) { message(tr.maximum);return null; }
+        const pos = freePosition(home);
+        if (!pos) {message(tr.noRoute);return null;}
+        const farmer = new Farmer({id:`farmer-${++farmerNumber}`,name:`Farmer ${farmerNumber}`,team:'blue',...pos});
+        farmer.onBlocked = () => {
+          const job = jobs.get(farmer.id);
+          if (job) { job.phase='seek';job.plantId=null;job.timer=1.5; }
+          message(tr.noRoute);
+        };
         farmers.push(farmer);
-        footer.setResources({ villagers: farmers.length });
+        syncHud();
         return farmer;
       }
 
-      function commandMove(units, point, text = tr.moved) {
-        if (!units.length) {
-          message(tr.select);
-          return;
-        }
-        let accepted = 0;
-        const columns = Math.ceil(Math.sqrt(units.length));
-        units.forEach((unit, index) => {
-          const col = index % columns;
-          const row = Math.floor(index / columns);
-          const rows = Math.ceil(units.length / columns);
-          const destination = units.length === 1 ? point : {
-            x: point.x + (col - (columns - 1) / 2) * 39,
-            y: point.y + (row - (rows - 1) / 2) * 39,
+      function manualMove(units,point) {
+        if (!units.length) {message(tr.noSelected);return;}
+        let success=0;
+        const cols=Math.ceil(Math.sqrt(units.length));
+        const rows=Math.ceil(units.length/cols);
+        units.forEach((farmer,i)=>{
+          jobs.delete(farmer.id);
+          farmer.setHarvestAnimation(false);
+          const desired=units.length===1 ? point : {
+            x:point.x+(i%cols-(cols-1)/2)*39,
+            y:point.y+(Math.floor(i/cols)-(rows-1)/2)*39,
           };
-          const actual = map.isWalkable(destination.x, destination.y, unit.radius)
-            ? destination : point;
-          if (navigation.moveUnit(unit, actual)) accepted++;
+          const target=map.isWalkable(desired.x,desired.y,farmer.radius)?desired:point;
+          if (route.moveUnit(farmer,target)) success++;
         });
-        message(accepted ? `${text} (${accepted}/${units.length})` : tr.blocked);
+        message(success?`${tr.move}: ${success}/${units.length}`:tr.noRoute);
       }
 
-      function zoomBy(factor) {
-        camera.zoomAt(camera.zoom * factor);
-        canvas.focus({ preventScroll: true });
+      function chooseField(point,nearest=false) {
+        const direct=rice.getFieldAt(point,nearest?180:25);
+        if (direct) return direct;
+        if (!nearest) return null;
+        let result=null, best=Infinity;
+        for (const field of rice.getFields()) {
+          const length=dist(field,point);
+          if (length<best) {best=length;result=field;}
+        }
+        return result;
+      }
+
+      function pickPlant(farmer,fieldId) {
+        const candidates=rice.plants.filter(p=>p.fieldId===fieldId && rice.isRipe(p) && !reserveOf(p.id));
+        candidates.sort((a,b)=>dist(a,farmer)-dist(b,farmer));
+        return candidates;
+      }
+
+      function safeStand(plant,farmer) {
+        if (map.isWalkable(plant.x,plant.y,farmer.radius)) return {x:plant.x,y:plant.y};
+        for (let radius=12;radius<=44;radius+=8) {
+          for (let i=0;i<16;i++) {
+            const angle=i*Math.PI/8;
+            const point={x:plant.x+Math.cos(angle)*radius,y:plant.y+Math.sin(angle)*radius};
+            if (map.isWalkable(point.x,point.y,farmer.radius)) return point;
+          }
+        }
+        return null;
+      }
+
+      function beginReturn(farmer, resume=false) {
+        farmer.setHarvestAnimation(false);
+        const existing=jobs.get(farmer.id);
+        const job=existing || {type:'return',fieldId:null,timer:0};
+        job.phase='return';job.plantId=null;job.resume=Boolean(resume && job.fieldId);
+        jobs.set(farmer.id,job);
+        if (dist(farmer,home)<=rice.config.depositRange) {
+          completeReturn(farmer,job);
+          return;
+        }
+        if (!route.moveUnit(farmer,home)) {
+          job.phase='returnRetry';job.timer=1.5;
+          message(tr.noRoute);
+        } else message(tr.returning);
+      }
+
+      function completeReturn(farmer,job) {
+        const result=rice.deposit(farmer,home);
+        if (result.ok) message(`${tr.deposited}: +${result.amount}`);
+        else if (!job.resume) message(tr.home);
+        farmer.setHarvestAnimation(false);
+        if (job.resume && job.fieldId) {
+          job.phase='seek';job.timer=0;job.plantId=null;
+        } else jobs.delete(farmer.id);
+      }
+
+      function seekHarvest(farmer,job) {
+        if (farmer.carry + rice.config.yieldPerPlant > rice.config.carryingCapacity) {
+          beginReturn(farmer,true);
+          return;
+        }
+        let planned=false;
+        for (const plant of pickPlant(farmer,job.fieldId)) {
+          const target=safeStand(plant,farmer);
+          if (!target) continue;
+          if (dist(farmer,plant)<=rice.config.harvestRange-5) {
+            farmer.setHarvestAnimation(true);
+            job.phase='swing';job.plantId=plant.id;job.timer=.62;
+            planned=true;
+            break;
+          }
+          if (route.moveUnit(farmer,target)) {
+            job.phase='travel';job.plantId=plant.id;
+            planned=true;
+            break;
+          }
+        }
+        if (!planned) {
+          job.plantId=null;
+          if (farmer.carry>0) beginReturn(farmer,true);
+          else {farmer.setHarvestAnimation(false);job.phase='waiting';job.timer=1.8;}
+        }
+      }
+
+      function startHarvest(farmersToSend,point) {
+        if (!farmersToSend.length) {message(tr.noSelected);return;}
+        const field=chooseField(point,false);
+        if (!field) {message(tr.noField);return;}
+        let started=0;
+        for (const farmer of farmersToSend) {
+          farmer.stop();
+          farmer.setHarvestAnimation(false);
+          jobs.set(farmer.id,{type:'harvest',fieldId:field.id,phase:'seek',timer:0,plantId:null,resume:true});
+          seekHarvest(farmer,jobs.get(farmer.id));
+          started++;
+        }
+        message(`${tr.harvesting}: ${started}`);
+      }
+
+      function autoHarvest(units) {
+        if (!units.length) {message(tr.noSelected);return;}
+        const viable=rice.getFields().filter(field=>
+          field.x<map.width*.5 && field.plants.some(p=>rice.isRipe(p)));
+        const pool=viable.length?viable:rice.getFields().filter(field=>field.x<map.width*.5);
+        if (!pool.length) {message(tr.noField);return;}
+        for (const farmer of units) {
+          const target=[...pool].sort((a,b)=>dist(a,farmer)-dist(b,farmer))[0];
+          farmer.stop();farmer.setHarvestAnimation(false);
+          jobs.set(farmer.id,{type:'harvest',fieldId:target.id,phase:'seek',timer:0,plantId:null,resume:true});
+          seekHarvest(farmer,jobs.get(farmer.id));
+        }
+        message(`${tr.harvesting}: ${units.length}`);
+      }
+
+      function runJob(farmer,dt) {
+        const job=jobs.get(farmer.id);
+        if (!job) {
+          if (farmer.carry>0 && dist(farmer,home)<=rice.config.depositRange) {
+            const result=rice.deposit(farmer,home);
+            if (result.ok) message(`${tr.deposited}: +${result.amount}`);
+          }
+          return;
+        }
+        if (job.phase==='swing') {
+          job.timer-=dt;
+          if (job.timer>0) return;
+          const result=rice.harvestPlant(job.plantId,farmer);
+          farmer.setHarvestAnimation(false);
+          job.plantId=null;
+          job.phase='seek';job.timer=0.12;
+          if (!result.ok && result.reason==='full') beginReturn(farmer,true);
+          return;
+        }
+        if (job.phase==='travel' && farmer.state!=='walking') {
+          const plant=rice.byId.get(job.plantId);
+          if (plant && rice.isRipe(plant) && dist(farmer,plant)<=rice.config.harvestRange) {
+            farmer.setHarvestAnimation(true);
+            job.phase='swing';job.timer=.62;
+          } else {job.plantId=null;job.phase='seek';job.timer=.3;}
+          return;
+        }
+        if (job.phase==='return' && (dist(farmer,home)<=rice.config.depositRange || farmer.state!=='walking')) {
+          if (dist(farmer,home)<=rice.config.depositRange) completeReturn(farmer,job);
+          else {job.phase='returnRetry';job.timer=1.5;}
+          return;
+        }
+        if (job.phase==='seek'||job.phase==='waiting'||job.phase==='returnRetry') {
+          job.timer-=dt;
+          if (job.timer>0) return;
+          if (job.phase==='returnRetry') beginReturn(farmer,job.resume);
+          else seekHarvest(farmer,job);
+        }
       }
 
       function actionHandler(action) {
-        if (action === 'zoomIn') { zoomBy(1.18); return; }
-        if (action === 'zoomOut') { zoomBy(1 / 1.18); return; }
-        if (action === 'spawnFarmer') {
-          const f = spawnFarmer();
-          if (f) {
-            selection.setSelectedIds([f.id]);
-            message(`${tr.spawn} (${farmers.length})`);
-          }
+        if (action==='zoomIn') {zoomBy(1.18);return;}
+        if (action==='zoomOut') {zoomBy(1/1.18);return;}
+        if (action==='spawnFarmer') {
+          const f=spawnFarmer();
+          if (f) {selection.setSelectedIds([f.id]);message(`${tr.spawned}: ${farmers.length}`);}
           return;
         }
-        if (action === 'sendToField' || action === 'returnHome') {
-          const selected = selection.selectedUnits();
-          const point = action === 'returnHome' ? home :
-            (map.clearings.find(c => c.x < map.width / 2 && c.y > map.height * .5) || home);
-          commandMove(selected, point, action === 'returnHome' ? tr.home : tr.field);
+        if (action==='sendToField') {autoHarvest(selectedFarmers());return;}
+        if (action==='returnHome') {
+          const chosen=selectedFarmers();
+          if (!chosen.length) {message(tr.noSelected);return;}
+          for (const farmer of chosen) {jobs.delete(farmer.id);beginReturn(farmer,false);}
           return;
         }
-        if (action === 'ghostHouse' || action === 'ghostBarn' || action === 'cancelBuild') {
-          message(tr.disabled);
-        }
+        if (action==='ghostHouse'||action==='ghostBarn'||action==='cancelBuild') message(tr.disabled);
       }
 
-      // Renderers draw after map ground and before map foreground trees/rocks.
-      engine.onUpdate = (dt) => {
-        for (const farmer of farmers) farmer.update(dt, map);
-        hudTime += dt;
-        if (hudTime >= .2) {
-          hudTime = 0;
-          const zoom = Math.round(camera.zoom * 100);
-          if (zoom !== lastZoom) {
-            footer.setResources({ zoom: camera.zoom });
-            lastZoom = zoom;
-          }
+      function zoomBy(factor) {camera.zoomAt(camera.zoom*factor);canvas.focus({preventScroll:true});}
+
+      game.onUpdate=(dt)=>{
+        rice.update(dt);
+        for (const farmer of farmers) {
+          farmer.update(dt,map);
+          runJob(farmer,dt);
         }
+        hudElapsed+=dt;
+        if (hudElapsed>=.25) {hudElapsed=0;syncHud();}
       };
-      engine.onRender = (ctx, currentCamera) => {
-        for (const farmer of [...farmers].sort((a, b) => a.y - b.y)) {
-          farmer.draw(ctx, currentCamera);
-        }
+      game.onRender=(ctx,currentCamera)=>{
+        rice.drawGround(ctx,currentCamera);
+        rice.drawCrops(ctx,currentCamera);
+        for (const farmer of [...farmers].sort((a,b)=>a.y-b.y)) farmer.draw(ctx,currentCamera);
       };
 
-      selection = new SelectionController({
-        engine,
-        footer,
-        getUnits: () => farmers,
-        playerTeam: 'blue',
-        onCommand: ({ type, units, point }) => {
-          if (type === 'move') commandMove(units, point);
+      selection=new SelectionController({
+        engine:game,footer,getUnits:()=>farmers,playerTeam:'blue',
+        onCommand:({type,units,point})=>{
+          if (type==='move') manualMove(units,point);
+          else if (type==='harvest') startHarvest(units,point);
           else message(tr.disabled);
         },
-        onAction: actionHandler,
+        onAction:actionHandler,
       }).attach();
 
-      for (let i = 0; i < 3; i++) spawnFarmer();
+      for (let i=0;i<3;i++) spawnFarmer();
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
-      footer.setResources({ villagers:farmers.length, zoom:camera.zoom, hint:tr.help });
+      syncHud();
+      footer.setResources({hint:tr.help});
 
-      document.getElementById('zoom-in').addEventListener('click', () => zoomBy(1.18));
-      document.getElementById('zoom-out').addEventListener('click', () => zoomBy(1 / 1.18));
-      document.getElementById('reset-camera').addEventListener('click', () => {
-        camera.zoomAt(1);
-        camera.centerOn(home.x, home.y);
+      document.getElementById('zoom-in').addEventListener('click',()=>zoomBy(1.18));
+      document.getElementById('zoom-out').addEventListener('click',()=>zoomBy(1/1.18));
+      document.getElementById('reset-camera').addEventListener('click',()=>{
+        camera.zoomAt(1);camera.centerOn(home.x,home.y);
       });
-
-      // Never start multiple animation loops; pause while tab is hidden.
-      const onVisibility = () => {
-        if (document.hidden) engine.stop();
-        else if (!engine.destroyed) engine.start();
+      const visibility=()=>{
+        if (document.hidden) game.stop();
+        else if (!game.destroyed) game.start();
       };
-      document.addEventListener('visibilitychange', onVisibility);
-      window.addEventListener('pagehide', () => {
-        document.removeEventListener('visibilitychange', onVisibility);
-        selection.destroy();
-        footer.destroy();
-        engine.destroy();
-      }, { once:true });
-
-      window.shadowRealmsGame = engine; // Local debugging only; no remote services.
-      engine.start(); // Immediately playable — no Start button.
-    } catch (error) {
+      document.addEventListener('visibilitychange',visibility);
+      window.addEventListener('pagehide',()=>{
+        document.removeEventListener('visibilitychange',visibility);
+        selection.destroy();footer.destroy();game.destroy();
+      },{once:true});
+      window.shadowRealmsGame=game;
+      window.shadowRealmsRice=rice;
+      game.start();
+    } catch(error) {
       window.showGameError(error);
-      console.error('Shadow Realms local game startup:', error);
+      console.error('Shadow Realms rice game:',error);
     }
   </script>
 </body>
