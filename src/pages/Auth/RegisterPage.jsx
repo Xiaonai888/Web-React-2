@@ -833,9 +833,23 @@ export default function RegisterPage() {
       if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)
 
       saveLogin(data.token, data.user)
-      setCreatedToken(data.token)
-      setCreatedUser(data.user)
-      setStep(2)
+
+const newReaderId = String(data.user?.id || '')
+
+if (newReaderId) {
+  try {
+    localStorage.setItem(
+      `shadow_story_onboarding_pending_v1:${newReaderId}`,
+      '1'
+    )
+    localStorage.removeItem(
+      `shadow_story_onboarding_done_v1:${newReaderId}`
+    )
+    localStorage.removeItem('shadow_story_language')
+  } catch {}
+}
+
+navigate('/me', { replace: true })
     } catch (error) {
       setTurnstileToken('')
       setTurnstileRefreshKey((value) => value + 1)
