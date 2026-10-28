@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
   <meta name="color-scheme" content="dark">
-  <title>Shadow Realms — Living Rice Farm</title>
+  <title>Shadow Realms — Farming & Construction</title>
   <style>
     :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
     * { box-sizing:border-box }
@@ -45,6 +45,14 @@
     .error p { line-height:1.6;max-width:510px;font-size:13px }
     .error pre { max-width:95vw;overflow-wrap:anywhere;white-space:pre-wrap;font-size:11px }
 
+    /* Build management reuses the existing Footer. No second control system. */
+    .sr-ui-shell .sr-build-tools { display:flex;flex-wrap:wrap;gap:5px;margin-top:8px }
+    .sr-ui-shell .sr-build-tool { flex:1 1 68px;padding:8px 7px;border-radius:9px;border:1px solid #947b56;
+      color:#ffeecb;background:#454032;font-size:11px;cursor:pointer }
+    .sr-ui-shell .sr-build-tool:disabled { opacity:.4;cursor:not-allowed }
+    .sr-ui-shell .sr-build-mobile-heading { font-size:10px;font-weight:800;color:#efd391;margin:10px 0 4px }
+    .sr-ui-shell .sr-ui-mobile-pad { max-height:calc(100dvh - 205px);overflow-y:auto;scrollbar-width:thin }
+    .sr-ui-shell .sr-farm-mobile-actions button { touch-action:manipulation }
     /* Integrate existing CommandFooter without a duplicate heading. */
     .sr-ui-shell .sr-ui-topbar,.sr-ui-shell .sr-ui-hint { display:none }
     .sr-ui-shell .sr-ui-footer { z-index:2 }
@@ -100,12 +108,12 @@
     <header class="top">
       <div class="brand">
         <strong>Shadow Realms</strong>
-        <span class="stage" id="stage-label">LIVING RICE • FARM TEST</span>
+        <span class="stage" id="stage-label">FARM + BUILD • STAGE 1</span>
       </div>
       <a href="/game" class="back" id="back-link">‹ Games</a>
     </header>
     <section class="map-area" aria-label="Battlefield">
-      <canvas id="game" aria-label="Three-quarter-view rice farming world"></canvas>
+      <canvas id="game" aria-label="Three-quarter-view farming and construction world"></canvas>
       <div class="status" aria-live="polite">
         <div class="status-line" id="map-status">Choose a farmer and harvest a field.</div>
         <div class="status-line farm-stats" id="farm-stats">Fields: 6 • Ripe crops: ...</div>
@@ -127,58 +135,94 @@
     // UI labels only. All gameplay state stays in this browser's memory.
     const gameText = {
       km: {
-        back:'‹ ហ្គេម',stage:'សាកល្បងស្រែរស់',welcome:'ជ្រើសកសិករ រួចចុច Harvest និងចុចលើស្រែ',
+        back:'‹ ហ្គេម',stage:'កសិកម្ម និងសំណង់',welcome:'ជ្រើសកសិករ រួចចុច Harvest និងចុចលើស្រែ',
         fields:'ស្រែ',ripe:'ស្រូវទុំ',carrying:'កំពុងដឹក',help:'PC: ជ្រើសកសិករ → Harvest → ចុចលើស្រែ | Mobile: Harvest → ចុចស្រែ',
         auto:'ច្រូតស្វ័យប្រវត្តិ',home:'ត្រឡប់មូលដ្ឋាន',harvest:'ច្រូត',select:'ជ្រើស',move:'ដើរ',
         noSelected:'សូមជ្រើសកសិករមុន',noField:'រកស្រែមិនឃើញ។ សូមចុចលើស្រែ',
         noRoute:'រកផ្លូវមិនឃើញ ឬមានឧបសគ្គ',harvesting:'កសិករកំពុងច្រូតស្រូវ',
         returning:'កសិករកំពុងដឹកស្រូវទៅមូលដ្ឋាន',deposited:'បានទម្លាក់ស្រូវនៅមូលដ្ឋាន',
         spawned:'បានបន្ថែមកសិករ',maximum:'កសិករគ្រប់ចំនួនសាកល្បងហើយ',
-        disabled:'សំណង់នឹងធ្វើនៅជំហានបន្ទាប់',fail:'មិនអាចបើកហ្គេមបាន',
+        build:'សាងសង់',house:'ផ្ទះ',barn:'ឃ្លាំង',assign:'ចាត់កសិករ',cancel:'បោះបង់',demolish:'រុះរើ',
+        buildHelp:'រើសកសិករ → ចុច House/Barn → ចុចទីតាំងលើដី',
+        buildPlaced:'បានដាក់គ្រឹះសំណង់',buildReady:'សំណង់រួចរាល់',buildCancelled:'បានបោះបង់សំណង់',
+        buildSelected:'បានជ្រើសអាគារ',needBuilding:'សូមចុចលើសំណង់ជាមុន',needBuilder:'សូមជ្រើសកសិករមុន',
+        buildInvalid:'កន្លែងនេះសាងសង់មិនបាន',buildPoor:'ស្រូវ ឬឈើមិនគ្រប់',
+        buildAssigned:'បានចាត់កសិករឱ្យសាងសង់',buildStopped:'បានបោះបង់ការដាក់ទីតាំង',
+        buildDemolished:'បានរុះរើអាគារ',demolishAsk:'តើប្រាកដថាចង់រុះរើអាគារនេះឬ?',
+        buildEmpty:'គ្មានសំណង់កំពុងធ្វើត្រូវបោះបង់',houses:'ផ្ទះ',barns:'ឃ្លាំង',sites:'កំពុងសាងសង់',capacity:'ចំនួនអតិបរមា',
+        disabled:'សូមជ្រើសទីតាំងសាងសង់',fail:'មិនអាចបើកហ្គេមបាន',
         serve:'បើកហ្គេមតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។'
       },
       en: {
-        back:'‹ Games',stage:'LIVING RICE • FARM TEST',welcome:'Select a farmer → Harvest → click a rice field',
+        back:'‹ Games',stage:'FARM + BUILD • STAGE 1',welcome:'Select a farmer → Harvest → click a rice field',
         fields:'Fields',ripe:'Ripe',carrying:'Carrying',help:'PC: select farmer → Harvest → click field | Mobile: Harvest → tap field',
         auto:'Auto Harvest',home:'Return Home',harvest:'Harvest',select:'Select',move:'Move',
         noSelected:'Select a farmer first',noField:'No rice field here — click on a field',
         noRoute:'No route to the target',harvesting:'Farmer harvesting rice',
         returning:'Farmer taking rice home',deposited:'Rice delivered to storage',
         spawned:'Farmer spawned',maximum:'Maximum test farmers reached',
-        disabled:'Buildings will arrive in the next stage',fail:'Unable to start the game',
+        build:'Build',house:'House',barn:'Barn',assign:'Assign builders',cancel:'Cancel',demolish:'Demolish',
+        buildHelp:'Select farmer → House/Barn → click a valid patch of ground',
+        buildPlaced:'Construction site placed',buildReady:'Construction finished',buildCancelled:'Construction cancelled',
+        buildSelected:'Selected building',needBuilding:'Click a building first',needBuilder:'Select a farmer first',
+        buildInvalid:'Cannot build on this terrain',buildPoor:'Not enough rice or wood',
+        buildAssigned:'Builders assigned',buildStopped:'Placement cancelled',buildDemolished:'Building demolished',
+        demolishAsk:'Demolish this finished building?',buildEmpty:'No pending site to cancel',
+        houses:'Houses',barns:'Barns',sites:'Building',capacity:'Capacity',disabled:'Choose where to build',fail:'Unable to start the game',
         serve:'Open the game over HTTP/HTTPS, not directly as a file:// URL.'
       },
       zh: {
-        back:'‹ 游戏',stage:'稻田生长测试',welcome:'选择农民 → 收割 → 点击稻田',
+        back:'‹ 游戏',stage:'稻田与建造',welcome:'选择农民 → 收割 → 点击稻田',
         fields:'稻田',ripe:'成熟',carrying:'携带',help:'选择农民后点击收割并点选稻田',
         auto:'自动收割',home:'返回基地',harvest:'收割',select:'选择',move:'移动',
         noSelected:'请先选择农民',noField:'此处没有稻田，请点击稻田',
         noRoute:'找不到可达路线',harvesting:'农民正在收割',
         returning:'农民正在送回稻米',deposited:'稻米已入库',
         spawned:'已添加农民',maximum:'已达到人数上限',
-        disabled:'建筑功能将在下一阶段加入',fail:'游戏启动失败',
+        build:'建造',house:'房屋',barn:'仓库',assign:'派遣工人',cancel:'取消',demolish:'拆除',
+        buildHelp:'选择农民 → 房屋/仓库 → 点击可建造的空地',
+        buildPlaced:'已放置工地',buildReady:'建筑完成',buildCancelled:'施工已取消',
+        buildSelected:'已选建筑',needBuilding:'请先选择建筑',needBuilder:'请先选择农民',
+        buildInvalid:'该位置无法建造',buildPoor:'稻米或木材不足',
+        buildAssigned:'工人已派遣',buildStopped:'已取消建造位置',buildDemolished:'建筑已拆除',
+        demolishAsk:'确定拆除此建筑吗？',buildEmpty:'没有可取消的工地',
+        houses:'房屋',barns:'仓库',sites:'施工中',capacity:'人口上限',disabled:'请选择建造位置',fail:'游戏启动失败',
         serve:'请使用网站的 HTTP/HTTPS 地址打开，不能直接使用 file://。'
       },
       ja: {
-        back:'‹ ゲーム',stage:'稲作テスト',welcome:'農民を選択 → 収穫 → 水田をクリック',
+        back:'‹ ゲーム',stage:'農業と建築',welcome:'農民を選択 → 収穫 → 水田をクリック',
         fields:'田んぼ',ripe:'成熟',carrying:'運搬中',help:'農民を選択し、収穫を押して水田をクリック',
         auto:'自動収穫',home:'拠点へ戻る',harvest:'収穫',select:'選択',move:'移動',
         noSelected:'最初に農民を選択してください',noField:'ここには田んぼがありません',
         noRoute:'通行可能な経路が見つかりません',harvesting:'農民が収穫中',
         returning:'農民が稲を拠点へ運搬中',deposited:'稲が倉庫に入りました',
         spawned:'農民を追加しました',maximum:'テスト人数の上限です',
-        disabled:'建築は次の段階で追加されます',fail:'ゲームを起動できません',
+        build:'建築',house:'家',barn:'倉庫',assign:'作業員配置',cancel:'取消',demolish:'解体',
+        buildHelp:'農民を選択 → 家/倉庫 → 建築できる地面をクリック',
+        buildPlaced:'建築開始',buildReady:'建築完了',buildCancelled:'建築を取消',
+        buildSelected:'建物を選択',needBuilding:'建物を選択してください',needBuilder:'農民を選択してください',
+        buildInvalid:'ここには建築できません',buildPoor:'米または木材が不足',
+        buildAssigned:'建築作業員を配置',buildStopped:'配置を取り消しました',buildDemolished:'建物を解体しました',
+        demolishAsk:'この建物を解体しますか？',buildEmpty:'取消できる建築現場がありません',
+        houses:'家',barns:'倉庫',sites:'建築中',capacity:'人数上限',disabled:'建築場所を選んでください',fail:'ゲームを起動できません',
         serve:'file:// ではなく、HTTP/HTTPS のサイトURLから開いてください。'
       },
       ko: {
-        back:'‹ 게임',stage:'벼농사 테스트',welcome:'농부 선택 → 수확 → 논 클릭',
+        back:'‹ 게임',stage:'농사와 건설',welcome:'농부 선택 → 수확 → 논 클릭',
         fields:'논',ripe:'익은 벼',carrying:'운반',help:'농부를 선택하고 수확 버튼을 누른 뒤 논을 누르세요',
         auto:'자동 수확',home:'기지 복귀',harvest:'수확',select:'선택',move:'이동',
         noSelected:'농부를 먼저 선택하세요',noField:'여기에는 논이 없습니다',
         noRoute:'이동할 수 있는 길이 없습니다',harvesting:'농부가 수확 중입니다',
         returning:'농부가 벼를 기지로 운반 중입니다',deposited:'벼를 창고에 보관했습니다',
         spawned:'농부 추가 완료',maximum:'테스트 농부 수가 최대입니다',
-        disabled:'건설 기능은 다음 단계에서 추가됩니다',fail:'게임을 시작할 수 없습니다',
+        build:'건설',house:'집',barn:'창고',assign:'일꾼 배치',cancel:'취소',demolish:'철거',
+        buildHelp:'농부 선택 → 집/창고 → 건설 가능한 땅 터치',
+        buildPlaced:'건설 현장 배치',buildReady:'건설 완료',buildCancelled:'건설 취소',
+        buildSelected:'건물 선택',needBuilding:'건물을 먼저 선택하세요',needBuilder:'농부를 선택하세요',
+        buildInvalid:'이곳에 건설할 수 없습니다',buildPoor:'쌀이나 목재가 부족합니다',
+        buildAssigned:'일꾼 배치 완료',buildStopped:'배치 취소',buildDemolished:'건물 철거 완료',
+        demolishAsk:'이 건물을 철거할까요?',buildEmpty:'취소할 건설 현장이 없습니다',
+        houses:'집',barns:'창고',sites:'건설 중',capacity:'인구 상한',disabled:'건설할 위치를 선택하세요',fail:'게임을 시작할 수 없습니다',
         serve:'file:// 대신 HTTP/HTTPS 웹사이트 URL에서 실행하세요.'
       }
     };
@@ -200,13 +244,14 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
         import('./ui/SelectionController.js'),
         import('./ui/CommandFooter.js'),
         import('./world/RiceSystem.js'),
+        import('./buildings/ConstructionSystem.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -214,6 +259,7 @@
       const { SelectionController } = selectionLib;
       const { CommandFooter } = footerLib;
       const { RiceSystem } = riceLib;
+      const { ConstructionSystem, BUILDING_TYPES } = constructionLib;
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -223,7 +269,19 @@
       const home = map.getSpawnPoint('blue');
       const farmers = [];
       const jobs = new Map();
-      const MAX_FARMERS = 12;
+      const MAX_FARMERS = 24;
+      // One local resource ledger: ConstructionSystem debits RiceSystem in place.
+      const construction = new ConstructionSystem(map, {
+        riceSystem:rice, navigation:route, getUnits:()=>farmers,
+        startingWood:180, basePopulation:8,
+        onEvent:(event,info)=>{
+          if (event==='completed') message(`${tr.buildReady}: ${info.building.type}`);
+        },
+      });
+      let selectedBuildingId = null;
+      const buildingAt = point => construction.getBuildingAt(point);
+      const selectedBuilding = () => construction.getBuildingById(selectedBuildingId);
+
       const statusNode = document.getElementById('map-status');
       const farmStats = document.getElementById('farm-stats');
       const footer = new CommandFooter({ root:document.body }).mount();
@@ -243,15 +301,31 @@
         footer.setResources({ hint:text });
       };
 
-      // Construction remains inactive until there is a real BuildingSystem.
-      for (const selector of [
-        '[data-mode="build"]','[data-touch="build"]',
-        '[data-action="ghostHouse"]','[data-action="ghostBarn"]','[data-action="cancelBuild"]',
-      ]) {
-        for (const button of footer.nodes.shell.querySelectorAll(selector)) {
-          button.disabled = true;
-          button.title = tr.disabled;
+      // Existing build/house/barn/cancel buttons are now functional.
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostHouse"]')) {
+        button.textContent = `${tr.house} (30🌾 45🪵)`;
+        button.title = tr.buildHelp;
+      }
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostBarn"]')) {
+        button.textContent = `${tr.barn} (20🌾 60🪵)`;
+        button.title = tr.buildHelp;
+      }
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="cancelBuild"]')) {
+        button.textContent = tr.cancel;
+      }
+      for (const button of footer.nodes.shell.querySelectorAll('[data-mode="build"],[data-touch="build"]')) {
+        button.textContent = tr.build;
+      }
+      const buildGroup = footer.nodes.shell.querySelector('.sr-ui-action-group:last-child');
+      if (buildGroup) {
+        const tools = document.createElement('div');
+        tools.className = 'sr-build-tools';
+        for (const [action,label] of [['assignBuilders',tr.assign],['demolishBuilding',tr.demolish]]) {
+          const button = document.createElement('button');
+          button.type='button'; button.dataset.action=action; button.className='sr-build-tool';
+          button.textContent=label; tools.appendChild(button);
         }
+        buildGroup.appendChild(tools);
       }
       // Use existing, functional command buttons rather than inventing a parallel UI.
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="sendToField"]')) button.textContent = tr.auto;
@@ -265,7 +339,9 @@
       if (mobilePad) {
         const actions = document.createElement('div');
         actions.className = 'sr-farm-mobile-actions';
-        for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer']]) {
+        for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer'],
+          ['ghostHouse',tr.house],['ghostBarn',tr.barn],['cancelBuild',tr.cancel],
+          ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish]]) {
           const button = document.createElement('button');
           button.type = 'button';
           button.dataset.action = action;
@@ -278,8 +354,17 @@
       function syncHud() {
         const stats = rice.getSummary();
         const carry = farmers.reduce((total,farmer)=> total + (farmer.carry || 0),0);
-        footer.setResources({rice:stats.rice,wood:0,villagers:farmers.length,zoom:camera.zoom});
-        const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total} · ${tr.carrying}: ${carry}`;
+        const resources=construction.getResources();
+        footer.setResources({rice:resources.rice,wood:resources.wood,villagers:farmers.length,zoom:camera.zoom});
+        const site=selectedBuilding();
+        if (site && !selectedFarmers().length) {
+          footer.setResources({selected:`${site.type} · ${Math.round(site.progress*100)}%`});
+        }
+        const buildings=construction.getSummary();
+        const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total}` +
+          ` · ${tr.carrying}: ${carry} · ${tr.houses}: ${buildings.houses}` +
+          ` · ${tr.barns}: ${buildings.barns} · ${tr.sites}: ${buildings.sites}` +
+          ` · ${tr.capacity}: ${farmers.length}/${resources.populationCapacity}`;
         if (line !== lastSummary) {
           farmStats.textContent = line;
           lastSummary = line;
@@ -302,7 +387,7 @@
       }
 
       function spawnFarmer() {
-        if (farmers.length >= MAX_FARMERS) { message(tr.maximum);return null; }
+        if (farmers.length >= Math.min(MAX_FARMERS,construction.getResources().populationCapacity)) { message(tr.maximum);return null; }
         const pos = freePosition(home);
         if (!pos) {message(tr.noRoute);return null;}
         const farmer = new Farmer({id:`farmer-${++farmerNumber}`,name:`Farmer ${farmerNumber}`,team:'blue',...pos});
@@ -323,6 +408,7 @@
         const rows=Math.ceil(units.length/cols);
         units.forEach((farmer,i)=>{
           jobs.delete(farmer.id);
+          construction.removeBuilderFromAll(farmer.id);
           farmer.setHarvestAnimation(false);
           const desired=units.length===1 ? point : {
             x:point.x+(i%cols-(cols-1)/2)*39,
@@ -424,6 +510,7 @@
         if (!field) {message(tr.noField);return;}
         let started=0;
         for (const farmer of farmersToSend) {
+          construction.removeBuilderFromAll(farmer.id);
           farmer.stop();
           farmer.setHarvestAnimation(false);
           jobs.set(farmer.id,{type:'harvest',fieldId:field.id,phase:'seek',timer:0,plantId:null,resume:true});
@@ -441,6 +528,7 @@
         if (!pool.length) {message(tr.noField);return;}
         for (const farmer of units) {
           const target=[...pool].sort((a,b)=>dist(a,farmer)-dist(b,farmer))[0];
+          construction.removeBuilderFromAll(farmer.id);
           farmer.stop();farmer.setHarvestAnimation(false);
           jobs.set(farmer.id,{type:'harvest',fieldId:target.id,phase:'seek',timer:0,plantId:null,resume:true});
           seekHarvest(farmer,jobs.get(farmer.id));
@@ -488,6 +576,84 @@
         }
       }
 
+      const constructionError = reason => {
+        if (reason==='insufficient_resources') return tr.buildPoor;
+        if (reason==='no_eligible_units') return tr.needBuilder;
+        return `${tr.buildInvalid} (${reason || 'invalid_position'})`;
+      };
+
+      // Only one placement preview exists; construction/harvest/move never overlap.
+      function beginBuild(type) {
+        if (!selectedFarmers().length) {message(tr.needBuilder);return;}
+        if (!construction.canAfford(type)) {message(tr.buildPoor);return;}
+        construction.cancelPlacement();
+        construction.startPlacement(type);
+        selectedBuildingId=null;
+        selection.setMode('build');selection.setTouchMode('build');
+        message(`${tr.buildHelp}: ${BUILDING_TYPES[type].name}`);
+      }
+
+      function stopBuild() {
+        construction.cancelPlacement();
+        selection.setMode('select');selection.setTouchMode('select');
+      }
+
+      function confirmBuild(point, units) {
+        if (!construction.preview) {
+          message(tr.buildHelp);
+          return;
+        }
+        construction.setPreview(point);
+        if (!construction.preview.valid) {
+          message(constructionError(construction.preview.reason));
+          return;
+        }
+        if (!construction.canAfford(construction.preview.type)) {message(tr.buildPoor);return;}
+        const result=construction.confirmPlacement(units.map(u=>u.id));
+        if (!result.ok) {message(constructionError(result.reason));return;}
+        for (const unit of units) {
+          jobs.delete(unit.id);
+          unit.setHarvestAnimation(false);
+        }
+        selectedBuildingId=result.building.id;
+        stopBuild();
+        syncHud();
+        message(`${tr.buildPlaced}: ${result.building.type}`);
+      }
+
+      function cancelBuild() {
+        if (construction.preview) {stopBuild();message(tr.buildStopped);return;}
+        const site=selectedBuilding();
+        if (!site) {message(tr.needBuilding);return;}
+        if (site.state!=='construction') {message(tr.buildEmpty);return;}
+        const result=construction.cancelConstruction(site.id);
+        if (!result.ok) {message(constructionError(result.reason));return;}
+        selectedBuildingId=null;
+        syncHud();
+        message(`${tr.buildCancelled} (+${result.refund.rice}🌾 +${result.refund.wood}🪵)`);
+      }
+
+      function assignBuilders() {
+        const site=selectedBuilding();
+        if (!site || site.state!=='construction') {message(tr.needBuilding);return;}
+        const chosen=selectedFarmers();
+        if (!chosen.length) {message(tr.needBuilder);return;}
+        const result=construction.assignBuilders(site.id,chosen.map(u=>u.id));
+        if (!result.ok) {message(constructionError(result.reason));return;}
+        for (const unit of chosen) jobs.delete(unit.id);
+        message(`${tr.buildAssigned}: ${result.accepted}`);
+      }
+
+      function demolishBuilding() {
+        const site=selectedBuilding();
+        if (!site || site.state!=='complete') {message(tr.needBuilding);return;}
+        if (!window.confirm(tr.demolishAsk)) return;
+        const result=construction.demolish(site.id);
+        if (!result.ok) {message(constructionError(result.reason));return;}
+        selectedBuildingId=null;
+        syncHud();message(tr.buildDemolished);
+      }
+
       function actionHandler(action) {
         if (action==='zoomIn') {zoomBy(1.18);return;}
         if (action==='zoomOut') {zoomBy(1/1.18);return;}
@@ -497,13 +663,18 @@
           return;
         }
         if (action==='sendToField') {autoHarvest(selectedFarmers());return;}
+        if (action==='ghostHouse') {beginBuild('house');return;}
+        if (action==='ghostBarn') {beginBuild('barn');return;}
+        if (action==='cancelBuild') {cancelBuild();return;}
+        if (action==='assignBuilders') {assignBuilders();return;}
+        if (action==='demolishBuilding') {demolishBuilding();return;}
         if (action==='returnHome') {
           const chosen=selectedFarmers();
           if (!chosen.length) {message(tr.noSelected);return;}
-          for (const farmer of chosen) {jobs.delete(farmer.id);beginReturn(farmer,false);}
+          for (const farmer of chosen) {jobs.delete(farmer.id);construction.removeBuilderFromAll(farmer.id);beginReturn(farmer,false);}
           return;
         }
-        if (action==='ghostHouse'||action==='ghostBarn'||action==='cancelBuild') message(tr.disabled);
+
       }
 
       function zoomBy(factor) {camera.zoomAt(camera.zoom*factor);canvas.focus({preventScroll:true});}
@@ -514,13 +685,40 @@
           farmer.update(dt,map);
           runJob(farmer,dt);
         }
+        construction.update(dt);
         hudElapsed+=dt;
         if (hudElapsed>=.25) {hudElapsed=0;syncHud();}
       };
       game.onRender=(ctx,currentCamera)=>{
+        construction.drawGround(ctx,currentCamera);
         rice.drawGround(ctx,currentCamera);
         rice.drawCrops(ctx,currentCamera);
+        construction.drawBuildings(ctx,currentCamera);
         for (const farmer of [...farmers].sort((a,b)=>a.y-b.y)) farmer.draw(ctx,currentCamera);
+        construction.drawPreview(ctx,currentCamera);
+      };
+
+      // Hover preview for PC. Touch builds by tapping its final location.
+      const onPreviewMove=event=>{
+        if (!construction.preview || event.pointerType!=='mouse') return;
+        const p=game.clientPoint(event);
+        construction.setPreview(game.screenToWorld(p.x,p.y));
+      };
+      canvas.addEventListener('pointermove',onPreviewMove);
+
+      // Click a building to manage its builders, cancel or demolish.
+      // SelectionController keeps handling the normal farmer selection.
+      game.onWorldPointer=event=>{
+        const isSelect=event.kind==='select' && selection?.mode==='select';
+        const isTap=event.kind==='tap' && selection?.touchMode==='select';
+        if (!isSelect && !isTap) return;
+        const site=buildingAt(event.world);
+        if (site) {
+          selectedBuildingId=site.id;
+          message(`${tr.buildSelected}: ${site.type} (${Math.round(site.progress*100)}%)`);
+        } else if (!selection?.hitTest(event.screen)) {
+          selectedBuildingId=null;
+        }
       };
 
       selection=new SelectionController({
@@ -528,10 +726,30 @@
         onCommand:({type,units,point})=>{
           if (type==='move') manualMove(units,point);
           else if (type==='harvest') startHarvest(units,point);
+          else if (type==='build') confirmBuild(point,units);
           else message(tr.disabled);
         },
         onAction:actionHandler,
       }).attach();
+
+      // Build mode button defaults to House; clicking another mode cancels
+      // its preview, without altering independent map/camera inputs.
+      const onFooterAction=footer.onAction;
+      footer.onAction=(action,payload)=>{
+        if ((action==='mode'||action==='touchMode') && payload?.mode==='build' &&
+            !construction.preview) beginBuild('house');
+        if ((action==='mode'||action==='touchMode') && payload?.mode!=='build' &&
+            construction.preview) construction.cancelPlacement();
+        onFooterAction?.(action,payload);
+      };
+
+      // ESC cancels an unfinished placement; never spends resources.
+      const onEscape=event=>{
+        if (event.key==='Escape' && construction.preview) {
+          stopBuild();message(tr.buildStopped);
+        }
+      };
+      window.addEventListener('keydown',onEscape);
 
       for (let i=0;i<3;i++) spawnFarmer();
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
@@ -550,10 +768,13 @@
       document.addEventListener('visibilitychange',visibility);
       window.addEventListener('pagehide',()=>{
         document.removeEventListener('visibilitychange',visibility);
-        selection.destroy();footer.destroy();game.destroy();
+        canvas.removeEventListener('pointermove',onPreviewMove);
+        window.removeEventListener('keydown',onEscape);
+        selection.destroy();footer.destroy();construction.destroy();game.destroy();
       },{once:true});
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
+      window.shadowRealmsConstruction=construction;
       game.start();
     } catch(error) {
       window.showGameError(error);
