@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BookOpen, Check, X } from 'lucide-react'
 import { useDisplayTranslation } from '../utils/displayLanguage'
-import { getStoryLanguageId } from '../utils/storyLanguage'
-
-const STORY_LANGUAGE_KEY = 'shadow_story_language'
+import { getStoryLanguageId, saveStoryLanguagePreference } from '../utils/storyLanguage'
 
 const LANGUAGES = [
   { id: 'km', name: 'Khmer', flag: 'kh' },
@@ -68,6 +66,8 @@ export default function StoryLanguageOnboardingModal({
 }) {
   const { language: displayLanguage } = useDisplayTranslation()
   const [selectedLanguage, setSelectedLanguage] = useState(() => getStoryLanguageId())
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const copy = COPY[displayLanguage] || COPY.en
 
   useEffect(() => {
@@ -85,17 +85,26 @@ export default function StoryLanguageOnboardingModal({
 
   if (!open) return null
 
-  const complete = () => {
-  try {
-    localStorage.setItem(STORY_LANGUAGE_KEY, selectedLanguage)
-    window.dispatchEvent(
-      new CustomEvent('shadow:story-language-initialized', {
-        detail: { language: selectedLanguage },
-      })
-    )
-  } catch {}
+  const complete = async () => {
+  if (saving) return
 
-  onFinish?.()
+  setSaving(true)
+  setSaveError(false)
+
+  try {
+    const result = await saveStoryLanguagePreference(selectedLanguage)
+
+    if (result?.ok !== true) {
+      throw new Error('STORY_LANGUAGE_SAVE_FAILED')
+    }
+
+    onFinish?.()
+  } catch (error) {
+    console.warn('STORY_LANGUAGE_SYNC_FAILED', error)
+    setSaveError(true)
+  } finally {
+    setSaving(false)
+  }
 }
 
 const skip = () => {
@@ -165,12 +174,25 @@ const openSettings = () => {
         </div>
 
         <button
-          type="button"
-          onClick={complete}
-          className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#f6b800] text-[15px] font-bold text-[#111827] transition active:scale-[0.98]"
-        >
-          {copy.continue}
-        </button>
+  type="button"
+  onClick={complete}
+  disabled={saving}
+  className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#f6b800] text-[15px] font-bold text-[#111827] transition active:scale-[0.98] disabled:opacity-60"
+>
+  {saving ? `${copy.continue}…` : copy.continue}
+</button>
+
+{saveError && (
+  <p role="alert" className="mt-2 text-center text-[12px] text-red-500">
+    {{
+      km: 'រក្សាទុកភាសាមិនបាន សូមព្យាយាមម្ដងទៀត។',
+      en: 'Could not save language. Please try again.',
+      zh: '保存语言失败，请重试。',
+      ja: '言語を保存できませんでした。再試行してください。',
+      ko: '언어를 저장하지 못했습니다. 다시 시도해 주세요.',
+    }[displayLanguage] || 'Could not save language. Please try again.'}
+  </p>
+)}
         <div className="mt-3 text-center text-[11px] leading-5 text-[#707786]">
           <span>{copy.hint} </span>
           <button
