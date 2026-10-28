@@ -527,7 +527,8 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
     let active = true
     setCountryMethods(null)
 
-    loadCountrySettings({ force: retryMethods > 0 }).then(settings => {
+    // Refresh on opening payment methods so a saved Admin toggle is respected.
+    loadCountrySettings({ force: true }).then(settings => {
       if (!active) return
 
       const policyEnabled = isCountryPolicyEnabled(settings)
@@ -535,7 +536,9 @@ function PaymentMethodModal({ selectedPackage, creating, onClose, onCreateManual
 
       setCountryMethods({
         payway: !policyEnabled || (verified && getCountryFeature(settings, 'payway', false) === true),
-        binancePay: !policyEnabled || (verified && getCountryFeature(settings, 'binancePay', false) === true),
+        // Binance alone has a live saved-country rule while other policies pause.
+        // The Backend enforces the same rule for actual order creation.
+        binancePay: verified && settings?.effective?.binancePay === true,
       })
     }).catch(() => {
       if (active) setCountryMethods({ payway: true, binancePay: false })
