@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
   <meta name="color-scheme" content="dark">
-  <title>Shadow Realms — Farming & Construction</title>
+  <title>Shadow Realms — Farming, Wood & Construction</title>
   <style>
     :root { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark }
     * { box-sizing:border-box }
@@ -45,6 +45,11 @@
     .error p { line-height:1.6;max-width:510px;font-size:13px }
     .error pre { max-width:95vw;overflow-wrap:anywhere;white-space:pre-wrap;font-size:11px }
 
+    /* Woodcutting controls live inside the existing CommandFooter. */
+    .sr-ui-shell .sr-wood-tools {display:flex;gap:5px;margin-top:8px}
+    .sr-ui-shell .sr-wood-tool {flex:1 1 60px;min-width:0;padding:9px 5px;border-radius:9px;
+      border:1px solid #71936b;background:#294934;color:#e8f5d6;font-size:11px;font-weight:750}
+    body.sr-wood-targeting #game {cursor:crosshair}
     /* Build management reuses the existing Footer. No second control system. */
     .sr-ui-shell .sr-build-tools { display:flex;flex-wrap:wrap;gap:5px;margin-top:8px }
     .sr-ui-shell .sr-build-tool { flex:1 1 68px;padding:8px 7px;border-radius:9px;border:1px solid #947b56;
@@ -151,7 +156,8 @@
         buildDemolished:'បានរុះរើអាគារ',demolishAsk:'តើប្រាកដថាចង់រុះរើអាគារនេះឬ?',
         buildEmpty:'គ្មានសំណង់កំពុងធ្វើត្រូវបោះបង់',houses:'ផ្ទះ',barns:'ឃ្លាំង',sites:'កំពុងសាងសង់',capacity:'ចំនួនអតិបរមា',
         disabled:'សូមជ្រើសទីតាំងសាងសង់',fail:'មិនអាចបើកហ្គេមបាន',
-        serve:'បើកហ្គេមតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។'
+        serve:'បើកហ្គេមតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។',
+        woodChop:'កាប់ឈើ',woodAuto:'កាប់ស្វ័យប្រវត្តិ',woodHelp:'ជ្រើសកសិករ → ចុច កាប់ឈើ → ចុចលើដើមឈើ',woodAssigned:'កសិករកំពុងកាប់ឈើ',woodDelivered:'បានដឹកឈើមកមូលដ្ឋាន',woodNotFound:'រកដើមឈើមិនឃើញនៅទីនេះ',woodNoPath:'មិនអាចទៅកាប់ឈើទីនោះបាន',woodTrees:'ដើមឈើ',woodWorkers:'កំពុងកាប់',woodCarry:'ឈើកំពុងដឹក',
       },
       en: {
         back:'‹ Games',stage:'FARM + BUILD • STAGE 1',welcome:'Select a farmer → Harvest → click a rice field',
@@ -169,7 +175,8 @@
         buildAssigned:'Builders assigned',buildStopped:'Placement cancelled',buildDemolished:'Building demolished',
         demolishAsk:'Demolish this finished building?',buildEmpty:'No pending site to cancel',
         houses:'Houses',barns:'Barns',sites:'Building',capacity:'Capacity',disabled:'Choose where to build',fail:'Unable to start the game',
-        serve:'Open the game over HTTP/HTTPS, not directly as a file:// URL.'
+        serve:'Open the game over HTTP/HTTPS, not directly as a file:// URL.',
+        woodChop:'Chop Tree',woodAuto:'Auto Wood',woodHelp:'Select farmer → Chop Tree → click a tree',woodAssigned:'Farmers gathering wood',woodDelivered:'Wood delivered to base',woodNotFound:'No tree at that point',woodNoPath:'No reachable tree for the selected farmer',woodTrees:'Trees',woodWorkers:'Woodcutters',woodCarry:'Logs carried',
       },
       zh: {
         back:'‹ 游戏',stage:'稻田与建造',welcome:'选择农民 → 收割 → 点击稻田',
@@ -187,7 +194,8 @@
         buildAssigned:'工人已派遣',buildStopped:'已取消建造位置',buildDemolished:'建筑已拆除',
         demolishAsk:'确定拆除此建筑吗？',buildEmpty:'没有可取消的工地',
         houses:'房屋',barns:'仓库',sites:'施工中',capacity:'人口上限',disabled:'请选择建造位置',fail:'游戏启动失败',
-        serve:'请使用网站的 HTTP/HTTPS 地址打开，不能直接使用 file://。'
+        serve:'请使用网站的 HTTP/HTTPS 地址打开，不能直接使用 file://。',
+        woodChop:'砍树',woodAuto:'自动伐木',woodHelp:'选择农民 → 砍树 → 点击树木',woodAssigned:'农民开始伐木',woodDelivered:'木材已运回基地',woodNotFound:'这里没有树木',woodNoPath:'没有可到达的树木',woodTrees:'树木',woodWorkers:'伐木工',woodCarry:'携带木材',
       },
       ja: {
         back:'‹ ゲーム',stage:'農業と建築',welcome:'農民を選択 → 収穫 → 水田をクリック',
@@ -205,7 +213,8 @@
         buildAssigned:'建築作業員を配置',buildStopped:'配置を取り消しました',buildDemolished:'建物を解体しました',
         demolishAsk:'この建物を解体しますか？',buildEmpty:'取消できる建築現場がありません',
         houses:'家',barns:'倉庫',sites:'建築中',capacity:'人数上限',disabled:'建築場所を選んでください',fail:'ゲームを起動できません',
-        serve:'file:// ではなく、HTTP/HTTPS のサイトURLから開いてください。'
+        serve:'file:// ではなく、HTTP/HTTPS のサイトURLから開いてください。',
+        woodChop:'木を伐る',woodAuto:'自動伐採',woodHelp:'農民を選択 → 木を伐る → 木をクリック',woodAssigned:'木材を集めています',woodDelivered:'木材を拠点に運びました',woodNotFound:'ここに木がありません',woodNoPath:'到達できる木がありません',woodTrees:'木',woodWorkers:'伐採中',woodCarry:'運搬中の木材',
       },
       ko: {
         back:'‹ 게임',stage:'농사와 건설',welcome:'농부 선택 → 수확 → 논 클릭',
@@ -223,7 +232,8 @@
         buildAssigned:'일꾼 배치 완료',buildStopped:'배치 취소',buildDemolished:'건물 철거 완료',
         demolishAsk:'이 건물을 철거할까요?',buildEmpty:'취소할 건설 현장이 없습니다',
         houses:'집',barns:'창고',sites:'건설 중',capacity:'인구 상한',disabled:'건설할 위치를 선택하세요',fail:'게임을 시작할 수 없습니다',
-        serve:'file:// 대신 HTTP/HTTPS 웹사이트 URL에서 실행하세요.'
+        serve:'file:// 대신 HTTP/HTTPS 웹사이트 URL에서 실행하세요.',
+        woodChop:'나무 베기',woodAuto:'자동 벌목',woodHelp:'농부 선택 → 나무 베기 → 나무 터치',woodAssigned:'나무를 베고 있습니다',woodDelivered:'목재를 기지로 운반했습니다',woodNotFound:'여기에 나무가 없습니다',woodNoPath:'갈 수 있는 나무가 없습니다',woodTrees:'나무',woodWorkers:'벌목 중',woodCarry:'운반 목재',
       }
     };
     const shortLang = (navigator.language || 'km').toLowerCase().split('-')[0];
@@ -244,7 +254,7 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -252,6 +262,7 @@
         import('./ui/CommandFooter.js'),
         import('./world/RiceSystem.js'),
         import('./buildings/ConstructionSystem.js'),
+        import('./world/WoodSystem.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -260,6 +271,7 @@
       const { CommandFooter } = footerLib;
       const { RiceSystem } = riceLib;
       const { ConstructionSystem, BUILDING_TYPES } = constructionLib;
+      const { WoodSystem } = woodLib;
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -278,6 +290,18 @@
           if (event==='completed') message(`${tr.buildReady}: ${info.building.type}`);
         },
       });
+      const wood = new WoodSystem(map, {
+        navigation:route, construction, getUnits:()=>farmers, home,
+        onClaimUnit:unit=>{
+          // A farmer may do only one job at a time; carried rice is not lost.
+          jobs.delete(unit.id);
+          unit.setHarvestAnimation(false);
+        },
+        onEvent:(event,detail)=>{
+          if (event==='deposited') message(`${tr.woodDelivered}: +${detail.amount}`);
+        },
+      });
+      let woodTargeting = false;
       let selectedBuildingId = null;
       const buildingAt = point => construction.getBuildingAt(point);
       const selectedBuilding = () => construction.getBuildingById(selectedBuildingId);
@@ -300,6 +324,19 @@
         statusNode.textContent = text;
         footer.setResources({ hint:text });
       };
+
+      // Put both wood actions on the existing desktop farmer command panel.
+      const farmerGroup = footer.nodes.shell.querySelector('.sr-ui-action-group:first-child');
+      if (farmerGroup) {
+        const tools=document.createElement('div');
+        tools.className='sr-wood-tools';
+        for (const [action,label] of [['chopWood',tr.woodChop],['autoWood',tr.woodAuto]]) {
+          const button=document.createElement('button');
+          button.type='button';button.dataset.action=action;button.className='sr-wood-tool';
+          button.textContent=label;tools.appendChild(button);
+        }
+        farmerGroup.appendChild(tools);
+      }
 
       // Existing build/house/barn/cancel buttons are now functional.
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostHouse"]')) {
@@ -341,7 +378,8 @@
         actions.className = 'sr-farm-mobile-actions';
         for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer'],
           ['ghostHouse',tr.house],['ghostBarn',tr.barn],['cancelBuild',tr.cancel],
-          ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish]]) {
+          ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish],
+          ['chopWood',tr.woodChop],['autoWood',tr.woodAuto]]) {
           const button = document.createElement('button');
           button.type = 'button';
           button.dataset.action = action;
@@ -361,10 +399,13 @@
           footer.setResources({selected:`${site.type} · ${Math.round(site.progress*100)}%`});
         }
         const buildings=construction.getSummary();
+        const lumber=wood.getSummary();
         const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total}` +
           ` · ${tr.carrying}: ${carry} · ${tr.houses}: ${buildings.houses}` +
           ` · ${tr.barns}: ${buildings.barns} · ${tr.sites}: ${buildings.sites}` +
-          ` · ${tr.capacity}: ${farmers.length}/${resources.populationCapacity}`;
+          ` · ${tr.capacity}: ${farmers.length}/${resources.populationCapacity}` +
+          ` · ${tr.woodTrees}: ${lumber.alive}/${lumber.trees}` +
+          ` · ${tr.woodWorkers}: ${lumber.workers} · ${tr.woodCarry}: ${lumber.carried}`;
         if (line !== lastSummary) {
           farmStats.textContent = line;
           lastSummary = line;
@@ -407,6 +448,7 @@
         const cols=Math.ceil(Math.sqrt(units.length));
         const rows=Math.ceil(units.length/cols);
         units.forEach((farmer,i)=>{
+          wood.cancel(farmer.id,{stop:false});
           jobs.delete(farmer.id);
           construction.removeBuilderFromAll(farmer.id);
           farmer.setHarvestAnimation(false);
@@ -468,6 +510,7 @@
 
       function completeReturn(farmer,job) {
         const result=rice.deposit(farmer,home);
+        wood.deposit(farmer,home);
         if (result.ok) message(`${tr.deposited}: +${result.amount}`);
         else if (!job.resume) message(tr.home);
         farmer.setHarvestAnimation(false);
@@ -510,6 +553,7 @@
         if (!field) {message(tr.noField);return;}
         let started=0;
         for (const farmer of farmersToSend) {
+          wood.cancel(farmer.id,{stop:false});
           construction.removeBuilderFromAll(farmer.id);
           farmer.stop();
           farmer.setHarvestAnimation(false);
@@ -527,6 +571,7 @@
         const pool=viable.length?viable:rice.getFields().filter(field=>field.x<map.width*.5);
         if (!pool.length) {message(tr.noField);return;}
         for (const farmer of units) {
+          wood.cancel(farmer.id,{stop:false});
           const target=[...pool].sort((a,b)=>dist(a,farmer)-dist(b,farmer))[0];
           construction.removeBuilderFromAll(farmer.id);
           farmer.stop();farmer.setHarvestAnimation(false);
@@ -539,6 +584,9 @@
       function runJob(farmer,dt) {
         const job=jobs.get(farmer.id);
         if (!job) {
+          if (farmer.woodCarry>0 && dist(farmer,home)<=wood.config.depositRange && !wood.jobs.has(farmer.id)) {
+            wood.deposit(farmer,home);
+          }
           if (farmer.carry>0 && dist(farmer,home)<=rice.config.depositRange) {
             const result=rice.deposit(farmer,home);
             if (result.ok) message(`${tr.deposited}: +${result.amount}`);
@@ -584,6 +632,7 @@
 
       // Only one placement preview exists; construction/harvest/move never overlap.
       function beginBuild(type) {
+        woodTargeting=false;document.body.classList.remove('sr-wood-targeting');
         if (!selectedFarmers().length) {message(tr.needBuilder);return;}
         if (!construction.canAfford(type)) {message(tr.buildPoor);return;}
         construction.cancelPlacement();
@@ -612,6 +661,7 @@
         const result=construction.confirmPlacement(units.map(u=>u.id));
         if (!result.ok) {message(constructionError(result.reason));return;}
         for (const unit of units) {
+          wood.cancel(unit.id,{stop:false});
           jobs.delete(unit.id);
           unit.setHarvestAnimation(false);
         }
@@ -640,7 +690,7 @@
         if (!chosen.length) {message(tr.needBuilder);return;}
         const result=construction.assignBuilders(site.id,chosen.map(u=>u.id));
         if (!result.ok) {message(constructionError(result.reason));return;}
-        for (const unit of chosen) jobs.delete(unit.id);
+        for (const unit of chosen) {wood.cancel(unit.id,{stop:false});jobs.delete(unit.id);}
         message(`${tr.buildAssigned}: ${result.accepted}`);
       }
 
@@ -654,7 +704,36 @@
         syncHud();message(tr.buildDemolished);
       }
 
+      function stopWoodTarget() {
+        woodTargeting=false;
+        document.body.classList.remove('sr-wood-targeting');
+      }
+
+      function orderWood(units, point=null) {
+        if (!units.length) {message(tr.noSelected);return false;}
+        const ids=units.map(unit=>unit.id);
+        const result=wood.assign(ids,point,{auto:true});
+        message(result.ok ? `${tr.woodAssigned}: ${result.assigned}/${ids.length}` : tr.woodNoPath);
+        return Boolean(result.ok);
+      }
+
       function actionHandler(action) {
+        if (action==='chopWood') {
+          if (!selectedFarmers().length) {message(tr.noSelected);return;}
+          if (construction.preview) stopBuild();
+          woodTargeting=true;
+          document.body.classList.add('sr-wood-targeting');
+          selection.setMode('select');selection.setTouchMode('select');
+          message(tr.woodHelp);
+          return;
+        }
+        if (action==='autoWood') {
+          if (construction.preview) stopBuild();
+          stopWoodTarget();
+          selection.setMode('select');selection.setTouchMode('select');
+          orderWood(selectedFarmers());
+          return;
+        }
         if (action==='zoomIn') {zoomBy(1.18);return;}
         if (action==='zoomOut') {zoomBy(1/1.18);return;}
         if (action==='spawnFarmer') {
@@ -671,7 +750,12 @@
         if (action==='returnHome') {
           const chosen=selectedFarmers();
           if (!chosen.length) {message(tr.noSelected);return;}
-          for (const farmer of chosen) {jobs.delete(farmer.id);construction.removeBuilderFromAll(farmer.id);beginReturn(farmer,false);}
+          stopWoodTarget();
+          for (const farmer of chosen) {
+            wood.cancel(farmer.id,{stop:false});
+            jobs.delete(farmer.id);construction.removeBuilderFromAll(farmer.id);
+            beginReturn(farmer,false);
+          }
           return;
         }
 
@@ -686,6 +770,7 @@
           runJob(farmer,dt);
         }
         construction.update(dt);
+        wood.update(dt);
         hudElapsed+=dt;
         if (hudElapsed>=.25) {hudElapsed=0;syncHud();}
       };
@@ -694,6 +779,7 @@
         rice.drawGround(ctx,currentCamera);
         rice.drawCrops(ctx,currentCamera);
         construction.drawBuildings(ctx,currentCamera);
+        wood.draw(ctx,currentCamera);
         for (const farmer of [...farmers].sort((a,b)=>a.y-b.y)) farmer.draw(ctx,currentCamera);
         construction.drawPreview(ctx,currentCamera);
       };
@@ -711,7 +797,7 @@
       game.onWorldPointer=event=>{
         const isSelect=event.kind==='select' && selection?.mode==='select';
         const isTap=event.kind==='tap' && selection?.touchMode==='select';
-        if (!isSelect && !isTap) return;
+        if (!isSelect && !isTap || woodTargeting) return;
         const site=buildingAt(event.world);
         if (site) {
           selectedBuildingId=site.id;
@@ -732,10 +818,25 @@
         onAction:actionHandler,
       }).attach();
 
+      // A one-tap wood target takes precedence over normal SelectionController
+      // selection without changing any independent, existing module.
+      const normalWorldPointer=selection.handleWorldPointer.bind(selection);
+      selection.handleWorldPointer=event=>{
+        if (woodTargeting && (event.kind==='select'||event.kind==='tap')) {
+          const chosen=selectedFarmers();
+          const tree=wood.getNearestTree(event.world,{maxDistance:70});
+          if (!tree) {message(tr.woodNotFound);return;}
+          if (orderWood(chosen,tree)) stopWoodTarget();
+          return;
+        }
+        normalWorldPointer(event);
+      };
+
       // Build mode button defaults to House; clicking another mode cancels
       // its preview, without altering independent map/camera inputs.
       const onFooterAction=footer.onAction;
       footer.onAction=(action,payload)=>{
+        if ((action==='mode'||action==='touchMode') && woodTargeting) stopWoodTarget();
         if ((action==='mode'||action==='touchMode') && payload?.mode==='build' &&
             !construction.preview) beginBuild('house');
         if ((action==='mode'||action==='touchMode') && payload?.mode!=='build' &&
@@ -745,6 +846,9 @@
 
       // ESC cancels an unfinished placement; never spends resources.
       const onEscape=event=>{
+        if (event.key==='Escape' && woodTargeting) {
+          stopWoodTarget();message(tr.help);return;
+        }
         if (event.key==='Escape' && construction.preview) {
           stopBuild();message(tr.buildStopped);
         }
@@ -770,11 +874,12 @@
         document.removeEventListener('visibilitychange',visibility);
         canvas.removeEventListener('pointermove',onPreviewMove);
         window.removeEventListener('keydown',onEscape);
-        selection.destroy();footer.destroy();construction.destroy();game.destroy();
+        stopWoodTarget();selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
       },{once:true});
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
       window.shadowRealmsConstruction=construction;
+      window.shadowRealmsWood=wood;
       game.start();
     } catch(error) {
       window.showGameError(error);
