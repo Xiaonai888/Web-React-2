@@ -6,6 +6,7 @@ import ShadowInstallCard from '../../components/ShadowInstallCard.jsx'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import MeSupportButton from '../../components/Me/MeSupportButton'
 import DiamondPurchaseSuccessModal from '../../components/Shop/DiamondPurchaseSuccessModal'
+import StoryLanguageOnboardingModal from '../../components/StoryLanguageOnboardingModal'
 import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 
 registerTranslationNamespace('mePage', {
@@ -204,6 +205,23 @@ function getStoredReaderUser() {
     )
   } catch {
     return null
+  }
+}
+
+function getPendingStoryOnboardingId() {
+  const id = String(getStoredReaderUser()?.id || '')
+  if (!getReaderToken() || !id) return ''
+
+  try {
+    const pending = localStorage.getItem(
+      `shadow_story_onboarding_pending_v1:${id}`
+    )
+    const done = localStorage.getItem(
+      `shadow_story_onboarding_done_v1:${id}`
+    )
+    return pending === '1' && done !== '1' ? id : ''
+  } catch {
+    return ''
   }
 }
 
@@ -751,6 +769,26 @@ export default function Me() {
   const { t: tx } = useDisplayTranslation()
   const { authorUnreadCount } = useAuthorPageNotifications()
   const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get('settings') === '1')
+
+const [storyOnboardingId, setStoryOnboardingId] = useState(
+  getPendingStoryOnboardingId
+)
+
+const finishStoryOnboarding = () => {
+  if (!storyOnboardingId) return
+
+  try {
+    localStorage.setItem(
+      `shadow_story_onboarding_done_v1:${storyOnboardingId}`,
+      '1'
+    )
+    localStorage.removeItem(
+      `shadow_story_onboarding_pending_v1:${storyOnboardingId}`
+    )
+  } catch {}
+
+  setStoryOnboardingId('')
+}
   const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
   const [authorLoading, setAuthorLoading] = useState(false)
   const [authorPage, setAuthorPage] = useState(null)
@@ -1211,6 +1249,11 @@ const handleOpenProfileSwitcher = (event) => {
   return (
     <div className="min-h-screen bg-[#fafafa] pb-[100px] dark:bg-[#0d0f16]">
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} isLoggedIn={isLoggedIn} />
+
+<StoryLanguageOnboardingModal
+  open={Boolean(storyOnboardingId)}
+  onFinish={finishStoryOnboarding}
+/>
       <DiamondPurchaseSuccessModal
         open={Boolean(diamondCreditNotice) && !settingsOpen && !profileSwitcherOpen && !switchingProfile}
         confirmed={Boolean(diamondCreditNotice)}
