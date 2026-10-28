@@ -3,171 +3,367 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#162319" />
-  <title>Shadow Realms — Stage 1</title>
+  <meta name="theme-color" content="#17251a" />
+  <title>Shadow Realms — Farmer Navigation Test</title>
   <style>
-    :root { color-scheme: dark; font-family: system-ui,-apple-system,"Segoe UI",sans-serif; }
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1d14; }
-    button, select { font: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #f3d68b; outline-offset: 2px; }
-    .app { width: 100%; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-    .top {
-      position: relative; z-index: 2; min-height: 54px;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));
-      background: linear-gradient(180deg,#27392b,#192b21); border-bottom: 2px solid #526944;
-      color: #fff4cf;
+    :root { color-scheme:dark; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+    * { box-sizing:border-box; }
+    html,body { width:100%; height:100%; overflow:hidden; margin:0; background:#0e1d14; }
+    button,a { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible,a:focus-visible { outline:2px solid #ffd15a; outline-offset:2px; }
+    .app { height:100vh; height:100dvh; display:flex; flex-direction:column; }
+    .top { flex:none; height:52px; position:relative; z-index:3; padding:6px 14px;
+      background:linear-gradient(180deg,#2b3e2d,#17261c); border-bottom:2px solid #6a774e;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; color:#ffefd1; }
+    .brand { min-width:0; display:flex; align-items:center; gap:11px; }
+    .brand strong { font-size:clamp(14px,2.2vw,19px); white-space:nowrap; }
+    .tag { padding:4px 8px; font-size:10px; font-weight:800; border:1px solid #81936c;
+      color:#d7ddb8; border-radius:999px; white-space:nowrap; }
+    .top-actions { display:flex; gap:8px; align-items:center; }
+    .back { text-decoration:none; color:#fff0c9; padding:7px 10px; border:1px solid #7b8a65;
+      border-radius:9px; font-size:12px; white-space:nowrap; }
+    .map-area { flex:1; min-height:0; overflow:hidden; position:relative; background:#91b46b; }
+    #game { width:100%; height:100%; display:block; outline:none; touch-action:none; }
+    .map-badge { position:absolute; top:12px; left:12px; background:rgba(18,30,22,.82);
+      color:#fff1c7; padding:8px 12px; border-radius:11px; font-size:11px;
+      border:1px solid rgba(255,255,255,.12); pointer-events:none; z-index:1; }
+    .zoom-panel { position:absolute; top:12px; right:12px; display:flex; flex-direction:column;
+      gap:7px; z-index:2; }
+    .control { border:1px solid #b8a77b; border-radius:11px; min-width:40px; min-height:40px;
+      background:rgba(25,45,28,.9); color:#fff0c6; font-size:21px; font-weight:800;
+      box-shadow:0 3px 10px #0004; touch-action:manipulation; }
+    .control:active { background:#556c45; }
+    .control.home { font-size:18px; }
+    .error { position:absolute; inset:0; z-index:6; display:none; align-items:center;
+      justify-content:center; flex-direction:column; padding:20px; text-align:center;
+      background:rgba(14,27,20,.96); color:#fff1d6; gap:10px; }
+    .error.show { display:flex; }
+    .error strong { font-size:18px; }
+    .error p { max-width:520px; line-height:1.6; font-size:13px; }
+    .error pre { max-width:95%; white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; }
+
+    /* CommandFooter is deliberately independent; these overrides fit the game stage. */
+    .sr-ui-shell .sr-ui-topbar { display:none; }
+    .sr-ui-shell .sr-ui-hint { display:none; }
+    .sr-ui-shell .sr-ui-footer { z-index:2; }
+    .sr-ui-shell .sr-ui-square-btn:disabled,
+    .sr-ui-shell .sr-ui-mode-chip:disabled,
+    .sr-ui-shell .sr-ui-mobile-btn:disabled { opacity:.42; cursor:not-allowed; filter:none; }
+    @media(max-width:980px) {
+      .sr-ui-shell .sr-ui-footer { grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+        padding:7px; gap:7px; }
+      .sr-ui-shell .sr-ui-panel--center { display:none; }
+      .sr-ui-shell .sr-ui-panel { min-width:0; min-height:0; padding:9px; }
+      .sr-ui-shell .sr-ui-panel--left { order:1; }
+      .sr-ui-shell .sr-ui-panel--right { order:2; }
+      .sr-ui-shell .sr-ui-resource-card { padding:5px 8px; gap:6px; }
+      .sr-ui-shell .sr-ui-resource-grid { gap:5px; }
+      .sr-ui-shell .sr-ui-resource-value { font-size:14px; }
+      .sr-ui-shell .sr-ui-title { font-size:10px; margin-bottom:5px; }
+      .sr-ui-shell .sr-ui-minimap { height:46px; margin-top:6px; }
+      .sr-ui-shell .sr-ui-selected-card { padding:8px; }
+      .sr-ui-shell .sr-ui-selected-name { font-size:14px; }
+      .sr-ui-shell .sr-ui-selected-sub { font-size:10px; }
+      .sr-ui-shell .sr-ui-zoom-row { margin-top:5px; }
     }
-    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .brand strong { font-size: clamp(14px,2.8vw,19px); white-space: nowrap; }
-    .tag { font-size: 10px; font-weight: 700; white-space: nowrap; color: #d0ddb7; border: 1px solid #77906c; padding: 3px 7px; border-radius: 999px; }
-    .top-actions { display: flex; align-items: center; gap: 8px; }
-    .back { color: #f3e7be; text-decoration: none; font-size: 12px; border: 1px solid #6a7958; border-radius: 8px; padding: 7px 9px; }
-    .map-area { position: relative; flex: 1; min-height: 0; background: #91b46b; overflow: hidden; }
-    #game { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
-    .zoom-panel { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 7px; z-index: 1; }
-    .control {
-      min-width: 42px; min-height: 42px; border: 1px solid #b3ac81; border-radius: 11px;
-      color: #fff6da; background: rgba(31,48,32,.89); box-shadow: 0 3px 12px #0004;
-      display: grid; place-items: center; font-weight: 800; font-size: 22px;
-      touch-action: manipulation;
+    @media(max-width:760px) {
+      .tag { display:none; }
+      .zoom-panel { left:12px; right:auto; top:50px; }
+      .map-badge { top:10px; font-size:10px; }
+      .sr-ui-shell .sr-ui-footer { padding-right:7px; }
+      .sr-ui-shell .sr-ui-mobile-pad { top:66px; right:8px; width:118px; padding:8px; }
+      .sr-ui-shell .sr-ui-mobile-btn { padding:8px 5px; }
     }
-    .control:active { background: #536744; transform: scale(.96); }
-    .control.home { font-size: 17px; }
-    .bottom {
-      min-height: 65px; display: flex; align-items: center; gap: 10px; justify-content: space-between;
-      padding: 9px max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
-      color: #eee1b5; border-top: 3px solid #98794b;
-      background: linear-gradient(180deg,#3b3326,#211f1a);
-    }
-    .status { min-width: 0; }
-    .status strong { font-size: 13px; }
-    .status small { display: block; margin-top: 3px; font-size: 11px; color: #cabd9d; line-height: 1.4; }
-    .coords { flex-shrink: 0; color: #d7c997; font-variant-numeric: tabular-nums; font-size: 12px; }
-    .error { position: absolute; inset: 0; z-index: 4; padding: 24px; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: #15241ce8; color: #fff0d9; gap: 10px; }
-    .error.show { display: flex; }
-    .error p { max-width: 460px; line-height: 1.65; font-size: 13px; }
-    .error pre { max-width: 90vw; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; opacity: .8; }
-    @media (max-width: 520px) {
-      .tag { display: none; }
-      .top { min-height: 49px; }
-      .bottom { min-height: 60px; }
-      .status small { font-size: 10px; }
-      .coords { font-size: 11px; }
+    @media(max-height:650px) {
+      .sr-ui-shell .sr-ui-minimap { display:none; }
+      .sr-ui-shell .sr-ui-panel { padding:7px; }
+      .sr-ui-shell .sr-ui-resource-card { padding:4px 7px; }
+      .sr-ui-shell .sr-ui-zoom-btn { width:30px; height:30px; }
     }
   </style>
 </head>
 <body>
-  <main class="app" aria-label="Shadow Realms game">
+  <main class="app" aria-label="Shadow Realms browser strategy game">
     <header class="top">
       <div class="brand">
         <strong>Shadow Realms</strong>
-        <span class="tag" id="stage-label">STAGE 1 · MAP TEST</span>
+        <span class="tag" id="stage-label">STAGE 1 · FARMER DEMO</span>
       </div>
-      <div class="top-actions"><a class="back" href="/game" id="back-link">‹ Game</a></div>
+      <div class="top-actions"><a class="back" href="/game" id="back-link">‹ Games</a></div>
     </header>
-
     <section class="map-area" aria-label="Battlefield">
-      <canvas id="game" aria-label="Three-quarter-view world map"></canvas>
+      <canvas id="game" aria-label="2D strategy battlefield"></canvas>
+      <div class="map-badge" id="map-status" aria-live="polite">Farmer navigation test</div>
       <nav class="zoom-panel" aria-label="Camera controls">
         <button class="control" id="zoom-in" type="button" aria-label="Zoom in">+</button>
         <button class="control" id="zoom-out" type="button" aria-label="Zoom out">−</button>
-        <button class="control home" id="reset-camera" type="button" aria-label="Return to starting position">⌂</button>
+        <button class="control home" id="reset-camera" type="button" aria-label="Reset camera">⌂</button>
       </nav>
-      <div id="game-error" class="error" role="alert">
-        <strong id="error-title">មិនអាចបើកផែនទីបាន</strong>
+      <div class="error" id="game-error" role="alert">
+        <strong id="error-title">Unable to open Shadow Realms</strong>
         <p id="error-message"></p>
         <pre id="error-details"></pre>
       </div>
     </section>
-
-    <!-- Temporary status dock. The complete Battle Realms-style footer is a later module. -->
-    <footer class="bottom">
-      <div class="status">
-        <strong id="status-title">ផែនទីកំពុងដំណើរការ</strong>
-        <small id="status-hint">PC: WASD ដើម្បីរំកិល · Mouse Wheel ដើម្បី Zoom · Mobile: អូស / ម្រាមដៃពីរ</small>
-      </div>
-      <output class="coords" id="camera-position" aria-label="Camera position">—</output>
-    </footer>
   </main>
 
   <script>
-    // The game is intentionally local-only. These labels do not load network content.
-    const labels = {
-      km: { back: '‹ ហ្គេម', status: 'ផែនទីកំពុងដំណើរការ', hint: 'PC: WASD រំកិល · Wheel ពង្រីក · Mobile: អូស / ម្រាមដៃពីរ', fail: 'មិនអាចបើកផែនទីបាន', serve: 'ត្រូវបើកឯកសារនេះតាម Game URL របស់វេបសាយ (HTTP/HTTPS)។ JavaScript Modules មិនដំណើរការត្រឹមត្រូវពេលបើក file:// ផ្ទាល់ទេ។' },
-      en: { back: '‹ Games', status: 'World map running', hint: 'PC: WASD pan · Wheel zoom · Mobile: drag / pinch', fail: 'Unable to load the map', serve: 'Open this file from your game site using HTTP/HTTPS. JavaScript modules may be blocked when opening file:// directly.' },
-      zh: { back: '‹ 游戏', status: '地图运行中', hint: '电脑：WASD 移动 · 滚轮缩放 · 手机：拖动/双指缩放', fail: '无法加载地图', serve: '请通过网站的 HTTP/HTTPS 游戏地址打开。直接打开 file:// 可能会阻止 JavaScript 模块。' },
-      ja: { back: '‹ ゲーム', status: 'マップ起動中', hint: 'PC：WASD移動・ホイール拡大・スマホ：ドラッグ/ピンチ', fail: 'マップを読み込めません', serve: 'サイトの HTTP/HTTPS アドレスから開いてください。file:// からは JavaScript モジュールが動作しない場合があります。' },
-      ko: { back: '‹ 게임', status: '지도가 실행 중입니다', hint: 'PC: WASD 이동 · 휠 확대 · 모바일: 드래그/핀치', fail: '지도를 열 수 없습니다', serve: 'HTTP/HTTPS 게임 주소로 열어 주세요. file:// 직접 열기에서는 JavaScript 모듈이 차단될 수 있습니다.' },
+    // No API or backend dependencies: all game entities live only in browser memory.
+    const gameLabels = {
+      km: {
+        back:'‹ ហ្គេម', stage:'វគ្គសាកល្បងកសិករ', status:'ចុចកសិករ ហើយចុច Mouse ស្តាំដើម្បីបញ្ជាដើរ',
+        help:'PC: ចុចឆ្វេងជ្រើស · ចុចស្តាំបញ្ជាដើរ · WASD រំកិលផែនទី',
+        moved:'បានបញ្ជាកសិករឱ្យដើរ', blocked:'រកផ្លូវមិនឃើញ ឬទីតាំងត្រូវបានរារាំង',
+        field:'កសិករកំពុងដើរទៅទីតាំងស្រែសាកល្បង', home:'កសិករកំពុងត្រឡប់មូលដ្ឋាន',
+        spawn:'បានបន្ថែមកសិករ', max:'មានកសិករសាកល្បងគ្រប់កំណត់ហើយ',
+        select:'សូមជ្រើសកសិករមុន', disabled:'មុខងារនេះនឹងបង្កើតនៅជំហាន Rice / Construction',
+        fail:'មិនអាចបើកហ្គេមបាន', serve:'សូមបើកតាម URL របស់វេបសាយ (HTTP/HTTPS) មិនមែន file:// ផ្ទាល់ទេ។'
+      },
+      en: {
+        back:'‹ Games', stage:'Farmer movement test', status:'Select a farmer, then right-click the ground to move',
+        help:'PC: left click select · right click move · WASD pan',
+        moved:'Farmer movement ordered', blocked:'No valid route or the destination is blocked',
+        field:'Farmer walking to the planned field', home:'Farmer returning home',
+        spawn:'Farmer spawned', max:'Maximum number of test farmers reached',
+        select:'Select a farmer first', disabled:'Coming in the rice / construction stage',
+        fail:'Unable to open the game', serve:'Open the game using its HTTP/HTTPS website URL, not file://.'
+      },
+      zh: {
+        back:'‹ 游戏', stage:'农民移动测试', status:'选择农民后右键点击地面移动',
+        help:'左键选择 · 右键移动 · WASD 平移',
+        moved:'已下达移动指令', blocked:'没有可用路径或目标被阻挡',
+        field:'农民正在前往计划农田', home:'农民正在返回基地',
+        spawn:'已添加农民', max:'已达到测试人数上限',
+        select:'请先选择农民', disabled:'种植与建造功能将在后续阶段提供',
+        fail:'无法启动游戏', serve:'请通过 HTTP/HTTPS 网站地址打开游戏，不要直接打开 file://。'
+      },
+      ja: {
+        back:'‹ ゲーム', stage:'農民の移動テスト', status:'農民を選択し、地面を右クリックして移動',
+        help:'左クリックで選択 · 右クリックで移動 · WASDで移動',
+        moved:'移動指示を出しました', blocked:'移動できる経路がないか目的地が塞がれています',
+        field:'予定された畑へ移動中', home:'拠点へ戻っています',
+        spawn:'農民を追加しました', max:'テスト人数の上限です',
+        select:'最初に農民を選択してください', disabled:'収穫と建築は後のステージで対応',
+        fail:'ゲームを起動できません', serve:'file:// ではなく HTTP/HTTPS のゲームURLから開いてください。'
+      },
+      ko: {
+        back:'‹ 게임', stage:'농부 이동 테스트', status:'농부를 선택하고 바닥을 우클릭하면 이동합니다',
+        help:'왼쪽 클릭 선택 · 오른쪽 클릭 이동 · WASD 카메라 이동',
+        moved:'이동 명령을 내렸습니다', blocked:'경로가 없거나 목적지가 막혔습니다',
+        field:'예정된 밭으로 이동 중', home:'기지로 복귀 중',
+        spawn:'농부를 추가했습니다', max:'테스트 농부 수가 최대입니다',
+        select:'농부를 먼저 선택하세요', disabled:'수확 및 건설은 다음 단계에서 지원',
+        fail:'게임을 시작할 수 없습니다', serve:'file:// 대신 HTTP/HTTPS 사이트 URL로 열어 주세요.'
+      },
     };
-    const shortLang = (navigator.language || 'km').toLowerCase().split('-')[0];
-    const lang = labels[shortLang] ? shortLang : 'km';
-    const tr = labels[lang];
-    document.documentElement.lang = lang;
+    const requested = (navigator.language || 'km').toLowerCase().split('-')[0];
+    const language = gameLabels[requested] ? requested : 'km';
+    const tr = gameLabels[language];
+    document.documentElement.lang = language;
     document.getElementById('back-link').textContent = tr.back;
-    document.getElementById('status-title').textContent = tr.status;
-    document.getElementById('status-hint').textContent = tr.hint;
+    document.getElementById('stage-label').textContent = tr.stage;
+    document.getElementById('map-status').textContent = tr.status;
     document.getElementById('error-title').textContent = tr.fail;
-    window.showGameError = function (error) {
+    window.showGameError = error => {
       document.getElementById('game-error').classList.add('show');
       document.getElementById('error-message').textContent = location.protocol === 'file:' ? tr.serve : tr.fail;
       document.getElementById('error-details').textContent = String(error?.message || error || '');
     };
-    window.addEventListener('error', event => {
-      if (!window.shadowRealmsGame) window.showGameError(event.message);
-    });
-    window.addEventListener('unhandledrejection', event => {
-      if (!window.shadowRealmsGame) window.showGameError(event.reason);
-    });
     if (location.protocol === 'file:') window.showGameError(tr.serve);
   </script>
+
   <script type="module">
-    import { GameEngine } from './core/GameEngine.js';
-
     try {
-      const game = new GameEngine({ canvas: document.getElementById('game') });
-      game.start(); // No Start button: map appears immediately.
-      window.shadowRealmsGame = game; // Useful for local browser debugging only.
+      const [engineModule, farmerModule, navigationModule, selectionModule, footerModule] = await Promise.all([
+        import('./core/GameEngine.js'),
+        import('./characters/Farmer.js'),
+        import('./core/Pathfinding.js'),
+        import('./ui/SelectionController.js'),
+        import('./ui/CommandFooter.js'),
+      ]);
+      const { GameEngine } = engineModule;
+      const { Farmer } = farmerModule;
+      const { Pathfinding } = navigationModule;
+      const { SelectionController } = selectionModule;
+      const { CommandFooter } = footerModule;
 
-      const zoomIn = document.getElementById('zoom-in');
-      const zoomOut = document.getElementById('zoom-out');
-      const reset = document.getElementById('reset-camera');
-      const coords = document.getElementById('camera-position');
-      const camera = game.camera;
+      const canvas = document.getElementById('game');
+      const status = document.getElementById('map-status');
+      const engine = new GameEngine({ canvas });
+      const { camera, map } = engine;
+      const navigation = new Pathfinding(map);
+      const farmers = [];
+      const MAX_FARMERS = 12;
+      const home = map.getSpawnPoint('blue');
+      const footer = new CommandFooter({ root: document.body }).mount();
+      let selection = null;
+      let number = 0;
+      let hudTime = 0;
+      let lastZoom = -1;
 
-      function zoom(factor) {
-        camera.zoomAt(camera.zoom * factor);
-        document.getElementById('game').focus({ preventScroll: true });
+      function message(text) {
+        status.textContent = text;
+        footer.setResources({ hint: text });
       }
-      zoomIn.addEventListener('click', () => zoom(1.18));
-      zoomOut.addEventListener('click', () => zoom(1 / 1.18));
-      reset.addEventListener('click', () => {
-        camera.zoomAt(1);
-        const point = game.map.getSpawnPoint('blue');
-        camera.centerOn(point.x, point.y);
-      });
 
-      // A very lightweight status readout: no separate animation loop or requests.
-      let previous = '';
-      const originalUpdate = game.onUpdate;
-      game.onUpdate = (dt, instance) => {
-        originalUpdate?.(dt, instance);
-        const state = `${Math.round(camera.x)} · ${Math.round(camera.y)} · ${Math.round(camera.zoom * 100)}%`;
-        if (state !== previous) {
-          coords.textContent = state;
-          previous = state;
+      // Farming and building need their own real systems; do not pretend they work.
+      for (const selector of [
+        '[data-mode="harvest"]', '[data-mode="build"]',
+        '[data-touch="harvest"]', '[data-touch="build"]',
+        '[data-action="ghostHouse"]', '[data-action="ghostBarn"]',
+        '[data-action="cancelBuild"]',
+      ]) {
+        for (const item of footer.nodes.shell.querySelectorAll(selector)) {
+          item.disabled = true;
+          item.title = tr.disabled;
+        }
+      }
+
+      function openPosition(origin, spacing = 35) {
+        for (let ring = 0; ring <= 8; ring++) {
+          const radius = ring === 0 ? 0 : ring * spacing;
+          const count = ring === 0 ? 1 : Math.max(12, ring * 10);
+          for (let i = 0; i < count; i++) {
+            const theta = 2 * Math.PI * i / count;
+            const x = origin.x + Math.cos(theta) * radius;
+            const y = origin.y + Math.sin(theta) * radius;
+            if (!map.isWalkable(x, y, 14)) continue;
+            if (farmers.some(f => Math.hypot(f.x - x, f.y - y) < 36)) continue;
+            return { x, y };
+          }
+        }
+        return null;
+      }
+
+      function spawnFarmer() {
+        if (farmers.length >= MAX_FARMERS) {
+          message(tr.max);
+          return null;
+        }
+        const position = openPosition(home);
+        if (!position) {
+          message(tr.blocked);
+          return null;
+        }
+        number++;
+        const farmer = new Farmer({ id: `farmer-${number}`, name: `Farmer ${number}`, team:'blue', ...position });
+        farmer.onBlocked = () => message(tr.blocked);
+        farmers.push(farmer);
+        footer.setResources({ villagers: farmers.length });
+        return farmer;
+      }
+
+      function commandMove(units, point, text = tr.moved) {
+        if (!units.length) {
+          message(tr.select);
+          return;
+        }
+        let accepted = 0;
+        const columns = Math.ceil(Math.sqrt(units.length));
+        units.forEach((unit, index) => {
+          const col = index % columns;
+          const row = Math.floor(index / columns);
+          const rows = Math.ceil(units.length / columns);
+          const destination = units.length === 1 ? point : {
+            x: point.x + (col - (columns - 1) / 2) * 39,
+            y: point.y + (row - (rows - 1) / 2) * 39,
+          };
+          const actual = map.isWalkable(destination.x, destination.y, unit.radius)
+            ? destination : point;
+          if (navigation.moveUnit(unit, actual)) accepted++;
+        });
+        message(accepted ? `${text} (${accepted}/${units.length})` : tr.blocked);
+      }
+
+      function zoomBy(factor) {
+        camera.zoomAt(camera.zoom * factor);
+        canvas.focus({ preventScroll: true });
+      }
+
+      function actionHandler(action) {
+        if (action === 'zoomIn') { zoomBy(1.18); return; }
+        if (action === 'zoomOut') { zoomBy(1 / 1.18); return; }
+        if (action === 'spawnFarmer') {
+          const f = spawnFarmer();
+          if (f) {
+            selection.setSelectedIds([f.id]);
+            message(`${tr.spawn} (${farmers.length})`);
+          }
+          return;
+        }
+        if (action === 'sendToField' || action === 'returnHome') {
+          const selected = selection.selectedUnits();
+          const point = action === 'returnHome' ? home :
+            (map.clearings.find(c => c.x < map.width / 2 && c.y > map.height * .5) || home);
+          commandMove(selected, point, action === 'returnHome' ? tr.home : tr.field);
+          return;
+        }
+        if (action === 'ghostHouse' || action === 'ghostBarn' || action === 'cancelBuild') {
+          message(tr.disabled);
+        }
+      }
+
+      // Renderers draw after map ground and before map foreground trees/rocks.
+      engine.onUpdate = (dt) => {
+        for (const farmer of farmers) farmer.update(dt, map);
+        hudTime += dt;
+        if (hudTime >= .2) {
+          hudTime = 0;
+          const zoom = Math.round(camera.zoom * 100);
+          if (zoom !== lastZoom) {
+            footer.setResources({ zoom: camera.zoom });
+            lastZoom = zoom;
+          }
         }
       };
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) game.stop();
-        else if (!game.destroyed) game.start();
+      engine.onRender = (ctx, currentCamera) => {
+        for (const farmer of [...farmers].sort((a, b) => a.y - b.y)) {
+          farmer.draw(ctx, currentCamera);
+        }
+      };
+
+      selection = new SelectionController({
+        engine,
+        footer,
+        getUnits: () => farmers,
+        playerTeam: 'blue',
+        onCommand: ({ type, units, point }) => {
+          if (type === 'move') commandMove(units, point);
+          else message(tr.disabled);
+        },
+        onAction: actionHandler,
+      }).attach();
+
+      for (let i = 0; i < 3; i++) spawnFarmer();
+      if (farmers.length) selection.setSelectedIds([farmers[0].id]);
+      footer.setResources({ villagers:farmers.length, zoom:camera.zoom, hint:tr.help });
+
+      document.getElementById('zoom-in').addEventListener('click', () => zoomBy(1.18));
+      document.getElementById('zoom-out').addEventListener('click', () => zoomBy(1 / 1.18));
+      document.getElementById('reset-camera').addEventListener('click', () => {
+        camera.zoomAt(1);
+        camera.centerOn(home.x, home.y);
       });
-      window.addEventListener('pagehide', () => game.destroy(), { once: true });
+
+      // Never start multiple animation loops; pause while tab is hidden.
+      const onVisibility = () => {
+        if (document.hidden) engine.stop();
+        else if (!engine.destroyed) engine.start();
+      };
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('pagehide', () => {
+        document.removeEventListener('visibilitychange', onVisibility);
+        selection.destroy();
+        footer.destroy();
+        engine.destroy();
+      }, { once:true });
+
+      window.shadowRealmsGame = engine; // Local debugging only; no remote services.
+      engine.start(); // Immediately playable — no Start button.
     } catch (error) {
       window.showGameError(error);
-      console.error('Shadow Realms startup:', error);
+      console.error('Shadow Realms local game startup:', error);
     }
   </script>
 </body>
