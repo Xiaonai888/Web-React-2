@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
+import {
+  getReaderBinanceOrder,
+  getRememberedBinanceOrderId,
+  clearRememberedBinanceOrderId,
+} from '../../services/binanceCheckoutApi'
 import DiamondPurchaseSuccessModal from './DiamondPurchaseSuccessModal'
 import { getCountryFeature, getPaymentCountryTicket, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -28,6 +33,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: 'Pay exactly {{amount}}',
     binanceFee: 'An additional 1 USDT applies to every purchase.',
     binanceBonus: 'Bonus: +100 Vouchers',
+    binanceVerification: 'Binance payments are confirmed after verification.',
     nonRefundable: 'Completed payments are non-refundable.',
     cancel: 'Cancel',
     close: 'Close',
@@ -88,6 +94,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: 'ទូទាត់ចំនួន {{amount}}',
     binanceFee: 'រាល់ការទិញត្រូវបូកបន្ថែម 1 USDT។',
     binanceBonus: 'រង្វាន់បន្ថែម៖ +100 Vouchers',
+    binanceVerification: 'ការទូទាត់ Binance នឹងត្រូវបានបញ្ជាក់ក្រោយការផ្ទៀងផ្ទាត់។',
     nonRefundable: 'ការទូទាត់ដែលបានបញ្ចប់ មិនអាចសងប្រាក់វិញបានទេ។',
     cancel: 'បោះបង់',
     close: 'បិទ',
@@ -148,6 +155,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '支付 {{amount}}',
     binanceFee: '每笔购买均需额外支付 1 USDT。',
     binanceBonus: '额外奖励：+100 Vouchers',
+    binanceVerification: 'Binance 付款将在核实后确认。',
     nonRefundable: '已完成的付款不可退款。',
     cancel: '取消',
     close: '关闭',
@@ -208,6 +216,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '{{amount}} を支払う',
     binanceFee: '購入ごとに 1 USDT が追加されます。',
     binanceBonus: '特典：+100 Vouchers',
+    binanceVerification: 'Binance の支払いは確認後に確定します。',
     nonRefundable: '完了した支払いは返金できません。',
     cancel: 'キャンセル',
     close: '閉じる',
@@ -268,6 +277,7 @@ registerTranslationNamespace('purchaseSection', {
     payExactly: '{{amount}} 결제',
     binanceFee: '구매할 때마다 1 USDT가 추가됩니다.',
     binanceBonus: '보너스: +100 Vouchers',
+    binanceVerification: 'Binance 결제는 검증 후 확정됩니다.',
     nonRefundable: '완료된 결제는 환불되지 않습니다.',
     cancel: '취소',
     close: '닫기',
@@ -380,6 +390,19 @@ function getSecondsLeft(dateValue) {
 function formatCountdown(seconds) {
   const safe = Math.max(0, Number(seconds || 0))
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`
+}
+
+// Adapt Binance checkout's own verified status to the existing ABA confirmation UI.
+function normalizeBinancePayment(order) {
+  return {
+    order_id: order.id,
+    status: order.status === 'credited' ? 'success' : order.status,
+    amount_usdt: order.amount_usdt,
+    diamonds: order.diamonds,
+    bonus_vouchers: order.bonus_vouchers,
+    payment_method: 'binance',
+    expires_at: order.expires_at,
+  }
 }
 
 function savePendingPayment(payment) {
@@ -653,6 +676,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
   const isSuccess = status === 'success'
   const isReview = status === 'pending_review'
   const isWaiting = status === 'waiting_payment'
+  const isBinance = payment.payment_method === 'binance'
 
   if (isSuccess) {
     return (
@@ -679,7 +703,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
                 ? t('purchaseSection.diamondsAdded', { count: formatNumber(payment.diamonds) })
                 : isReview
                   ? t('purchaseSection.paymentNeedsReview')
-                  : t('purchaseSection.returnAfterPayment')}
+                  : isBinance ? t('purchaseSection.binanceVerification') : t('purchaseSection.returnAfterPayment')}
             </p>
           </div>
           <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
@@ -691,7 +715,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--shadow-text-secondary)]">{t('purchaseSection.amount')}</p>
-              <p className="mt-1 text-[26px] font-bold text-[var(--shadow-text-primary)]">{formatMoney(payment.amount_usd)}</p>
+              <p className="mt-1 text-[26px] font-bold text-[var(--shadow-text-primary)]">{isBinance ? `${Number(payment.amount_usdt || 0).toFixed(2)} USDT` : formatMoney(payment.amount_usd)}</p>
             </div>
             <StatusBadge status={payment.status} t={t} />
           </div>
@@ -711,7 +735,7 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
 
         {message ? <p className="mt-3 text-center text-[12px] font-bold leading-5 text-[var(--shadow-text-primary)]">{message}</p> : null}
 
-        {isWaiting ? (
+        {(isWaiting || (isBinance && isReview)) ? (
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button type="button" onClick={onRefresh} disabled={checking} className="rounded-[18px] bg-[#111111] py-4 text-[14px] font-normal text-white active:scale-[0.99] disabled:opacity-50 dark:bg-white dark:text-[#111827]">
               {checking ? t('purchaseSection.checking') : t('purchaseSection.checkStatus')}
@@ -753,7 +777,10 @@ export default function PurchaseSection() {
     [packages, selectedUsd]
   )
 
-  const hasPaymentProfile = Boolean(String(user?.payment_account_name || '').trim())
+  const hasBankProfile = Boolean(String(user?.payment_account_name || '').trim())
+  const hasBinanceProfile = String(user?.binance_name || '').trim().length >= 2 &&
+    /^\d{5,20}$/.test(String(user?.binance_uid || '').trim())
+  const hasPaymentProfile = hasBankProfile || hasBinanceProfile
 
   function openStatusModal(payment) {
     setManualPayment(payment)
@@ -799,7 +826,34 @@ export default function PurchaseSection() {
     } catch {}
   }
 
+  async function refreshBinanceStatus(orderId, silent = false) {
+    if (!orderId || !getReaderToken()) return null
+
+    try {
+      setChecking(true)
+      const order = await getReaderBinanceOrder(orderId)
+      if (!order?.id) throw new Error(t('purchaseSection.paymentNotConfirmed'))
+
+      openStatusModal(normalizeBinancePayment(order))
+      if (['credited', 'expired', 'cancelled'].includes(order.status)) {
+        clearRememberedBinanceOrderId()
+      }
+      if (order.status === 'credited') void refreshWalletData()
+      return order
+    } catch (error) {
+      if (error?.status === 404) clearRememberedBinanceOrderId()
+      if (!silent) setToast(error?.message || t('purchaseSection.paymentNotConfirmed'))
+      return null
+    } finally {
+      setChecking(false)
+    }
+  }
+
   async function refreshPaymentStatus(orderId, silent = false) {
+    // Binance uses its own checkout API. Never send a Binance order to ABA status.
+    if (manualPayment?.payment_method === 'binance') {
+      return refreshBinanceStatus(orderId, silent)
+    }
     if (!orderId || !getReaderToken()) return null
 
     try {
@@ -851,8 +905,30 @@ export default function PurchaseSection() {
 
   function restorePendingPayment() {
     const saved = getSavedPendingPayment()
-    if (!saved?.order_id || !getReaderToken()) return
+    if (!saved?.order_id || !getReaderToken()) return false
     openStatusModal(saved)
+    return true
+  }
+
+  async function restoreBinancePayment() {
+    // Display only on the Purchase page after returning from Binance QR.
+    // Reuse the existing PaymentStatusModal; do not open another popup on QR.
+    const orderId = getRememberedBinanceOrderId()
+    if (!orderId || !getReaderToken()) return
+
+    try {
+      const order = await getReaderBinanceOrder(orderId)
+      if (!order?.id) return
+      openStatusModal(normalizeBinancePayment(order))
+
+      if (['credited', 'expired', 'cancelled'].includes(order.status)) {
+        clearRememberedBinanceOrderId()
+      }
+      if (order.status === 'credited') void refreshWalletData()
+    } catch (error) {
+      if (error?.status === 404) clearRememberedBinanceOrderId()
+      else setToast(error?.message || t('purchaseSection.paymentNotConfirmed'))
+    }
   }
 
   async function createManualPayment() {
@@ -862,6 +938,11 @@ export default function PurchaseSection() {
     }
 
     if (!selectedPackage || creatingPayment) return
+    if (!hasBankProfile) {
+      setShowPaymentMethods(false)
+      setShowPaymentProfileRequired(true)
+      return
+    }
 
     try {
   setCreatingPayment(true)
@@ -915,7 +996,9 @@ export default function PurchaseSection() {
 
   useEffect(() => {
     loadPurchaseData()
-    restorePendingPayment()
+    // Prefer an existing ABA confirmation if both methods have pending orders.
+    // Only fetch the saved Binance order once on returning, not on every timer tick.
+    if (!restorePendingPayment()) void restoreBinancePayment()
   }, [])
 
   useEffect(() => {
@@ -927,6 +1010,27 @@ export default function PurchaseSection() {
       !['waiting_payment', 'pending_review'].includes(status)
     ) {
       return undefined
+    }
+
+    if (manualPayment?.payment_method === 'binance') {
+      // Binance has no ABA SSE stream: use the server expiry and one check at 00:00.
+      if (status !== 'waiting_payment') {
+        setSecondsLeft(0)
+        return undefined
+      }
+
+      let expiryChecked = false
+      const updateBinanceClock = () => {
+        const next = getSecondsLeft(manualPayment.expires_at)
+        setSecondsLeft(next)
+        if (next <= 0 && !expiryChecked) {
+          expiryChecked = true
+          void refreshBinanceStatus(orderId, true)
+        }
+      }
+      updateBinanceClock()
+      const timer = window.setInterval(updateBinanceClock, 1000)
+      return () => window.clearInterval(timer)
     }
 
     const token = getReaderToken()
