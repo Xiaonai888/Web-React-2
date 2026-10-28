@@ -302,7 +302,7 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib, missionLib] = await Promise.all([
+      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib, missionLib, bootstrapLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -318,6 +318,7 @@
         import('./combat/WaveSystem.js'),
         import('./visual/VisualSystem.js'),
         import('./missions/MissionDirector.js'),
+        import('./bootstrap/GameBootstrap.js'),
       ]);
       const { GameEngine } = engineLib;
       const { Farmer } = farmerLib;
@@ -333,6 +334,7 @@
       const { EnemyAI } = enemyLib;
       const { WaveSystem } = waveLib;
       const { VisualSystem } = visualLib;
+      const { GameBootstrap } = bootstrapLib;
       const { MissionDirector } = missionLib;
 
       const canvas = document.getElementById('game');
@@ -1323,10 +1325,41 @@
         document.removeEventListener('visibilitychange',visibility);
         canvas.removeEventListener('pointermove',onPreviewMove);
         window.removeEventListener('keydown',onEscape);
+        // Remove optional gameplay hooks synchronously where possible before core teardown.
+        features.detach();
+        void features.destroy().catch(error=>console.warn('Feature cleanup:',error));
         stopCombatTarget();stopWoodTarget();waves.stop();missionTasks.clear();missions.destroy();combat.reset();
         projectiles.reset();enemyAI.reset();health.reset();
         visual.destroy();selection.destroy();footer.destroy();wood.destroy();construction.destroy();game.destroy();
       },{once:true});
+      // STEP 28: ONE-TIME feature bridge. All later feature imports live in
+      // bootstrap/FeatureManifest.js, not in this HTML page.
+      const features = new GameBootstrap({
+        engine:game,
+        pointerPriority:'before', // Minimap / Defense / Tactics consume their own taps.
+        services:{
+          rice,wood,construction,combat,health,projectiles,enemyAI,waves,
+          missions,visual,farmerList:farmers,farmers,selection,footer,home,
+          navigation:route,getUnits:allUnits,
+          notify: message,
+          claimTacticalUnit:(unit)=>{
+            if(!unit||unit.team!=='blue'||unit.alive===false)return;
+            releaseMission([unit]);
+            wood.cancel(unit.id,{stop:false});
+            jobs.delete(unit.id);
+            construction.removeBuilderFromAll(unit.id);
+            unit.setHarvestAnimation(false);
+          },
+        },
+        onError:(error,detail)=>console.error('Shadow Realms feature error', detail, error),
+      });
+      // If a future optional feature fails, keep the existing game playable.
+      try { await features.start(); }
+      catch(error) {
+        console.error('Shadow Realms optional features unavailable:',error);
+        message('Optional features: '+(error?.message||error));
+      }
+      window.shadowRealmsBootstrap=features;
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
       window.shadowRealmsConstruction=construction;
