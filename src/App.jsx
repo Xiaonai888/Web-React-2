@@ -318,7 +318,7 @@ const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 const ChatInfoPage = lazy(() => import('./pages/Chat/ChatInfoPage'))
 const AuthorPageInviteFriendsPage = lazy(() => import('./pages/Author/AuthorPageInviteFriendsPage'))
 const AuthorPageHelpPage = lazy(() => import('./pages/Author/AuthorPageHelpPage'))
-const AuthorChatInboxPage = lazy(() => import('./pages/AuthorChat/AuthorChatInboxPage'))
+const AuthorChatInboxShellPage = lazy(() => import('./pages/AuthorChat/AuthorChatInboxShellPage'))
 const AuthorArchivedChatPage = lazy(() => import('./pages/AuthorChat/AuthorArchivedChatPage'))
 const AuthorChatRoomPage = lazy(() => import('./pages/AuthorChat/AuthorChatRoomPage'))
 const AuthorChatInfoPage = lazy(() => import('./pages/AuthorChat/AuthorChatInfoPage'))
@@ -326,6 +326,7 @@ const AuthorPostCommentFocusPage = lazy(() => import('./pages/AuthorChat/AuthorP
 const AuthorPostActivityPage = lazy(() => import('./pages/Author/AuthorPostActivityPage'))
 const PicToArtCreationsPage = lazy(() => import('./pages/PicToArt/PicToArtCreationsPage'))
 const InstallPage = lazy(() => import('./pages/Install/InstallPage'))
+const AuthorChatInboxShellPage = lazy(() => import('./pages/AuthorChat/AuthorChatInboxShellPage'))
 
 function ComingSoon({ titleKey }) {
   const { t } = useDisplayTranslation()
@@ -1205,7 +1206,7 @@ const shouldShowOpeningAds =
 
         <Route
   path="/author/page/chat"
-  element={<LazyPage><AuthorChatInboxPage /></LazyPage>}
+  element={<LazyPage><AuthorChatInboxShellPage /></LazyPage>}
 />
 
 <Route
