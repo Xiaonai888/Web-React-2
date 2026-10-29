@@ -1,4 +1,3 @@
-/** Shadow Realms — exploration adapter for the existing feature registry. */
 import { FogOfWar } from './FogOfWar.js';
 import { MiniMap } from './MiniMap.js';
 import { StageZones } from './StageZones.js';
@@ -8,63 +7,65 @@ export function createFeature(scope) {
       typeof scope.provide !== 'function' || typeof scope.emit !== 'function')
     throw new TypeError('ExplorationFeature requires GameContext');
   const map = scope.map;
-  const getUnits = () => {
-    const getter = scope.get('getUnits',null);
-    const raw = typeof getter === 'function' ? getter() : scope.get('farmers',[]);
+  const allUnits = () => {
+    const getter = scope.get('getUnits', null);
+    const raw = typeof getter === 'function' ? getter() : scope.get('farmers', []);
     return Array.isArray(raw) ? raw : [];
   };
-  const players = () => getUnits().filter(unit => unit?.team === 'blue' &&
+  const players = () => allUnits().filter(unit => unit?.team === 'blue' &&
     unit.alive !== false && Number.isFinite(unit.hp) && unit.hp > 0 &&
     Number.isFinite(unit.x) && Number.isFinite(unit.y));
-  const safeEmit = (name,data) => {
-    try { scope.emit(name,data); }
-    catch (error) { console.warn('Shadow Realms exploration observer failed:',name,error); }
+  const emit = (name, data) => {
+    try { scope.emit(name, data); }
+    catch { /* A UI observer must not stop exploration. */ }
   };
   const fog = new FogOfWar(map);
-  const zones = new StageZones(map,{
-    onDiscover:zone => safeEmit('exploration:zone-discovered',{...zone}),
+  const zones = new StageZones(map, {
+    onDiscover: zone => emit('exploration:zone-discovered', { ...zone }),
   });
-  const miniMap = new MiniMap(map,{fog,zones,getUnits});
-  const api = Object.freeze({fog,zones,miniMap});
-  let disposed = false;
+  const miniMap = new MiniMap(map, { fog, zones, getUnits: allUnits });
+  const api = Object.freeze({ fog, zones, miniMap });
   let started = false;
+  let disposed = false;
   let elapsed = 0;
   const locale = () => {
     const value = typeof document === 'undefined' ? 'km' :
-      String(document.documentElement?.lang || 'km').split('-')[0];
-    return ['km','en','zh','ja','ko'].includes(value) ? value : 'en';
+      String(document.documentElement?.lang || 'km').split('-')[0].toLowerCase();
+    return ['km', 'en', 'zh', 'ja', 'ko'].includes(value) ? value : 'en';
   };
   return {
     ...api,
     start() {
       if (disposed || started) return;
       started = true;
-      scope.provide('exploration',api);
-      fog.refresh(players());
-      zones.update(.01,players());
-      safeEmit('exploration:ready',{fog:fog.getSummary(),zones:zones.getSummary()});
+      scope.provide('exploration', api);
+      const current = players();
+      fog.refresh(current);
+      zones.update(0.01, current);
+      emit('exploration:ready', { zones: zones.getSummary(), fog: fog.getSummary() });
     },
     update(dt) {
       if (disposed || !started || !Number.isFinite(dt) || dt <= 0) return;
-      const units = players();
-      fog.update(dt,units);
-      // Check zones at a modest cadence, but never postpone the first discovery.
-      elapsed += Math.min(.1,dt);
-      if (elapsed >= .12) {elapsed = 0;zones.update(dt,units);}
+      const current = players();
+      fog.update(dt, current);
+      elapsed += Math.min(dt, 0.1);
+      if (elapsed >= 0.12) { elapsed = 0; zones.update(dt, current); }
     },
-    render(ctx,camera) {
+    render(ctx, camera) {
       if (disposed || !started) return;
-      fog.draw(ctx,camera);
-      zones.draw(ctx,camera,fog,locale());
-      miniMap.draw(ctx,camera);
+      fog.draw(ctx, camera);
+      zones.draw(ctx, camera, fog, locale());
+      miniMap.draw(ctx, camera);
     },
     onPointer(event) {
-      return !!(!disposed && started && miniMap.onPointer(event,scope.camera));
+      return !!(!disposed && started && miniMap.onPointer(event, scope.camera));
     },
     dispose() {
       if (disposed) return;
       disposed = true;
-      miniMap.destroy();zones.destroy();fog.destroy();
+      miniMap.destroy();
+      zones.destroy();
+      fog.destroy();
     },
   };
 }
