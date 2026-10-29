@@ -312,7 +312,7 @@ function NotificationCharacterMoreSheet({ open, characters, selectedId, onSelect
 
   return (
     <div
-      className="fixed inset-0 z-[10002] flex items-end justify-center overscroll-contain bg-black/75 sm:items-center"
+      className="fixed inset-0 z-[10002] flex items-end justify-center overscroll-contain bg-black/30 sm:items-center"
       onClick={onClose}
     >
       <section
@@ -354,9 +354,6 @@ function NotificationCharacterMoreSheet({ open, characters, selectedId, onSelect
             <p className="py-8 text-center text-[13px] text-[var(--shadow-text-secondary,#6b7280)]">No characters yet</p>
           )}
         </div>
-        <div className="shrink-0 border-t border-[var(--shadow-border,#e5e7eb)] px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
-          <button type="button" onClick={onClose} className="h-11 w-full rounded-[12px] bg-[var(--shadow-bg-soft,#f3f4f6)] text-[13px] font-semibold">Close</button>
-        </div>
       </section>
     </div>
   )
@@ -370,6 +367,7 @@ export function ChatStoryNotificationSettings({
   onClose,
   onSave,
   onAddCharacter,
+  characterAdding = false,
 }) {
   const [form, setForm] = useState(() => normalizeChatNotification(value))
   const [maximum, setMaximum] = useState(() => limitedNumber(maxVisible, 2, 1, 3))
@@ -483,7 +481,7 @@ export function ChatStoryNotificationSettings({
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-[9997] flex items-end justify-center bg-black/60 pt-5 sm:items-center sm:px-4"
+        className={`fixed inset-0 z-[9997] flex items-end justify-center pt-5 sm:items-center sm:px-4 ${characterAdding ? 'bg-black/15' : moreCharactersOpen ? 'bg-black/35' : 'bg-black/60'}`}
         onClick={() => { if (!moreCharactersOpen) onClose?.() }}
       >
         <section
