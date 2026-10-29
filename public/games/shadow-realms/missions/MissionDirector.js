@@ -27,38 +27,59 @@ export class MissionDirector {
     this.getUnits=typeof getUnits==='function'?getUnits:()=>getUnits
     this.home=point(home)?{...home}:map.getSpawnPoint('blue')
     this.rice=rice;this.construction=construction;this.onEvent=onEvent
-    this.objectives=new ObjectiveSystem({onEvent:(name,data)=>this.onEvent?.(`objective_${name}`,data)})
-    this.progression=new StageProgression({stages,onEvent:(name,data)=>this.onEvent?.(`stage_${name}`,data)})
+    this.objectives=new ObjectiveSystem({onEvent:(name,data)=>this.#emit(`objective_${name}`,data)})
+    this.progression=new StageProgression({stages,onEvent:(name,data)=>this.#emit(`stage_${name}`,data)})
     this.rescues=new RescueSystem({map,navigation,home:this.home,getUnits:this.getUnits,
       onEvent:(name,data)=>this.#onRescue(name,data)})
     this.loot=new LootSystem({map,grantReward:grantReward||((r)=>this.#grant(r)),
       onEvent:(name,data)=>this.#onLoot(name,data)})
-    this.defeatedIds=new Set();this.elapsed=0
+    this.defeatedIds=new Set();this.elapsed=0;this.rewardBusy=false
+  }
+  #emit(name, data) {
+    try { this.onEvent?.(name, data); }
+    catch (error) { console.warn('Shadow Realms mission event failed:', name, error); }
   }
   #grant(reward) {
-    // One shared economy: no fake resource balance or double-counting.
-    const rice=reward.rice||0,wood=reward.wood||0
-    if(rice&&(!this.rice||typeof this.rice.getResources!=='function'||typeof this.rice.setStorageRice!=='function'))return false
-    if(wood&&(!this.construction||typeof this.construction.addWood!=='function'))return false
-    const old=rice?this.rice.getResources().rice:0
-    if(rice&&this.rice.setStorageRice(old+rice)!==true)return false
-    if(wood&&!this.construction.addWood(wood)) {
-      if(rice)this.rice.setStorageRice(old)
-      return false
-    }
-    return true
+    if (this.rewardBusy) return false;
+    const rice=reward?.rice??0,wood=reward?.wood??0;
+    if (!Number.isSafeInteger(rice) || !Number.isSafeInteger(wood) ||
+        rice<0 || wood<0) return false;
+    if (rice && (typeof this.rice?.getResources!=='function' ||
+        typeof this.rice?.setStorageRice!=='function')) return false;
+    if (wood && (typeof this.construction?.getResources!=='function' ||
+        typeof this.construction?.addWood!=='function' ||
+        typeof this.construction?.setWood!=='function')) return false;
+    const oldRice=rice ? this.rice.getResources().rice : 0;
+    const oldWood=wood ? this.construction.getResources().wood : 0;
+    if ((rice && (!Number.isSafeInteger(oldRice) ||
+        !Number.isSafeInteger(oldRice+rice))) ||
+        (wood && (!Number.isSafeInteger(oldWood) ||
+        !Number.isSafeInteger(oldWood+wood)))) return false;
+    this.rewardBusy=true;
+    try {
+      let accepted=true;
+      try {
+        if (rice) accepted=this.rice.setStorageRice(oldRice+rice)===true;
+        if (accepted && wood) accepted=this.construction.addWood(wood)===true;
+      } catch { accepted=false; }
+      if (accepted) return true;
+      // Compensate BOTH shared ledgers if a callback failed after mutating.
+      try { if (rice) this.rice.setStorageRice(oldRice); } catch { /* rollback best effort */ }
+      try { if (wood) this.construction.setWood(oldWood); } catch { /* rollback best effort */ }
+      return false;
+    } finally { this.rewardBusy=false; }
   }
   #onRescue(name,data) {
     if(name==='rescued'&&this.progression.activeId) {
       this.objectives.progress('rescue',1,{token:data.captive.id})
     }
-    this.onEvent?.(`rescue_${name}`,data)
+    this.#emit(`rescue_${name}`,data)
   }
   #onLoot(name,data) {
     if(name==='collected'&&this.progression.activeId){
       this.objectives.progress('supply',1,{token:data.drop.id})
     }
-    this.onEvent?.(`loot_${name}`,data)
+    this.#emit(`loot_${name}`,data)
   }
   onHealthEvent(name,data={}) {
     if(name!=='death'||!this.progression.activeId)return false
@@ -110,7 +131,7 @@ export class MissionDirector {
     }
     const result=this.progression.start(id)
     if(!result.ok)return this.#rollback(result.reason)
-    this.onEvent?.('mission_started',{stage,summary:this.getSummary()})
+    this.#emit('mission_started',{stage,summary:this.getSummary()})
     return {ok:true,stage}
   }
   #rollback(reason){this.rescues.reset();this.loot.reset();this.objectives.reset();this.defeatedIds.clear();return {ok:false,reason}}
@@ -133,7 +154,7 @@ export class MissionDirector {
     if(!this.objectives.allRequiredComplete())return
     const id=this.progression.activeId
     const result=this.progression.finish(id,{objectivesComplete:this.objectives.getSummary().complete})
-    if(result.ok)this.onEvent?.('mission_completed',{...result,summary:this.getSummary()})
+    if(result.ok)this.#emit('mission_completed',{...result,summary:this.getSummary()})
   }
   draw(ctx,camera){if(!this.progression.activeId)return;this.loot.draw(ctx,camera);this.rescues.draw(ctx,camera)}
   getSummary(){return {stage:this.progression.getActive(),stages:this.progression.getSummary(),
