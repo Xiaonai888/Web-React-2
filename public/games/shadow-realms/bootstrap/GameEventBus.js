@@ -1,7 +1,4 @@
-/**
- * Shadow Realms — synchronous in-memory gameplay event bus.
- * No browser APIs, persistence, external packages, fetch or background tasks.
- */
+/** Synchronous, reentrant-safe game events with deterministic priority order. */
 export class GameEventBus {
   constructor({ onError = null } = {}) {
     this.listeners = new Map();
@@ -14,21 +11,24 @@ export class GameEventBus {
     if (this.disposed) throw new Error('GameEventBus is disposed');
     if (typeof type !== 'string' || !type.trim()) throw new TypeError('Event name is required');
     if (typeof callback !== 'function') throw new TypeError('Event listener must be a function');
-    const item = { callback, once: Boolean(once), priority: Number.isFinite(priority) ? priority : 0, serial: this.serial++ };
+    const item = {
+      callback, once: Boolean(once), priority: Number.isFinite(priority) ? priority : 0,
+      serial: this.serial++, active: true,
+    };
     const bucket = this.listeners.get(type) || [];
     bucket.push(item);
     bucket.sort((a, b) => b.priority - a.priority || a.serial - b.serial);
     this.listeners.set(type, bucket);
-    let active = true;
+
     return () => {
-      if (!active) return false;
-      active = false;
+      if (!item.active) return false;
+      item.active = false;
       const current = this.listeners.get(type);
       if (!current) return false;
-      const i = current.indexOf(item);
-      if (i < 0) return false;
-      current.splice(i, 1);
-      if (!current.length) this.listeners.delete(type);
+      const index = current.indexOf(item);
+      if (index < 0) return false;
+      current.splice(index, 1);
+      if (!current.length && this.listeners.get(type) === current) this.listeners.delete(type);
       return true;
     };
   }
@@ -43,27 +43,43 @@ export class GameEventBus {
     if (!bucket?.length) return 0;
     let delivered = 0;
     for (const item of [...bucket]) {
-      if (!bucket.includes(item)) continue; // May have been unsubscribed mid-dispatch.
+      if (this.disposed || !item.active || !this.listeners.get(type)?.includes(item)) continue;
       if (item.once) {
-        bucket.splice(bucket.indexOf(item), 1); // Remove BEFORE calling; reentrant safe.
-        if (!bucket.length) this.listeners.delete(type);
+        item.active = false;
+        const current = this.listeners.get(type);
+        const index = current?.indexOf(item) ?? -1;
+        if (index >= 0) {
+          current.splice(index, 1);
+          if (!current.length && this.listeners.get(type) === current) this.listeners.delete(type);
+        }
       }
-      try { item.callback(payload, type); delivered++; }
-      catch (error) {
-        try { this.onError?.(error, { event: type }); } catch { /* An error reporter cannot break the loop. */ }
+      try {
+        item.callback(payload, type);
+        delivered++;
+      } catch (error) {
+        try { this.onError?.(error, { event: type }); }
+        catch { /* A reporting failure cannot interrupt the game loop. */ }
       }
     }
     return delivered;
   }
 
   listenerCount(type = null) {
-    return type == null ? [...this.listeners.values()].reduce((sum, a) => sum + a.length, 0)
+    return type == null
+      ? [...this.listeners.values()].reduce((sum, entries) => sum + entries.length, 0)
       : (this.listeners.get(type)?.length || 0);
   }
 
   clear(type = null) {
-    if (type == null) this.listeners.clear();
-    else this.listeners.delete(type);
+    if (type == null) {
+      for (const entries of this.listeners.values()) {
+        for (const item of entries) item.active = false;
+      }
+      this.listeners.clear();
+      return;
+    }
+    for (const item of this.listeners.get(type) || []) item.active = false;
+    this.listeners.delete(type);
   }
 
   destroy() {
