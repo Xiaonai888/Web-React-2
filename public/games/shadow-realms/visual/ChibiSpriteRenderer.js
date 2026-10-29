@@ -12,7 +12,15 @@ const palettes = Object.freeze({
   red:  { cloth: '#b75a59', shadow: '#773f4c', accent: '#d7b184', hair: '#423038' },
   green:{ cloth: '#5c9971', shadow: '#3b6854', accent: '#e2c471', hair: '#43362d' },
 })
-const roleOf = u => (u?.isEnemy ? u.type || 'raider' : u?.type || 'farmer').toLowerCase()
+// Farmer.type remains 'farmer' after Guard/Archer training in index.html.
+// Explicit combat training takes priority over the unchanged entity type.
+const roleOf = u => {
+  const requested = u?.isEnemy ? u.type || 'raider' :
+    u?.combatTraining === 'ranged' || u?.attackType === 'ranged' ? 'archer' :
+    u?.combatTraining === 'melee' || u?.attackType === 'melee' ? 'guard' :
+    u?.type || 'farmer'
+  return typeof requested === 'string' ? requested.toLowerCase() : 'farmer'
+}
 function oval(ctx, x, y, rx, ry, fill, border = null, width = 1.6) {
   ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU)
   ctx.fillStyle = fill; ctx.fill()
@@ -103,9 +111,9 @@ export class ChibiSpriteRenderer {
     const back=(frame.facing || unit.facing)==='up'
     const left=(frame.facing || unit.facing)==='left'
     const side=(frame.facing || unit.facing)==='left'||(frame.facing || unit.facing)==='right'
-    const step=frame.stride||0
-    const swing=frame.swing||0
-    const bob=frame.bob||0
+    const step=Number.isFinite(frame.stride)?frame.stride:0
+    const swing=Number.isFinite(frame.swing)?frame.swing:0
+    const bob=Number.isFinite(frame.bob)?frame.bob:0
     const size=role==='brute'?1.18:role==='scout'?.95:1
     ctx.save();ctx.scale(size,size);ctx.translate(0,-bob)
     if(left)ctx.scale(-1,1)
@@ -166,8 +174,8 @@ export class ChibiSpriteRenderer {
       ctx.strokeStyle='#945a52';ctx.lineWidth=1.2;ctx.stroke()
     }
     helmet(ctx,role,pal,back)
-    if((frame.flash||0)>0){
-      ctx.globalAlpha=Math.min(.6,(frame.flash||0)*.65)
+    if(Number.isFinite(frame.flash) && frame.flash>0){
+      ctx.globalAlpha=Math.min(.6,frame.flash*.65)
       oval(ctx,0,-41,17,34,'#fffbe3')
     }
     ctx.restore()
