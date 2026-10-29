@@ -184,11 +184,16 @@ export class DefenseSystem {
 
   /** Undo a failed transaction even if the wood setter mutated then threw. */
   #restoreResources(before) {
-    let riceOK = false;
-    let woodOK = false;
-    try { riceOK = this.rice.setStorageRice(before.rice) === true; } catch { /* rollback */ }
-    try { woodOK = this.construction.setWood(before.wood) === true; } catch { /* rollback */ }
-    return riceOK && woodOK;
+    try {
+      const current = this.getResources();
+      if (current?.rice !== before.rice) this.rice.setStorageRice(before.rice);
+    } catch { /* Check final balances below. */ }
+    try {
+      const current = this.getResources();
+      if (current?.wood !== before.wood) this.construction.setWood(before.wood);
+    } catch { /* Check final balances below. */ }
+    const after = this.getResources();
+    return after?.rice === before.rice && after?.wood === before.wood;
   }
 
   place(type, position, { team = 'blue' } = {}) {
