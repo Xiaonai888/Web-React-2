@@ -18,6 +18,7 @@ export class WorldAtmosphere {
       speed:4+rand()*13,phase:rand()*TAU,alpha:.07+rand()*.16,
       glow:rand()>.76,
     }))
+    for(const m of this.motes){m.originX=m.x;m.originY=m.y}
   }
   update(dt) {
     if(!this.enabled||!Number.isFinite(dt)||dt<=0)return
@@ -28,24 +29,29 @@ export class WorldAtmosphere {
       m.x+=m.speed*d
       m.y+=Math.sin(this.elapsed*.6+m.phase)*d*2
       if(m.x>this.map.width+10)m.x=-10
+      m.y=clamp(m.y,0,this.map.height)
     }
   }
   /** Overlay is subtle; call after the original map is painted. */
   draw(ctx,camera) {
-    if(!this.enabled||!ctx||!camera)return
+    if(!this.enabled||!ctx||typeof camera?.getVisibleBounds!=='function'||
+       typeof camera?.worldToScreen!=='function')return
     const bounds=camera.getVisibleBounds()
+    if(!bounds||!Number.isFinite(bounds.left)||!Number.isFinite(bounds.right)||
+       !Number.isFinite(bounds.top)||!Number.isFinite(bounds.bottom))return
+    const zoom=Number.isFinite(camera.zoom)&&camera.zoom>0?camera.zoom:1
     ctx.save()
     for(const m of this.motes) {
       if(m.x<bounds.left-30||m.x>bounds.right+30||m.y<bounds.top-30||m.y>bounds.bottom+30)continue
       const p=camera.worldToScreen(m.x,m.y)
       ctx.globalAlpha=m.alpha*(.8+.2*Math.sin(this.elapsed*1.3+m.phase))
       ctx.fillStyle=m.glow?'#fff1b5':'#e1f1b4'
-      ctx.beginPath();ctx.ellipse(p.x,p.y,m.r*camera.zoom,m.r*.67*camera.zoom,0,0,TAU);ctx.fill()
+      ctx.beginPath();ctx.ellipse(p.x,p.y,m.r*zoom,m.r*.67*zoom,0,0,TAU);ctx.fill()
     }
     // River remains the original WorldMap river; these are only light glints.
     const y0=Math.max(0,Math.floor(bounds.top/145)*145)
     const y1=Math.min(this.map.height,bounds.bottom)
-    for(let y=y0;y<=y1;y+=145){
+    for(let y=y0;y<=y1 && typeof this.map.riverX==='function';y+=145){
       const x=this.map.riverX(y)
       if(x<bounds.left-60||x>bounds.right+60)continue
       const p=camera.worldToScreen(x,y)
@@ -57,6 +63,6 @@ export class WorldAtmosphere {
     ctx.restore()
   }
   setEnabled(value){this.enabled=Boolean(value)}
-  reset(){this.elapsed=0}
+  reset(){this.elapsed=0;for(const m of this.motes){m.x=m.originX;m.y=m.originY}}
 }
 export default WorldAtmosphere
