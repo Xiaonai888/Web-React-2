@@ -148,7 +148,9 @@ export default function AuthorAdsBoostContentPage() {
   ? '/author/page/ads/boost-story'
   : type === 'pdf'
     ? '/author/page/ads/boost-pdf'
-    : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
+    : type === 'physical'
+      ? '/author/page/ads/boost-physical'
+      : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
   }
 
   useEffect(() => {
