@@ -49,8 +49,11 @@ export class MissionDirector {
     if (wood && (typeof this.construction?.getResources!=='function' ||
         typeof this.construction?.addWood!=='function' ||
         typeof this.construction?.setWood!=='function')) return false;
-    const oldRice=rice ? this.rice.getResources().rice : 0;
-    const oldWood=wood ? this.construction.getResources().wood : 0;
+    let oldRice,oldWood;
+    try {
+      oldRice=rice ? this.rice.getResources().rice : 0;
+      oldWood=wood ? this.construction.getResources().wood : 0;
+    } catch { return false; }
     if ((rice && (!Number.isSafeInteger(oldRice) ||
         !Number.isSafeInteger(oldRice+rice))) ||
         (wood && (!Number.isSafeInteger(oldWood) ||
@@ -61,29 +64,31 @@ export class MissionDirector {
       try {
         if (rice) accepted=this.rice.setStorageRice(oldRice+rice)===true;
         if (accepted && wood) accepted=this.construction.addWood(wood)===true;
+        if (accepted && rice) accepted=this.rice.getResources().rice===oldRice+rice;
+        if (accepted && wood) accepted=this.construction.getResources().wood===oldWood+wood;
       } catch { accepted=false; }
       if (accepted) return true;
-      // Compensate BOTH shared ledgers if a callback failed after mutating.
-      try { if (rice) this.rice.setStorageRice(oldRice); } catch { /* rollback best effort */ }
-      try { if (wood) this.construction.setWood(oldWood); } catch { /* rollback best effort */ }
+      // Restore both ledgers if a callback rejected or only partly applied a grant.
+      try { if (rice) this.rice.setStorageRice(oldRice); } catch { /* best-effort rollback */ }
+      try { if (wood) this.construction.setWood(oldWood); } catch { /* best-effort rollback */ }
       return false;
     } finally { this.rewardBusy=false; }
   }
   #onRescue(name,data) {
-    if(name==='rescued'&&this.progression.activeId) {
+    if(name==='rescued'&&this.progression.activeId&&data?.captive?.id!=null) {
       this.objectives.progress('rescue',1,{token:data.captive.id})
     }
     this.#emit(`rescue_${name}`,data)
   }
   #onLoot(name,data) {
-    if(name==='collected'&&this.progression.activeId){
+    if(name==='collected'&&this.progression.activeId&&data?.drop?.id!=null){
       this.objectives.progress('supply',1,{token:data.drop.id})
     }
     this.#emit(`loot_${name}`,data)
   }
   onHealthEvent(name,data={}) {
     if(name!=='death'||!this.progression.activeId)return false
-    const unit=data.unit
+    const unit=data?.unit
     if(!unit||unit.team!=='red'||unit.id==null||this.defeatedIds.has(unit.id))return false
     this.defeatedIds.add(unit.id)
     return this.objectives.progress('defeat',1,{token:unit.id}).ok
@@ -139,7 +144,7 @@ export class MissionDirector {
   /** One direct interaction — no automatic looting or teleport-rescue. */
   interact(unit,position,{damage=20}={}) {
     if(!this.progression.activeId)return {ok:false,reason:'no_active_mission'}
-    if(!unit||unit.team!=='blue'||unit.alive===false||!point(position))return {ok:false,reason:'invalid_unit'}
+    if(!unit||unit.team!=='blue'||unit.alive===false||!finite(unit.hp)||unit.hp<=0||!point(unit)||!point(position))return {ok:false,reason:'invalid_unit'}
     const villager=this.rescues.getNearest(position,{maxDistance:55})
     if(villager&&distance(unit,villager)<=this.rescues.pickupRange){
       return this.rescues.assignEscort(villager.id,unit)
@@ -159,7 +164,7 @@ export class MissionDirector {
   draw(ctx,camera){if(!this.progression.activeId)return;this.loot.draw(ctx,camera);this.rescues.draw(ctx,camera)}
   getSummary(){return {stage:this.progression.getActive(),stages:this.progression.getSummary(),
     objectives:this.objectives.getSummary(),rescue:this.rescues.getSummary(),loot:this.loot.getSummary()}}
-  reset(){this.rescues.reset();this.loot.reset();this.objectives.reset();this.progression.reset();this.defeatedIds.clear();this.elapsed=0}
+  reset(){this.rescues.reset();this.loot.reset();this.objectives.reset();this.progression.reset();this.defeatedIds.clear();this.elapsed=0;this.rewardBusy=false}
   destroy(){this.reset();this.onEvent=null}
 }
 export default MissionDirector
