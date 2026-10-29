@@ -5,6 +5,7 @@
  */
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n))
 const DURATIONS = Object.freeze({ attack: 0.33, hit: 0.24, build: 0.58, harvest: 0.54, cheer: 0.8 })
+const PRIORITY = Object.freeze({ attack: 2, hit: 4, build: 1, harvest: 1, cheer: 1 })
 
 export class UnitAnimationSystem {
   constructor({ reducedMotion = false, speed = 1 } = {}) {
@@ -28,6 +29,9 @@ export class UnitAnimationSystem {
     if (!unit || typeof unit !== 'object' || unit.alive === false) return false
     if (typeof action !== 'string' || !DURATIONS[action]) return false
     const state = this.#state(unit)
+    // Damage flash must remain visible when a nearby combat/harvest signal
+    // arrives during the same frame. A new hit may refresh a previous hit.
+    if (state.remaining > 0 && PRIORITY[state.action] > PRIORITY[action]) return false
     state.action = action
     state.duration = clamp(Number.isFinite(duration) ? duration : DURATIONS[action], 0.05, 4)
     state.remaining = state.duration
@@ -42,7 +46,13 @@ export class UnitAnimationSystem {
     this.time += delta
     for (const unit of units || []) {
       if (!unit || typeof unit !== 'object') continue
-      const state = this.#state(unit)
+      // Idle units do not need a newly allocated visual state every tick.
+      const state = this.states.get(unit)
+      if (!state) continue
+      if (unit.alive === false || unit.hp === 0) {
+        this.states.delete(unit)
+        continue
+      }
       if (state.remaining > 0) {
         state.remaining = Math.max(0, state.remaining - delta)
         state.elapsed += delta
@@ -55,7 +65,7 @@ export class UnitAnimationSystem {
 
   frame(unit) {
     if (!unit || typeof unit !== 'object') return { state: 'idle', facing: 'down', bob: 0, stride: 0, action: null, actionProgress: 0, flash: 0, time: this.time }
-    const state = this.#state(unit)
+    const state = this.states.get(unit) || {action:null,remaining:0,duration:0,elapsed:0,flash:0}
     const walking = unit.state === 'walking' && unit.alive !== false
     const harvesting = unit.state === 'harvesting'
     const building = unit.state === 'building'
