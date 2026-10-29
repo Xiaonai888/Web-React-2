@@ -7469,7 +7469,13 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
     readingHeartbeatBusyRef.current = true
 
-    try {
+        try {
+      const readingSessionSource = autoScrollEnabled
+        ? recentlyActive
+          ? 'auto-active'
+          : 'auto-only'
+        : 'manual-active'
+
       const progressResponse = await fetch(
         `${API_BASE_URL}/api/tasks/reading-session/progress`,
         {
@@ -7477,6 +7483,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           headers: {
             ...readerAuthHeaders(),
             'Content-Type': 'application/json',
+            'X-Shadow-Page': `WEB:/reader/episode/${readingSessionSource}`,
           },
           body: JSON.stringify({
             story_id: storyId,
