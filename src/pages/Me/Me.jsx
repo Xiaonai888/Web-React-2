@@ -827,10 +827,13 @@ const finishStoryOnboarding = () => {
   const diamondCreditNoticeAckRef = useRef(null)
   const [activeProfileFrame, setActiveProfileFrame] = useState(null)
 const [appAllowed, setAppAllowed] = useState(true)
+const [gameAllowed, setGameAllowed] = useState(true)
 useEffect(() => {
   let active = true
   loadCountrySettings().then(data => {
-    if (active) setAppAllowed(getCountryFeature(data, 'app', true))
+    if (!active) return
+    setAppAllowed(getCountryFeature(data, 'app', true))
+    setGameAllowed(getCountryFeature(data, 'game', true))
   })
   return () => { active = false }
 }, [token])
@@ -1530,17 +1533,19 @@ const handleOpenProfileSwitcher = (event) => {
   title={tx('mePage.myFrame')}
   divider
 />
-            <MenuRow
-  to="/game"
-  icon="fa-solid fa-gamepad"
-  title={tx('mePage.game')}
-  divider
-/>
-           {appAllowed && (
+            {appAllowed && (
   <MenuRow
     to="/app"
     customIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" /></svg>}
     title={tx('mePage.app')}
+    divider
+  />
+)}
+            {gameAllowed && (
+  <MenuRow
+    to="/game"
+    icon="fa-solid fa-gamepad"
+    title={tx('mePage.game')}
     divider
   />
 )}
