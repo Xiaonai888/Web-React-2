@@ -258,7 +258,8 @@ export class RiceSystem {
     const plant = this.#getPlant(plantOrId)
     if (!plant) return { ok: false, reason: 'not_found', amount: 0 }
     if (!this.isRipe(plant)) return { ok: false, reason: 'not_ripe', amount: 0 }
-    if (!farmer || !at(farmer) || farmer.alive === false) {
+    if (!farmer || !at(farmer) || farmer.alive === false ||
+        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red') {
       return { ok: false, reason: 'invalid_farmer', amount: 0 }
     }
     if (distance(plant, farmer) > this.config.harvestRange) {
@@ -293,7 +294,8 @@ export class RiceSystem {
 
   /** Deposit only if the farmer reached the base. Prevents remote deposits. */
   deposit(farmer, home = this.map.getSpawnPoint?.(farmer?.team || 'blue')) {
-    if (!farmer || !at(farmer) || !at(home) || farmer.alive === false) {
+    if (!farmer || !at(farmer) || !at(home) || farmer.alive === false ||
+        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red') {
       return { ok: false, reason: 'invalid_farmer_or_home', amount: 0 }
     }
     if (distance(farmer, home) > this.config.depositRange) {
@@ -309,7 +311,7 @@ export class RiceSystem {
 
   /** Admin/test economy hook. This does not create any database request. */
   setStorageRice(amount) {
-    if (!finite(amount) || amount < 0) return false
+    if (!finite(amount) || amount < 0 || !Number.isSafeInteger(Math.floor(amount))) return false
     this.rice = Math.floor(amount)
     return true
   }
