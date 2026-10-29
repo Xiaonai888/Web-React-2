@@ -5,25 +5,30 @@ const finite=Number.isFinite
 const point=p=>finite(p?.x)&&finite(p?.y)
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n))
-const rewardOf=r=>({rice:Math.max(0,Math.floor(finite(r?.rice)?r.rice:0)),wood:Math.max(0,Math.floor(finite(r?.wood)?r.wood:0))})
+const bounded=(n,fallback,low,high)=>clamp(finite(n)?n:fallback,low,high)
+const rewardOf=r=>({rice:Math.floor(bounded(r?.rice,0,0,1000000)),wood:Math.floor(bounded(r?.wood,0,0,1000000))})
 
 export class LootSystem {
   constructor({map,grantReward=null,onEvent=null,maxCaches=40,collectRange=65,breakRange=75}={}) {
     if(!map||typeof map.isWalkable!=='function')throw new TypeError('LootSystem requires WorldMap')
-    this.map=map;this.grantReward=grantReward;this.onEvent=onEvent
-    this.maxCaches=Math.max(1,Math.floor(maxCaches));this.collectRange=collectRange;this.breakRange=breakRange
+    this.map=map;this.grantReward=typeof grantReward==='function'?grantReward:null
+    this.onEvent=typeof onEvent==='function'?onEvent:null
+    this.maxCaches=Math.floor(bounded(maxCaches,40,1,1000))
+    this.collectRange=bounded(collectRange,65,10,500);this.breakRange=bounded(breakRange,75,10,500)
     this.caches=[];this.drops=[];this.byId=new Map();this.nextId=1;this.time=0
   }
+  #emit(name,data){try{this.onEvent?.(name,data)}catch{/* Observer errors must not change loot state. */}}
+  #id(prefix){let key;do{key=`${prefix}-${this.nextId++}`}while(this.byId.has(key));return key}
   spawn({id=null,x,y,hp=35,type='cache',reward={rice:10,wood:15}}={}) {
     if(!point({x,y})||!this.map.isWalkable(x,y,12))return {ok:false,reason:'blocked'}
     if(this.caches.length>=this.maxCaches)return {ok:false,reason:'limit'}
     if(this.caches.some(c=>c.state==='intact'&&dist(c,{x,y})<42))return {ok:false,reason:'overlap'}
-    const key=String(id??`cache-${this.nextId++}`)
-    if(this.byId.has(key))return {ok:false,reason:'duplicate_id'}
-    const cache={id:key,x,y,hp:clamp(Math.floor(hp)||35,1,5000),maxHp:clamp(Math.floor(hp)||35,1,5000),
+    const key=id==null?this.#id('cache'):String(id)
+    if(!key||this.byId.has(key))return {ok:false,reason:'duplicate_id'}
+    const cache={id:key,x,y,hp:Math.floor(bounded(hp,35,1,5000)),maxHp:Math.floor(bounded(hp,35,1,5000)),
       type:String(type),reward:rewardOf(reward),state:'intact'}
     this.caches.push(cache);this.byId.set(key,cache)
-    this.onEvent?.('cache_spawned',{cache})
+    this.#emit('cache_spawned',{cache})
     return {ok:true,cache}
   }
   #isPlayer(unit) {return unit?.team==='blue'&&unit.alive!==false&&finite(unit.hp)&&unit.hp>0&&point(unit)}
@@ -34,13 +39,16 @@ export class LootSystem {
     if(actor && (!this.#isPlayer(actor)||dist(actor,cache)>this.breakRange))return {ok:false,reason:'out_of_range'}
     const dealt=Math.min(cache.hp,Math.max(1,Math.floor(damage)))
     cache.hp-=dealt
-    this.onEvent?.('cache_damaged',{cache,actor,damage:dealt})
-    if(cache.hp>0)return {ok:true,broken:false,remaining:cache.hp}
+    if(cache.hp>0){
+      this.#emit('cache_damaged',{cache,actor,damage:dealt})
+      return {ok:true,broken:false,remaining:cache.hp}
+    }
     cache.state='broken'
-    const drop={id:`drop-${this.nextId++}`,sourceId:cache.id,x:cache.x,y:cache.y,
+    const drop={id:this.#id('drop'),sourceId:cache.id,x:cache.x,y:cache.y,
       reward:{...cache.reward},state:'ground',createdAt:this.time}
     this.drops.push(drop);this.byId.set(drop.id,drop)
-    this.onEvent?.('cache_broken',{cache,drop,actor})
+    this.#emit('cache_damaged',{cache,actor,damage:dealt})
+    this.#emit('cache_broken',{cache,drop,actor})
     return {ok:true,broken:true,drop}
   }
   collect(dropId,actor) {
@@ -49,32 +57,34 @@ export class LootSystem {
     if(!this.#isPlayer(actor))return {ok:false,reason:'invalid_collector'}
     if(dist(drop,actor)>this.collectRange)return {ok:false,reason:'too_far'}
     if(typeof this.grantReward!=='function')return {ok:false,reason:'missing_reward_adapter'}
+    drop.state='collecting'
     let accepted=false
     try{accepted=this.grantReward({...drop.reward},{drop,actor})===true}
-    catch(error){return {ok:false,reason:'reward_failed',error}}
-    if(!accepted)return {ok:false,reason:'reward_rejected'}
+    catch(error){drop.state='ground';return {ok:false,reason:'reward_failed',error}}
+    if(!accepted){drop.state='ground';return {ok:false,reason:'reward_rejected'}}
     drop.state='collected'
-    this.onEvent?.('collected',{drop,actor,reward:{...drop.reward}})
+    this.#emit('collected',{drop,actor,reward:{...drop.reward}})
     return {ok:true,reward:{...drop.reward},drop}
   }
   interact(actor,position,{damage=20}={}) {
     if(!this.#isPlayer(actor)||!point(position))return {ok:false,reason:'invalid_interaction'}
     const drop=this.getNearestDrop(position,{maxDistance:this.collectRange})
-    if(drop)return this.collect(drop.id,actor)
+    if(drop&&dist(drop,actor)<=this.collectRange)return this.collect(drop.id,actor)
     const cache=this.getNearestCache(position,{maxDistance:this.breakRange})
-    if(cache)return this.damage(cache.id,damage,{actor})
+    if(cache&&dist(cache,actor)<=this.breakRange)return this.damage(cache.id,damage,{actor})
+    if(drop||cache)return {ok:false,reason:'too_far'}
     return {ok:false,reason:'no_object'}
   }
   getNearestCache(position,{maxDistance=75}={}) {
     if(!point(position))return null
-    let best=maxDistance,chosen=null
+    let best=bounded(maxDistance,75,0,5000),chosen=null
     for(const c of this.caches){if(c.state!=='intact')continue;const d=dist(c,position)
       if(d<best){best=d;chosen=c}}
     return chosen
   }
   getNearestDrop(position,{maxDistance=65}={}) {
     if(!point(position))return null
-    let best=maxDistance,chosen=null
+    let best=bounded(maxDistance,65,0,5000),chosen=null
     for(const d of this.drops){if(d.state!=='ground')continue;const n=dist(d,position)
       if(n<best){best=n;chosen=d}}
     return chosen
