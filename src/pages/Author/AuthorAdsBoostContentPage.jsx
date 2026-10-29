@@ -146,7 +146,9 @@ export default function AuthorAdsBoostContentPage() {
     setShowEmptyChooser(false)
     navigate(type === 'story'
   ? '/author/page/ads/boost-story'
-  : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
+  : type === 'pdf'
+    ? '/author/page/ads/boost-pdf'
+    : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
   }
 
   useEffect(() => {
