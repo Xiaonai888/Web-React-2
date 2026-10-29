@@ -165,6 +165,7 @@ const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorAdsPage = lazy(() => import('./pages/Author/AuthorAdsPage'))
 const AuthorAdsLandingPage = lazy(() => import('./pages/Author/AuthorAdsLandingPage'))
+const AuthorAdsBoostContentPage = lazy(() => import('./pages/Author/AuthorAdsBoostContentPage'))
 const AuthorPostsContentLibraryPage = lazy(() =>
   import('./pages/Author/AuthorPostsContentLibraryPage')
 )
@@ -1149,8 +1150,9 @@ const shouldShowOpeningAds =
   }
 />
 
-          <Route path="/author/page/ads" element={<LazyPage><AuthorAdsLandingPage /></LazyPage>} />
-<Route path="/author/page/ads/boost-content" element={<LazyPage><AuthorAdsPage /></LazyPage>} />
+<Route path="/author/page/ads" element={<LazyPage><AuthorAdsLandingPage /></LazyPage>} />
+<Route path="/author/page/ads/boost-content" element={<LazyPage><AuthorAdsBoostContentPage /></LazyPage>} />
+<Route path="/author/page/ads/boost-editor" element={<LazyPage><AuthorAdsPage /></LazyPage>} />
           
 <Route
   path="/game/spin"
