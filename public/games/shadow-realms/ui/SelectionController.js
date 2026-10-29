@@ -21,6 +21,7 @@
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y)
 const sameIds = (a, b) => a.length === b.length && a.every((id, i) => id === b[i])
 const hasPosition = u => Number.isFinite(u?.x) && Number.isFinite(u?.y)
+const now = () => typeof performance !== 'undefined' ? performance.now() : Date.now()
 
 export class SelectionController {
   constructor({
@@ -62,7 +63,7 @@ export class SelectionController {
   }
 
   canSelect(u) {
-    if (u.id === undefined || u.id === null || u.selectable === false ||
+    if (!u || u.id === undefined || u.id === null || u.selectable === false ||
         u.alive === false || (Number.isFinite(u.hp) && u.hp <= 0)) return false
     const team = u.team ?? u.faction ?? u.side
     return team == null || team === this.playerTeam
@@ -83,8 +84,8 @@ export class SelectionController {
     this.original.pointer = engine.onWorldPointer
     this.original.render = engine.onRender
     this.boundPointer = (event, instance) => {
-      this.original.pointer?.(event, instance)
-      this.handleWorldPointer(event)
+      const result = this.original.pointer?.(event, instance)
+      if (result !== true) this.handleWorldPointer(event)
     }
     this.boundRender = (ctx, camera, map, instance) => {
       this.original.render?.(ctx, camera, map, instance)
@@ -157,11 +158,12 @@ export class SelectionController {
 
   setSelectedIds(nextIds) {
     const valid = new Set(this.selectableUnits().map(u => u.id))
-    const next = [...new Set(nextIds)].filter(id => valid.has(id))
+    const next = [...new Set(Array.isArray(nextIds) ? nextIds : [])].filter(id => valid.has(id))
     if (sameIds(next, this.ids)) return
     this.ids = next
     this.syncFooter()
-    this.onSelectionChange?.(this.selectedUnits(), this.ids.slice())
+    try { this.onSelectionChange?.(this.selectedUnits(), this.ids.slice()) }
+    catch (error) { console.warn('Shadow Realms selection observer failed:', error) }
   }
 
   clear() { this.setSelectedIds([]) }
@@ -178,6 +180,7 @@ export class SelectionController {
   }
 
   hitTest(screen) {
+    if (!hasPosition(screen)) return null
     const camera = this.engine.camera
     let nearest = null
     let nearestDist = Infinity
@@ -201,6 +204,7 @@ export class SelectionController {
   }
 
   selectBox(a, b, additive = false) {
+    if (!hasPosition(a) || !hasPosition(b)) return
     const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x)
     const top = Math.min(a.y, b.y), bottom = Math.max(a.y, b.y)
     const found = this.selectableUnits().filter(u => {
@@ -211,6 +215,7 @@ export class SelectionController {
   }
 
   handleWorldPointer(event) {
+    if (!event || !hasPosition(event.screen) || !hasPosition(event.world)) return false
     const { kind, screen, world, originalEvent } = event
     if (kind === 'command') { this.issueCommand('move', world); return }
     if (kind === 'select') {
@@ -240,8 +245,18 @@ export class SelectionController {
       unitIds: selected.map(unit => unit.id),
       units: selected,
     }
-    this.onCommand?.(order)
-    this.lastOrder = { x: point.x, y: point.y, expires: performance.now() + 1200 }
+    let outcome
+    try { outcome = this.onCommand?.(order) }
+    catch (error) {
+      console.warn('Shadow Realms command failed:', error)
+      this.syncFooter('Command failed')
+      return false
+    }
+    if (outcome === false || outcome?.ok === false) {
+      this.syncFooter('Command unavailable')
+      return false
+    }
+    this.lastOrder = { x: point.x, y: point.y, expires: now() + 1200 }
     this.syncFooter(`${type.toUpperCase()} order for ${selected.length} unit(s)`)
     return true
   }
@@ -276,6 +291,7 @@ export class SelectionController {
   }
 
   draw(ctx, camera = this.engine.camera) {
+    if (!ctx || typeof camera?.worldToScreen !== 'function') return
     const selected = this.selectedUnits()
     if (selected.length !== this.ids.length) {
       // Units may be removed by game systems after dying or despawning.
@@ -303,7 +319,7 @@ export class SelectionController {
       ctx.fillRect(x, y, w, h)
       ctx.strokeRect(x, y, w, h)
     }
-    if (this.lastOrder && performance.now() < this.lastOrder.expires) {
+    if (this.lastOrder && now() < this.lastOrder.expires) {
       const p = camera.worldToScreen(this.lastOrder.x, this.lastOrder.y)
       ctx.strokeStyle = '#fff1ae'
       ctx.lineWidth = 2
