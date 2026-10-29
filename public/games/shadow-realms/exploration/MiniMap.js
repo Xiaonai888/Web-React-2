@@ -146,7 +146,7 @@ export class MiniMap {
 
     const roster = this.getUnits();
     for (const unit of (Array.isArray(roster) ? roster : [])) {
-      if (unit?.alive === false || !goodPoint(unit)) continue;
+      if (unit?.alive === false || (Number.isFinite(unit?.hp) && unit.hp <= 0) || !goodPoint(unit)) continue;
       if (unit.team !== 'blue' && !this.fog?.isVisible(unit.x, unit.y)) continue;
       ctx.fillStyle = unit.team === 'blue' ? '#85d7ff' : '#f98b83';
       ctx.beginPath();
