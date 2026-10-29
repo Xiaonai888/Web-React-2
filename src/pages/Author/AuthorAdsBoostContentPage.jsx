@@ -150,7 +150,9 @@ export default function AuthorAdsBoostContentPage() {
     ? '/author/page/ads/boost-pdf'
     : type === 'physical'
       ? '/author/page/ads/boost-physical'
-      : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
+      : type === 'post'
+  ? '/author/page/ads/boost-post'
+  : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
   }
 
   useEffect(() => {
