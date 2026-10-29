@@ -58,7 +58,9 @@ export class GameBootstrap {
     await this.registry.start();
     try { this.attach(); }
     catch (error) { await this.registry.stop(); throw error; }
-    this.context.events.emit('game:features-attached', this.registry.getSummary());
+    // An event observer is not permitted to cancel an otherwise healthy boot.
+    try { this.context.events.emit('game:features-attached', this.registry.getSummary()); }
+    catch { /* GameContext continues to own the installed feature hooks. */ }
     return this;
   }
 
@@ -115,9 +117,11 @@ export class GameBootstrap {
     if (this.destroyed) return;
     if (this.startPromise) await this.startPromise.catch(() => {});
     this.detach();
-    await this.registry.destroy();
-    this.context.destroy();
-    this.destroyed = true;
+    try { await this.registry.destroy(); }
+    finally {
+      this.context.destroy();
+      this.destroyed = true;
+    }
   }
 }
 
