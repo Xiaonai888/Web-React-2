@@ -1,76 +1,109 @@
 /**
- * Shadow Realms — optional AI tactics via the EXISTING GameBootstrap registry.
- * No new enemy spawning: all units belong to the existing EnemyAI/WaveSystem.
- * The built-in EnemyAI repeatedly overwrites attack orders every .7s, so this
- * feature suspends ONLY that decision timer while active, reversibly.
- * Existing EnemyAI.update() continues to move every enemy on every frame.
- *
- * Final integration: register this feature in bootstrap/FeatureManifest.js,
- * pass {enemyAI,waves,combat,health,farmers,home} into GameBootstrap services.
+ * Shadow Realms — Step 43: feature bridge for smarter EXISTING enemy units.
+ * WaveSystem still owns every spawn; EnemyAI still updates movement.
+ * Install reversible event observers, preserving Visual/Mission/XP/Boss events.
+ * API: createFeature(scope) with start/update/render/onPointer/dispose.
  */
 import {ThreatAnalyzer} from './ThreatAnalyzer.js';
 import {EnemySquadSystem} from './EnemySquadSystem.js';
 import {AmbushSystem} from './AmbushSystem.js';
 import {BossEncounter} from './BossEncounter.js';
 
-export function createFeature(scope){
-  if(!scope||typeof scope.get!=='function')throw new TypeError('EnemyStrategyFeature needs GameContext');
-  const enemyAI=scope.get('enemyAI'),waves=scope.get('waves'),combat=scope.get('combat'),health=scope.get('health');
-  if(typeof enemyAI?.getUnits!=='function'||typeof waves?.getSummary!=='function'||
-    typeof combat?.orderAttack!=='function'||typeof health?.damage!=='function')
+export function createFeature(scope) {
+  if (!scope || typeof scope.get !== 'function')
+    throw new TypeError('EnemyStrategyFeature needs GameContext');
+  const enemyAI = scope.get('enemyAI');
+  const waves = scope.get('waves');
+  const combat = scope.get('combat');
+  const health = scope.get('health');
+  if (typeof enemyAI?.getUnits !== 'function' || typeof waves?.getSummary !== 'function' ||
+      typeof combat?.orderAttack !== 'function' || typeof health?.damage !== 'function')
     throw new TypeError('EnemyStrategyFeature needs enemyAI, waves, combat and health');
-  const getPlayers=()=>{
-    const list=scope.get('farmers',[]);
-    return Array.isArray(list)?list.filter(u=>u?.team==='blue'&&u.alive!==false&&u.hp>0):[];
+
+  const getPlayers = () => {
+    const roster = scope.get('farmers',[]);
+    return Array.isArray(roster) ? roster.filter(u => u?.team === 'blue' &&
+      u.alive !== false && Number.isFinite(u.hp) && u.hp > 0) : [];
   };
-  const emit=(kind,event,data)=>scope.emit(`enemy:${kind}-${event}`,data);
-  const threat=new ThreatAnalyzer({getPlayers,home:scope.get('home',null)});
-  const squads=new EnemySquadSystem({enemyAI,combat,threat,onEvent:(e,d)=>emit('squad',e,d)});
-  const ambush=new AmbushSystem({map:scope.map,getPlayers,getEnemies:()=>enemyAI.getUnits(),
-    onEvent:(e,d)=>emit('ambush',e,d)});
-  const boss=new BossEncounter({waves,health,getPlayers,onEvent:(e,d)=>emit('boss',e,d)});
-  const api=Object.freeze({threat,squads,ambush,boss,getSummary:()=>({squads:squads.getSummary(),boss:boss.getSummary()})});
-  let oldWave=null,oldHealth=null,waveObserver=null,healthObserver=null;
-  let oldDecision=null,takeover=false,disposed=false,started=false;
+  const emit = (kind,event,data) => {
+    try {scope.emit(`enemy:${kind}-${event}`,data);}
+    catch {/* The game loop must survive observer/UI errors. */}
+  };
+  const threat = new ThreatAnalyzer({getPlayers,home:scope.get('home',null)});
+  const squads = new EnemySquadSystem({enemyAI,combat,threat,
+    onEvent:(event,data) => emit('squad',event,data)});
+  const ambush = new AmbushSystem({map:scope.map,getPlayers,
+    getEnemies:() => enemyAI.getUnits(),
+    onEvent:(event,data) => emit('ambush',event,data)});
+  const boss = new BossEncounter({waves,health,getPlayers,
+    onEvent:(event,data) => emit('boss',event,data)});
+  const api = Object.freeze({threat,squads,ambush,boss,getSummary:() => ({
+    squads:squads.getSummary(),boss:boss.getSummary(),
+    ambush:{active:ambush.getFocusId(),zones:ambush.getZones().length},
+  })});
+  let oldWave = null,oldHealth = null,waveObserver = null,healthObserver = null;
+  let oldDecision = null,takeover = false,started = false,disposed = false;
+  const reportError = (part,error) => {
+    try {console.warn('Shadow Realms enemy strategy:',part,error);} catch {}
+  };
+  const restore = () => {
+    if (waves.onEvent === waveObserver) waves.onEvent = oldWave;
+    if (health.onEvent === healthObserver) health.onEvent = oldHealth;
+    if (takeover && enemyAI.decisionTimer === Infinity) enemyAI.decisionTimer = oldDecision;
+    takeover = false;
+  };
+
   return {
     ...api,
-    start(){
-      if(started)return;
-      oldWave=waves.onEvent;oldHealth=health.onEvent;
-      // Preserve mission, visual, progression and wave HUD listeners.
-      waveObserver=function(name,data){
-        try {oldWave?.call(waves,name,data);} finally {
-          if(!disposed){boss.onWaveEvent(name,data);
-            if(name==='enemy_spawned')squads.register(data?.unit);}
+    start() {
+      if (started || disposed) return;
+      oldWave = waves.onEvent;
+      oldHealth = health.onEvent;
+      waveObserver = function(name,data) {
+        try {if (typeof oldWave === 'function') oldWave.call(waves,name,data);}
+        catch(error) {reportError('prior wave observer',error);}
+        if (disposed) return;
+        try {boss.onWaveEvent(name,data);} catch(error) {reportError('boss wave',error);}
+        if (name === 'enemy_spawned' && data?.unit) squads.register(data.unit);
+      };
+      healthObserver = function(name,data) {
+        try {if (typeof oldHealth === 'function') oldHealth.call(health,name,data);}
+        catch(error) {reportError('prior health observer',error);}
+        if (!disposed) {
+          try {boss.onHealthEvent(name,data);} catch(error) {reportError('boss health',error);}
         }
       };
-      healthObserver=function(name,data){
-        try{oldHealth?.call(health,name,data);}finally{if(!disposed)boss.onHealthEvent(name,data);}
-      };
-      waves.onEvent=waveObserver;health.onEvent=healthObserver;
-      // Keep EnemyAI movement and WaveSystem ownership, replace only decisions.
-      if(typeof enemyAI.decisionTimer==='number'){
-        oldDecision=enemyAI.decisionTimer;enemyAI.decisionTimer=Infinity;takeover=true;
+      try {
+        waves.onEvent = waveObserver;
+        health.onEvent = healthObserver;
+        if (typeof enemyAI.decisionTimer === 'number' && Number.isFinite(enemyAI.decisionTimer)) {
+          oldDecision = enemyAI.decisionTimer;
+          enemyAI.decisionTimer = Infinity;
+          takeover = true;
+        }
+        for (const unit of enemyAI.getUnits()) squads.register(unit);
+        scope.provide('enemyStrategy',api);
+        started = true;
+        emit('strategy','ready',api.getSummary());
+      } catch(error) {
+        restore();
+        throw error;
       }
-      for(const u of enemyAI.getUnits())squads.register(u);
-      scope.provide('enemyStrategy',api);
-      started=true;
-      scope.emit('enemy:strategy-ready',api.getSummary());
     },
-    update(dt){
-      if(!started||disposed)return;
-      if(takeover&&enemyAI.decisionTimer!==Infinity)enemyAI.decisionTimer=Infinity;
-      ambush.update(dt);
-      squads.update(dt,{focusId:ambush.getFocusId()});
-      boss.update(dt);
+    update(dt) {
+      if (!started || disposed || !Number.isFinite(dt) || dt <= 0) return;
+      if (takeover && enemyAI.decisionTimer !== Infinity) enemyAI.decisionTimer = Infinity;
+      try {ambush.update(dt);} catch(error) {reportError('ambush',error);}
+      try {squads.update(dt,{focusId:ambush.getFocusId()});}
+      catch(error) {reportError('squads',error);}
+      try {boss.update(dt);} catch(error) {reportError('boss update',error);}
     },
-    render(ctx,camera){if(!disposed)boss.draw(ctx,camera);},
-    onPointer(){return false;},
-    dispose(){
-      if(disposed)return;disposed=true;
-      if(waves.onEvent===waveObserver)waves.onEvent=oldWave;
-      if(health.onEvent===healthObserver)health.onEvent=oldHealth;
-      if(takeover&&enemyAI.decisionTimer===Infinity)enemyAI.decisionTimer=oldDecision;
+    render(ctx,camera) {if (!disposed && started) boss.draw(ctx,camera);},
+    onPointer() {return false;},
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      restore();
       boss.destroy();ambush.destroy();squads.destroy();
     },
   };
