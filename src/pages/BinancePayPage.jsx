@@ -11,6 +11,7 @@ import {
 } from '../services/binanceCheckoutApi'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { Download } from 'lucide-react'
 
 // Full-page Binance QR checkout. Never auto-credit a wallet from a QR display.
 registerTranslationNamespace('binancePayFullPage', {
@@ -327,7 +328,10 @@ export default function BinancePayPage() {
             <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-white/50">{t('binancePayFullPage.amount')}</p>
             <div className="mt-1 flex items-baseline justify-center gap-2">
               <strong className="text-[34px] font-black tracking-tight tabular-nums">{Number(order.amount_usdt).toFixed(2)}</strong>
-              <span className="text-[14px] font-bold text-gray-500 dark:text-white/70">USDT</span>
+              <span className="inline-flex items-center gap-1 text-[14px] font-bold text-gray-500 dark:text-white/70">
+  USDT
+  <img src="/assets/Icons/Picture/USDT.webp" alt="" className="h-4 w-4 object-contain" />
+</span>
             </div>
             <p className="mt-1 text-[12px] font-medium text-gray-500 dark:text-white/70">
               {t('binancePayFullPage.bonus', { diamonds: order.diamonds, vouchers: order.bonus_vouchers })}
@@ -354,9 +358,10 @@ export default function BinancePayPage() {
               <>
                 <p className="mt-3 text-[13px] font-bold">{t('binancePayFullPage.scan')}</p>
                 <p className="mt-1 text-[12px] text-gray-400 dark:text-white/55">{t('binancePayFullPage.or')}</p>
-                <button type="button" onClick={downloadQr} className="mt-3 flex min-h-11 items-center justify-center gap-2 text-[14px] font-bold text-[#00A8C9] hover:underline">
-                  <i className="fas fa-download" aria-hidden="true" /> {t('binancePayFullPage.download')}
-                </button>
+                <button type="button" onClick={downloadQr} className="mt-3 flex min-h-11 items-center justify-center gap-2 text-[14px] font-normal text-[#00A8C9] hover:underline">
+  <Download size={18} strokeWidth={2.5} aria-hidden="true" />
+  {t('binancePayFullPage.download')}
+</button>
               </>
             ) : null}
           </>
