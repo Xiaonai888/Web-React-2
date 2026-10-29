@@ -107,7 +107,7 @@ export class ConstructionSystem {
     this.getUnits = typeof getUnits === 'function' ? getUnits : () => getUnits;
     this.rice = Math.max(0, Math.floor(finite(startingRice) ? startingRice : 80));
     this.wood = Math.max(0, Math.floor(finite(startingWood) ? startingWood : 180));
-    this.maxBuildings = Math.max(1, Math.floor(maxBuildings) || 24);
+    this.maxBuildings = Math.floor(clamp(finite(maxBuildings) ? maxBuildings : 24, 1, 150));
     this.basePopulation = Math.max(0, Math.floor(basePopulation) || 0);
     this.baseRiceStorage = Math.max(0, Math.floor(baseRiceStorage) || 0);
     this.maxBuilders = clamp(Math.floor(maxBuilders) || 4, 1, 12);
@@ -120,6 +120,7 @@ export class ConstructionSystem {
     this.time = 0;
     this.preview = null;
     this.destroyed = false;
+    this.placing = false;
 
     // Instance-scoped collision wrapper. Original terrain never mutates.
     this.originalWalkable = map.isWalkable;
@@ -136,7 +137,7 @@ export class ConstructionSystem {
     wrapped.__shadowConstructionOwner = this;
     this.wrappedWalkable = wrapped;
     map.isWalkable = wrapped;
-    this.navigation?.invalidate();
+    this.#invalidateNavigation();
   }
 
   #checkLive() {
@@ -144,11 +145,18 @@ export class ConstructionSystem {
   }
 
   #emit(name, payload) {
-    this.onEvent?.(name, payload);
+    try { this.onEvent?.(name, payload); }
+    catch (error) { console.warn('Shadow Realms construction event failed:', name, error); }
   }
 
   #changed() {
-    this.onChange?.(this.getSummary());
+    try { this.onChange?.(this.getSummary()); }
+    catch (error) { console.warn('Shadow Realms construction observer failed:', error); }
+  }
+
+  #invalidateNavigation() {
+    try { this.navigation?.invalidate?.(); }
+    catch (error) { console.warn('Shadow Realms construction path update failed:', error); }
   }
 
   #riceBalance() {
@@ -159,7 +167,7 @@ export class ConstructionSystem {
   /** Direct local wood stock for construction; collecting wood comes later. */
   setWood(value) {
     this.#checkLive();
-    if (!finite(value) || value < 0) return false;
+    if (!finite(value) || value < 0 || !Number.isSafeInteger(Math.floor(value))) return false;
     this.wood = Math.floor(value);
     this.#changed();
     return true;
@@ -167,7 +175,8 @@ export class ConstructionSystem {
 
   addWood(value) {
     this.#checkLive();
-    if (!finite(value) || value <= 0) return false;
+    if (!finite(value) || value < 1 || !Number.isSafeInteger(Math.floor(value)) ||
+        !Number.isSafeInteger(this.wood + Math.floor(value))) return false;
     this.wood += Math.floor(value);
     this.#changed();
     return true;
@@ -206,6 +215,8 @@ export class ConstructionSystem {
   /** Position / terrain validation, including overlapping sites and rice fields. */
   validatePlacement(type, position) {
     if (!BUILDING_TYPES[type]) return { ok: false, reason: 'unknown_type' };
+    if (this.destroyed) return { ok: false, reason: 'destroyed' };
+    if (this.placing) return { ok: false, reason: 'busy' };
     if (!pointOK(position)) return { ok: false, reason: 'invalid_position' };
     if (this.buildings.length >= this.maxBuildings) return { ok: false, reason: 'limit_reached' };
     const definition = BUILDING_TYPES[type];
@@ -303,12 +314,21 @@ export class ConstructionSystem {
     if (!this.canAfford(type)) return { ok: false, reason: 'insufficient_resources' };
     const spec = BUILDING_TYPES[type];
     const before = this.#riceBalance();
-    if (!this.#setRice(before - spec.cost.rice)) {
-      return { ok: false, reason: 'rice_payment_failed' };
-    }
-    // This operation is synchronous: cost is charged exactly once.
-    this.wood -= spec.cost.wood;
-    const building = {
+    const beforeWood = this.wood;
+    // Keep a synchronous, non-reentrant wallet transaction; no second house
+    // may be purchased from a RiceSystem callback before the first is recorded.
+    this.placing = true;
+    try {
+      let paid = false;
+      try { paid = this.#setRice(before - spec.cost.rice) === true; }
+      catch { paid = false; }
+      if (!paid) {
+        let restored = false;
+        try { restored = this.#setRice(before) === true; } catch { /* failed rollback */ }
+        return { ok: false, reason: restored ? 'rice_payment_failed' : 'rollback_failed' };
+      }
+      this.wood = beforeWood - spec.cost.wood;
+      const building = {
       id: `building-${this.nextId++}`,
       type, x: point.x, y: point.y,
       width: spec.width, depth: spec.depth,
@@ -321,17 +341,19 @@ export class ConstructionSystem {
     };
     this.buildings.push(building);
     this.byId.set(building.id, building);
-    this.navigation?.invalidate();
+    this.#invalidateNavigation();
     if (builderIds.length) this.assignBuilders(building.id, builderIds);
     this.#emit('placed', { building, resources: this.getResources() });
     this.#changed();
     return { ok: true, reason: 'placed', building };
+    } finally { this.placing = false; }
   }
 
   /** Suggest a safe build spot near a camera/unit, without modifying state. */
   findNearbyPosition(type, origin, maxDistance = 420) {
     if (!BUILDING_TYPES[type] || !pointOK(origin)) return null;
-    for (let radius = 0; radius <= maxDistance; radius += 24) {
+    const limit = finite(maxDistance) ? clamp(maxDistance, 0, 3000) : 420;
+    for (let radius = 0; radius <= limit; radius += 24) {
       const count = radius === 0 ? 1 : Math.max(12, Math.ceil(TAU * radius / 38));
       for (let i = 0; i < count; i++) {
         const angle = TAU * i / count;
@@ -500,7 +522,7 @@ export class ConstructionSystem {
     this.byId.delete(building.id);
     building.builders.clear();
     building._nextRoute.clear();
-    this.navigation?.invalidate();
+    this.#invalidateNavigation();
   }
 
   getBuildingAt(point, padding = 8) {
@@ -689,7 +711,7 @@ export class ConstructionSystem {
     if (this.map.isWalkable === this.wrappedWalkable) {
       this.map.isWalkable = this.originalWalkable;
     }
-    this.navigation?.invalidate();
+    this.#invalidateNavigation();
     this.buildings.length = 0;
     this.byId.clear();
     this.preview = null;
