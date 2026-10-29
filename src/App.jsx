@@ -1788,6 +1788,7 @@ const shouldShowOpeningAds =
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
         <Route path="/app" element={<LazyPage><AppPage /></LazyPage>} />
         <Route path="/author/page/ads/boost-pdf" element={<LazyPage><AuthorAdsProductEditorPage productType="pdf" /></LazyPage>} />
+        <Route path="/author/page/ads/boost-physical" element={<LazyPage><AuthorAdsProductEditorPage productType="book" /></LazyPage>} />
         <Route path="/apps/shadow-fx" element={
   <LazyPage><AppAccessGuard appKey="shadow-fx"><ShadowFXPage /></AppAccessGuard></LazyPage>
 } />
