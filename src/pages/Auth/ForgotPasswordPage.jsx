@@ -18,6 +18,7 @@ registerTranslationNamespace('forgotPasswordPage', {
     enterResetCode: 'Enter Reset Code',
     emailSubtitle: 'Enter your Gmail and we will send you a 6-digit reset code.',
     resetSubtitle: 'Enter the 6-digit code sent to your email.',
+    otpStepSubtitle: 'Enter the 6-digit code sent to your email.',
     passwordStepTitle: 'Create New Password',
     passwordStepSubtitle: 'Choose a strong password to secure your account.',
     continue: 'Continue',
@@ -53,6 +54,7 @@ registerTranslationNamespace('forgotPasswordPage', {
     enterResetCode: 'បញ្ចូលកូដកំណត់ឡើងវិញ',
     emailSubtitle: 'បញ្ចូល Gmail របស់អ្នក ហើយយើងនឹងផ្ញើកូដ 6 ខ្ទង់ទៅអ្នក។',
     resetSubtitle: 'បញ្ចូលកូដ 6 ខ្ទង់ដែលបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។',
+    otpStepSubtitle: 'បញ្ចូលកូដ ៦ ខ្ទង់ដែលបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។',
     passwordStepTitle: 'បង្កើតពាក្យសម្ងាត់ថ្មី',
     passwordStepSubtitle: 'កំណត់ពាក្យសម្ងាត់រឹងមាំសម្រាប់គណនីរបស់អ្នក។',
     continue: 'បន្ត',
@@ -88,6 +90,7 @@ registerTranslationNamespace('forgotPasswordPage', {
     enterResetCode: '输入重置验证码',
     emailSubtitle: '输入你的 Gmail，我们会发送一个 6 位重置验证码。',
     resetSubtitle: '输入发送到邮箱的 6 位验证码。',
+    otpStepSubtitle: '输入发送到邮箱的 6 位验证码。',
     passwordStepTitle: '创建新密码',
     passwordStepSubtitle: '设置安全的新密码以保护账户。',
     continue: '继续',
@@ -123,6 +126,7 @@ registerTranslationNamespace('forgotPasswordPage', {
     enterResetCode: 'リセットコードを入力',
     emailSubtitle: 'Gmail を入力すると、6桁のリセットコードを送信します。',
     resetSubtitle: 'メールで届いた6桁のコードを入力してください。',
+    otpStepSubtitle: 'メールに届いた6桁のコードを入力してください。',
     passwordStepTitle: '新しいパスワードを作成',
     passwordStepSubtitle: '安全な新しいパスワードを設定してください。',
     continue: '続ける',
@@ -158,6 +162,7 @@ registerTranslationNamespace('forgotPasswordPage', {
     enterResetCode: '재설정 코드 입력',
     emailSubtitle: 'Gmail을 입력하면 6자리 재설정 코드를 보내드립니다.',
     resetSubtitle: '이메일로 받은 6자리 코드를 입력하세요.',
+    otpStepSubtitle: '이메일로 전송된 6자리 코드를 입력하세요.',
     passwordStepTitle: '새 비밀번호 만들기',
     passwordStepSubtitle: '계정을 보호할 새 비밀번호를 설정하세요.',
     continue: '계속',
@@ -202,15 +207,27 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [otpShake, setOtpShake] = useState(false)
+  const [otpActive, setOtpActive] = useState(0)
+  const [otpBurst, setOtpBurst] = useState(0)
 
   const otp = otpDigits.join('')
 
   function updateOtpDigit(index, value) {
-    const digit = value.replace(/\D/g, '').slice(-1)
+    const digits = value.replace(/\D/g, '')
+    if (digits.length > 1) {
+      const next = [...otpDigits]
+      digits.slice(0, 6 - index).split('').forEach((digit, offset) => { next[index + offset] = digit })
+      setOtpDigits(next)
+      setOtpBurst((current) => current + 1)
+      otpRefs.current[Math.min(index + digits.length, 5)]?.focus()
+      return
+    }
+    const digit = digits.slice(-1)
     const nextDigits = [...otpDigits]
 
     nextDigits[index] = digit
     setOtpDigits(nextDigits)
+    if (digit) setOtpBurst((current) => current + 1)
 
     if (digit && index < 5) {
       otpRefs.current[index + 1]?.focus()
@@ -240,6 +257,7 @@ export default function ForgotPasswordPage() {
     })
 
     setOtpDigits(nextDigits)
+    setOtpBurst((current) => current + 1)
 
     const focusIndex = Math.min(pasted.length, 6) - 1
     otpRefs.current[focusIndex]?.focus()
@@ -286,7 +304,8 @@ export default function ForgotPasswordPage() {
 
       setEmail(cleanEmail)
       setOtpDigits(['', '', '', '', '', ''])
-      setStep('reset')
+      setOtpActive(0)
+      setStep('otp')
       setMessage(t('forgotPasswordPage.checkEmail'))
 
       setTimeout(() => {
@@ -364,12 +383,14 @@ export default function ForgotPasswordPage() {
         return
       }
 
-      localStorage.setItem('shadow_reader_token', data.token)
-      localStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
-      sessionStorage.setItem('shadow_reader_token', data.token)
-      sessionStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+      if (data.token && data.user) {
+        localStorage.setItem('shadow_reader_token', data.token)
+        localStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+        sessionStorage.setItem('shadow_reader_token', data.token)
+        sessionStorage.setItem('shadow_reader_user', JSON.stringify(data.user))
+      }
 
-      navigate('/me', { replace: true })
+      navigate(data.token && data.user ? '/me' : '/login', { replace: true })
     } catch {
       setError(t('forgotPasswordPage.backendUnavailable'))
     } finally {
@@ -379,7 +400,19 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="app-page min-h-screen bg-[#f5f3fa] px-4 py-8 dark:bg-[var(--shadow-bg-page)]">
-      <style>{`@keyframes shadowOtpPop{0%{transform:scale(.83)}60%{transform:scale(1.13)}100%{transform:scale(1)}}@keyframes shadowOtpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}.shadow-otp-filled{animation:shadowOtpPop .25s ease-out}.shadow-otp-shake{animation:shadowOtpShake .35s ease-in-out}@media(prefers-reduced-motion:reduce){.shadow-otp-filled,.shadow-otp-shake{animation:none}}`}</style>
+      <style>{`
+        @keyframes shadowOtpPop {0%{transform:translateY(9px) scale(.83);filter:brightness(1.25)}55%{transform:translateY(-7px) scale(1.11)}85%{transform:translateY(1px) scale(.98)}100%{transform:translateY(0) scale(1)}}
+        @keyframes shadowOtpShake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+        @keyframes shadowOtpGlow {0%,100%{opacity:.45}50%{opacity:1}}
+        @keyframes shadowOtpAppear {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .shadow-otp-enter{animation:shadowOtpAppear .35s ease-out both}
+        .shadow-otp-filled{animation:shadowOtpPop .38s cubic-bezier(.2,.8,.2,1);box-shadow:inset 0 2px 2px rgba(255,255,255,.35),0 7px 16px rgba(37,99,235,.24)}
+        .shadow-otp-shake{animation:shadowOtpShake .38s ease-in-out}
+        .shadow-otp-connector{position:absolute;top:50%;left:calc(100% + 1px);width:7px;height:3px;transform:translateY(-50%);background:#cbd5e1;border-radius:5px;pointer-events:none}
+        .shadow-otp-connector-done{background:#60a5fa;box-shadow:0 0 6px rgba(59,130,246,.6)}
+        .shadow-otp-current{animation:shadowOtpGlow 1.4s ease-in-out infinite}
+        @media(prefers-reduced-motion:reduce){.shadow-otp-filled,.shadow-otp-shake,.shadow-otp-enter,.shadow-otp-current{animation:none!important;transition:none!important}}
+      `}</style>
       <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
         <div className="mb-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white dark:bg-[#7c3aed]">
@@ -398,7 +431,7 @@ export default function ForgotPasswordPage() {
             {step === 'email'
               ? t('forgotPasswordPage.emailSubtitle')
               : step === 'otp'
-                ? t('forgotPasswordPage.resetSubtitle')
+                ? t('forgotPasswordPage.otpStepSubtitle')
                 : t('forgotPasswordPage.passwordStepSubtitle')}
           </p>
         </div>
@@ -443,35 +476,32 @@ export default function ForgotPasswordPage() {
           </form>
         ) : (
           step === 'otp' ? (
-          <form onSubmit={handleOtpContinue} className="space-y-5">
+          <form onSubmit={handleOtpContinue} className="space-y-5 shadow-otp-enter">
             <label className="block">
               <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.otpCode')}
               </span>
-              <div className={`grid grid-cols-6 gap-2 ${otpShake ? 'shadow-otp-shake' : ''}`}>
+              <div className={`grid grid-cols-6 gap-2 ${otpShake ? 'shadow-otp-shake' : ''}`} role="group" aria-label={t('forgotPasswordPage.otpCode')}>
                 {otpDigits.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(element) => {
-                      otpRefs.current[index] = element
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(event) =>
-                      updateOtpDigit(index, event.target.value)
-                    }
-                    onKeyDown={(event) =>
-                      handleOtpKeyDown(index, event)
-                    }
-                    onPaste={handleOtpPaste}
-                    aria-label={t(
-                      'forgotPasswordPage.otpDigit',
-                      { number: index + 1 }
-                    )}
-                    className={`shadow-otp-digit h-12 min-w-0 rounded-[14px] border text-center text-[20px] font-extrabold outline-none transition-all duration-200 focus:-translate-y-1 focus:ring-4 focus:ring-blue-400/20 ${digit ? 'shadow-otp-filled border-blue-500 bg-gradient-to-b from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/20 dark:border-blue-400' : 'border-[#d9dce3] bg-white text-[#111827] focus:border-blue-500 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)]'}`}
-                  />
+                  <div key={index} className="relative min-w-0">
+                    <input
+                      ref={(element) => { otpRefs.current[index] = element }}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                      maxLength={index === 0 ? 6 : 1}
+                      value={digit}
+                      onChange={(event) => updateOtpDigit(index, event.target.value)}
+                      onFocus={() => setOtpActive(index)}
+                      onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                      onPaste={handleOtpPaste}
+                      aria-label={t('forgotPasswordPage.otpDigit', { number: index + 1 })}
+                      className={`h-12 w-full min-w-0 rounded-[14px] border text-center text-[20px] font-extrabold outline-none transition-[border-color,background-color,box-shadow,transform] duration-200 ${digit ? 'border-blue-500 bg-gradient-to-b from-[#60a5fa] to-[#2563eb] text-white shadow-lg shadow-blue-500/20 dark:border-blue-400' : 'border-[#d9dce3] bg-white text-[#111827] focus:-translate-y-1 focus:border-blue-500 focus:shadow-[0_0_0_4px_rgba(59,130,246,.12)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:focus:border-blue-400'}`}
+                    />
+                    {digit && <span key={`${index}-${digit}-${otpBurst}`} className="pointer-events-none absolute inset-0 rounded-[14px] shadow-otp-filled" aria-hidden="true" />}
+                    {index < 5 && <span className={`shadow-otp-connector ${digit || otpActive > index ? 'shadow-otp-connector-done' : ''}`} aria-hidden="true" />}
+                  </div>
                 ))}
               </div>
             </label>
