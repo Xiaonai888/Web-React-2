@@ -110,19 +110,20 @@ export class FogOfWar {
         typeof camera?.getVisibleBounds !== 'function' ||
         typeof camera.worldToScreen !== 'function') return;
     const bounds = camera.getVisibleBounds();
-    if (!point({x:bounds.left,y:bounds.top}) ||
+    if (!bounds || !point({x:bounds.left,y:bounds.top}) ||
         !point({x:bounds.right,y:bounds.bottom})) return;
     const size = this.cellSize;
     const x0 = clamp(Math.floor(bounds.left / size), 0, this.columns - 1);
     const x1 = clamp(Math.ceil(bounds.right / size), 0, this.columns - 1);
     const y0 = clamp(Math.floor(bounds.top / size), 0, this.rows - 1);
     const y1 = clamp(Math.ceil(bounds.bottom / size), 0, this.rows - 1);
+    if (bounds.right < 0 || bounds.bottom < 0 || bounds.left > this.map.width ||
+        bounds.top > this.map.height || x0 > x1 || y0 > y1) return;
     const sx = size * number(camera.zoom, 1, .1, 8) + .7;
     const sy = size * number(camera.zoom, 1, .1, 8) *
       number(camera.tilt, .74, .1, 2) + .7;
     ctx.save();
     try {
-      // Merge adjacent cells of matching alpha to reduce draw calls.
       for (let y = y0; y <= y1; y++) {
         let x = x0;
         while (x <= x1) {
@@ -135,8 +136,10 @@ export class FogOfWar {
               Boolean(this.visited[y * this.columns + end]) === explored) end++;
           if (alpha > 0) {
             const p = camera.worldToScreen(x * size, y * size);
-            ctx.fillStyle = `rgba(8,16,14,${alpha})`;
-            ctx.fillRect(p.x, p.y, (end - x - 1) * size * camera.zoom + sx, sy);
+            if (point(p)) {
+              ctx.fillStyle = `rgba(8,16,14,${alpha})`;
+              ctx.fillRect(p.x, p.y, (end - x - 1) * size * camera.zoom + sx, sy);
+            }
           }
           x = end;
         }
