@@ -144,7 +144,9 @@ export default function AuthorAdsBoostContentPage() {
 
   const goToEditor = type => {
     setShowEmptyChooser(false)
-    navigate(`/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
+    navigate(type === 'story'
+  ? '/author/page/ads/boost-story'
+  : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
   }
 
   useEffect(() => {
