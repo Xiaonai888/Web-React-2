@@ -2629,7 +2629,7 @@ export default function ChatStoryEditorPage() {
   const notificationCharacterReturnRef = useRef(null)
   const notificationCharacterReturnKey = `shadow_chat_notification_return_${storyId}`
   const [notificationCharacterRevision, setNotificationCharacterRevision] = useState(0)
-‌  const notificationCharacterAdding =
+  const notificationCharacterAdding =
   Boolean(notificationCharacterReturnRef.current) &&
   (imageSourceOpen || addPopupOpen)
   const [notificationMaxVisible, setNotificationMaxVisible] = useState(2)
@@ -3499,7 +3499,9 @@ restoredDraftCharactersRef.current = false
           setCharacters((current) => current.some((character) => String(character.id) === String(saved.id))
             ? current.map((character) => String(character.id) === String(saved.id) ? saved : character)
             : [...current, saved])
-          setSelectedCharacterId((current) => current || saved.id)
+          if (!notificationCharacterReturnRef.current) {
+            setSelectedCharacterId((current) => current || saved.id)
+          }
           setCharacterQueueIssue('')
           showToast(getDisplayText('chatStoryEditor.characterAdded'))
         }
@@ -4410,6 +4412,8 @@ const saveNotificationSettings = (value, maximum) => {
     })
   }
   setMessageEditMode(null)
+  notificationCharacterReturnRef.current = null
+  sessionStorage.removeItem(notificationCharacterReturnKey)
   setNotificationSettingsTarget(null)
   setActiveMessageId('')
 }
@@ -4440,6 +4444,7 @@ const resumeNotificationAfterCharacter = (characterId = '') => {
       characterId: characterId || pending.draft.characterId,
     },
   })
+  setNotificationCharacterRevision((current) => current + 1)
 }
 
 const openNotificationCharacterAdd = (draft, maximum) => {
@@ -4457,7 +4462,6 @@ const openNotificationCharacterAdd = (draft, maximum) => {
     JSON.stringify(pending)
   )
 
-  setNotificationSettingsTarget(null)
   openAddCharacterPopup()
 }
 
@@ -4485,6 +4489,20 @@ useEffect(() => {
     resumeNotificationAfterCharacter(String(added.id))
   }
 }, [characters, storyId])
+
+useEffect(() => {
+  let pending
+  try {
+    pending = JSON.parse(sessionStorage.getItem(notificationCharacterReturnKey) || 'null')
+  } catch {
+    sessionStorage.removeItem(notificationCharacterReturnKey)
+    return
+  }
+  if (!pending?.target || pending.storyId !== String(storyId)) return
+  notificationCharacterReturnRef.current = pending
+  setNotificationMaxVisible(pending.maximum)
+  setNotificationSettingsTarget({ ...pending.target, draft: pending.draft })
+}, [notificationCharacterReturnKey, storyId])
 
 const sendMessage = () => {
   const text = draft.trim()
@@ -5018,17 +5036,22 @@ const handleAddConfirm = async () => {
     characterAvatarUploadRef.current = null
     characterSaveAttemptRef.current = null
     setAddPopupOpen(false)
-    setSelectedCharacterId(savedCharacter.id)
-    setComposerMode('message')
+    const addedFromNotification = Boolean(notificationCharacterReturnRef.current)
+    if (!addedFromNotification) {
+      setSelectedCharacterId(savedCharacter.id)
+      setComposerMode('message')
+    }
     setNewCharacterName('')
     setNewCharacterImage('')
     setNewCharacterAvatarSource('device')
     setNewCharacterGender('')
     showToast(getDisplayText('chatStoryEditor.characterAdded'))
 
-    window.setTimeout(() => {
-      composerRef.current?.focus()
-    }, 50)
+    if (!addedFromNotification) {
+      window.setTimeout(() => {
+        composerRef.current?.focus()
+      }, 50)
+    }
   } catch (error) {
     showToast(
       error.message === 'Failed to fetch'
@@ -5849,8 +5872,12 @@ setPublishSettingsOpen(true)
   type="file"
   accept="image/*"
   onChange={handleNewCharacterImageChange}
+  onCancel={() => {
+    if (notificationCharacterReturnRef.current) resumeNotificationAfterCharacter()
+  }}
   className="hidden"
 />
+      <NotificationAddLayer raised={notificationCharacterAdding}>
       <ImageSourceSheet
   open={imageSourceOpen}
   onClose={() => {
@@ -5877,6 +5904,7 @@ setPublishSettingsOpen(true)
   onClose={closeAddCharacterPopup}
   onConfirm={handleAddConfirm}
 />
+      </NotificationAddLayer>
 
       <CharacterQuickPopup
   character={profilePopupCharacter}
@@ -5916,6 +5944,8 @@ setPublishSettingsOpen(true)
 />
 
       <ChatStoryNotificationSettings
+  key={notificationCharacterRevision}
+  characterAdding={notificationCharacterAdding}
   open={Boolean(notificationSettingsTarget)}
   characters={characters}
   maxVisible={notificationMaxVisible}
@@ -5929,7 +5959,11 @@ setPublishSettingsOpen(true)
           text: '',
         }
   )}
-  onClose={() => setNotificationSettingsTarget(null)}
+  onClose={() => {
+    notificationCharacterReturnRef.current = null
+    sessionStorage.removeItem(notificationCharacterReturnKey)
+    setNotificationSettingsTarget(null)
+  }}
   onSave={saveNotificationSettings}
   onAddCharacter={openNotificationCharacterAdd}
 />
