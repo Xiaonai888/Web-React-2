@@ -1169,7 +1169,7 @@ function syncCachedNotificationMutation(path, method, response) {
   const nextUnread = match && match[2] ? match[2] === 'unread' : null
   const deleted = method === 'DELETE' && Boolean(id)
 
-  for (const [key, entry] of notificationPageCache) {
+  for (const [key, entry] of [...notificationPageCache]) {
     if (!key.startsWith(`${token}:`)) continue
     let notifications = entry.notifications
     if (nextUnread === true && key === notificationCacheKey(token, 'unread') && !notifications.some((item) => String(item.id) === id)) {
