@@ -23,7 +23,8 @@ export function createFeature(scope) {
   const getPlayers = () => {
     const roster = scope.get('farmers',[]);
     return Array.isArray(roster) ? roster.filter(u => u?.team === 'blue' &&
-      u.alive !== false && Number.isFinite(u.hp) && u.hp > 0) : [];
+      u.alive !== false && Number.isFinite(u.hp) && u.hp > 0 &&
+      Number.isFinite(u.x) && Number.isFinite(u.y)) : [];
   };
   const emit = (kind,event,data) => {
     try {scope.emit(`enemy:${kind}-${event}`,data);}
@@ -42,15 +43,19 @@ export function createFeature(scope) {
     ambush:{active:ambush.getFocusId(),zones:ambush.getZones().length},
   })});
   let oldWave = null,oldHealth = null,waveObserver = null,healthObserver = null;
-  let oldDecision = null,takeover = false,started = false,disposed = false;
+  let oldDecision = null,takeover = false,nativeFallback = false,started = false,disposed = false;
   const reportError = (part,error) => {
     try {console.warn('Shadow Realms enemy strategy:',part,error);} catch {}
+  };
+  const releaseDecision = () => {
+    if (takeover && enemyAI.decisionTimer === Infinity)
+      enemyAI.decisionTimer = oldDecision;
+    takeover = false;
   };
   const restore = () => {
     if (waves.onEvent === waveObserver) waves.onEvent = oldWave;
     if (health.onEvent === healthObserver) health.onEvent = oldHealth;
-    if (takeover && enemyAI.decisionTimer === Infinity) enemyAI.decisionTimer = oldDecision;
-    takeover = false;
+    releaseDecision();
   };
 
   return {
@@ -99,8 +104,15 @@ export function createFeature(scope) {
       if (!started || disposed || !Number.isFinite(dt) || dt <= 0) return;
       if (takeover && enemyAI.decisionTimer !== Infinity) enemyAI.decisionTimer = Infinity;
       try {ambush.update(dt);} catch(error) {reportError('ambush',error);}
-      try {squads.update(dt,{focusId:ambush.getFocusId()});}
-      catch(error) {reportError('squads',error);}
+      if (!nativeFallback) {
+        try {squads.update(dt,{focusId:ambush.getFocusId()});}
+        catch(error) {
+          reportError('squads',error);
+          // Never mix the failed tactical controller with resumed native AI.
+          releaseDecision();
+          nativeFallback = true;
+        }
+      }
       try {boss.update(dt);} catch(error) {reportError('boss update',error);}
     },
     render(ctx,camera) {
@@ -113,7 +125,9 @@ export function createFeature(scope) {
       if (disposed) return;
       disposed = true;
       restore();
-      boss.destroy();ambush.destroy();squads.destroy();
+      for (const [name,system] of [['boss',boss],['ambush',ambush],['squads',squads]]) {
+        try {system.destroy();} catch(error) {reportError(name+' cleanup',error);}
+      }
     },
   };
 }
