@@ -12,6 +12,7 @@ import { installReaderPresenceTracking } from './utils/installReaderPresenceTrac
 import { loadReaderEpisodeCache } from './utils/readerEpisodeCache'
 import { installMangaImageCacheControl } from './utils/mangaImageCacheControl'
 import { installTemporaryCacheManagement } from './utils/temporaryCacheManager'
+import { installAuthorNotificationDiagnostics } from './utils/authorNotificationDiagnostics'
 import {
   initializeStoryReactionQueue,
 } from './services/storyReactionQueue'
@@ -29,6 +30,7 @@ if (!isIOS) installReaderEpisodeCacheFetch()
 installReaderPresenceTracking()
 installMangaImageCacheControl()
 installTemporaryCacheManagement()
+installAuthorNotificationDiagnostics()
 void initializeStoryReactionQueue()
 void initializeCommentQueue()
 
