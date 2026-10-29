@@ -81,6 +81,11 @@ const gameMeta = {
     icon: 'fa-solid fa-flask',
     path: '',
   },
+  'shadow-realms': {
+    defaultName: 'Shadow Realms',
+    icon: 'fa-solid fa-shield-halved',
+    path: '/games/shadow-realms/index.html',
+  },
 }
 
 function mergeGame(game) {
@@ -215,7 +220,11 @@ export default function GamePage() {
                   key={game.gameKey}
                   onClick={() => {
                     if (!cannotOpen) {
-                      navigate(game.path)
+                      if (game.gameKey === 'shadow-realms') {
+                        window.location.assign(game.path)
+                      } else {
+                        navigate(game.path)
+                      }
                     }
                   }}
                   disabled={cannotOpen}
