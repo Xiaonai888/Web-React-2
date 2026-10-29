@@ -1,116 +1,177 @@
-/** Shadow Realms — breakable caches and collectable drops.
- * Rewards are credited ONLY after a supplied economy adapter acknowledges them.
+/**
+ * Shadow Realms — LootSystem (Step 42).
+ * Break supply caches, pick up drops and credit the EXISTING economy once.
+ * Only grantReward commits resources. Preserves MissionDirector's API.
  */
-const finite=Number.isFinite
-const point=p=>finite(p?.x)&&finite(p?.y)
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n))
-const rewardOf=r=>({rice:Math.max(0,Math.floor(finite(r?.rice)?r.rice:0)),wood:Math.max(0,Math.floor(finite(r?.wood)?r.wood:0))})
+const finite=Number.isFinite;
+const point=p=>finite(p?.x)&&finite(p?.y);
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const bounded=(n,fallback,lo,hi)=>clamp(finite(n)?n:fallback,lo,hi);
+const rewardOf=r=>({rice:Math.floor(bounded(r?.rice,0,0,1000000)),
+  wood:Math.floor(bounded(r?.wood,0,0,1000000))});
 
 export class LootSystem {
-  constructor({map,grantReward=null,onEvent=null,maxCaches=40,collectRange=65,breakRange=75}={}) {
-    if(!map||typeof map.isWalkable!=='function')throw new TypeError('LootSystem requires WorldMap')
-    this.map=map;this.grantReward=grantReward;this.onEvent=onEvent
-    this.maxCaches=Math.max(1,Math.floor(maxCaches));this.collectRange=collectRange;this.breakRange=breakRange
-    this.caches=[];this.drops=[];this.byId=new Map();this.nextId=1;this.time=0
+  constructor({map,grantReward=null,onEvent=null,maxCaches=40,
+    collectRange=65,breakRange=75}={}) {
+    if(typeof map?.isWalkable!=='function')throw new TypeError('LootSystem requires WorldMap');
+    this.map=map;
+    this.grantReward=typeof grantReward==='function'?grantReward:null;
+    this.onEvent=typeof onEvent==='function'?onEvent:null;
+    this.maxCaches=Math.floor(bounded(maxCaches,40,1,1000));
+    this.collectRange=bounded(collectRange,65,10,500);
+    this.breakRange=bounded(breakRange,75,10,500);
+    this.caches=[];this.drops=[];
+    this.byId=new Map();this.nextId=1;this.time=0;
   }
-  spawn({id=null,x,y,hp=35,type='cache',reward={rice:10,wood:15}}={}) {
-    if(!point({x,y})||!this.map.isWalkable(x,y,12))return {ok:false,reason:'blocked'}
-    if(this.caches.length>=this.maxCaches)return {ok:false,reason:'limit'}
-    if(this.caches.some(c=>c.state==='intact'&&dist(c,{x,y})<42))return {ok:false,reason:'overlap'}
-    const key=String(id??`cache-${this.nextId++}`)
-    if(this.byId.has(key))return {ok:false,reason:'duplicate_id'}
-    const cache={id:key,x,y,hp:clamp(Math.floor(hp)||35,1,5000),maxHp:clamp(Math.floor(hp)||35,1,5000),
-      type:String(type),reward:rewardOf(reward),state:'intact'}
-    this.caches.push(cache);this.byId.set(key,cache)
-    this.onEvent?.('cache_spawned',{cache})
-    return {ok:true,cache}
+  #emit(event,payload){
+    try{this.onEvent?.(event,payload);}
+    catch(error){console.warn('Shadow Realms loot observer:',event,error);}
   }
-  #isPlayer(unit) {return unit?.team==='blue'&&unit.alive!==false&&finite(unit.hp)&&unit.hp>0&&point(unit)}
-  damage(cacheId,damage,{actor=null}={}) {
-    const cache=this.byId.get(cacheId)
-    if(!cache||cache.state!=='intact')return {ok:false,reason:'not_intact'}
-    if(!finite(damage)||damage<=0)return {ok:false,reason:'invalid_damage'}
-    if(actor && (!this.#isPlayer(actor)||dist(actor,cache)>this.breakRange))return {ok:false,reason:'out_of_range'}
-    const dealt=Math.min(cache.hp,Math.max(1,Math.floor(damage)))
-    cache.hp-=dealt
-    this.onEvent?.('cache_damaged',{cache,actor,damage:dealt})
-    if(cache.hp>0)return {ok:true,broken:false,remaining:cache.hp}
-    cache.state='broken'
-    const drop={id:`drop-${this.nextId++}`,sourceId:cache.id,x:cache.x,y:cache.y,
-      reward:{...cache.reward},state:'ground',createdAt:this.time}
-    this.drops.push(drop);this.byId.set(drop.id,drop)
-    this.onEvent?.('cache_broken',{cache,drop,actor})
-    return {ok:true,broken:true,drop}
+  #id(prefix){let key;do{key=`${prefix}-${this.nextId++}`;}while(this.byId.has(key));return key;}
+  #isPlayer(unit){return unit?.team==='blue'&&unit.alive!==false&&
+    finite(unit.hp)&&unit.hp>0&&point(unit);}
+
+  spawn({id=null,x,y,hp=35,type='cache',reward={rice:10,wood:15}}={}){
+    const at={x,y};
+    if(!point(at)||!this.map.isWalkable(x,y,12))return {ok:false,reason:'blocked'};
+    if(this.caches.length>=this.maxCaches)return {ok:false,reason:'limit'};
+    if(this.caches.some(c=>c.state==='intact'&&dist(c,at)<42))
+      return {ok:false,reason:'overlap'};
+    const key=id==null?this.#id('cache'):String(id);
+    if(!key||this.byId.has(key))return {ok:false,reason:'duplicate_id'};
+    const total=Math.floor(bounded(hp,35,1,5000));
+    const cache={id:key,x,y,hp:total,maxHp:total,type:String(type),
+      reward:rewardOf(reward),state:'intact'};
+    this.caches.push(cache);this.byId.set(key,cache);
+    this.#emit('cache_spawned',{cache});
+    return {ok:true,cache};
   }
-  collect(dropId,actor) {
-    const drop=this.byId.get(dropId)
-    if(!drop||drop.state!=='ground')return {ok:false,reason:'missing_drop'}
-    if(!this.#isPlayer(actor))return {ok:false,reason:'invalid_collector'}
-    if(dist(drop,actor)>this.collectRange)return {ok:false,reason:'too_far'}
-    if(typeof this.grantReward!=='function')return {ok:false,reason:'missing_reward_adapter'}
-    let accepted=false
-    try{accepted=this.grantReward({...drop.reward},{drop,actor})===true}
-    catch(error){return {ok:false,reason:'reward_failed',error}}
-    if(!accepted)return {ok:false,reason:'reward_rejected'}
-    drop.state='collected'
-    this.onEvent?.('collected',{drop,actor,reward:{...drop.reward}})
-    return {ok:true,reward:{...drop.reward},drop}
+
+  damage(cacheId,damage,{actor=null}={}){
+    const cache=this.byId.get(cacheId);
+    if(!cache||cache.state!=='intact')return {ok:false,reason:'not_intact'};
+    if(!finite(damage)||damage<=0)return {ok:false,reason:'invalid_damage'};
+    if(actor&&(!this.#isPlayer(actor)||dist(actor,cache)>this.breakRange))
+      return {ok:false,reason:'out_of_range'};
+    const dealt=Math.min(cache.hp,Math.max(1,Math.floor(damage)));
+    cache.hp-=dealt;
+    if(cache.hp>0){
+      this.#emit('cache_damaged',{cache,actor,damage:dealt});
+      return {ok:true,broken:false,remaining:cache.hp};
+    }
+    // Commit BREAK before callbacks: a synchronous second hit must NOT create
+    // a second supply drop or overwrite an already committed state.
+    cache.state='broken';
+    const drop={id:this.#id('drop'),sourceId:cache.id,x:cache.x,y:cache.y,
+      reward:{...cache.reward},state:'ground',createdAt:this.time};
+    this.drops.push(drop);this.byId.set(drop.id,drop);
+    this.#emit('cache_damaged',{cache,actor,damage:dealt});
+    this.#emit('cache_broken',{cache,drop,actor});
+    return {ok:true,broken:true,drop};
   }
-  interact(actor,position,{damage=20}={}) {
-    if(!this.#isPlayer(actor)||!point(position))return {ok:false,reason:'invalid_interaction'}
-    const drop=this.getNearestDrop(position,{maxDistance:this.collectRange})
-    if(drop)return this.collect(drop.id,actor)
-    const cache=this.getNearestCache(position,{maxDistance:this.breakRange})
-    if(cache)return this.damage(cache.id,damage,{actor})
-    return {ok:false,reason:'no_object'}
+
+  collect(dropId,actor){
+    const drop=this.byId.get(dropId);
+    if(!drop||drop.state!=='ground')return {ok:false,reason:'missing_drop'};
+    if(!this.#isPlayer(actor))return {ok:false,reason:'invalid_collector'};
+    if(dist(drop,actor)>this.collectRange)return {ok:false,reason:'too_far'};
+    if(!this.grantReward)return {ok:false,reason:'missing_reward_adapter'};
+    // Reserve drop BEFORE calling the external resource adapter. An adapter
+    // callback that reenters collect() MUST NOT pay out a second time.
+    drop.state='collecting';
+    let accepted=false;
+    try{accepted=this.grantReward({...drop.reward},{drop,actor})===true;}
+    catch(error){
+      drop.state='ground';
+      return {ok:false,reason:'reward_failed',error};
+    }
+    if(!accepted){
+      drop.state='ground';
+      return {ok:false,reason:'reward_rejected'};
+    }
+    drop.state='collected';
+    const result={ok:true,reward:{...drop.reward},drop};
+    this.#emit('collected',{drop,actor,reward:{...drop.reward}});
+    return result;
   }
-  getNearestCache(position,{maxDistance=75}={}) {
-    if(!point(position))return null
-    let best=maxDistance,chosen=null
-    for(const c of this.caches){if(c.state!=='intact')continue;const d=dist(c,position)
-      if(d<best){best=d;chosen=c}}
-    return chosen
+
+  interact(actor,position,{damage=20}={}){
+    if(!this.#isPlayer(actor)||!point(position))return {ok:false,reason:'invalid_interaction'};
+    // The pointer chooses an object, but the ACTOR must be close enough.
+    // Prefer a reachable drop when several objects overlap the same tap.
+    const nearDrop=this.getNearestDrop(position,{maxDistance:this.collectRange});
+    if(nearDrop && dist(nearDrop,actor)<=this.collectRange)
+      return this.collect(nearDrop.id,actor);
+    const nearCache=this.getNearestCache(position,{maxDistance:this.breakRange});
+    if(nearCache && dist(nearCache,actor)<=this.breakRange)
+      return this.damage(nearCache.id,damage,{actor});
+    if(nearDrop||nearCache)return {ok:false,reason:'too_far'};
+    return {ok:false,reason:'no_object'};
   }
-  getNearestDrop(position,{maxDistance=65}={}) {
-    if(!point(position))return null
-    let best=maxDistance,chosen=null
-    for(const d of this.drops){if(d.state!=='ground')continue;const n=dist(d,position)
-      if(n<best){best=n;chosen=d}}
-    return chosen
+  getNearestCache(position,{maxDistance=75}={}){
+    if(!point(position))return null;
+    let best=bounded(maxDistance,75,0,5000),chosen=null;
+    for(const cache of this.caches){
+      if(cache.state!=='intact')continue;
+      const d=dist(cache,position);
+      if(d<best){best=d;chosen=cache;}
+    }
+    return chosen;
   }
-  getCaches({includeBroken=false}={}) {return this.caches.filter(c=>includeBroken||c.state==='intact')}
-  getDrops({includeCollected=false}={}) {return this.drops.filter(d=>includeCollected||d.state==='ground')}
-  update(dt) {if(finite(dt)&&dt>0)this.time+=Math.min(dt,.1)}
-  draw(ctx,camera) {
-    if(!ctx||!camera)return
-    ctx.save()
+  getNearestDrop(position,{maxDistance=65}={}){
+    if(!point(position))return null;
+    let best=bounded(maxDistance,65,0,5000),chosen=null;
+    for(const drop of this.drops){
+      if(drop.state!=='ground')continue;
+      const d=dist(drop,position);
+      if(d<best){best=d;chosen=drop;}
+    }
+    return chosen;
+  }
+  getCaches({includeBroken=false}={}){
+    return this.caches.filter(c=>includeBroken||c.state==='intact');
+  }
+  getDrops({includeCollected=false}={}){
+    return this.drops.filter(d=>includeCollected||d.state==='ground');
+  }
+  update(dt){if(finite(dt)&&dt>0)this.time+=Math.min(dt,.1);}
+
+  draw(ctx,camera){
+    if(!ctx||typeof camera?.worldToScreen!=='function')return;
+    ctx.save();
     for(const c of this.caches){
-      if(c.state!=='intact')continue
-      const p=camera.worldToScreen(c.x,c.y),z=clamp(camera.zoom,.5,2)
-      if(p.x< -60||p.y< -80||p.x>camera.viewportWidth+60||p.y>camera.viewportHeight+30)continue
-      ctx.save();ctx.translate(p.x,p.y);ctx.scale(z,z)
-      ctx.fillStyle='#372d1c';ctx.beginPath();ctx.ellipse(0,2,20,6,0,0,Math.PI*2);ctx.fill()
-      ctx.fillStyle='#855931';ctx.fillRect(-16,-28,32,26)
-      ctx.fillStyle='#c58e4f';ctx.fillRect(-16,-30,32,7)
-      ctx.fillStyle='#50412c';ctx.fillRect(-3,-28,6,26)
-      ctx.fillStyle='#f5d27a';ctx.textAlign='center';ctx.font='bold 11px sans-serif';ctx.fillText('SUPPLY',0,-37)
-      const fraction=c.hp/c.maxHp
-      if(fraction<1){ctx.fillStyle='#332c2a';ctx.fillRect(-16,-42,32,4);ctx.fillStyle='#dbaa62';ctx.fillRect(-16,-42,32*fraction,4)}
-      ctx.restore()
+      if(c.state!=='intact')continue;
+      const p=camera.worldToScreen(c.x,c.y),z=bounded(camera.zoom,1,.5,2);
+      if(!point(p)||p.x< -60||p.y< -80||p.x>camera.viewportWidth+60||p.y>camera.viewportHeight+30)continue;
+      ctx.save();ctx.translate(p.x,p.y);ctx.scale(z,z);
+      ctx.fillStyle='#372d1c';ctx.beginPath();ctx.ellipse(0,2,20,6,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#855931';ctx.fillRect(-16,-28,32,26);
+      ctx.fillStyle='#c58e4f';ctx.fillRect(-16,-30,32,7);
+      ctx.fillStyle='#50412c';ctx.fillRect(-3,-28,6,26);
+      ctx.fillStyle='#f5d27a';ctx.textAlign='center';ctx.font='bold 11px sans-serif';
+      ctx.fillText('SUPPLY',0,-37);
+      const fraction=c.hp/c.maxHp;
+      if(fraction<1){ctx.fillStyle='#332c2a';ctx.fillRect(-16,-42,32,4);
+        ctx.fillStyle='#dbaa62';ctx.fillRect(-16,-42,32*fraction,4);}
+      ctx.restore();
     }
     for(const d of this.drops){
-      if(d.state!=='ground')continue
-      const p=camera.worldToScreen(d.x,d.y),z=clamp(camera.zoom,.5,2),bob=Math.sin(this.time*3+d.x)*3
-      ctx.save();ctx.translate(p.x,p.y+bob-17*z);ctx.scale(z,z)
-      ctx.fillStyle='#ffe9a6';ctx.strokeStyle='#725a2c';ctx.lineWidth=2
-      ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(11,0);ctx.lineTo(0,10);ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke()
-      ctx.restore()
+      if(d.state!=='ground')continue;
+      const p=camera.worldToScreen(d.x,d.y),z=bounded(camera.zoom,1,.5,2);
+      if(!point(p))continue;
+      const bob=Math.sin(this.time*3+d.x)*3;
+      ctx.save();ctx.translate(p.x,p.y+bob-17*z);ctx.scale(z,z);
+      ctx.fillStyle='#ffe9a6';ctx.strokeStyle='#725a2c';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(11,0);ctx.lineTo(0,10);
+      ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
     }
-    ctx.restore()
+    ctx.restore();
   }
-  getSummary(){return {intact:this.getCaches().length,broken:this.caches.filter(c=>c.state==='broken').length,
-    ground:this.getDrops().length,collected:this.drops.filter(d=>d.state==='collected').length}}
-  reset(){this.caches=[];this.drops=[];this.byId.clear();this.nextId=1;this.time=0}
+  getSummary(){return {intact:this.getCaches().length,
+    broken:this.caches.filter(c=>c.state==='broken').length,
+    ground:this.getDrops().length,
+    collected:this.drops.filter(d=>d.state==='collected').length};}
+  reset(){this.caches=[];this.drops=[];this.byId.clear();this.nextId=1;this.time=0;}
 }
-export default LootSystem
+export default LootSystem;
