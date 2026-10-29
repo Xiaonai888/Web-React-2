@@ -2613,6 +2613,8 @@ export default function ChatStoryEditorPage() {
     useState(null)
   const [messageEditMode, setMessageEditMode] = useState(null)
   const [notificationSettingsTarget, setNotificationSettingsTarget] = useState(null)
+  const notificationCharacterReturnRef = useRef(null)
+  const notificationCharacterReturnKey = `shadow_chat_notification_return_${storyId}`
   const [notificationMaxVisible, setNotificationMaxVisible] = useState(2)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
@@ -4395,6 +4397,78 @@ const saveNotificationSettings = (value, maximum) => {
   setActiveMessageId('')
 }
 
+const resumeNotificationAfterCharacter = (characterId = '') => {
+  let pending = notificationCharacterReturnRef.current
+
+  if (!pending) {
+    try {
+      pending = JSON.parse(
+        sessionStorage.getItem(notificationCharacterReturnKey) || 'null'
+      )
+    } catch {
+      return
+    }
+  }
+
+  if (!pending?.target || pending.storyId !== String(storyId)) return
+
+  notificationCharacterReturnRef.current = null
+  sessionStorage.removeItem(notificationCharacterReturnKey)
+
+  setNotificationMaxVisible(pending.maximum)
+  setNotificationSettingsTarget({
+    ...pending.target,
+    draft: {
+      ...pending.draft,
+      characterId: characterId || pending.draft.characterId,
+    },
+  })
+}
+
+const openNotificationCharacterAdd = (draft, maximum) => {
+  const pending = {
+    storyId: String(storyId),
+    target: notificationSettingsTarget,
+    draft,
+    maximum,
+    characterIds: characters.map((character) => String(character.id)),
+  }
+
+  notificationCharacterReturnRef.current = pending
+  sessionStorage.setItem(
+    notificationCharacterReturnKey,
+    JSON.stringify(pending)
+  )
+
+  setNotificationSettingsTarget(null)
+  openAddCharacterPopup()
+}
+
+useEffect(() => {
+  let pending = notificationCharacterReturnRef.current
+
+  if (!pending) {
+    try {
+      pending = JSON.parse(
+        sessionStorage.getItem(notificationCharacterReturnKey) || 'null'
+      )
+    } catch {
+      return
+    }
+  }
+
+  if (!pending?.target || pending.storyId !== String(storyId)) return
+
+  const existingIds = new Set(pending.characterIds || [])
+  const added = characters.find(
+    (character) => !existingIds.has(String(character.id))
+  )
+
+  if (added) {
+    resumeNotificationAfterCharacter(String(added.id))
+  }
+}, [characters, storyId])
+
 const sendMessage = () => {
   const text = draft.trim()
   if (!text) return
@@ -4536,6 +4610,7 @@ const deleteMessage = (messageId) => {
 const closeAddCharacterPopup = () => {
   if (addCharacterSaving) return
   setAddPopupOpen(false)
+  resumeNotificationAfterCharacter()
 }
 
 const chooseNewCharacterDeviceImage = () => {
@@ -5761,7 +5836,10 @@ setPublishSettingsOpen(true)
 />
       <ImageSourceSheet
   open={imageSourceOpen}
-  onClose={() => setImageSourceOpen(false)}
+  onClose={() => {
+  setImageSourceOpen(false)
+  resumeNotificationAfterCharacter()
+}}
   onDevice={chooseNewCharacterDeviceImage}
   onShadowGallery={openNewCharacterShadowGallery}
 />
@@ -5821,15 +5899,23 @@ setPublishSettingsOpen(true)
 />
 
       <ChatStoryNotificationSettings
-        open={Boolean(notificationSettingsTarget)}
-        characters={characters}
-        maxVisible={notificationMaxVisible}
-        value={notificationSettingsTarget?.mode === 'edit'
-          ? messages.find((message) => message.id === notificationSettingsTarget.targetId)
-          : { characterId: selectedCharacterId || characters[0]?.id || '', text: '' }}
-        onClose={() => setNotificationSettingsTarget(null)}
-        onSave={saveNotificationSettings}
-      />
+  open={Boolean(notificationSettingsTarget)}
+  characters={characters}
+  maxVisible={notificationMaxVisible}
+  value={notificationSettingsTarget?.draft || (
+    notificationSettingsTarget?.mode === 'edit'
+      ? messages.find(
+          (message) => message.id === notificationSettingsTarget.targetId
+        )
+      : {
+          characterId: selectedCharacterId || characters[0]?.id || '',
+          text: '',
+        }
+  )}
+  onClose={() => setNotificationSettingsTarget(null)}
+  onSave={saveNotificationSettings}
+  onAddCharacter={openNotificationCharacterAdd}
+/>
 
       <MorePopup
         open={morePopupOpen}
