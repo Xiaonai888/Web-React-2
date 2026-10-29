@@ -15,7 +15,7 @@ const ENDPOINT = '/api/country-settings'
 const CACHE_MS = 5 * 60 * 1000
 const RETRY_MS = 20 * 1000
 const LEGACY_FLAGS = new Set(['app', 'physicalBooks', 'binancePay', 'payway'])
-const NEW_FLAGS = new Set(['shadowMall', 'readerMall'])
+const NEW_FLAGS = new Set(['shadowMall', 'readerMall', 'game'])
 const FLAGS = new Set([...LEGACY_FLAGS, ...NEW_FLAGS])
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ja', 'ko'])
 const TARGETS = new Set(['shadow_mall', 'diamonds'])
@@ -51,6 +51,8 @@ function parseCountrySettings(data) {
     ...effective,
     shadowMall: typeof effective.shadowMall === 'boolean' ? effective.shadowMall : data.region === 'kh',
     readerMall: typeof effective.readerMall === 'boolean' ? effective.readerMall : data.region === 'kh',
+    // Keep existing Game available until a saved Country Rule explicitly controls it.
+    game: typeof effective.game === 'boolean' ? effective.game : true,
   } : null
   return {
     country: typeof data.country === 'string' ? data.country : 'unknown',
@@ -134,6 +136,13 @@ export function isCountryPolicyEnabled(settings) {
 
 export function getCountryFeature(settings, feature, fallback = null) {
   if (!FLAGS.has(feature)) return fallback
+  // Game has its own Country Settings switch while other country restrictions
+  // remain paused. Only enforce a verified, saved reader country.
+  if (feature === 'game') {
+    if (settings?.countryVerified !== true) return fallback
+    const gameAllowed = settings?.effective?.game
+    return typeof gameAllowed === 'boolean' ? gameAllowed : fallback
+  }
   if (!isCountryPolicyEnabled(settings)) return true
   if (settings?.countryVerified !== true) return fallback
   const value = settings?.effective?.[feature]
