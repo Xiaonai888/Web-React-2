@@ -1,45 +1,67 @@
-/** Shadow Realms: score existing blue units; never changes state or creates units. */
-const valid = p => Number.isFinite(p?.x) && Number.isFinite(p?.y);
-const living = u => u?.team === 'blue' && u.alive !== false && u.hp > 0 && valid(u);
-const distance = (a,b) => Math.hypot(a.x - b.x, a.y - b.y);
-const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+/**
+ * Shadow Realms — Step 43: enemy targeting, purely observational.
+ * Only ranks existing live BLUE units; never moves/spawns them or touches DOM.
+ * API: players(), score(enemy,player), choose(enemy,preferredId), ranked(enemy,limit).
+ */
+const finite = Number.isFinite;
+const pos = p => finite(p?.x) && finite(p?.y);
+const living = u => u?.id != null && u.team === 'blue' && u.alive !== false &&
+  finite(u.hp) && u.hp > 0 && pos(u);
+const dist = (a,b) => Math.hypot(a.x - b.x, a.y - b.y);
+const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+const safe = (n,fallback) => finite(n) ? n : fallback;
 
 export class ThreatAnalyzer {
-  constructor({getPlayers = () => [], home = null, maxDistance = 3500} = {}) {
+  constructor({getPlayers = () => [],home = null,maxDistance = 3500} = {}) {
     this.getPlayers = typeof getPlayers === 'function' ? getPlayers : () => getPlayers;
-    this.home = valid(home) ? {...home} : null;
-    this.maxDistance = clamp(Number(maxDistance) || 3500, 150, 20000);
+    this.home = pos(home) ? {x:home.x,y:home.y} : null;
+    this.maxDistance = clamp(safe(maxDistance,3500),150,20000);
   }
+
   players() {
-    const list = this.getPlayers();
-    return Array.isArray(list) ? list.filter(living) : [];
+    const roster = this.getPlayers() || [];
+    if (!Array.isArray(roster)) return [];
+    const ids = new Set();
+    return roster.filter(u => {
+      if (!living(u) || ids.has(u.id)) return false;
+      ids.add(u.id);
+      return true;
+    });
   }
-  score(enemy, player) {
-    if (!valid(enemy) || !living(player)) return -Infinity;
-    const d = distance(enemy, player);
-    if (d > this.maxDistance) return -Infinity;
-    const max = Math.max(1, Number(player.maxHp) || Number(player.hp) || 100);
-    const weakness = 1 - clamp(player.hp / max, 0, 1);
-    const damage = clamp(Number(player.attackDamage) || 0, 0, 80);
-    const closeToBase = this.home && distance(player,this.home) < 260 ? 35 : 0;
+
+  score(enemy,player) {
+    if (!pos(enemy) || !living(player) || enemy.id === player.id) return -Infinity;
+    const distance = dist(enemy,player);
+    if (distance > this.maxDistance) return -Infinity;
+    const maxHp = Math.max(1,safe(player.maxHp,player.hp));
+    const weakness = 1 - clamp(player.hp / maxHp,0,1);
+    const damage = clamp(safe(player.attackDamage,0),0,80);
     const ranged = player.attackType === 'ranged' ? 30 : 0;
-    // Distance matters most, but fragile ranged targets remain attractive.
-    return 600 - d * .45 + weakness * 110 + damage * .65 + ranged + closeToBase;
+    const nearBase = this.home && dist(player,this.home) <= 260 ? 35 : 0;
+    // Distance still dominates: weak archers and base defenders earn priority.
+    return 600 - distance * .45 + weakness * 110 + damage * .65 + ranged + nearBase;
   }
-  choose(enemy, preferredId = null) {
-    const players = this.players();
-    let selected = null, best = -Infinity;
-    for (const player of players) {
-      const preference = preferredId != null && player.id === preferredId ? 100 : 0;
-      const score = this.score(enemy, player) + preference;
-      if (score > best) { best = score; selected = player; }
+
+  choose(enemy,preferredId = null) {
+    let best = -Infinity, chosen = null;
+    for (const player of this.players()) {
+      const raw = this.score(enemy,player);
+      if (!finite(raw)) continue; // Never choose an unreachable/out-of-range target.
+      const value = raw + (preferredId != null && player.id === preferredId ? 100 : 0);
+      if (value > best || (value === best && chosen && String(player.id) < String(chosen.id))) {
+        best = value;
+        chosen = player;
+      }
     }
-    return selected;
+    return chosen;
   }
-  ranked(enemy, limit = 5) {
-    return this.players().map(unit => ({unit, score:this.score(enemy,unit)}))
-      .filter(x => Number.isFinite(x.score)).sort((a,b)=>b.score-a.score)
-      .slice(0,clamp(Math.floor(limit)||5,1,100));
+
+  ranked(enemy,limit = 5) {
+    const max = clamp(Math.floor(safe(limit,5)),1,100);
+    return this.players().map(unit => ({unit,score:this.score(enemy,unit)}))
+      .filter(entry => finite(entry.score))
+      .sort((a,b) => b.score - a.score || String(a.unit.id).localeCompare(String(b.unit.id)))
+      .slice(0,max);
   }
 }
 export default ThreatAnalyzer;
