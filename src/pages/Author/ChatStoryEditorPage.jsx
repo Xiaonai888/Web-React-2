@@ -8,6 +8,7 @@ import { createChatStoryInlineUploadQueue, chatStoryPendingImageCount, chatStory
 import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { encryptChatGalleryDraft, decryptChatGalleryDraft } from '../../utils/secureChatGalleryDraft'
 import { ChatStoryNotificationSettings, normalizeChatNotification } from '../../components/chat-story/ChatStoryNotification'
+import { createPortal } from 'react-dom'
 
 registerTranslationNamespace('chatStoryEditor', {
   "en": {
@@ -1797,6 +1798,18 @@ function MessageEditToolbar({
   )
 }
 
+function NotificationAddLayer({ raised, children }) {
+  if (!raised || typeof document === 'undefined') {
+    return <>{children}</>
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10010]">
+      {children}
+    </div>,
+    document.body
+  )
+}
 
 function AddCharacterPopup({
   open,
@@ -2615,6 +2628,10 @@ export default function ChatStoryEditorPage() {
   const [notificationSettingsTarget, setNotificationSettingsTarget] = useState(null)
   const notificationCharacterReturnRef = useRef(null)
   const notificationCharacterReturnKey = `shadow_chat_notification_return_${storyId}`
+  const [notificationCharacterRevision, setNotificationCharacterRevision] = useState(0)
+‌  const notificationCharacterAdding =
+  Boolean(notificationCharacterReturnRef.current) &&
+  (imageSourceOpen || addPopupOpen)
   const [notificationMaxVisible, setNotificationMaxVisible] = useState(2)
   const [episodeLeadCharacterId, setEpisodeLeadCharacterId] = useState('')
   const [savedSeconds, setSavedSeconds] = useState(0)
