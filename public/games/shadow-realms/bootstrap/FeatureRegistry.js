@@ -40,8 +40,18 @@ export class FeatureRegistry {
   }
 
   registerAll(definitions = []) {
-    for (const definition of definitions) this.register(definition);
-    return this;
+    const added = [];
+    try {
+      for (const definition of definitions) {
+        this.register(definition);
+        added.push(definition.id);
+      }
+      return this;
+    } catch (error) {
+      // Invalid manifests should never leave half of their IDs registered.
+      for (const id of added) this.definitions.delete(id);
+      throw error;
+    }
   }
 
   #plan() {
