@@ -188,6 +188,7 @@ const ShadowMallPurchasePage = lazy(() => import('./pages/Shop/ShadowMallPurchas
 const BinancePayPage = lazy(() => import('./pages/BinancePayPage'))
 const ReaderAdminMailPage = lazy(() => import('./pages/Shop/ReaderAdminMailPage'))
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'))
+const AuthorAdsPostEditorPage = lazy(() => import('./pages/Author/AuthorAdsPostEditorPage'))
 const ReaderPostCreatePage = lazy(() =>
   import('./pages/ReaderPosts/ReaderPostCreatePage')
 )
@@ -1156,6 +1157,7 @@ const shouldShowOpeningAds =
 <Route path="/author/page/ads/boost-content" element={<LazyPage><AuthorAdsBoostContentPage /></LazyPage>} />
 <Route path="/author/page/ads/boost-editor" element={<LazyPage><AuthorAdsPage /></LazyPage>} />
 <Route path="/author/page/ads/boost-story" element={<LazyPage><AuthorAdsStoryEditorPage /></LazyPage>} />
+<Route path="/author/page/ads/boost-post" element={<LazyPage><AuthorAdsPostEditorPage /></LazyPage>} />
           
 <Route
   path="/game/spin"
