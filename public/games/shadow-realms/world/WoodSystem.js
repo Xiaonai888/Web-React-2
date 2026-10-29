@@ -102,7 +102,10 @@ export class WoodSystem {
     map.__shadowWoodSystem = this;
   }
 
-  #emit(name, detail = {}) { this.onEvent?.(name, detail); }
+  #emit(name, detail = {}) {
+    try { this.onEvent?.(name, detail); }
+    catch (error) { console.warn('Shadow Realms wood event failed:', name, error); }
+  }
   #units() {
     const candidates = this.getUnits();
     return Array.isArray(candidates) ? candidates : [];
@@ -113,7 +116,12 @@ export class WoodSystem {
       unit.alive !== false && unit.selectable !== false &&
       pointOK(unit) && typeof unit.setPath === 'function';
   }
-  #isFull(unit) { return (unit.woodCarry || 0) + this.config.woodPerTree > this.config.capacity; }
+  #isFull(unit) {
+    const held = Math.max(0, finite(unit?.woodCarry) ? unit.woodCarry : 0);
+    // Small custom capacities must still allow a partial load from a tree.
+    return held >= this.config.capacity ||
+      (held > 0 && held + this.config.woodPerTree > this.config.capacity);
+  }
   #releaseReservation(job) {
     if (job.treeId && this.reservations.get(job.treeId) === job.unitId) {
       this.reservations.delete(job.treeId);
@@ -127,7 +135,8 @@ export class WoodSystem {
     if (unit) {
       if (stop) unit.stop?.();
       unit.setHarvestAnimation?.(false);
-      this.onReleaseUnit?.(unit);
+      try { this.onReleaseUnit?.(unit); }
+      catch (error) { console.warn('Shadow Realms wood release failed:', error); }
     }
   }
 
@@ -200,13 +209,17 @@ export class WoodSystem {
     let assigned = 0;
     for (const unit of valid) {
       this.cancel(unit.id, { stop: false });
-      this.onClaimUnit?.(unit);
+      try { this.onClaimUnit?.(unit); }
+      catch (error) {
+        this.#emit('claim_failed', { unitId: unit.id, error: String(error) });
+        continue;
+      }
       this.construction.removeBuilderFromAll?.(unit.id);
       const job = { unitId: unit.id, treeId: null, phase: 'seek', auto: Boolean(auto),
         target: pointOK(targetPoint) ? { x: targetPoint.x, y: targetPoint.y } : null,
         progress: 0, retryIn: 0, tried: new Set() };
       this.jobs.set(unit.id, job);
-      if ((unit.woodCarry || 0) + this.config.woodPerTree > this.config.capacity) {
+      if (this.#isFull(unit)) {
         this.#beginReturn(unit, job);
         assigned++;
       } else if (this.#findNextTree(unit, job)) {
@@ -241,8 +254,26 @@ export class WoodSystem {
     }
     const amount = Math.max(0, Math.floor(unit.woodCarry || 0));
     if (!amount) return { ok: false, reason: 'empty', amount: 0 };
-    if (!this.construction.addWood(amount)) return { ok: false, reason: 'ledger_rejected', amount: 0 };
+    // Reserve logs BEFORE ConstructionSystem.onChange can call deposit again.
+    // Snapshot the shared wood wallet so even a mutate-then-false adapter can
+    // be compensated before returning the logs for retry.
+    const beforeWood = this.construction.getResources().wood;
     unit.woodCarry = 0;
+    let accepted = false;
+    try { accepted = this.construction.addWood(amount) === true; }
+    catch (error) { this.#emit('deposit_failed', { unitId: unit.id, error: String(error) }); }
+    if (!accepted) {
+      let restored = true;
+      try {
+        const current = this.construction.getResources().wood;
+        if (current !== beforeWood) restored =
+          this.construction.setWood?.(beforeWood) === true;
+      } catch { restored = false; }
+      // Do not refund the inventory if the ledger was credited but cannot be
+      // rolled back: otherwise another deposit would duplicate its value.
+      if (restored) unit.woodCarry = amount;
+      return { ok: false, reason: restored ? 'ledger_rejected' : 'rollback_failed', amount: 0 };
+    }
     this.totalDelivered += amount;
     this.#emit('deposited', { unitId: unit.id, amount, balance: this.construction.getResources().wood });
     return { ok: true, reason: 'deposited', amount };
@@ -325,7 +356,9 @@ export class WoodSystem {
   #fellTree(unit, job, tree) {
     if (!tree.alive || this.reservations.get(tree.id) !== unit.id) return false;
     if (distance(unit, tree) > this.config.choppingRange) return false;
-    if ((unit.woodCarry || 0) + this.config.woodPerTree > this.config.capacity) return false;
+    const room = this.config.capacity - Math.max(0, finite(unit.woodCarry) ? unit.woodCarry : 0);
+    if (room < 1) return false;
+    const gathered = Math.min(this.config.woodPerTree, Math.floor(room));
 
     // Update BOTH tree collections: renderer and collision use different ones.
     const liveAt = this.map.trees.indexOf(tree.source);
@@ -336,14 +369,14 @@ export class WoodSystem {
     tree.alive = false;
     tree.regrowIn = this.config.regrowSeconds;
     tree.fellCount++;
-    unit.woodCarry = Math.max(0, unit.woodCarry || 0) + this.config.woodPerTree;
+    unit.woodCarry = Math.max(0, unit.woodCarry || 0) + gathered;
     this.totalFelled++;
-    this.totalCollected += this.config.woodPerTree;
+    this.totalCollected += gathered;
     this.#releaseReservation(job);
     unit.setHarvestAnimation?.(false);
     this.navigation.invalidate();
     this.#emit('tree_felled', { treeId: tree.id, unitId: unit.id,
-      collected: this.config.woodPerTree, carried: unit.woodCarry });
+      collected: gathered, carried: unit.woodCarry });
     return true;
   }
 
