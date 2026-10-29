@@ -54,7 +54,6 @@ export class StageZones {
     for (const zone of this.zones) {
       if (zone.discovered) continue;
       if (!players.some(player => distance(zone,player) <= zone.radius)) continue;
-      // Commit before invoking observers; a reentrant update can't emit twice.
       zone.discovered = true;
       zone.visits++;
       try { this.onDiscover?.({...zone}); }
@@ -74,7 +73,7 @@ export class StageZones {
   label(zone, locale = 'km') {
     const id = typeof zone === 'string' ? zone : zone?.id;
     if (!id) return '';
-    const language = String(locale).split('-')[0];
+    const language = String(locale).split('-')[0].toLowerCase();
     return names[id]?.[language] || names[id]?.en || id;
   }
 
