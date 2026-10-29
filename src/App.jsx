@@ -450,6 +450,8 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/author/agreement',
     '/login',
     '/register',
+    '/forgot-password',
+    '/reset-password',
     '/shop',
     '/wallet',
     '/wallet/orders',
