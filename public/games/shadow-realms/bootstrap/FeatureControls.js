@@ -47,7 +47,13 @@ export function createFeature(scope) {
   if (!scope || typeof scope.get !== 'function') throw new TypeError('FeatureControls needs GameContext');
   const lang = document.documentElement.lang?.split('-')[0] || 'en';
   const t = LOCALES[lang] || LOCALES.en;
-  const notify = msg => { const fn = scope.get('notify'); if (typeof fn === 'function') fn(msg); };
+  const notify = msg => {
+    const fn = scope.get('notify');
+    if (typeof fn === 'function') {
+      try { fn(msg); }
+      catch (error) { console.warn('Shadow Realms strategy notice:', error); }
+    }
+  };
   const defense = () => scope.get('defense');
   const progression = () => scope.get('progression');
   const tactics = () => scope.get('tactics');
@@ -162,13 +168,12 @@ export function createFeature(scope) {
 
   function onMapPointer(event) {
     if (disposed || !mode || mode === 'defense' || !['select','tap'].includes(event?.kind)) return false;
-    if (!validPoint(event.world)) return true;
-    // The exploration feature normally consumes mini-map taps first; retain
-    // this check for reordered manifests and future optional UI additions.
+    // Mini-map taps belong to exploration, even if a map-world point is absent.
     const minimap = scope.get('exploration')?.miniMap;
     if (minimap?.enabled && minimap.hitTest?.(event.screen, scope.camera)) return false;
+    if (!validPoint(event.world)) return true;
     const squads = tactics()?.squads, patrol = tactics()?.patrol;
-    if (!squads || !pendingIds?.length) {cancel();return false;}
+    if (!squads || !pendingIds?.length) {cancel();return true;}
     const units = players().filter(u => pendingIds.includes(u.id));
     if (units.length !== pendingIds.length) {cancel();feedback(t.selected);return true;}
     if (!scope.map.isWalkable(event.world.x,event.world.y,14)) {
