@@ -1,6 +1,8 @@
 /**
  * Shadow Realms — Stage 1: procedural, three-quarter-view world map.
  *
+ * Step 45 — preserves original terrain art, seed, paths and WorldMap API.
+ * Uses a bounded local spatial index for tree/rock collision to keep A* fast.
  * Pure local Canvas module. No fetch, storage, backend, or external assets.
  * World positions are flat (x, y); Camera2D applies the visual tilt.
  *
@@ -41,8 +43,8 @@ function insideBounds(x, y, bounds, margin = 0) {
 
 export class WorldMap {
   constructor({ width = 3200, height = 2200, seed = 42 } = {}) {
-    this.width = Math.max(900, Number(width) || 3200)
-    this.height = Math.max(700, Number(height) || 2200)
+    this.width = Math.max(900, Number.isFinite(width) ? width : 3200)
+    this.height = Math.max(700, Number.isFinite(height) ? height : 2200)
     this.seed = Number(seed) || 42
     this.elapsed = 0
 
@@ -104,6 +106,12 @@ export class WorldMap {
     this.foreground = [...this.trees.map(o => ({ ...o, type: 'tree' })),
       ...this.rocks.map(o => ({ ...o, type: 'rock' }))]
       .sort((a, b) => a.y - b.y)
+    // Only static scenery lives here; Defense/Construction map wrappers retain
+    // ownership of dynamic obstacles, with Pathfinding.invalidate() as before.
+    this.obstacleCellSize = 128
+    this.obstacleBuckets = new Map()
+    this.obstacleCount = 0
+    this.#indexObstacles()
   }
 
   riverX(y) {
@@ -143,39 +151,82 @@ export class WorldMap {
     return 'grass'
   }
 
-  // Use for click-to-move, basic collision and the future pathfinding module.
-  // Characters are blocked by water (except bridges), tree trunks and rocks.
+  /** Buckets are keyed by world-space cells; no additional game loop. */
+  #indexObstacles() {
+    const size = this.obstacleCellSize
+    const buckets = new Map()
+    for (const [kind, list] of [['tree', this.trees], ['rock', this.rocks]]) {
+      for (const item of list) {
+        const col = Math.floor(item.x / size), row = Math.floor(item.y / size)
+        const key = `${col}:${row}`
+        if (!buckets.has(key)) buckets.set(key, [])
+        buckets.get(key).push({ kind, item })
+      }
+    }
+    this.obstacleBuckets = buckets
+    this.obstacleCount = this.trees.length + this.rocks.length
+  }
+
+  // Units do not pass through river water, tree trunks or rocks. An indexed
+  // obstacle scan avoids iterating ~290 scenery items for EACH A* sample.
   isWalkable(x, y, radius = 13) {
-    const r = Math.max(0, Number(radius) || 0)
+    if (!Number.isFinite(x) || !Number.isFinite(y) ||
+        !Number.isFinite(radius) || radius < 0) return false
+    const r = radius
     if (x - r < 0 || x + r > this.width || y - r < 0 || y + r > this.height) return false
-    for (const [dx, dy] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]]) {
+    for (const [dx, dy] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r],
+      [r * .7071, r * .7071], [r * .7071, -r * .7071],
+      [-r * .7071, r * .7071], [-r * .7071, -r * .7071]]) {
       if (this.getTerrainAt(x + dx, y + dy) === 'water') return false
     }
-    for (const t of this.trees) {
-      if (sq(t.x - x) + sq(t.y - y) < sq(r + t.size * 0.31)) return false
-    }
-    for (const b of this.rocks) {
-      if (sq(b.x - x) + sq(b.y - y) < sq(r + b.size * 0.7)) return false
+    // A dynamic scenery editor may add/remove objects; rebuild only on count
+    // changes. Existing game scenery remains static for the full battle.
+    if (this.obstacleCount !== this.trees.length + this.rocks.length)
+      this.#indexObstacles()
+    const size = this.obstacleCellSize
+    const extent = r + 75 // tree collision radius < 16; rock < 19.
+    const minX = Math.floor((x - extent) / size), maxX = Math.floor((x + extent) / size)
+    const minY = Math.floor((y - extent) / size), maxY = Math.floor((y + extent) / size)
+    for (let cy = minY; cy <= maxY; cy++) for (let cx = minX; cx <= maxX; cx++) {
+      const group = this.obstacleBuckets.get(`${cx}:${cy}`)
+      if (!group) continue
+      for (const { kind, item } of group) {
+        const hit = r + item.size * (kind === 'tree' ? .31 : .7)
+        if (sq(item.x - x) + sq(item.y - y) < sq(hit)) return false
+      }
     }
     return true
   }
 
   getSpawnPoint(side = 'blue') {
-    return side === 'red'
-      ? { x: this.width * 0.87, y: this.height * 0.51 }
-      : { x: this.width * 0.13, y: this.height * 0.51 }
+    const desired = side === 'red'
+      ? { x: this.width * .87, y: this.height * .51 }
+      : { x: this.width * .13, y: this.height * .51 }
+    if (this.isWalkable(desired.x, desired.y, 14)) return desired
+    // Keep original start location whenever possible; find reachable ground
+    // nearby when a procedural rock/tree happens to obstruct the exact spot.
+    for (let radius = 24; radius <= 300; radius += 24) {
+      for (let step = 0; step < 24; step++) {
+        const a = step * Math.PI / 12
+        const p = { x: desired.x + Math.cos(a) * radius,
+          y: desired.y + Math.sin(a) * radius }
+        if (this.isWalkable(p.x, p.y, 14)) return p
+      }
+    }
+    return desired
   }
 
   getNavigationGrid(cellSize = 48, unitRadius = 13) {
-    const size = clamp(Math.floor(cellSize) || 48, 20, 128)
+    const size = clamp(Number.isFinite(cellSize) ? Math.floor(cellSize) : 48, 20, 128)
+    const radius = clamp(Number.isFinite(unitRadius) ? unitRadius : 13, 0, 120)
     const columns = Math.ceil(this.width / size)
     const rows = Math.ceil(this.height / size)
     const cells = new Uint8Array(columns * rows)
     for (let row = 0; row < rows; row++) {
       for (let column = 0; column < columns; column++) {
-        const x = Math.min(this.width - unitRadius, (column + 0.5) * size)
-        const y = Math.min(this.height - unitRadius, (row + 0.5) * size)
-        cells[row * columns + column] = this.isWalkable(x, y, unitRadius) ? 1 : 0
+        const x = Math.min(this.width - radius, (column + 0.5) * size)
+        const y = Math.min(this.height - radius, (row + 0.5) * size)
+        cells[row * columns + column] = this.isWalkable(x, y, radius) ? 1 : 0
       }
     }
     return { cellSize: size, columns, rows, cells }
