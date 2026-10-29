@@ -1,94 +1,106 @@
-/**
- * Shadow Realms — Step 43: bridge ambush signals, NO extra enemy spawns.
- * Gives the EnemySquadSystem a short-lived focus on a nearby live player,
- * but only when an existing enemy can support that ambush.
- */
 const finite = Number.isFinite;
-const pos = p => finite(p?.x) && finite(p?.y);
-const dist = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
-const clamp = (value,low,high) => Math.max(low,Math.min(high,value));
-const safe = (value,fallback) => finite(value) ? value : fallback;
-const blue = u => u?.id != null && u.team === 'blue' && u.alive !== false && finite(u.hp) && u.hp > 0 && pos(u);
-const red = u => u?.id != null && u.team === 'red' && u.alive !== false && finite(u.hp) && u.hp > 0 && pos(u);
+const point = p => finite(p?.x) && finite(p?.y);
+const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const bounded = (value, fallback, low, high) => clamp(finite(value) ? value : fallback, low, high);
+const playerAlive = u => u?.id != null && u.team === 'blue' && u.alive !== false &&
+  finite(u.hp) && u.hp > 0 && point(u);
+const enemyAlive = u => u?.id != null && u.team === 'red' && u.alive !== false &&
+  finite(u.hp) && u.hp > 0 && point(u);
 
 export class AmbushSystem {
-  constructor({map,getPlayers = () => [],getEnemies = () => [],activationRadius = 255,
-    supportRadius = 800,focusSeconds = 4,onEvent = null} = {}) {
-    if (!finite(map?.width) || typeof map?.isWalkable !== 'function')
+  constructor({ map, getPlayers = () => [], getEnemies = () => [],
+    activationRadius = 255, supportRadius = 800, focusSeconds = 4, onEvent = null } = {}) {
+    if (!finite(map?.width) || map.width <= 0 || !finite(map?.height) || map.height <= 0 ||
+        typeof map.isWalkable !== 'function')
       throw new TypeError('AmbushSystem needs WorldMap');
     this.map = map;
     this.getPlayers = typeof getPlayers === 'function' ? getPlayers : () => getPlayers;
     this.getEnemies = typeof getEnemies === 'function' ? getEnemies : () => getEnemies;
-    this.activationRadius = clamp(safe(activationRadius,255),60,550);
-    this.supportRadius = clamp(safe(supportRadius,800),150,2000);
-    this.focusSeconds = clamp(safe(focusSeconds,4),1,20);
+    this.activationRadius = bounded(activationRadius, 255, 60, 550);
+    this.supportRadius = bounded(supportRadius, 800, 150, 2000);
+    this.focusSeconds = bounded(focusSeconds, 4, 1, 20);
     this.onEvent = typeof onEvent === 'function' ? onEvent : null;
-    this.timer = 0;
     this.time = 0;
+    this.timer = 0;
     this.focus = null;
     this.destroyed = false;
-    const bridges = Array.isArray(map.bridges) ? map.bridges.filter(pos).slice(0,3) : [];
-    this.zones = bridges.map((p,i) => ({
-      id:`river-ambush-${i+1}`,x:p.x,y:p.y,triggered:false,cooldown:0,
+    const bridges = Array.isArray(map.bridges) ? map.bridges.filter(point).slice(0, 3) : [];
+    this.zones = bridges.map((bridge, index) => ({
+      id: `river-ambush-${index + 1}`, x: bridge.x, y: bridge.y,
+      triggered: false, cooldown: 0,
     }));
   }
 
-  #emit(name,data) {try{this.onEvent?.(name,data);}catch{/* signal-only */}}
+  #emit(name, data) {
+    try { this.onEvent?.(name, data); }
+    catch { /* Observers must not interrupt enemy tactics. */ }
+  }
   #players() {
-    const units = this.getPlayers() || [];
-    return Array.isArray(units) ? units.filter(blue) : [];
+    const raw = this.getPlayers() || [];
+    return Array.isArray(raw) ? raw.filter(playerAlive) : [];
   }
   #enemies() {
-    const units = this.getEnemies() || [];
-    return Array.isArray(units) ? units.filter(red) : [];
+    const raw = this.getEnemies() || [];
+    return Array.isArray(raw) ? raw.filter(enemyAlive) : [];
   }
-  #validateFocus(players) {
-    if (!this.focus) return;
-    if (this.time >= this.focus.until || !players.some(p => p.id === this.focus.targetId))
-      this.focus = null;
+  #checkFocus(players) {
+    if (this.focus && (this.time >= this.focus.until ||
+        !players.some(player => player.id === this.focus.targetId))) this.focus = null;
   }
 
   update(dt) {
     if (this.destroyed || !finite(dt) || dt <= 0) return this.focus;
-    const step = Math.min(dt,.1);
-    this.time += step;
-    this.timer += step;
+    const seconds = Math.min(dt, 0.1);
+    this.time += seconds;
+    this.timer += seconds;
     const players = this.#players();
-    this.#validateFocus(players);
-    if (this.focus || this.timer < .4) return this.focus;
+    this.#checkFocus(players);
+    if (this.focus || this.timer < 0.4) return this.focus;
     this.timer = 0;
     if (!players.length) return null;
     const enemies = this.#enemies();
     if (!enemies.length) return null;
     for (const zone of this.zones) {
-      if (zone.triggered || this.time < zone.cooldown) continue;
-      if (!enemies.some(unit => dist(unit,zone) <= this.supportRadius)) continue;
-      let target = null,nearest = this.activationRadius;
+      if (zone.triggered || this.time < zone.cooldown ||
+          !enemies.some(enemy => distance(enemy, zone) <= this.supportRadius)) continue;
+      let target = null;
+      let nearest = this.activationRadius;
       for (const player of players) {
-        const d = dist(player,zone);
-        if (d < nearest || (d === nearest && target && String(player.id) < String(target.id))) {
-          nearest = d;target = player;
+        const d = distance(player, zone);
+        if (d < nearest || (d === nearest && target &&
+            String(player.id) < String(target.id))) {
+          nearest = d;
+          target = player;
         }
       }
       if (!target) continue;
-      zone.triggered = true; // Each bridge signals once per mission/reset.
-      this.focus = {targetId:target.id,until:this.time+this.focusSeconds,zoneId:zone.id};
-      this.#emit('triggered',{zoneId:zone.id,targetId:target.id});
+      zone.triggered = true;
+      this.focus = { targetId: target.id, until: this.time + this.focusSeconds, zoneId: zone.id };
+      this.#emit('triggered', { zoneId: zone.id, targetId: target.id });
       return this.focus;
     }
     return null;
   }
 
   getFocusId() {
-    if (!this.focus || this.time >= this.focus.until) {this.focus = null;return null;}
-    this.#validateFocus(this.#players());
+    if (this.destroyed || !this.focus) return null;
+    this.#checkFocus(this.#players());
     return this.focus?.targetId ?? null;
   }
-  getZones() {return this.zones.map(zone => ({...zone}));}
+  getZones() { return this.zones.map(zone => ({ ...zone })); }
   reset() {
-    this.focus = null;this.time = 0;this.timer = 0;
-    for (const zone of this.zones) {zone.triggered = false;zone.cooldown = 0;}
+    if (this.destroyed) return;
+    this.focus = null;
+    this.time = 0;
+    this.timer = 0;
+    for (const zone of this.zones) { zone.triggered = false; zone.cooldown = 0; }
   }
-  destroy() {this.reset();this.destroyed = true;this.onEvent = null;}
+  destroy() {
+    if (this.destroyed) return;
+    this.reset();
+    this.destroyed = true;
+    this.onEvent = null;
+  }
 }
 export default AmbushSystem;
