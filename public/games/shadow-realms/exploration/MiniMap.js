@@ -59,6 +59,7 @@ export class MiniMap {
     if (!['tap', 'select'].includes(event?.kind)) return false;
     const position = this.hitTest(event.screen, camera);
     if (!position) return false;
+    if (typeof camera.centerOn !== 'function') return false;
     camera.centerOn(position.x, position.y);
     return true;
   }
@@ -102,7 +103,8 @@ export class MiniMap {
     ctx.strokeStyle = '#d8c08b';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.roundRect(r.x - 3, r.y - 3, r.width + 6, r.height + 6, 8);
+    if (typeof ctx.roundRect === 'function') ctx.roundRect(r.x - 3, r.y - 3, r.width + 6, r.height + 6, 8);
+    else ctx.rect(r.x - 3, r.y - 3, r.width + 6, r.height + 6);
     ctx.fill();
     ctx.stroke();
     ctx.beginPath();
@@ -142,7 +144,8 @@ export class MiniMap {
 
     this.#drawFog(ctx, r);
 
-    for (const unit of this.getUnits() || []) {
+    const roster = this.getUnits();
+    for (const unit of (Array.isArray(roster) ? roster : [])) {
       if (unit?.alive === false || !goodPoint(unit)) continue;
       if (unit.team !== 'blue' && !this.fog?.isVisible(unit.x, unit.y)) continue;
       ctx.fillStyle = unit.team === 'blue' ? '#85d7ff' : '#f98b83';
@@ -150,12 +153,15 @@ export class MiniMap {
       ctx.arc(mx(unit.x), my(unit.y), unit.team === 'blue' ? 2.8 : 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
-    const view = camera.getVisibleBounds();
-    ctx.strokeStyle = '#fff7cf';
-    ctx.lineWidth = 1.1;
-    ctx.strokeRect(mx(view.left), my(view.top),
-      (view.right - view.left) / this.map.width * r.width,
-      (view.bottom - view.top) / this.map.height * r.height);
+    const view = typeof camera.getVisibleBounds === 'function' ? camera.getVisibleBounds() : null;
+    if (view && Number.isFinite(view.left) && Number.isFinite(view.top) &&
+        Number.isFinite(view.right) && Number.isFinite(view.bottom)) {
+      ctx.strokeStyle = '#fff7cf';
+      ctx.lineWidth = 1.1;
+      ctx.strokeRect(mx(view.left), my(view.top),
+        (view.right - view.left) / this.map.width * r.width,
+        (view.bottom - view.top) / this.map.height * r.height);
+    }
     ctx.restore();
   }
 
