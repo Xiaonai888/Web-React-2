@@ -35,12 +35,29 @@ export class VisualSystem {
     this.destroyed=false
     this.time=0
   }
-  units(){const list=this.getUnits();return Array.isArray(list)?list.filter(x=>x&&x.id!=null):[]}
+  units(){
+    const list=this.getUnits()
+    if(!Array.isArray(list))return []
+    const seen=new Set()
+    return list.filter(unit=>{
+      if(!unit||unit.id==null||seen.has(unit.id))return false
+      seen.add(unit.id);return true
+    })
+  }
   /** Explicit binding is also supported for units just spawned. */
   attachUnit(unit) {
     if(this.destroyed||!unit||unit.id==null||typeof unit.draw!=='function')return false
     const existing=this.attached.get(unit)
-    if(existing)return false
+    if(existing){
+      if(unit.renderer===existing.painter)return false
+      // index.html replaces the renderer when a Farmer becomes Guard/Archer.
+      // Adopt the newly installed painter as the external original, while
+      // continuing to present the upgraded Chibi role. Restore it on cleanup.
+      if(!this.replaceExisting){this.detachUnit(unit);return false}
+      existing.original=unit.renderer
+      unit.renderer=existing.painter
+      return true
+    }
     if(!this.replaceExisting&&typeof unit.renderer==='function')return false
     const original=unit.renderer
     const painter=(ctx,entity)=>this.sprites.paint(ctx,entity,this.animations.frame(entity))
@@ -74,7 +91,7 @@ export class VisualSystem {
   }
   onHealthEvent(name,data={}) {
     if(this.destroyed)return false
-    if(name==='damage'&&data.unit)this.animations.signal(data.unit,'hit')
+    if(name==='damage'&&data.unit && !data.killed)this.animations.signal(data.unit,'hit')
     return this.effects.onHealthEvent(name,data)
   }
   onCombatEvent(name,data={}) {
@@ -94,6 +111,7 @@ export class VisualSystem {
     if(this.destroyed)return
     for(const u of [...this.attached.keys()])this.detachUnit(u)
     this.animations.reset();this.effects.reset();this.atmosphere.reset()
+    this.attached.clear()
     this.destroyed=true
   }
 }
