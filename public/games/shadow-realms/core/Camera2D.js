@@ -3,6 +3,7 @@
  *
  * World coordinates stay in normal 2D units. Only the view is vertically
  * compressed (tilt). Characters can be drawn upright at projected positions.
+ * Step 45 — safe input arithmetic, stable pointer-centred zoom and clamps.
  * This module knows nothing about HTML, input, units, or map artwork.
  */
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -68,18 +69,20 @@ export class Camera2D {
   }
 
   centerOn(worldX, worldY, smoothing = 1) {
-    const t = clamp(smoothing, 0, 1)
+    const t = Number.isFinite(smoothing) ? clamp(smoothing, 0, 1) : 1
     if (Number.isFinite(worldX)) this.x += (worldX - this.x) * t
     if (Number.isFinite(worldY)) this.y += (worldY - this.y) * t
     this.#clampPosition()
   }
 
   panWorld(dx, dy) {
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return
     this.centerOn(this.x + dx, this.y + dy)
   }
 
   // Dragging right moves the map right, so the camera moves left.
   panScreen(dx, dy) {
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return
     this.panWorld(-dx / this.zoom, -dy / (this.zoom * this.tilt))
   }
 
@@ -99,10 +102,12 @@ export class Camera2D {
 
   // Zoom around a mouse pointer or touch point, not just the screen center.
   zoomAt(nextZoom, screenX = this.viewportWidth / 2, screenY = this.viewportHeight / 2) {
-    const before = this.screenToWorld(screenX, screenY)
+    const px = Number.isFinite(screenX) ? screenX : this.viewportWidth / 2
+    const py = Number.isFinite(screenY) ? screenY : this.viewportHeight / 2
+    const before = this.screenToWorld(px, py)
     this.zoom = clamp(positive(nextZoom, this.zoom), this.minZoom, this.maxZoom)
-    this.x = before.x - (screenX - this.viewportWidth / 2) / this.zoom
-    this.y = before.y - (screenY - this.viewportHeight / 2) / (this.zoom * this.tilt)
+    this.x = before.x - (px - this.viewportWidth / 2) / this.zoom
+    this.y = before.y - (py - this.viewportHeight / 2) / (this.zoom * this.tilt)
     this.#clampPosition()
     return this.zoom
   }
