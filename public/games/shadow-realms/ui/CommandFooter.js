@@ -15,6 +15,34 @@
  */
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+const MODES = ['select', 'move', 'harvest', 'build']
+const LOCALES = {
+  en: {resources:'Resources',rice:'Rice',wood:'Wood',villagers:'Villagers',commands:'Commands',
+    selection:'Selection',select:'Select',move:'Move',harvest:'Harvest',build:'Build',
+    farmer:'Farmer',spawn:'Spawn Farmer',field:'Go Field',return:'Return',
+    house:'House',barn:'Barn',cancel:'Cancel',ready:'Ready for command',touch:'Touch Control',
+    touchNote:'Use these buttons instead of right-click.',hint:'Left click select • Right click move'},
+  km: {resources:'ធនធាន',rice:'ស្រូវ',wood:'ឈើ',villagers:'កសិករ',commands:'បញ្ជា',
+    selection:'ការជ្រើសរើស',select:'ជ្រើសរើស',move:'ផ្លាស់ទី',harvest:'ប្រមូលផល',build:'សាងសង់',
+    farmer:'កសិករ',spawn:'បន្ថែមកសិករ',field:'ទៅវាលស្រែ',return:'ត្រឡប់',
+    house:'ផ្ទះ',barn:'ឃ្លាំង',cancel:'បោះបង់',ready:'រង់ចាំបញ្ជា',touch:'បញ្ជាប៉ះ',
+    touchNote:'ប្រើប៊ូតុងនេះជំនួសចុចកណ្ដុរស្ដាំ',hint:'ចុចឆ្វេងជ្រើសរើស • ចុចស្ដាំផ្លាស់ទី'},
+  zh: {resources:'资源',rice:'稻米',wood:'木材',villagers:'村民',commands:'命令',
+    selection:'选择',select:'选择',move:'移动',harvest:'收获',build:'建造',
+    farmer:'农民',spawn:'添加农民',field:'去稻田',return:'返回',
+    house:'房屋',barn:'仓库',cancel:'取消',ready:'等待命令',touch:'触控',
+    touchNote:'使用按钮代替鼠标右键',hint:'左键选择 • 右键移动'},
+  ja: {resources:'資源',rice:'米',wood:'木材',villagers:'村人',commands:'指示',
+    selection:'選択',select:'選択',move:'移動',harvest:'収穫',build:'建設',
+    farmer:'農民',spawn:'農民を追加',field:'田んぼへ',return:'戻る',
+    house:'家',barn:'倉庫',cancel:'取消',ready:'指示待ち',touch:'タッチ操作',
+    touchNote:'右クリックの代わりに操作ボタンを使用',hint:'左クリックで選択 • 右クリックで移動'},
+  ko: {resources:'자원',rice:'쌀',wood:'나무',villagers:'주민',commands:'명령',
+    selection:'선택',select:'선택',move:'이동',harvest:'수확',build:'건설',
+    farmer:'농부',spawn:'농부 추가',field:'논으로',return:'귀환',
+    house:'집',barn:'창고',cancel:'취소',ready:'명령 대기',touch:'터치 조작',
+    touchNote:'오른쪽 클릭 대신 버튼 사용',hint:'왼쪽 클릭 선택 • 오른쪽 클릭 이동'},
+};
 
 function el(tag, className = '', text = '') {
   const node = document.createElement(tag)
@@ -39,19 +67,63 @@ export class CommandFooter {
   constructor({ root = document.body, onAction = null } = {}) {
     this.root = root
     this.onAction = typeof onAction === 'function' ? onAction : null
+    const language = String(document.documentElement?.lang || 'en').split('-')[0]
+    this.language = Object.hasOwn(LOCALES, language) ? language : 'en'
+    this.translations = LOCALES[this.language]
     this.state = {
       rice: 0,
       wood: 0,
       villagers: 0,
       selected: 'None',
       mode: 'select',
-      hint: 'Left click select • Right click move',
+      hint: this.translations.hint,
       zoom: 100,
       touchMode: 'select',
     }
 
     this.nodes = {}
     this.handleClick = event => this.#onClick(event)
+  }
+
+  #localize(shell) {
+    const t = this.translations
+    const put = (selector, label) => {
+      const element = shell.querySelector(selector)
+      if (element && typeof label === 'string') element.textContent = label
+    }
+    const headings = shell.querySelectorAll('.sr-ui-title')
+    ;[t.resources, t.commands, t.selection].forEach((value, index) => {
+      if (headings[index]) headings[index].textContent = value
+    })
+    const resourceLabels = shell.querySelectorAll('.sr-ui-resource-label')
+    ;[t.rice, t.wood, t.villagers].forEach((value, index) => {
+      if (resourceLabels[index]) resourceLabels[index].textContent = value
+    })
+    const groups = shell.querySelectorAll('.sr-ui-group-label')
+    if (groups[0]) groups[0].textContent = t.farmer
+    if (groups[1]) groups[1].textContent = t.build
+    for (const button of shell.querySelectorAll('[data-mode]')) {
+      button.textContent = t[button.dataset.mode] || button.textContent
+    }
+    for (const button of shell.querySelectorAll('[data-touch]')) {
+      button.textContent = t[button.dataset.touch] || button.textContent
+    }
+    const commands = {
+      spawnFarmer: t.spawn, sendToField: t.field, returnHome: t.return,
+      ghostHouse: t.house, ghostBarn: t.barn, cancelBuild: t.cancel,
+    }
+    for (const button of shell.querySelectorAll('[data-action]')) {
+      if (commands[button.dataset.action]) button.textContent = commands[button.dataset.action]
+    }
+    put('.sr-ui-topbar-text', 'Chibi Strategy')
+    put('.sr-ui-selected-sub', t.ready)
+    put('.sr-ui-mobile-title', t.touch)
+    put('.sr-ui-mobile-note', t.touchNote)
+    put('.sr-ui-hint', t.hint)
+    const zoomIn = shell.querySelector('[data-action="zoomIn"]')
+    const zoomOut = shell.querySelector('[data-action="zoomOut"]')
+    if (zoomIn) zoomIn.setAttribute('aria-label', 'Zoom in')
+    if (zoomOut) zoomOut.setAttribute('aria-label', 'Zoom out')
   }
 
   mount() {
@@ -143,6 +215,7 @@ export class CommandFooter {
       </div>
     `
 
+    this.#localize(shell)
     this.nodes.shell = shell
     this.nodes.bindings = Object.fromEntries(
       [...shell.querySelectorAll('[data-bind]')].map(node => [node.dataset.bind, node])
@@ -173,13 +246,13 @@ export class CommandFooter {
   }
 
   setMode(mode) {
-    this.state.mode = mode || 'select'
+    this.state.mode = MODES.includes(mode) ? mode : 'select'
     this.render()
     this.onAction?.('mode', { mode: this.state.mode })
   }
 
   setTouchMode(mode) {
-    this.state.touchMode = mode || 'select'
+    this.state.touchMode = MODES.includes(mode) ? mode : 'select'
     this.render()
     this.onAction?.('touchMode', { mode: this.state.touchMode })
   }
@@ -194,27 +267,35 @@ export class CommandFooter {
     if (b.zoom) b.zoom.textContent = `${this.state.zoom}%`
 
     for (const node of this.nodes.modeButtons || []) {
-      node.classList.toggle('is-active', node.dataset.mode === this.state.mode)
+      const active = node.dataset.mode === this.state.mode
+      node.classList.toggle('is-active', active)
+      node.setAttribute('aria-pressed', String(active))
     }
     for (const node of this.nodes.touchButtons || []) {
-      node.classList.toggle('is-active', node.dataset.touch === this.state.touchMode)
+      const active = node.dataset.touch === this.state.touchMode
+      node.classList.toggle('is-active', active)
+      node.setAttribute('aria-pressed', String(active))
     }
   }
 
   #onClick(event) {
-    const actionNode = event.target.closest('[data-action]')
+    const target = event?.target
+    if (!target?.closest || !this.nodes.shell?.contains(target)) return
+    const button = target.closest('button')
+    if (!button || button.disabled) return
+    const actionNode = button.closest('[data-action]')
     if (actionNode) {
       this.onAction?.(actionNode.dataset.action, {})
       return
     }
 
-    const modeNode = event.target.closest('[data-mode]')
+    const modeNode = button.closest('[data-mode]')
     if (modeNode) {
       this.setMode(modeNode.dataset.mode)
       return
     }
 
-    const touchNode = event.target.closest('[data-touch]')
+    const touchNode = button.closest('[data-touch]')
     if (touchNode) {
       this.setTouchMode(touchNode.dataset.touch)
     }
@@ -263,6 +344,8 @@ export class CommandFooter {
       .sr-ui-mobile-btn{border:1px solid rgba(255,255,255,.08);background:rgba(35,47,63,.92);color:#f8fafc;padding:10px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer}
       .sr-ui-mobile-btn.is-active{background:#f6b800;color:#111827;border-color:#f6b800}
       .sr-ui-mobile-note{margin-top:8px;font-size:10px;line-height:1.4;color:rgba(255,255,255,.56)}
+      .sr-ui-shell button:focus-visible{outline:2px solid #ffdc75;outline-offset:2px}
+      .sr-ui-shell button:disabled{opacity:.4;cursor:not-allowed}
       @media (max-width:980px){
         .sr-ui-footer{grid-template-columns:1fr;gap:8px;padding:10px}
         .sr-ui-panel--center{order:3}
