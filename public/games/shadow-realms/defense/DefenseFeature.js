@@ -58,7 +58,7 @@ export function createFeature(scope) {
     place: (type, position, options) => defense.place(type, position, options),
     remove: id => defense.remove(id),
     arm: type => {
-      if (disposed || !getDefenseBlueprint(type)) return false;
+      if (disposed || !getDefenseBlueprint(type) || !defense.canAfford(type)) return false;
       armed = type;
       return true;
     },
@@ -69,8 +69,8 @@ export function createFeature(scope) {
   return {
     start() {
       if (started || disposed) return;
-      started = true;
       scope.provide('defense', api);
+      started = true;
       emit('defense:ready', defense.getSummary());
     },
     update(dt) {
@@ -84,6 +84,8 @@ export function createFeature(scope) {
       if (disposed || !armed || !['tap', 'select'].includes(event?.kind)) return false;
       const minimap = scope.get('exploration')?.miniMap;
       if (minimap?.enabled && minimap.hitTest?.(event.screen, scope.camera))
+        return false;
+      if (!Number.isFinite(event.world?.x) || !Number.isFinite(event.world?.y))
         return false;
       const type = armed;
       const result = defense.place(type, event.world);
