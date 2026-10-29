@@ -1,62 +1,70 @@
-/**
- * Shadow Realms — FeatureRegistry adapter for existing WorldMap + Camera.
- * Loaded dynamically by bootstrap/FeatureManifest.js; NO index.html edits now.
- *
- * One-time GameBootstrap integration later should set pointerPriority:'before'
- * so mini-map taps cannot also select a farmer on the underlying world.
- */
-import {FogOfWar} from './FogOfWar.js';
-import {MiniMap} from './MiniMap.js';
-import {StageZones} from './StageZones.js';
+/** Shadow Realms — exploration adapter for the existing feature registry. */
+import { FogOfWar } from './FogOfWar.js';
+import { MiniMap } from './MiniMap.js';
+import { StageZones } from './StageZones.js';
 
 export function createFeature(scope) {
-  if(!scope || !scope.map || !scope.camera || typeof scope.get!=='function') {
-    throw new TypeError('ExplorationFeature requires a bootstrap GameContext scope');
-  }
-  const allUnits = () => {
-    const player = scope.get('farmers',[]);
-    const units = scope.get('getUnits',null);
-    if(typeof units==='function')return units() || [];
-    return Array.isArray(player)?player:[];
+  if (!scope?.map || !scope.camera || typeof scope.get !== 'function' ||
+      typeof scope.provide !== 'function' || typeof scope.emit !== 'function')
+    throw new TypeError('ExplorationFeature requires GameContext');
+  const map = scope.map;
+  const getUnits = () => {
+    const getter = scope.get('getUnits',null);
+    const raw = typeof getter === 'function' ? getter() : scope.get('farmers',[]);
+    return Array.isArray(raw) ? raw : [];
   };
-  const playerUnits = () => allUnits().filter(u=>u && u.team==='blue' && u.alive!==false);
-  const map=scope.map;
+  const players = () => getUnits().filter(unit => unit?.team === 'blue' &&
+    unit.alive !== false && Number.isFinite(unit.hp) && unit.hp > 0 &&
+    Number.isFinite(unit.x) && Number.isFinite(unit.y));
+  const safeEmit = (name,data) => {
+    try { scope.emit(name,data); }
+    catch (error) { console.warn('Shadow Realms exploration observer failed:',name,error); }
+  };
   const fog = new FogOfWar(map);
-  const zones = new StageZones(map,{onDiscover:zone=>scope.emit('exploration:zone-discovered',{...zone})});
-  const miniMap = new MiniMap(map,{fog,zones,getUnits:allUnits});
-  let disposed=false;
-  let locale='km';
-  const localeValue = () => {
-    const lang = typeof document!=='undefined' ? document.documentElement.lang : 'km';
-    return ['km','en','zh','ja','ko'].includes(lang)?lang:'en';
+  const zones = new StageZones(map,{
+    onDiscover:zone => safeEmit('exploration:zone-discovered',{...zone}),
+  });
+  const miniMap = new MiniMap(map,{fog,zones,getUnits});
+  const api = Object.freeze({fog,zones,miniMap});
+  let disposed = false;
+  let started = false;
+  let elapsed = 0;
+  const locale = () => {
+    const value = typeof document === 'undefined' ? 'km' :
+      String(document.documentElement?.lang || 'km').split('-')[0];
+    return ['km','en','zh','ja','ko'].includes(value) ? value : 'en';
   };
   return {
-    fog,zones,miniMap,
-    start(){
-      locale=localeValue();
-      scope.provide('exploration',{fog,zones,miniMap});
-      fog.refresh(playerUnits());
-      zones.update(0.01,playerUnits());
-      scope.emit('exploration:ready',{zones:zones.getSummary(),fog:fog.getSummary()});
+    ...api,
+    start() {
+      if (disposed || started) return;
+      started = true;
+      scope.provide('exploration',api);
+      fog.refresh(players());
+      zones.update(.01,players());
+      safeEmit('exploration:ready',{fog:fog.getSummary(),zones:zones.getSummary()});
     },
-    update(dt){
-      if(disposed)return;
-      const units=playerUnits();
+    update(dt) {
+      if (disposed || !started || !Number.isFinite(dt) || dt <= 0) return;
+      const units = players();
       fog.update(dt,units);
-      zones.update(dt,units);
+      // Check zones at a modest cadence, but never postpone the first discovery.
+      elapsed += Math.min(.1,dt);
+      if (elapsed >= .12) {elapsed = 0;zones.update(dt,units);}
     },
-    render(ctx,camera){
-      if(disposed)return;
+    render(ctx,camera) {
+      if (disposed || !started) return;
       fog.draw(ctx,camera);
-      zones.draw(ctx,camera,fog,locale);
+      zones.draw(ctx,camera,fog,locale());
       miniMap.draw(ctx,camera);
     },
-    onPointer(event){return !disposed && miniMap.onPointer(event,scope.camera);},
-    dispose(){
-      if(disposed)return;
-      disposed=true;
+    onPointer(event) {
+      return !!(!disposed && started && miniMap.onPointer(event,scope.camera));
+    },
+    dispose() {
+      if (disposed) return;
+      disposed = true;
       miniMap.destroy();zones.destroy();fog.destroy();
-      // The owning GameContext scope releases exploration service by itself.
     },
   };
 }
