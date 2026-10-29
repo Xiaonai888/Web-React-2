@@ -164,6 +164,7 @@ const AuthorStorePendingBalancePage = lazy(() => import('./pages/Author/AuthorSt
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
 const AuthorAdsPage = lazy(() => import('./pages/Author/AuthorAdsPage'))
+const AuthorAdsLandingPage = lazy(() => import('./pages/Author/AuthorAdsLandingPage'))
 const AuthorPostsContentLibraryPage = lazy(() =>
   import('./pages/Author/AuthorPostsContentLibraryPage')
 )
@@ -1148,10 +1149,8 @@ const shouldShowOpeningAds =
   }
 />
 
-          <Route
-  path="/author/page/ads"
-  element={<LazyPage><AuthorAdsPage /></LazyPage>}
-/>
+          <Route path="/author/page/ads" element={<LazyPage><AuthorAdsLandingPage /></LazyPage>} />
+<Route path="/author/page/ads/boost-content" element={<LazyPage><AuthorAdsPage /></LazyPage>} />
           
 <Route
   path="/game/spin"
