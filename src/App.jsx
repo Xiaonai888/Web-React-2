@@ -8,6 +8,7 @@ import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from '
 import './i18n/appTranslations'
 import Footer from './components/Footer'
 import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
+import CountryGameAccessGuard from './components/common/CountryGameAccessGuard'
 import AuthorPageFooterShell from './components/AuthorPageFooterShell'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
@@ -589,7 +590,7 @@ const shouldShowOpeningAds =
   path="/game"
   element={
     <LazyPage>
-      <GamePage />
+      <CountryGameAccessGuard><GamePage /></CountryGameAccessGuard>
     </LazyPage>
   }
 />
@@ -1154,7 +1155,7 @@ const shouldShowOpeningAds =
   path="/game/spin"
   element={
     <LazyPage>
-      <SpinPage />
+      <CountryGameAccessGuard><SpinPage /></CountryGameAccessGuard>
     </LazyPage>
   }
 />
