@@ -1,57 +1,108 @@
-/**
- * Shadow Realms — bridge via the EXISTING FeatureRegistry and HealthSystem.
- * Later register in bootstrap/FeatureManifest.js (NOT in index.html):
- * defineGameFeature({id:'unit-progression',dependsOn:['runtime-clock'],
- *   load:()=>import('../progression/ProgressionFeature.js')});
- * All features use existing unit objects and the existing rice/wood ledger.
- */
-import {ExperienceSystem} from './ExperienceSystem.js';
-import {ResearchSystem} from './ResearchSystem.js';
-import {UnitUpgradeSystem} from './UnitUpgradeSystem.js';
-import {RESEARCH_RULES} from './ProgressionRules.js';
+/** Progression bridge for existing HealthSystem, shared Rice and Construction. */
+import { ExperienceSystem } from './ExperienceSystem.js';
+import { ResearchSystem } from './ResearchSystem.js';
+import { UnitUpgradeSystem } from './UnitUpgradeSystem.js';
+import { RESEARCH_RULES } from './ProgressionRules.js';
 
-export function createFeature(scope){
-  if(!scope||typeof scope.get!=='function')throw new TypeError('ProgressionFeature needs GameContext scope');
-  const health=scope.get('health'),rice=scope.get('rice'),construction=scope.get('construction');
-  if(!health||typeof health.damage!=='function')throw new Error('ProgressionFeature needs existing HealthSystem');
-  const getUnits=()=>{
-    const getter=scope.get('getUnits',null);
-    if(typeof getter==='function')return getter()||[];
-    const farmers=scope.get('farmers',[]),enemy=scope.get('enemyAI',null);
-    return [...(Array.isArray(farmers)?farmers:[]),...(enemy?.getUnits?.()||[])];
+export function createFeature(scope) {
+  if (!scope || typeof scope.get !== 'function' || typeof scope.provide !== 'function') {
+    throw new TypeError('ProgressionFeature needs GameContext scope');
+  }
+  const health = scope.get('health');
+  const rice = scope.get('rice');
+  const construction = scope.get('construction');
+  if (typeof health?.damage !== 'function') {
+    throw new Error('ProgressionFeature needs existing HealthSystem');
+  }
+  const getUnits = () => {
+    const getter = scope.get('getUnits', null);
+    if (typeof getter === 'function') {
+      const result = getter();
+      return Array.isArray(result) ? result : [];
+    }
+    const farmers = scope.get('farmers', []);
+    const enemy = scope.get('enemyAI', null);
+    const enemies = enemy?.getUnits?.() || [];
+    return [...(Array.isArray(farmers) ? farmers : []),
+      ...(Array.isArray(enemies) ? enemies : [])];
   };
-  const experience=new ExperienceSystem({getUnits,onEvent:(name,payload)=>scope.emit('progression:'+name,payload)});
-  const research=new ResearchSystem({rice,construction,onEvent:(name,payload)=>scope.emit('research:'+name,payload)});
-  const upgrades=new UnitUpgradeSystem({getUnits,experience,research,
-    onEvent:(name,payload)=>scope.emit('progression:'+name,payload)});
-  const api=Object.freeze({experience,research,upgrades,types:RESEARCH_RULES,
-    purchase:id=>research.purchase(id),
-    unit:id=>experience.get(id),
-    getSummary:()=>({experience:experience.getSummary(),research:research.getSummary()}),
+  const emit = (type, payload) => {
+    try { scope.emit(type, payload); }
+    catch (error) { console.warn('Shadow Realms progression event:', type, error); }
+  };
+  const experience = new ExperienceSystem({ getUnits,
+    onEvent: (name, payload) => emit('progression:' + name, payload) });
+  const research = new ResearchSystem({ rice, construction,
+    onEvent: (name, payload) => emit('research:' + name, payload) });
+  const upgrades = new UnitUpgradeSystem({ getUnits, experience, research,
+    onEvent: (name, payload) => emit('progression:' + name, payload) });
+  const api = Object.freeze({
+    experience, research, upgrades, types: RESEARCH_RULES,
+    purchase: id => research.purchase(id),
+    unit: id => experience.get(id),
+    getSummary: () => ({ experience: experience.getSummary(),
+      research: research.getSummary() }),
   });
-  let prior=null,observer=null,disposed=false;
-  return {
+  let prior = null;
+  let observer = null;
+  let started = false;
+  let disposed = false;
+
+  const restoreObserver = () => {
+    // A newer observer may still invoke ours. Keep its link to the prior
+    // observer intact until the newer observer is released.
+    if (observer && health.onEvent === observer) {
+      health.onEvent = prior;
+      observer = null;
+      prior = null;
+    }
+  };
+  const instance = {
     ...api,
-    start(){
-      // This is the only observation hook; preserve the Visual/Mission death handler.
-      prior=health.onEvent;
-      observer=function(event,payload){
-        try{if(typeof prior==='function')prior.call(health,event,payload);}
-        finally {if(!disposed)experience.onHealthEvent(event,payload);}
+    start() {
+      if (started || disposed) return;
+      prior = health.onEvent;
+      observer = function(event, payload) {
+        try {
+          if (typeof prior === 'function') prior.call(health, event, payload);
+        } catch (error) {
+          console.warn('Shadow Realms prior health observer:', error);
+        } finally {
+          if (!disposed) {
+            try { experience.onHealthEvent(event, payload); }
+            catch (error) { console.warn('Shadow Realms experience health observer:', error); }
+          }
+        }
       };
-      health.onEvent=observer;
-      scope.provide('progression',api);
-      upgrades.sync();
-      scope.emit('progression:ready',api.getSummary());
+      health.onEvent = observer;
+      try {
+        scope.provide('progression', api);
+        upgrades.sync();
+        started = true;
+        emit('progression:ready', api.getSummary());
+      } catch (error) {
+        restoreObserver();
+        throw error;
+      }
     },
-    update(){if(!disposed)upgrades.sync();},
-    render(){},
-    onPointer(){return false;},
-    dispose(){
-      if(disposed)return;disposed=true;
-      if(health.onEvent===observer)health.onEvent=prior;
-      upgrades.destroy();experience.reset();research.reset();
+    update() {
+      if (started && !disposed) upgrades.sync();
+    },
+    render() {},
+    onPointer() { return false; },
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      started = false;
+      restoreObserver();
+      try { upgrades.destroy(); }
+      finally {
+        try { experience.reset(); }
+        finally { research.reset(); }
+      }
     },
   };
+  return instance;
 }
+
 export default createFeature;
