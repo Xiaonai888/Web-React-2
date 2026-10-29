@@ -64,7 +64,10 @@ export function createFeature(scope) {
         catch(error) {reportError('prior wave observer',error);}
         if (disposed) return;
         try {boss.onWaveEvent(name,data);} catch(error) {reportError('boss wave',error);}
-        if (name === 'enemy_spawned' && data?.unit) squads.register(data.unit);
+        if (name === 'enemy_spawned' && data?.unit) {
+          try { squads.register(data.unit); }
+          catch (error) { reportError('squad spawn',error); }
+        }
       };
       healthObserver = function(name,data) {
         try {if (typeof oldHealth === 'function') oldHealth.call(health,name,data);}
@@ -81,7 +84,9 @@ export function createFeature(scope) {
           enemyAI.decisionTimer = Infinity;
           takeover = true;
         }
-        for (const unit of enemyAI.getUnits()) squads.register(unit);
+        const existing = enemyAI.getUnits();
+        for (const unit of (Array.isArray(existing) ? existing : []))
+          squads.register(unit);
         scope.provide('enemyStrategy',api);
         started = true;
         emit('strategy','ready',api.getSummary());
@@ -98,7 +103,11 @@ export function createFeature(scope) {
       catch(error) {reportError('squads',error);}
       try {boss.update(dt);} catch(error) {reportError('boss update',error);}
     },
-    render(ctx,camera) {if (!disposed && started) boss.draw(ctx,camera);},
+    render(ctx,camera) {
+      if (disposed || !started) return;
+      try { boss.draw(ctx,camera); }
+      catch (error) { reportError('boss render',error); }
+    },
     onPointer() {return false;},
     dispose() {
       if (disposed) return;
