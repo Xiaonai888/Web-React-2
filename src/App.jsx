@@ -87,6 +87,7 @@ import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 import { syncReaderOneSignalIdentity } from './services/readerOneSignal.service'
 
 
+const AuthorAdsProductEditorPage = lazy(() => import('./pages/Author/AuthorAdsProductEditorPage'))
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const MyFramePage = lazy(() => import('./pages/MyFramePage'))
 const AppPage = lazy(() => import('./pages/Me/AppPage'))
@@ -1786,6 +1787,7 @@ const shouldShowOpeningAds =
         <Route path="/author/top-supporters" element={<AuthorTopSupportersPage />} />
         <Route path="/author/monthly-earnings" element={<AuthorMonthlyEarningsPage />} />
         <Route path="/app" element={<LazyPage><AppPage /></LazyPage>} />
+        <Route path="/author/page/ads/boost-pdf" element={<LazyPage><AuthorAdsProductEditorPage productType="pdf" /></LazyPage>} />
         <Route path="/apps/shadow-fx" element={
   <LazyPage><AppAccessGuard appKey="shadow-fx"><ShadowFXPage /></AppAccessGuard></LazyPage>
 } />
