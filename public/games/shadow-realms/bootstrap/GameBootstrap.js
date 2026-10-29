@@ -36,6 +36,7 @@ export class GameBootstrap {
     this.handlers = null;
     this.installed = false;
     this.startPromise = null;
+    this.registered = false;
     this.destroyed = false;
   }
 
@@ -49,7 +50,11 @@ export class GameBootstrap {
   }
 
   async #start() {
-    this.registry.registerAll(this.manifest);
+    // A failed optional feature can be retried without registering IDs twice.
+    if (!this.registered) {
+      this.registry.registerAll(this.manifest);
+      this.registered = true;
+    }
     await this.registry.start();
     try { this.attach(); }
     catch (error) { await this.registry.stop(); throw error; }
@@ -66,17 +71,19 @@ export class GameBootstrap {
     const registry = this.registry;
     const handlers = {
       update: (dt, ...args) => {
-        if (typeof old.update === 'function') old.update(dt, ...args);
+        if (typeof old.update === 'function') old.update.call(game, dt, ...args);
         registry.update(dt);
       },
       render: (ctx, camera, ...args) => {
-        if (typeof old.render === 'function') old.render(ctx, camera, ...args);
+        if (typeof old.render === 'function') old.render.call(game, ctx, camera, ...args);
         registry.render(ctx, camera);
       },
       pointer: (event, ...args) => {
         if (this.pointerPriority === 'before' && registry.onPointer(event)) return true;
-        const result = typeof old.pointer === 'function' ? old.pointer(event, ...args) : undefined;
-        if (this.pointerPriority === 'after') registry.onPointer(event);
+        const result = typeof old.pointer === 'function' ? old.pointer.call(game, event, ...args) : undefined;
+        // If the original game already consumed the tap, never issue it twice.
+        if (this.pointerPriority === 'after' && result !== true &&
+            registry.onPointer(event)) return true;
         return result;
       },
     };
