@@ -17,7 +17,11 @@ registerTranslationNamespace('forgotPasswordPage', {
     forgotPassword: 'Forgot Password',
     enterResetCode: 'Enter Reset Code',
     emailSubtitle: 'Enter your Gmail and we will send you a 6-digit reset code.',
-    resetSubtitle: 'Enter the 6-digit code from your email and create a new password.',
+    resetSubtitle: 'Enter the 6-digit code sent to your email.',
+    passwordStepTitle: 'Create New Password',
+    passwordStepSubtitle: 'Choose a strong password to secure your account.',
+    continue: 'Continue',
+    back: 'Back',
     gmail: 'Gmail',
     sending: 'Sending...',
     sendOtp: 'Send OTP Code',
@@ -48,7 +52,11 @@ registerTranslationNamespace('forgotPasswordPage', {
     forgotPassword: 'ភ្លេចពាក្យសម្ងាត់',
     enterResetCode: 'បញ្ចូលកូដកំណត់ឡើងវិញ',
     emailSubtitle: 'បញ្ចូល Gmail របស់អ្នក ហើយយើងនឹងផ្ញើកូដ 6 ខ្ទង់ទៅអ្នក។',
-    resetSubtitle: 'បញ្ចូលកូដ 6 ខ្ទង់ពីអ៊ីមែល ហើយបង្កើតពាក្យសម្ងាត់ថ្មី។',
+    resetSubtitle: 'បញ្ចូលកូដ 6 ខ្ទង់ដែលបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។',
+    passwordStepTitle: 'បង្កើតពាក្យសម្ងាត់ថ្មី',
+    passwordStepSubtitle: 'កំណត់ពាក្យសម្ងាត់រឹងមាំសម្រាប់គណនីរបស់អ្នក។',
+    continue: 'បន្ត',
+    back: 'ត្រឡប់ក្រោយ',
     gmail: 'Gmail',
     sending: 'កំពុងផ្ញើ...',
     sendOtp: 'ផ្ញើកូដ OTP',
@@ -79,7 +87,11 @@ registerTranslationNamespace('forgotPasswordPage', {
     forgotPassword: '忘记密码',
     enterResetCode: '输入重置验证码',
     emailSubtitle: '输入你的 Gmail，我们会发送一个 6 位重置验证码。',
-    resetSubtitle: '输入邮件中的 6 位验证码并创建新密码。',
+    resetSubtitle: '输入发送到邮箱的 6 位验证码。',
+    passwordStepTitle: '创建新密码',
+    passwordStepSubtitle: '设置安全的新密码以保护账户。',
+    continue: '继续',
+    back: '返回',
     gmail: 'Gmail',
     sending: '发送中...',
     sendOtp: '发送 OTP 验证码',
@@ -110,7 +122,11 @@ registerTranslationNamespace('forgotPasswordPage', {
     forgotPassword: 'パスワードを忘れた場合',
     enterResetCode: 'リセットコードを入力',
     emailSubtitle: 'Gmail を入力すると、6桁のリセットコードを送信します。',
-    resetSubtitle: 'メールの6桁コードを入力して、新しいパスワードを作成してください。',
+    resetSubtitle: 'メールで届いた6桁のコードを入力してください。',
+    passwordStepTitle: '新しいパスワードを作成',
+    passwordStepSubtitle: '安全な新しいパスワードを設定してください。',
+    continue: '続ける',
+    back: '戻る',
     gmail: 'Gmail',
     sending: '送信中...',
     sendOtp: 'OTPコードを送信',
@@ -141,7 +157,11 @@ registerTranslationNamespace('forgotPasswordPage', {
     forgotPassword: '비밀번호 찾기',
     enterResetCode: '재설정 코드 입력',
     emailSubtitle: 'Gmail을 입력하면 6자리 재설정 코드를 보내드립니다.',
-    resetSubtitle: '이메일의 6자리 코드를 입력하고 새 비밀번호를 만드세요.',
+    resetSubtitle: '이메일로 받은 6자리 코드를 입력하세요.',
+    passwordStepTitle: '새 비밀번호 만들기',
+    passwordStepSubtitle: '계정을 보호할 새 비밀번호를 설정하세요.',
+    continue: '계속',
+    back: '뒤로',
     gmail: 'Gmail',
     sending: '전송 중...',
     sendOtp: 'OTP 코드 보내기',
@@ -181,6 +201,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [otpShake, setOtpShake] = useState(false)
 
   const otp = otpDigits.join('')
 
@@ -278,6 +299,19 @@ export default function ForgotPasswordPage() {
     }
   }
 
+  function handleOtpContinue(event) {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+    if (!/^\d{6}$/.test(otp)) {
+      setError(t('forgotPasswordPage.enterCode'))
+      setOtpShake(true)
+      setTimeout(() => setOtpShake(false), 450)
+      return
+    }
+    setStep('password')
+  }
+
   async function handleResetPassword(event) {
     event.preventDefault()
     setMessage('')
@@ -345,6 +379,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="app-page min-h-screen bg-[#f5f3fa] px-4 py-8 dark:bg-[var(--shadow-bg-page)]">
+      <style>{`@keyframes shadowOtpPop{0%{transform:scale(.83)}60%{transform:scale(1.13)}100%{transform:scale(1)}}@keyframes shadowOtpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}.shadow-otp-filled{animation:shadowOtpPop .25s ease-out}.shadow-otp-shake{animation:shadowOtpShake .35s ease-in-out}@media(prefers-reduced-motion:reduce){.shadow-otp-filled,.shadow-otp-shake{animation:none}}`}</style>
       <section className="mx-auto max-w-[430px] rounded-[26px] bg-white p-5 shadow-[0_14px_40px_rgba(17,24,39,0.06)] ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:shadow-[var(--shadow-shadow)] dark:ring-white/10">
         <div className="mb-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white dark:bg-[#7c3aed]">
@@ -354,13 +389,17 @@ export default function ForgotPasswordPage() {
           <h1 className="text-[25px] font-extrabold tracking-tight text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {step === 'email'
               ? t('forgotPasswordPage.forgotPassword')
-              : t('forgotPasswordPage.enterResetCode')}
+              : step === 'otp'
+                ? t('forgotPasswordPage.enterResetCode')
+                : t('forgotPasswordPage.passwordStepTitle')}
           </h1>
 
           <p className="mx-auto mt-2 max-w-[310px] text-[13px] leading-5 text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
             {step === 'email'
               ? t('forgotPasswordPage.emailSubtitle')
-              : t('forgotPasswordPage.resetSubtitle')}
+              : step === 'otp'
+                ? t('forgotPasswordPage.resetSubtitle')
+                : t('forgotPasswordPage.passwordStepSubtitle')}
           </p>
         </div>
 
@@ -403,26 +442,13 @@ export default function ForgotPasswordPage() {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
-                {t('forgotPasswordPage.gmail')}
-              </span>
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="yourname@gmail.com"
-                autoComplete="email"
-                className="h-12 w-full rounded-[16px] border border-[#d9dce3] bg-white px-4 text-[14px] font-semibold text-[#111827] outline-none placeholder:text-[#9ca3af] focus:border-[#111827] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:placeholder:text-[var(--shadow-placeholder)] dark:focus:border-[#a78bfa]"
-              />
-            </label>
-
+          step === 'otp' ? (
+          <form onSubmit={handleOtpContinue} className="space-y-5">
             <label className="block">
               <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.otpCode')}
               </span>
-              <div className="grid grid-cols-6 gap-2">
+              <div className={`grid grid-cols-6 gap-2 ${otpShake ? 'shadow-otp-shake' : ''}`}>
                 {otpDigits.map((digit, index) => (
                   <input
                     key={index}
@@ -444,12 +470,18 @@ export default function ForgotPasswordPage() {
                       'forgotPasswordPage.otpDigit',
                       { number: index + 1 }
                     )}
-                    className="h-12 rounded-[14px] border border-[#d9dce3] bg-white text-center text-[20px] font-extrabold text-[#111827] outline-none transition focus:border-[#111827] focus:bg-[#fafafe] focus:shadow-[0_0_0_4px_rgba(17,24,39,0.06)] dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)] dark:focus:border-[#a78bfa] dark:focus:bg-[var(--shadow-input-bg)] dark:focus:shadow-[0_0_0_4px_rgba(167,139,250,0.08)]"
+                    className={`shadow-otp-digit h-12 min-w-0 rounded-[14px] border text-center text-[20px] font-extrabold outline-none transition-all duration-200 focus:-translate-y-1 focus:ring-4 focus:ring-blue-400/20 ${digit ? 'shadow-otp-filled border-blue-500 bg-gradient-to-b from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/20 dark:border-blue-400' : 'border-[#d9dce3] bg-white text-[#111827] focus:border-blue-500 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-input-bg)] dark:text-[var(--shadow-text-primary)]'}`}
                   />
                 ))}
               </div>
             </label>
 
+            <button type="submit" disabled={loading} className="h-12 w-full rounded-[16px] bg-[#111827] text-[14px] font-extrabold text-white shadow-[0_12px_26px_rgba(17,24,39,0.18)] dark:bg-[#7c3aed]">{t('forgotPasswordPage.continue')}</button>
+            <button type="button" onClick={handleSendOtp} disabled={loading} className="w-full text-center text-[13px] font-bold text-blue-600 dark:text-blue-300">{t('forgotPasswordPage.resendCode')}</button>
+            <button type="button" onClick={() => { setError(''); setMessage(''); setStep('email') }} className="w-full text-center text-[12px] font-semibold text-[#8d94a1]">{t('forgotPasswordPage.back')}</button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-4">
             <label className="block">
               <span className="mb-2 block text-[13px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 {t('forgotPasswordPage.newPassword')}
@@ -510,16 +542,9 @@ export default function ForgotPasswordPage() {
                 : t('forgotPasswordPage.changePassword')}
             </button>
 
-            <button
-              type="button"
-              onClick={handleSendOtp}
-              disabled={loading}
-              className="h-11 w-full rounded-[16px] border border-[#d9dce3] bg-white text-[13px] font-extrabold text-[#111827] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
-            >
-              {t('forgotPasswordPage.resendCode')}
-            </button>
+            <button type="button" onClick={() => { setError(''); setStep('otp'); setTimeout(() => otpRefs.current[0]?.focus(), 80) }} className="w-full text-center text-[13px] font-bold text-[#8d94a1]">{t('forgotPasswordPage.back')}</button>
           </form>
-        )}
+        ))}
 
         <div className="mt-5 text-center text-[13px] font-bold text-[#8d94a1] dark:text-[var(--shadow-text-secondary)]">
           {t('forgotPasswordPage.rememberPassword')}{' '}
