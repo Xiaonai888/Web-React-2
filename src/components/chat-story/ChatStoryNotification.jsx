@@ -234,6 +234,134 @@ export function ChatStoryNotificationOverlay({
   )
 }
 
+function NotificationCharacterOption({ character, active, onChoose }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-label={`Choose ${characterLabel(character)}`}
+      onClick={onChoose}
+      className={`flex w-[54px] shrink-0 flex-col items-center rounded-[10px] px-0.5 py-1 text-center active:scale-[0.97] ${active ? 'bg-[var(--shadow-bg-soft,#f5f5f8)]' : ''}`}
+    >
+      <span className={`flex h-10 w-10 items-center justify-center rounded-full ${active ? 'ring-[3px] ring-[#7c3aed] ring-offset-1 ring-offset-[var(--shadow-bg-surface,#fff)]' : 'ring-1 ring-[var(--shadow-border,#e5e7eb)]'}`}>
+        <NotificationAvatar character={character} size={40} />
+      </span>
+      <span className={`mt-1 w-full truncate text-[9px] font-semibold ${active ? 'text-[#7c3aed]' : 'text-[var(--shadow-text-secondary,#6b7280)]'}`}>
+        {characterLabel(character)}
+      </span>
+    </button>
+  )
+}
+
+function NotificationCharacterAction({ type, onClick }) {
+  const isAdd = type === 'add'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isAdd ? 'Add character' : 'More characters'}
+      className="flex w-[48px] shrink-0 flex-col items-center rounded-[10px] py-1 text-center active:scale-[0.97]"
+    >
+      <span className="relative flex h-10 w-10 items-center justify-center text-[var(--shadow-text-secondary,#6b7280)]">
+        {isAdd ? (
+          <>
+            <i className="fa-regular fa-user text-[16px]" />
+            <i className="fa-solid fa-plus absolute right-[7px] top-[9px] text-[7px]" />
+          </>
+        ) : <i className="fa-solid fa-chevron-down text-[16px]" />}
+      </span>
+      <span className="mt-1 text-[9px] font-semibold text-[var(--shadow-text-secondary,#6b7280)]">
+        {isAdd ? 'Add Character' : 'More'}
+      </span>
+    </button>
+  )
+}
+
+function NotificationCharacterMoreSheet({ open, characters, selectedId, onSelect, onClose }) {
+  const closeRef = useRef(null)
+  const sheetRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+    const previous = document.activeElement
+    closeRef.current?.focus()
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose?.()
+      }
+      if (event.key !== 'Tab') return
+      const buttons = Array.from(sheetRef.current?.querySelectorAll('button:not([disabled])') || [])
+      if (!buttons.length) return
+      if (event.shiftKey && document.activeElement === buttons[0]) {
+        event.preventDefault()
+        buttons[buttons.length - 1].focus()
+      } else if (!event.shiftKey && document.activeElement === buttons[buttons.length - 1]) {
+        event.preventDefault()
+        buttons[0].focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus()
+    }
+  }, [open, onClose])
+
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[10002] flex items-end justify-center overscroll-contain bg-black/75 sm:items-center"
+      onClick={onClose}
+    >
+      <section
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Choose a character"
+        onClick={(event) => event.stopPropagation()}
+        className="flex max-h-[82dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-[24px] bg-[var(--shadow-bg-surface,#fff)] text-[var(--shadow-text-primary,#111827)] shadow-2xl sm:rounded-[24px]"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--shadow-border,#e5e7eb)] px-5 py-4">
+          <h3 className="text-[17px] font-bold">Characters</h3>
+          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close character list" className="flex h-8 w-8 items-center justify-center rounded-full text-[23px]">×</button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5">
+          {characters.length ? (
+            <div className="grid grid-cols-4 gap-x-2 gap-y-5">
+              {characters.map((character) => {
+                const active = String(character.id) === selectedId
+                return (
+                  <button
+                    type="button"
+                    key={character.id}
+                    aria-pressed={active}
+                    onClick={() => onSelect(String(character.id))}
+                    className="flex min-w-0 flex-col items-center rounded-[12px] px-1 py-2 text-center active:scale-[0.97]"
+                  >
+                    <span className={`flex h-14 w-14 max-w-full items-center justify-center rounded-full ${active ? 'ring-[3px] ring-[#7c3aed] ring-offset-2 ring-offset-[var(--shadow-bg-surface,#fff)]' : 'ring-1 ring-[var(--shadow-border,#e5e7eb)]'}`}>
+                      <NotificationAvatar character={character} size={56} />
+                    </span>
+                    <span className={`mt-2 w-full truncate text-[11px] font-semibold ${active ? 'text-[#7c3aed]' : 'text-[var(--shadow-text-primary,#111827)]'}`}>
+                      {characterLabel(character)}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-[13px] text-[var(--shadow-text-secondary,#6b7280)]">No characters yet</p>
+          )}
+        </div>
+        <div className="shrink-0 border-t border-[var(--shadow-border,#e5e7eb)] px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
+          <button type="button" onClick={onClose} className="h-11 w-full rounded-[12px] bg-[var(--shadow-bg-soft,#f3f4f6)] text-[13px] font-semibold">Close</button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export function ChatStoryNotificationSettings({
   open,
   characters = [],
@@ -241,22 +369,57 @@ export function ChatStoryNotificationSettings({
   maxVisible = 2,
   onClose,
   onSave,
+  onAddCharacter,
 }) {
   const [form, setForm] = useState(() => normalizeChatNotification(value))
   const [maximum, setMaximum] = useState(() => limitedNumber(maxVisible, 2, 1, 3))
   const [previewSequence, setPreviewSequence] = useState(0)
+  const [moreCharactersOpen, setMoreCharactersOpen] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageProgress, setImageProgress] = useState(0)
   const [imageError, setImageError] = useState('')
   const uploadRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  useEffect(() => {
-    return () => uploadRef.current?.abort()
-  }, [])
+  useEffect(() => () => uploadRef.current?.abort(), [])
 
   useEffect(() => {
     if (!open) uploadRef.current?.abort()
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return undefined
+    const body = document.body
+    const html = document.documentElement
+    const scrollY = window.scrollY
+    const bodyOverflow = body.style.overflow
+    const bodyPosition = body.style.position
+    const bodyTop = body.style.top
+    const bodyWidth = body.style.width
+    const htmlOverflow = html.style.overflow
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    html.style.overflow = 'hidden'
+    return () => {
+      body.style.overflow = bodyOverflow
+      body.style.position = bodyPosition
+      body.style.top = bodyTop
+      body.style.width = bodyWidth
+      html.style.overflow = htmlOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    setForm(normalizeChatNotification(value))
+    setMaximum(limitedNumber(maxVisible, 2, 1, 3))
+    setPreviewSequence(0)
+    setMoreCharactersOpen(false)
+    setImageError('')
+    setImageProgress(0)
   }, [open])
 
   const uploadImage = async (file) => {
@@ -303,145 +466,172 @@ export function ChatStoryNotificationSettings({
     }
   }
 
-  useEffect(() => {
-    if (!open) return
-    setForm(normalizeChatNotification(value))
-    setMaximum(limitedNumber(maxVisible, 2, 1, 3))
-    setPreviewSequence(0)
-    setImageError('')
-    setImageProgress(0)
-  }, [open])
-
   const selected = characters.find((character) => String(character.id) === form.characterId)
   const set = (name, nextValue) => setForm((current) => ({ ...current, [name]: nextValue }))
   const valid = Boolean(form.characterId && form.text.trim() && !uploadingImage)
+  const chooseCharacter = (id) => {
+    set('characterId', id)
+    setMoreCharactersOpen(false)
+  }
+  const addCharacter = () => {
+    setMoreCharactersOpen(false)
+    onAddCharacter?.({ ...form }, maximum)
+  }
 
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[9997] flex items-end justify-center bg-black/60 px-2 pt-8 sm:items-center sm:px-4"
-      onClick={onClose}>
-      <section role="dialog" aria-modal="true" aria-label="Notification Settings"
-        onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[92dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-[25px] bg-[var(--shadow-bg-surface,#fff)] text-[var(--shadow-text-primary,#111827)] shadow-2xl sm:rounded-[25px]">
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--shadow-border,#e5e7eb)] px-5 py-4">
-          <h2 className="text-[18px] font-bold">Notification Settings</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="text-[24px] leading-none">×</button>
-        </div>
-        <div className="space-y-5 overflow-y-auto px-5 py-5">
-          <label className="block space-y-1.5 text-[13px] font-semibold">
-            <span>Character</span>
-            <select value={form.characterId} onChange={(event) => set('characterId', event.target.value)}
-              className="h-12 w-full rounded-[12px] border border-[var(--shadow-border,#dedee5)] bg-[var(--shadow-bg-soft,#f8f8fa)] px-3 text-[14px]">
-              <option value="">Choose a character</option>
-              {characters.map((character) => (
-                <option key={character.id} value={character.id}>{characterLabel(character)}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block space-y-1.5 text-[13px] font-semibold">
-            <span>Notification message</span>
-            <textarea rows={3} maxLength={500} value={form.text} onChange={(event) => set('text', event.target.value)}
-              placeholder="Write your notification..."
-              className="w-full resize-none rounded-[12px] border border-[var(--shadow-border,#dedee5)] bg-[var(--shadow-bg-soft,#f8f8fa)] p-3 text-[14px] outline-none focus:border-[#8b5cf6]" />
-          </label>
-          <div className="space-y-2">
-            <p className="text-[13px] font-semibold">Notification image · Optional</p>
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-              className="hidden" onChange={(event) => {
-                const file = event.target.files?.[0]
-                event.target.value = ''
-                if (file) void uploadImage(file)
-              }} />
-            {form.imageUrl ? (
-              <div className="flex items-center gap-3 rounded-xl border border-[var(--shadow-border,#e5e7eb)] p-2">
-                <img src={form.imageUrl} alt="Notification attachment preview" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                <span className="min-w-0 flex-1 text-[12px] text-[var(--shadow-text-secondary,#6b7280)]">Image attached</span>
-                <button type="button" disabled={uploadingImage} onClick={() => set('imageUrl', '')}
-                  className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[#d92d20] disabled:opacity-50">Remove</button>
-              </div>
-            ) : null}
-            <button type="button" disabled={uploadingImage} onClick={() => fileInputRef.current?.click()}
-              className="w-full rounded-xl border border-dashed border-[#a78bfa] px-3 py-3 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-50">
-              {uploadingImage ? `Uploading image... ${imageProgress}%` : form.imageUrl ? 'Change image' : 'Choose image from device'}
-            </button>
-            {uploadingImage ? <div className="h-1.5 overflow-hidden rounded-full bg-[#e5e7eb]"><div className="h-full bg-[#7c3aed] transition-all" style={{ width: `${imageProgress}%` }} /></div> : null}
-            {imageError ? <p role="alert" className="text-[12px] text-[#d92d20]">{imageError}</p> : null}
+    <>
+      <div
+        className="fixed inset-0 z-[9997] flex items-end justify-center bg-black/60 pt-5 sm:items-center sm:px-4"
+        onClick={() => { if (!moreCharactersOpen) onClose?.() }}
+      >
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-label="Notification Settings"
+          aria-hidden={moreCharactersOpen}
+          onClick={(event) => event.stopPropagation()}
+          className="flex max-h-[calc(100dvh-20px)] w-full max-w-[520px] flex-col overflow-hidden rounded-t-[25px] bg-[var(--shadow-bg-surface,#fff)] text-[var(--shadow-text-primary,#111827)] shadow-2xl sm:max-h-[92dvh] sm:rounded-[25px]"
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--shadow-border,#e5e7eb)] px-5 py-4">
+            <h2 className="text-[18px] font-bold">Notification Settings</h2>
+            <button type="button" onClick={onClose} aria-label="Close" className="text-[24px] leading-none">×</button>
           </div>
-          <div className="space-y-2">
-            <p className="text-[13px] font-semibold">Live preview</p>
-            <div className="rounded-[17px] border border-[#e9eaf0] bg-[#f2f5fa] p-3 text-[#171827] shadow-sm">
-              <div className="flex items-center gap-3">
-                <NotificationAvatar character={selected} size={42} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold">{selected ? characterLabel(selected) : 'Character'}</p>
-                  <p className="whitespace-pre-wrap break-words text-[12px] text-[#404451]">{form.text || 'Notification message'}</p>
+          <div className="min-h-0 space-y-5 overflow-y-auto overscroll-contain px-5 py-5">
+            <div className="grid grid-cols-[minmax(0,1fr)_48px_48px] items-start gap-0" aria-label="Choose notification character">
+              <div className="relative min-w-0">
+                <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex w-max min-w-full gap-1.5 pb-1 pt-0.5">
+                    {characters.map((character) => (
+                      <NotificationCharacterOption
+                        key={character.id}
+                        character={character}
+                        active={form.characterId === String(character.id)}
+                        onChoose={() => chooseCharacter(String(character.id))}
+                      />
+                    ))}
+                    {!characters.length ? (
+                      <p className="self-center text-[12px] text-[var(--shadow-text-secondary,#6b7280)]">No characters</p>
+                    ) : null}
+                  </div>
                 </div>
-                {form.imageUrl ? <img src={form.imageUrl} alt="Attachment" className="h-11 w-11 shrink-0 rounded-lg object-cover" /> : null}
-                <span className="self-start text-[10px] text-[#8991a3]">now</span>
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-r from-transparent to-[var(--shadow-bg-surface,#fff)]" />
+              </div>
+              <NotificationCharacterAction type="add" onClick={addCharacter} />
+              <NotificationCharacterAction type="more" onClick={() => setMoreCharactersOpen(true)} />
+            </div>
+            <label className="block space-y-1.5 text-[13px] font-semibold">
+              <span>Notification message</span>
+              <textarea rows={3} maxLength={500} value={form.text} onChange={(event) => set('text', event.target.value)}
+                placeholder="Write your notification..."
+                className="w-full resize-none rounded-[12px] border border-[var(--shadow-border,#dedee5)] bg-[var(--shadow-bg-soft,#f8f8fa)] p-3 text-[14px] outline-none focus:border-[#8b5cf6]" />
+            </label>
+            <div className="space-y-2">
+              <p className="text-[13px] font-semibold">Notification image · Optional</p>
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                className="hidden" onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) void uploadImage(file)
+                }} />
+              {form.imageUrl ? (
+                <div className="flex items-center gap-3 rounded-xl border border-[var(--shadow-border,#e5e7eb)] p-2">
+                  <img src={form.imageUrl} alt="Notification attachment preview" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                  <span className="min-w-0 flex-1 text-[12px] text-[var(--shadow-text-secondary,#6b7280)]">Image attached</span>
+                  <button type="button" disabled={uploadingImage} onClick={() => set('imageUrl', '')}
+                    className="rounded-lg px-3 py-2 text-[12px] font-semibold text-[#d92d20] disabled:opacity-50">Remove</button>
+                </div>
+              ) : null}
+              <button type="button" disabled={uploadingImage} onClick={() => fileInputRef.current?.click()}
+                className="w-full rounded-xl border border-dashed border-[#a78bfa] px-3 py-3 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-50">
+                {uploadingImage ? `Uploading image... ${imageProgress}%` : form.imageUrl ? 'Change image' : 'Choose image from device'}
+              </button>
+              {uploadingImage ? <div className="h-1.5 overflow-hidden rounded-full bg-[#e5e7eb]"><div className="h-full bg-[#7c3aed] transition-all" style={{ width: `${imageProgress}%` }} /></div> : null}
+              {imageError ? <p role="alert" className="text-[12px] text-[#d92d20]">{imageError}</p> : null}
+            </div>
+            <div className="space-y-2">
+              <p className="text-[13px] font-semibold">Live preview</p>
+              <div className="rounded-[17px] border border-[#e9eaf0] bg-[#f2f5fa] p-3 text-[#171827] shadow-sm">
+                <div className="flex items-center gap-3">
+                  <NotificationAvatar character={selected} size={42} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold">{selected ? characterLabel(selected) : 'Character'}</p>
+                    <p className="whitespace-pre-wrap break-words text-[12px] text-[#404451]">{form.text || 'Notification message'}</p>
+                  </div>
+                  {form.imageUrl ? <img src={form.imageUrl} alt="Attachment" className="h-11 w-11 shrink-0 rounded-lg object-cover" /> : null}
+                  <span className="self-start text-[10px] text-[#8991a3]">now</span>
+                </div>
               </div>
             </div>
-          </div>
-          <fieldset className="space-y-3">
-            <legend className="text-[13px] font-semibold">Dismiss behavior</legend>
-            {[
-              ['duration', 'Auto dismiss after'],
-              ['swipe', 'Stay until reader swipes away'],
-              ['next', 'Dismiss when next notification appears'],
-            ].map(([mode, title]) => (
-              <label key={mode} className="flex items-center gap-3 text-[13px]">
-                <input type="radio" name="cs-notification-dismiss" checked={form.dismissMode === mode}
-                  onChange={() => set('dismissMode', mode)} className="accent-[#7c3aed]" />
-                <span>{title}</span>
-                {mode === 'duration' && form.dismissMode === 'duration' ? (
-                  <input aria-label="Duration seconds" type="number" min="1" max="30"
-                    value={form.durationSeconds} onChange={(event) => set('durationSeconds', limitedNumber(event.target.value, 4, 1, 30))}
-                    className="ml-auto w-[60px] rounded-lg border border-[var(--shadow-border,#ddd)] bg-transparent px-2 py-1 text-center" />
-                ) : null}
-                {mode === 'duration' && form.dismissMode === 'duration' ? <span>s</span> : null}
-              </label>
-            ))}
-          </fieldset>
-          <div className="space-y-2">
-            <p className="text-[13px] font-semibold">Max visible notifications · Episode setting</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3].map((number) => (
-                <button type="button" key={number} onClick={() => setMaximum(number)}
-                  className={`rounded-xl border py-2.5 text-[14px] font-semibold ${number === maximum
-                    ? 'border-[#7c3aed] bg-[#f0eaff] text-[#6d28d9]'
-                    : 'border-[var(--shadow-border,#e5e7eb)]'}`}>{number}</button>
+            <fieldset className="space-y-3">
+              <legend className="text-[13px] font-semibold">Dismiss behavior</legend>
+              {[
+                ['duration', 'Auto dismiss after'],
+                ['swipe', 'Stay until reader swipes away'],
+                ['next', 'Dismiss when next notification appears'],
+              ].map(([mode, title]) => (
+                <label key={mode} className="flex items-center gap-3 text-[13px]">
+                  <input type="radio" name="cs-notification-dismiss" checked={form.dismissMode === mode}
+                    onChange={() => set('dismissMode', mode)} className="accent-[#7c3aed]" />
+                  <span>{title}</span>
+                  {mode === 'duration' && form.dismissMode === 'duration' ? (
+                    <input aria-label="Duration seconds" type="number" min="1" max="30"
+                      value={form.durationSeconds} onChange={(event) => set('durationSeconds', limitedNumber(event.target.value, 4, 1, 30))}
+                      className="ml-auto w-[60px] rounded-lg border border-[var(--shadow-border,#ddd)] bg-transparent px-2 py-1 text-center" />
+                  ) : null}
+                  {mode === 'duration' && form.dismissMode === 'duration' ? <span>s</span> : null}
+                </label>
               ))}
+            </fieldset>
+            <div className="space-y-2">
+              <p className="text-[13px] font-semibold">Max visible notifications · Episode setting</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map((number) => (
+                  <button type="button" key={number} onClick={() => setMaximum(number)}
+                    className={`rounded-xl border py-2.5 text-[14px] font-semibold ${number === maximum
+                      ? 'border-[#7c3aed] bg-[#f0eaff] text-[#6d28d9]'
+                      : 'border-[var(--shadow-border,#e5e7eb)]'}`}>{number}</button>
+                ))}
+              </div>
             </div>
+            <label className="flex items-center justify-between gap-4 text-[13px] font-semibold">
+              <span>Swipe to dismiss</span>
+              <input type="checkbox" checked={form.dismissMode === 'swipe' || form.swipeToDismiss}
+                disabled={form.dismissMode === 'swipe'} onChange={(event) => set('swipeToDismiss', event.target.checked)}
+                className="h-5 w-5 accent-[#7c3aed]" />
+            </label>
+            <button type="button" disabled={!valid} onClick={() => setPreviewSequence((number) => number + 1)}
+              className="w-full rounded-xl border border-[#a78bfa] py-2.5 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-40">
+              Test notification on screen
+            </button>
           </div>
-          <label className="flex items-center justify-between gap-4 text-[13px] font-semibold">
-            <span>Swipe to dismiss</span>
-            <input type="checkbox" checked={form.dismissMode === 'swipe' || form.swipeToDismiss}
-              disabled={form.dismissMode === 'swipe'} onChange={(event) => set('swipeToDismiss', event.target.checked)}
-              className="h-5 w-5 accent-[#7c3aed]" />
-          </label>
-          <button type="button" disabled={!valid} onClick={() => setPreviewSequence((number) => number + 1)}
-            className="w-full rounded-xl border border-[#a78bfa] py-2.5 text-[13px] font-semibold text-[#7c3aed] disabled:opacity-40">
-            Test notification on screen
-          </button>
-        </div>
-        <div className="flex shrink-0 gap-3 border-t border-[var(--shadow-border,#e5e7eb)] p-4">
-          <button type="button" onClick={onClose}
-            className="h-11 flex-1 rounded-[12px] bg-[var(--shadow-bg-soft,#f3f4f6)] text-[14px] font-semibold">Cancel</button>
-          <button type="button" disabled={!valid} onClick={() => onSave?.({
-            ...form,
-            text: form.text.trim(),
-            durationSeconds: limitedNumber(form.durationSeconds, 4, 1, 30),
-          }, maximum)}
-            className="h-11 flex-1 rounded-[12px] bg-[#7c3aed] text-[14px] font-semibold text-white disabled:opacity-40">Save</button>
-        </div>
-      </section>
-      <ChatStoryNotificationOverlay
-        notification={previewSequence > 0 && valid ? { ...form, eventId: `preview-${previewSequence}` } : null}
+          <div className="flex shrink-0 gap-3 border-t border-[var(--shadow-border,#e5e7eb)] p-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+            <button type="button" onClick={onClose}
+              className="h-11 flex-1 rounded-[12px] bg-[var(--shadow-bg-soft,#f3f4f6)] text-[14px] font-semibold">Cancel</button>
+            <button type="button" disabled={!valid} onClick={() => onSave?.({
+              ...form,
+              text: form.text.trim(),
+              durationSeconds: limitedNumber(form.durationSeconds, 4, 1, 30),
+            }, maximum)}
+              className="h-11 flex-1 rounded-[12px] bg-[#7c3aed] text-[14px] font-semibold text-white disabled:opacity-40">Save</button>
+          </div>
+        </section>
+        <ChatStoryNotificationOverlay
+          notification={previewSequence > 0 && valid ? { ...form, eventId: `preview-${previewSequence}` } : null}
+          characters={characters}
+          maxVisible={maximum}
+          scopeId="author-notification-preview"
+        />
+      </div>
+      <NotificationCharacterMoreSheet
+        open={moreCharactersOpen}
         characters={characters}
-        maxVisible={maximum}
-        scopeId="author-notification-preview"
+        selectedId={form.characterId}
+        onSelect={chooseCharacter}
+        onClose={() => setMoreCharactersOpen(false)}
       />
-    </div>,
+    </>,
     document.body
   )
 }
