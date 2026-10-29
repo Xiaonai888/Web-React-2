@@ -1,5 +1,5 @@
 /**
- * Shadow Realms — local-only Canvas game engine.
+ * Shadow Realms — local-only Canvas game engine (Step 45 input fixes).
  *
  * Responsibilities: frame loop, canvas sizing, camera input, map rendering,
  * and stable hooks for later units/buildings. No backend, fetch, or storage.
@@ -58,6 +58,7 @@ export class GameEngine {
     this.keys = new Set()
     this.pointers = new Map()
     this.spaceDown = false
+    this.dragThreshold = 7
     this.resizeObserver = null
     this.originalTouchAction = canvas.style.touchAction
     this.originalTabIndex = canvas.getAttribute('tabindex')
@@ -87,7 +88,7 @@ export class GameEngine {
     const rect = this.canvas.getBoundingClientRect()
     const width = Math.max(1, Math.round(rect.width || this.canvas.clientWidth || 960))
     const height = Math.max(1, Math.round(rect.height || this.canvas.clientHeight || 540))
-    const requested = Number(window.devicePixelRatio) || 1
+    const requested = Number(globalThis.window?.devicePixelRatio) || 1
     this.pixelRatio = clamp(requested, 1, Math.max(1, this.maxPixelRatio))
     const pixelWidth = Math.round(width * this.pixelRatio)
     const pixelHeight = Math.round(height * this.pixelRatio)
@@ -226,6 +227,11 @@ export class GameEngine {
     const item = { ...point, startX: point.x, startY: point.y,
       pointerType: event.pointerType, button: event.button, pan, moved: false }
     this.pointers.set(event.pointerId, item)
+    // A second touch turns the entire gesture into camera navigation.
+    // Neither finger is later allowed to emit an accidental selection tap.
+    if (isTouch && [...this.pointers.values()].filter(p => p.pointerType !== 'mouse').length > 1) {
+      for (const touch of this.pointers.values()) if (touch.pointerType !== 'mouse') touch.moved = true
+    }
     try { this.canvas.setPointerCapture(event.pointerId) } catch { /* Not capturable. */ }
     if (pan || event.button === 2) event.preventDefault()
   }
@@ -245,7 +251,9 @@ export class GameEngine {
     const next = this.clientPoint(event)
     pointer.x = next.x
     pointer.y = next.y
-    if (length(next.x - pointer.startX, next.y - pointer.startY) > 7) pointer.moved = true
+    const movedBefore = pointer.moved
+    if (length(next.x - pointer.startX, next.y - pointer.startY) > this.dragThreshold)
+      pointer.moved = true
 
     if (oldMidpoint && pointer.pointerType !== 'mouse') {
       const touches = [...this.pointers.values()].filter(item => item.pointerType !== 'mouse')
@@ -257,8 +265,12 @@ export class GameEngine {
         this.camera.zoomAt(this.camera.zoom * distance / oldMidpoint.distance, center.x, center.y)
       }
       for (const touch of touches) touch.moved = true
-    } else if (pointer.pan) {
-      this.camera.panScreen(next.x - previous.x, next.y - previous.y)
+    } else if (pointer.pan && pointer.moved) {
+      // Do not pan a few pixels while a mobile user is trying to tap/select.
+      // On first drag apply the whole distance since pointerDown to avoid a jump.
+      const dx = movedBefore ? next.x - previous.x : next.x - pointer.startX
+      const dy = movedBefore ? next.y - previous.y : next.y - pointer.startY
+      this.camera.panScreen(dx, dy)
     }
   }
 
@@ -267,8 +279,9 @@ export class GameEngine {
     if (!pointer) return
     this.pointers.delete(event.pointerId)
     const canceled = event.type === 'pointercancel' || event.type === 'lostpointercapture'
-    if (!canceled && !pointer.moved && this.running) {
-      const point = this.clientPoint(event)
+    const point = this.clientPoint(event)
+    const releasedAway = length(point.x - pointer.startX, point.y - pointer.startY) > this.dragThreshold
+    if (!canceled && !pointer.moved && !releasedAway && this.running) {
       const kind = pointer.pointerType === 'mouse'
         ? (pointer.button === 2 ? 'command' : pointer.button === 0 && !pointer.pan ? 'select' : null)
         : 'tap'
@@ -289,7 +302,7 @@ export class GameEngine {
 
   keyDown(event) {
     if (event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return
-    const key = event.key.toLowerCase()
+    const key = String(event.key || '').toLowerCase()
     if (key === ' ') {
       this.spaceDown = true
       event.preventDefault()
@@ -300,7 +313,7 @@ export class GameEngine {
   }
 
   keyUp(event) {
-    const key = event.key.toLowerCase()
+    const key = String(event.key || '').toLowerCase()
     if (key === ' ') this.spaceDown = false
     this.keys.delete(key)
   }
