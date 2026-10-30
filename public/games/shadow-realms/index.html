@@ -1373,6 +1373,23 @@
         console.error('Shadow Realms optional features unavailable:',error);
         message('Optional features: '+(error?.message||error));
       }
+
+            try {
+        const { mountNecromancerFooter } =
+          await import('./ui/NecromancerFooter.js');
+
+        mountNecromancerFooter({
+          footer,
+          engine: game,
+          selection,
+          getUnits: () => farmers,
+          getAllUnits: allUnits,
+          exploration: features.getService('exploration', null),
+        });
+      } catch (error) {
+        console.warn('Optional footer UI unavailable:', error);
+      }
+      
       window.shadowRealmsBootstrap=features;
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
