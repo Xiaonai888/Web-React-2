@@ -20,11 +20,18 @@ export function createFeature(scope) {
       typeof combat?.orderAttack !== 'function' || typeof health?.damage !== 'function')
     throw new TypeError('EnemyStrategyFeature needs enemyAI, waves, combat and health');
 
+  // One live, attackable player roster shared by squads, ambushes and boss.
+  // Queued farmers remain exposed while travelling; only those inside training
+  // buildings are excluded until their training completes.
   const getPlayers = () => {
-    const roster = scope.get('farmers',[]);
-    return Array.isArray(roster) ? roster.filter(u => u?.team === 'blue' &&
-      u.alive !== false && Number.isFinite(u.hp) && u.hp > 0 &&
-      Number.isFinite(u.x) && Number.isFinite(u.y)) : [];
+    const roster = scope.get('farmers', []);
+    return Array.isArray(roster) ? roster.filter(u =>
+      u?.id != null && u.team === 'blue' && u.alive !== false &&
+      Number.isFinite(u.hp) && u.hp > 0 &&
+      Number.isFinite(u.x) && Number.isFinite(u.y) &&
+      u.trainingInside !== true && u.trainingState !== 'training' &&
+      u.training !== true
+    ) : [];
   };
   const emit = (kind,event,data) => {
     try {scope.emit(`enemy:${kind}-${event}`,data);}
