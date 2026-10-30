@@ -113,7 +113,7 @@ export default function AuthorAdsProductEditorPage({ productType = 'pdf' }) {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const tr = key => t(`boostProductEditor.${key}`)
+  const tr = (key, options) => t(`boostProductEditor.${key}`, options)
   const isPdf = productType === 'pdf'
   const type = isPdf ? 'pdf' : 'book'
   const [step, setStep] = useState(0)
