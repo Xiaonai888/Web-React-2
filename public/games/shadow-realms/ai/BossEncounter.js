@@ -50,7 +50,8 @@ export class BossEncounter {
   #players() {
     const result = this.getPlayers() || [];
     return Array.isArray(result) ? result.filter(unit =>
-      unit?.team === 'blue' && unit.alive !== false && unit.hp > 0 && isPoint(unit)) : [];
+      unit?.team === 'blue' && unit.alive !== false && unit.hp > 0 &&
+      isPoint(unit) && !unit.trainingInside && unit.trainingState !== 'training') : [];
   }
 
   #phaseFor(boss) {
@@ -176,6 +177,7 @@ export class BossEncounter {
         const hits = [];
         // Hit the WARNED position, not the boss's new position: dodging works.
         for (const player of players) {
+          if (player.trainingInside || player.trainingState === 'training') continue;
           if (distance(attack.center, player) > attack.radius + (player.radius || 0)) continue;
           const result = this.health.damage(player, attack.damage,
             { source: unit, type: 'boss-slam' });
