@@ -139,7 +139,7 @@ export default function AuthorAdsStoryEditorPage() {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const tr = key => t(`boostStoryEditor.${key}`)
+  const tr = (key, options) => t(`boostStoryEditor.${key}`, options)
   const [step, setStep] = useState(0)
   const [stories, setStories] = useState([])
   const [username, setUsername] = useState('')
