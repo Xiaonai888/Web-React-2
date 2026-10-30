@@ -8,6 +8,7 @@ import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooter
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { listAuthorAdCampaigns } from '../../services/authorAdsApi'
+import AuthorAdsInsightsPanel from './AuthorAdsInsightsPanel'
 
 registerTranslationNamespace('authorAdsBoostSelection', {
   en: {
@@ -263,11 +264,7 @@ export default function AuthorAdsBoostContentPage() {
           {!loading && hasMore && <button type="button" className="w-full rounded-xl border border-[#e9e6f3] bg-white py-3 text-sm font-medium dark:bg-[#231d30]" onClick={loadMore}>{tr('loadMore')}</button>}
         </section>}
 
-        {tab === 'insights' && <section className="rounded-2xl border border-[#eeebf8] bg-white px-5 py-12 text-center dark:border-white/10 dark:bg-[#231d30]">
-          <BarChart3 size={34} className="mx-auto text-[#6d4ccb]" />
-          <h2 className="mt-4 font-semibold">{tr('noInsights')}</h2>
-          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[#827b92] dark:text-[#bdb5cd]">{tr('insightsPending')}</p>
-        </section>}
+        {tab === 'insights' && <AuthorAdsInsightsPanel />}
       </div>
 
       <nav aria-label="Shadow Ads" className="fixed inset-x-0 bottom-0 z-[70] border-t border-[#eae6f5] bg-white/95 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_20px_rgba(35,22,67,0.05)] backdrop-blur dark:border-white/10 dark:bg-[#211b2b]/95">
