@@ -305,11 +305,13 @@ if (event.button === 0 && this.spaceDown) this.canvas.style.cursor = 'grabbing'
   keyDown(event) {
     if (event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return
     const key = String(event.key || '').toLowerCase()
-    if (key === ' ') {
-      this.spaceDown = true
-      this.canvas.style.cursor = 'grab'
-      event.preventDefault()
-    } else if ('wasd'.includes(key) && key.length === 1 || key.startsWith('arrow')) {
+    if (event.code === 'Space' && !event.shiftKey) {
+  this.spaceDown = true
+  this.canvas.style.cursor = 'grab'
+  event.preventDefault()
+}
+    
+    else if ('wasd'.includes(key) && key.length === 1 || key.startsWith('arrow')) {
       this.keys.add(key)
       event.preventDefault()
     }
@@ -317,9 +319,10 @@ if (event.button === 0 && this.spaceDown) this.canvas.style.cursor = 'grabbing'
 
   keyUp(event) {
     const key = String(event.key || '').toLowerCase()
-    if (key === ' ') {
+    if (event.code === 'Space') {
   this.spaceDown = false
   this.canvas.style.cursor = ''
+  event.preventDefault()
 }
     this.keys.delete(key)
   }
