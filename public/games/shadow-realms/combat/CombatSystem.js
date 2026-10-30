@@ -39,6 +39,18 @@ export class CombatSystem {
   getUnit(id){return this.units().find(u=>u.id===id)||null;}
   isHostile(a,b){return !!(a&&b&&a.id!==b.id&&a.team!=null&&b.team!=null&&a.team!==b.team);}
   isAlive(u){return !!u&&this.health.isAlive(u);}
+  /** A farmer becomes a combat unit only after finishing barracks training. */
+  #canFight(unit){
+    if(!this.isAlive(unit)||unit.trainingInside||unit.trainingState||unit.training===true)return false;
+    if(unit.isCivilian===true)return false;
+    if(unit.team==='blue'&&unit.type==='farmer'){
+      return unit.isCivilian===false &&
+        (unit.combatTraining==='melee'||unit.combatTraining==='ranged');
+    }
+    return true;
+  }
+  /** Units physically inside barracks are not visible attack targets. */
+  #canTarget(unit){return this.isAlive(unit)&&!unit.trainingInside;}
   #emit(name,payload){try{this.onEvent?.(name,payload);}catch{/* Visuals must not disrupt combat. */}}
 
   #forgetRoute(id,unit=null,stop=false){
@@ -54,7 +66,7 @@ export class CombatSystem {
     let count=0;
     for(const id of new Set(Array.isArray(ids)?ids:[ids])){
       const unit=byId.get(id);
-      if(!this.isAlive(unit))continue;
+      if(!this.#canFight(unit))continue;
       const command=build(unit);
       if(!command)continue;
       this.#forgetRoute(id,unit,true);
@@ -65,7 +77,7 @@ export class CombatSystem {
 
   orderAttack(unitIds,targetId){
     const target=this.getUnit(targetId);
-    if(!this.isAlive(target))return 0;
+    if(!this.#canTarget(target))return 0;
     return this.#order(unitIds,unit=>this.isHostile(unit,target)
       ? {type:'attack',targetId,issuedAt:this.time}:null);
   }
@@ -99,7 +111,7 @@ export class CombatSystem {
   #nearestEnemy(unit,maxDistance,units,guardPoint=null){
     let nearest=null,best=positive(maxDistance,145);
     for(const target of units){
-      if(!this.isHostile(unit,target)||!this.isAlive(target))continue;
+      if(!this.isHostile(unit,target)||!this.#canTarget(target))continue;
       if(guardPoint && distance(target,guardPoint)>maxDistance)continue;
       const gap=distance(unit,target);
       if(gap<best){best=gap;nearest=target;}
@@ -149,7 +161,7 @@ export class CombatSystem {
   }
 
   #engage(unit,target,dt,ordered=false){
-    if(!this.isAlive(unit)||!this.isAlive(target)||!this.isHostile(unit,target))return false;
+    if(!this.#canFight(unit)||!this.#canTarget(target)||!this.isHostile(unit,target))return false;
     const range=clamp(positive(unit.attackRange,39),24,900);
     if(distance(unit,target)>range+positive(target.radius,12)*.3){
       this.#approachEnemy(unit,target,range,dt);
@@ -188,15 +200,15 @@ export class CombatSystem {
     const all=this.units();
     const byId=new Map(all.map(u=>[u.id,u]));
     for(const [id,cooldown] of this.cooldowns){
-      if(!this.isAlive(byId.get(id)))this.cooldowns.delete(id);
+      if(!this.#canFight(byId.get(id)))this.cooldowns.delete(id);
       else this.cooldowns.set(id,Math.max(0,cooldown-seconds));
     }
     for(const [id,order] of [...this.orders]){
       const unit=byId.get(id);
-      if(!this.isAlive(unit)){this.#removeOrder(id,unit);continue;}
+      if(!this.#canFight(unit)){this.#removeOrder(id,unit);continue;}
       if(order.type==='attack'){
         const enemy=byId.get(order.targetId);
-        if(!this.isAlive(enemy)||!this.isHostile(unit,enemy)){
+        if(!this.#canTarget(enemy)||!this.isHostile(unit,enemy)){
           this.#removeOrder(id,unit);continue;
         }
         this.#engage(unit,enemy,seconds,true);
@@ -218,14 +230,14 @@ export class CombatSystem {
       }else this.#removeOrder(id,unit);
     }
     if(this.autoDefend)for(const unit of all){
-      if(!this.isAlive(unit)||this.orders.has(unit.id)||unit.isCivilian===true)continue;
+      if(!this.#canFight(unit)||this.orders.has(unit.id))continue;
       if(unit.state==='harvesting'||unit.state==='walking')continue;
       const enemy=this.#nearestEnemy(unit,positive(unit.aggroRange,145),all);
       if(enemy)this.#engage(unit,enemy,seconds,false);
     }
     // Keep transient navigation state bounded when units die or reset outside combat.
     for(const id of this.combatMovement){
-      if(!this.isAlive(byId.get(id))){this.#forgetRoute(id);this.cooldowns.delete(id);}
+      if(!this.#canFight(byId.get(id))){this.#forgetRoute(id,byId.get(id),true);this.cooldowns.delete(id);}
     }
   }
 
@@ -235,7 +247,7 @@ export class CombatSystem {
     ctx.save();ctx.lineWidth=1.2;
     for(const [id,order] of this.orders){
       const unit=byId.get(id);
-      if(!this.isAlive(unit))continue;
+      if(!this.#canFight(unit))continue;
       const marker=order.type==='attack'?byId.get(order.targetId):
         order.type==='guard'?order.point:order.destination;
       if(!point(marker))continue;
