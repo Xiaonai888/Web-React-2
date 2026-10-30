@@ -18,6 +18,7 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const number = (value, fallback) => finite(value) ? value : fallback;
 const living = unit => unit?.alive !== false && (unit?.hp > 0) && point(unit);
+const targetable = unit => living(unit) && !unit.trainingInside;
 const PROFILES = Object.freeze({
   scout: Object.freeze({ name: 'Scout', hp: 50, speed: 132, damage: 5, range: 38, cooldown: 1.05, aggro: 310, color: '#91614f' }),
   raider: Object.freeze({ name: 'Raider', hp: 85, speed: 98, damage: 11, range: 42, cooldown: 1.35, aggro: 430, color: '#8e3a43' }),
@@ -140,6 +141,7 @@ export class EnemyAI {
     enemy.selectable = false;
     enemy.type = kind;
     enemy.isEnemy = true;
+    enemy.isCivilian = false;
     enemy.enemyColor = spec.color;
     enemy.attackDamage = Math.round(spec.damage * (1 + (lvl - 1) * .12));
     enemy.attackRange = spec.range;
@@ -161,7 +163,7 @@ export class EnemyAI {
 
   #players() {
     const list = this.getPlayerUnits() || [];
-    return Array.isArray(list) ? list.filter(u => living(u) && u.team === 'blue') : [];
+    return Array.isArray(list) ? list.filter(u => targetable(u) && u.team === 'blue') : [];
   }
 
   /** Fallback AI only. EnemyStrategy's own ThreatAnalyzer owns decisions otherwise. */
