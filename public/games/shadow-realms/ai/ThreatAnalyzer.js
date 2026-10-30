@@ -6,6 +6,7 @@
 const finite = Number.isFinite;
 const pos = p => finite(p?.x) && finite(p?.y);
 const living = u => u?.id != null && u.team === 'blue' && u.alive !== false &&
+  u.trainingInside !== true && u.trainingState !== 'training' &&
   finite(u.hp) && u.hp > 0 && pos(u);
 const dist = (a,b) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
