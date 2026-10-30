@@ -10,6 +10,7 @@ import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { readMediaUploadFile, requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
+import { LanguageWheelPicker } from './EpisodeEditorPage'
 import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import {
   AUTHOR_STORE_PRODUCT_PAGE_SIZE,
@@ -185,6 +186,8 @@ registerTranslationNamespace('authorStoreManager', {
     "authorName": "Author name",
     "publisher": "Publisher",
     "novelType": "Novel type",
+    "storyLanguage": "Story Language",
+    "storyLanguageHelp": "Choose the language used inside the book. This is separate from Story Setting.",
     "category": "Category",
     "selectCategory": "Select category",
     "genre": "Genre",
@@ -479,6 +482,8 @@ registerTranslationNamespace('authorStoreManager', {
     "authorName": "ឈ្មោះអ្នកនិពន្ធ",
     "publisher": "អ្នកបោះពុម្ព",
     "novelType": "ប្រភេទប្រលោមលោក",
+    "storyLanguage": "ភាសារឿង",
+    "storyLanguageHelp": "ជ្រើសភាសាអក្សរនៅក្នុងសៀវភៅ។ វាខុសពីបរិបទសាច់រឿង (Story Setting)។",
     "category": "ប្រភេទ",
     "selectCategory": "ជ្រើសប្រភេទ",
     "genre": "ចំណាត់ថ្នាក់",
@@ -773,6 +778,8 @@ registerTranslationNamespace('authorStoreManager', {
     "authorName": "作者名",
     "publisher": "出版社",
     "novelType": "小说类型",
+    "storyLanguage": "故事语言",
+    "storyLanguageHelp": "选择书籍正文使用的语言。这与故事背景不同。",
     "category": "分类",
     "selectCategory": "选择分类",
     "genre": "类型",
@@ -1067,6 +1074,8 @@ registerTranslationNamespace('authorStoreManager', {
     "authorName": "著者名",
     "publisher": "出版社",
     "novelType": "小説タイプ",
+    "storyLanguage": "ストーリー言語",
+    "storyLanguageHelp": "本の本文で使われる言語を選択します。ストーリー設定とは別です。",
     "category": "カテゴリ",
     "selectCategory": "カテゴリを選択",
     "genre": "ジャンル",
@@ -1361,6 +1370,8 @@ registerTranslationNamespace('authorStoreManager', {
     "authorName": "저자명",
     "publisher": "출판사",
     "novelType": "소설 유형",
+    "storyLanguage": "스토리 언어",
+    "storyLanguageHelp": "책 본문에 사용된 언어를 선택하세요. 스토리 배경과는 별개입니다.",
     "category": "카테고리",
     "selectCategory": "카테고리 선택",
     "genre": "장르",
@@ -4324,7 +4335,8 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [category, setCategory] = useState(productToEdit?.category || '')
   const [authorName, setAuthorName] = useState(productToEdit?.authorName || '')
   const [publisher, setPublisher] = useState(productToEdit?.publisher || '')
-  const [novelType, setNovelType] = useState(productToEdit?.novelType || '')
+  const [novelType, setNovelType] = useState(productToEdit?.novelType || 'Khmer')
+  const [storyLanguageOpen, setStoryLanguageOpen] = useState(false)
   const [coverType, setCoverType] = useState(productToEdit?.coverType || '')
   const [sortOrder, setSortOrder] = useState(String(productToEdit?.sortOrder ?? '0'))
   const [bestSeller, setBestSeller] = useState(Boolean(productToEdit?.bestSeller))
@@ -4865,6 +4877,16 @@ accessRule,
 
   return (
     <main className="mx-auto max-w-[1180px] px-4 py-4 pb-28">
+      <LanguageWheelPicker
+        open={storyLanguageOpen}
+        value={novelType}
+        title={storeText('storyLanguage')}
+        onClose={() => setStoryLanguageOpen(false)}
+        onSave={(language) => {
+          setNovelType(language)
+          setStoryLanguageOpen(false)
+        }}
+      />
 <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <AdminStyleCard title={storeText('coverSectionTitle')} text={storeText('coverSectionHelp')}>
           <FormDivider title={storeText('mainCover')} />
@@ -5012,8 +5034,16 @@ accessRule,
 
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
-    <FieldLabel>{storeText('novelType')}</FieldLabel>
-    <TextInput value={novelType} onChange={setNovelType} placeholder={storeText('novelTypePlaceholder')} />
+    <FieldLabel>{storeText('storyLanguage')}</FieldLabel>
+    <button
+      type="button"
+      onClick={() => setStoryLanguageOpen(true)}
+      className="flex min-h-11 w-full items-center justify-between rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 text-left text-[13px] text-[var(--shadow-text-primary)]"
+    >
+      <span>{novelType || 'Khmer'}</span>
+      <i className="fa-solid fa-chevron-right text-[11px] text-[var(--shadow-text-tertiary)]" />
+    </button>
+    <p className="mt-1.5 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{storeText('storyLanguageHelp')}</p>
   </div>
 
   <div>
