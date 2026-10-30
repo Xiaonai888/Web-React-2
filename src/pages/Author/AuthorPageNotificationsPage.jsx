@@ -536,7 +536,10 @@ async function fetchPageNotifications(before = '', filter = 'all', includeMeta =
     include_meta: String(includeMeta),
   })
   if (before) params.set('before', before)
-  const data = await apiRequest(`/api/authors/me/page-notifications?${params.toString()}`)
+  const data = await apiRequest(
+  `/api/authors/me/page-notifications?${params.toString()}`,
+  { signal: AbortSignal.timeout(20000) }
+)
   return {
     notifications: Array.isArray(data.notifications)
       ? data.notifications.map(normalizeNotification)
