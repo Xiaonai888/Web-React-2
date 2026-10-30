@@ -377,7 +377,9 @@ export default function AuthorAdsPage() {
   useAuthorPageFooterVisibility(true)
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const [section, setSection] = useState('create')
+  const [section, setSection] = useState(
+  () => new URLSearchParams(window.location.search).get('tab') === 'campaigns' ? 'campaigns' : 'create'
+)
   const [kind, setKind] = useState('post')
   const [username, setUsername] = useState('')
   const [posts, setPosts] = useState([])
@@ -796,7 +798,7 @@ export default function AuthorAdsPage() {
     <main className="min-h-screen bg-[var(--shadow-bg-page)] pb-28 text-[var(--shadow-text-primary)]">
       <div className="mx-auto max-w-3xl px-4 pt-4 sm:px-6">
         <header className="mb-5 flex items-center gap-3">
-          <button type="button" aria-label={t('authorAds.back')} onClick={() => navigate('/author/page')} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)]"><ArrowLeft size={20} /></button>
+          <button type="button" aria-label={t('authorAds.back')} onClick={() => navigate(section === 'campaigns' ? '/author/page/ads/boost-content' : '/author/page')} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)]"><ArrowLeft size={20} /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-semibold">{t('authorAds.title')}</h1>
             <p className="text-xs text-[var(--shadow-text-secondary)]">{t('authorAds.subtitle')}</p>
