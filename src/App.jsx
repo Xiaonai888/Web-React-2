@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'r
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
 import { AuthorPageNotificationProvider } from './providers/AuthorPageNotificationProvider'
 import { getDisplayLanguageId, useDisplayTranslation } from './utils/displayLanguage'
+import { getStoryLanguageId } from './utils/storyLanguage'
 import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from './utils/countrySettings'
 import './i18n/appTranslations'
 import Footer from './components/Footer'
@@ -438,6 +439,26 @@ function AppShell() {
     window.addEventListener('storage', sync)
     return () => ['focus', 'storage'].forEach(name => window.removeEventListener(name, sync))
   }, [location.pathname])
+    const [homeSlideLanguage, setHomeSlideLanguage] = useState(() => getStoryLanguageId())
+
+  useEffect(() => {
+    const syncLanguage = () => setHomeSlideLanguage(getStoryLanguageId())
+
+    window.addEventListener('shadow:story-language-initialized', syncLanguage)
+    window.addEventListener('storage', syncLanguage)
+    window.addEventListener('pageshow', syncLanguage)
+
+    return () => {
+      window.removeEventListener('shadow:story-language-initialized', syncLanguage)
+      window.removeEventListener('storage', syncLanguage)
+      window.removeEventListener('pageshow', syncLanguage)
+    }
+  }, [])
+
+  const homeSlideSectionKey = homeSlideLanguage === 'km'
+    ? 'home_top_slider'
+    : `home_top_slider_${homeSlideLanguage}`
+
   const backgroundLocation =
     location.state?.backgroundLocation?.pathname === '/discover'
       ? location.state.backgroundLocation
@@ -586,7 +607,7 @@ const shouldShowOpeningAds =
     <>
       <VisitorTracker />
         <Routes location={backgroundLocation || location}>
-        <Route path="/" element={<ForYou onReady={finishShadowSplash} />} />
+        <Route path="/" element={<ForYou key={homeSlideSectionKey} slideSectionKey={homeSlideSectionKey} onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
         <Route path="/fast" element={<ComingSoon titleKey="fastReels" />} />
