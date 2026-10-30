@@ -162,7 +162,11 @@ export function installAuthorNotificationDiagnostics() {
   window.addEventListener('shadow-reader-route-change', syncRoute)
   window.addEventListener('popstate', syncRoute)
   document.addEventListener('visibilitychange', syncRoute)
-  syncRoute()
+    syncRoute()
+  window.addEventListener('shadow-author-notification-stage', ({ detail }) => {
+    if (!isNotificationsPage()) return
+    if (detail?.stage === 'DATA_READY' || detail?.stage === 'PAGE_RENDERED') record(detail.stage)
+  })
 
   window.setInterval(() => {
     if (!isNotificationsPage() || document.visibilityState !== 'visible') return
