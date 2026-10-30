@@ -244,8 +244,8 @@ export default function AuthorAdsBoostContentPage() {
     campaign={item}
     onManage={selected => navigate(
       selected.deviceDraft
-        ? '/author/page/ads/boost-editor?tab=campaigns'
-        : `/author/page/ads/campaign/${encodeURIComponent(selected.id)}`
+  ? `/author/page/ads/boost-editor?tab=campaigns&edit=${encodeURIComponent(selected.id)}`
+  : `/author/page/ads/campaign/${encodeURIComponent(selected.id)}`
     )}
   />
 ))}
