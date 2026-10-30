@@ -5,7 +5,8 @@ const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const bounded = (value, fallback, low, high) => clamp(finite(value) ? value : fallback, low, high);
 const playerAlive = u => u?.id != null && u.team === 'blue' && u.alive !== false &&
-  finite(u.hp) && u.hp > 0 && point(u);
+  finite(u.hp) && u.hp > 0 && point(u) &&
+  u.trainingInside !== true && u.trainingState !== 'training';
 const enemyAlive = u => u?.id != null && u.team === 'red' && u.alive !== false &&
   finite(u.hp) && u.hp > 0 && point(u);
 
@@ -41,7 +42,13 @@ export class AmbushSystem {
     let raw;
     try { raw = this.getPlayers() || []; }
     catch { return []; }
-    return Array.isArray(raw) ? raw.filter(playerAlive) : [];
+    if (!Array.isArray(raw)) return [];
+    const ids = new Set();
+    return raw.filter(unit => {
+      if (!playerAlive(unit) || ids.has(unit.id)) return false;
+      ids.add(unit.id);
+      return true;
+    });
   }
   #enemies() {
     let raw;
