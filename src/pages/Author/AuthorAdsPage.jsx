@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Image as ImageIcon, Info, Megaphone, Plus, RefreshCw, Search, Target } from 'lucide-react'
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -357,7 +357,7 @@ function Section({ title, children, aside }) {
 
 function ContentCard({ item, selected, onClick, t }) {
   const type = item.sourceType === 'post' ? t('authorAds.post') : item.sourceType === 'product'
-    ? (item.type === 'pdf' ? t('authorAds.pdfType') : t('authorAds.bookType'))
+    ? (item.type === 'pdf' ? t('authorAds.pdfType') : item.type === 'product' ? t('authorAds.product') : t('authorAds.bookType'))
     : (item.type === 'manga' ? t('authorAds.manga') : item.type === 'chat_story' ? t('authorAds.chatStory') : item.type === 'story' ? t('authorAds.story') : t('authorAds.novel'))
   return (
     <button type="button" onClick={onClick} aria-pressed={selected} className={`flex w-full items-center gap-3 rounded-xl border p-2 text-left transition ${selected ? 'border-[#8061df] bg-[#f5f0ff] dark:bg-[#30224b]' : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]'}`}>
@@ -376,10 +376,13 @@ function ContentCard({ item, selected, onClick, t }) {
 export default function AuthorAdsPage() {
   useAuthorPageFooterVisibility(true)
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
-  const [section, setSection] = useState(
-  () => new URLSearchParams(window.location.search).get('tab') === 'campaigns' ? 'campaigns' : 'create'
-)
+  const editRequestId = useMemo(() => new URLSearchParams(location.search).get('edit')?.trim() || '', [location.search])
+  const [section, setSection] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('tab') === 'campaigns' || params.has('edit') ? 'campaigns' : 'create'
+  })
   const [kind, setKind] = useState('post')
   const [username, setUsername] = useState('')
   const [posts, setPosts] = useState([])
@@ -398,6 +401,7 @@ export default function AuthorAdsPage() {
   const [duration, setDuration] = useState(3)
   const [drafts, setDrafts] = useState([])
   const [editingId, setEditingId] = useState('')
+  const [editingSnapshot, setEditingSnapshot] = useState(null)
   const [campaigns, setCampaigns] = useState([])
   const [campaignsLoaded, setCampaignsLoaded] = useState(false)
   const [campaignsLoading, setCampaignsLoading] = useState(false)
@@ -598,14 +602,17 @@ export default function AuthorAdsPage() {
   }
 
   const contents = kind === 'post' ? posts : books
-  const editingCampaign = campaigns.find(item => item.id === editingId) || drafts.find(item => item.id === editingId)
+  const editingCampaign = (editingSnapshot?.id === editingId && editingSnapshot) ||
+    campaigns.find(item => item.id === editingId) || drafts.find(item => item.id === editingId)
   const savedSelection = useMemo(() => {
-    if (!editingCampaign || editingCampaign.contentKey !== selectedKey || !selectedKey) return null
+    const campaignKey = editingCampaign?.contentKey || (editingCampaign?.contentType && editingCampaign?.contentId
+      ? `${editingCampaign.contentType}:${editingCampaign.contentId}` : '')
+    if (!editingCampaign || campaignKey !== selectedKey || !selectedKey) return null
     return {
       key: selectedKey,
       id: editingCampaign.contentId,
       sourceType: editingCampaign.contentType,
-      type: editingCampaign.contentType === 'product' ? 'book' : editingCampaign.contentType === 'story' ? 'story' : 'post',
+      type: editingCampaign.contentType === 'product' ? 'product' : editingCampaign.contentType === 'story' ? 'story' : 'post',
       title: editingCampaign.contentTitle || '',
       image: editingCampaign.contentImage || '',
     }
@@ -633,6 +640,7 @@ export default function AuthorAdsPage() {
     setGoal(nextKind === 'post' ? 'views' : 'readers')
     setMessage('')
     setEditingId('')
+    setEditingSnapshot(null)
   }
 
   const saveLocalDraft = draft => {
@@ -641,6 +649,7 @@ export default function AuthorAdsPage() {
       writeDrafts(username, nextDrafts)
       setDrafts(nextDrafts)
       setEditingId(draft.id)
+      setEditingSnapshot(draft)
       setMessage(t('authorAds.draftSaved'))
     } catch {
       setMessage(t('authorAds.localSaveFailed'))
@@ -682,6 +691,12 @@ export default function AuthorAdsPage() {
         ? await updateAuthorAdDraft(editingId, draft)
         : await createAuthorAdDraft(draft)
       setEditingId(result.id)
+      setEditingSnapshot(result)
+      setCampaigns(items => {
+        const index = items.findIndex(item => item.id === result.id)
+        if (index === -1) return [result, ...items]
+        return items.map(item => item.id === result.id ? result : item)
+      })
       setBackendAvailable(true)
       setCampaignsLoaded(false)
       setMessage(t('authorAds.cloudSaved'))
@@ -698,51 +713,71 @@ export default function AuthorAdsPage() {
   }
 
   const editDraft = useCallback(draft => {
+    if (!draft?.id || !draft?.contentId || !draft?.contentType) return
     setKind(draft.kind)
-    setSelectedKey(draft.contentKey)
+    setSelectedKey(draft.contentKey || `${draft.contentType}:${draft.contentId}`)
     setGoal(draft.goal)
     setAudienceMode(draft.audience?.mode || 'automatic')
     setTargetGenre(draft.audience?.genre || '')
     setLanguage(draft.audience?.language || '')
     setCountry(draft.audience?.country || '')
-    setBudget(String(Math.round(Number(draft.budgetUsd || 1) * 100)))
+    const originalBudget = Number(draft.budgetUsd ?? (Number(draft.budgetDiamonds) / 100))
+    setBudget(String(Number.isFinite(originalBudget) && originalBudget >= 1 ? Math.round(originalBudget * 100) : 100))
     setDuration(draft.durationDays || 3)
     setSearch('')
     setEditingId(draft.id)
+    setEditingSnapshot(draft)
     setSection('create')
     setMessage('')
   }, [])
 
   useEffect(() => {
-  const id = new URLSearchParams(window.location.search).get('edit')
-  if (!id || section !== 'campaigns' || !campaignsLoaded) return undefined
+    if (!editRequestId || section !== 'campaigns' || !username) return undefined
 
-  const controller = new AbortController()
-  const selected = campaigns.find(item => item.id === id)
-  const request = selected
-    ? Promise.resolve(selected)
-    : getAuthorAdCampaign(id, { signal: controller.signal })
+    const controller = new AbortController()
+    const localDraft = drafts.find(item => String(item.id) === editRequestId && item.status === 'draft')
+    const request = localDraft
+      ? Promise.resolve(localDraft)
+      : getAuthorAdCampaign(editRequestId, { signal: controller.signal })
 
-  request.then(draft => {
-    if (controller.signal.aborted) return
-    if (draft.status !== 'draft' || draft.reviewStatus !== 'not_submitted') {
-      setCampaignsError(t('authorAds.lifecycleBlocked'))
-      return
+    request.then(draft => {
+      if (controller.signal.aborted) return
+      if (!draft || draft.status !== 'draft' || (!localDraft && draft.reviewStatus !== 'not_submitted')) {
+        setCampaignsError(t('authorAds.lifecycleBlocked'))
+        return
+      }
+      if (!localDraft) {
+        setCampaigns(items => {
+          const found = items.some(item => item.id === draft.id)
+          return found ? items.map(item => item.id === draft.id ? draft : item) : [draft, ...items]
+        })
+      }
+      editDraft(draft)
+      navigate('/author/page/ads/boost-editor', { replace: true })
+    }).catch(error => {
+      if (controller.signal.aborted) return
+      setCampaignsError(t(error?.code === 'AUTH_REQUIRED' ? 'authorAds.loginRequired' : 'authorAds.campaignLoadFailed'))
+    })
+
+    return () => controller.abort()
+  }, [drafts, editDraft, editRequestId, navigate, section, t, username])
+
+  const deleteDraft = id => {
+    if (!username || !window.confirm(t('authorAds.confirmDelete'))) return
+    try {
+      const next = drafts.filter(item => item.id !== id)
+      writeDrafts(username, next)
+      setDrafts(next)
+      if (editingId === id) {
+        setEditingId('')
+        setEditingSnapshot(null)
+        setSelectedKey('')
+      }
+      setMessage('')
+    } catch {
+      setMessage(t('authorAds.localSaveFailed'))
     }
-
-    setCampaigns(items =>
-      items.some(item => item.id === id) ? items : [draft, ...items]
-    )
-    editDraft(draft)
-    navigate('/author/page/ads/boost-editor', { replace: true })
-  }).catch(() => {
-    if (!controller.signal.aborted) {
-      setCampaignsError(t('authorAds.campaignLoadFailed'))
-    }
-  })
-
-  return () => controller.abort()
-}, [campaigns, campaignsLoaded, editDraft, navigate, section, t])
+  }
 
   const deleteCampaign = async id => {
     if (processingId || !window.confirm(t('authorAds.confirmDelete'))) return
@@ -752,7 +787,11 @@ export default function AuthorAdsPage() {
       await deleteAuthorAdDraft(id)
       setCampaigns(current => current.filter(item => item.id !== id))
       setCampaignsLoaded(false)
-      if (editingId === id) setEditingId('')
+      if (editingId === id) {
+        setEditingId('')
+        setEditingSnapshot(null)
+        setSelectedKey('')
+      }
     } catch {
       setCampaignsError(t('authorAds.saveFailed'))
     } finally {
@@ -811,7 +850,7 @@ export default function AuthorAdsPage() {
     }
   }
 
-  const previewAction = kind === 'post' ? t('authorAds.viewPost') : selectedItem?.type === 'pdf' || selectedItem?.type === 'book' ? t('authorAds.buyNow') : t('authorAds.readNow')
+  const previewAction = kind === 'post' ? t('authorAds.viewPost') : selectedItem?.sourceType === 'product' ? t('authorAds.buyNow') : t('authorAds.readNow')
 
   return (
     <main className="min-h-screen bg-[var(--shadow-bg-page)] pb-28 text-[var(--shadow-text-primary)]">
