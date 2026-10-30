@@ -155,7 +155,7 @@ export default function AuthorAdsPostEditorPage() {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
-  const tr = key => t(`boostPostEditor.${key}`)
+  const tr = (key, options) => t(`boostPostEditor.${key}`, options)
   const [step, setStep] = useState(0)
   const [username, setUsername] = useState('')
   const [posts, setPosts] = useState([])
