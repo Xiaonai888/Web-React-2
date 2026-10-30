@@ -247,6 +247,11 @@ export default function AuthorAdsBoostContentPage() {
                 {Number.isFinite(Number(item.budget_usd ?? item.budgetUsd)) && <span>{Math.round(Number(item.budget_usd ?? item.budgetUsd) * 100).toLocaleString()} 💎</span>}
                 {(item.duration_days || item.durationDays) && <span>{item.duration_days || item.durationDays} days</span>}
               </div>
+              <button type="button"
+  onClick={() => navigate('/author/page/ads/boost-editor?tab=campaigns')}
+  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f1eaff] px-4 py-3 text-sm font-semibold text-[#6335d7] dark:bg-[#42325b] dark:text-[#decfff]">
+  Manage Campaign <ChevronRight size={16} />
+</button>
             </div>
           ))}
           {loading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#8b849c]"><RefreshCw size={17} className="animate-spin" />{tr('loading')}</div>}
