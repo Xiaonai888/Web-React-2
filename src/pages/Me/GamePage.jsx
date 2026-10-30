@@ -171,7 +171,11 @@ export default function GamePage() {
     return game.name || game.gameKey
   }
 
-  const cannotOpen = game.disabled || !game.path
+  function getStatusKey(game) {
+  if (!game.path) return 'gamePage.comingSoon'
+  if (game.disabled) return 'gamePage.disabled'
+  return 'gamePage.open'
+}
 
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0d0f16]">
