@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, BarChart3, Check, ChevronLeft, ChevronRight,
-  CircleCheck, Gem, Image as ImageIcon, Info, Loader2, Search, Users,
+  CircleCheck, Gem, Image as ImageIcon, Info, Loader2, Search, Users, UploadCloud, X,
 } from 'lucide-react'
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { createAuthorAdDraft, updateAuthorAdDraft } from '../../services/authorAdsApi'
+import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
+import { optimizeImageForUpload, validateImageUploadFile } from '../../utils/imageUploadOptimizer'
 
 registerTranslationNamespace('boostPostEditor', {
   en: {
@@ -98,6 +100,95 @@ registerTranslationNamespace('boostPostEditor', {
   },
 })
 
+registerTranslationNamespace('boostPostEditor', {
+  en: {
+    createAd: 'Create New Ad', createImage: 'Square ad image (1:1)', imageHint: 'Choose or drop one photo. It will be cropped to a centered square before publishing.',
+    writeAd: 'Ad text', textPlaceholder: 'Write a short message about your ad...', publishContinue: 'Publish Post & Continue',
+    posting: 'Publishing...', preparingImage: 'Preparing square image...', uploadingImage: 'Uploading image...',
+    photoNeeded: 'Add one image before continuing.', textNeeded: 'Write text before continuing.',
+    imageInvalid: 'This photo could not be prepared. Please choose a different image.',
+    publishFailed: 'Unable to publish the Post. Check your connection and try again.',
+    publishDone: 'Your Post was published. Continue to configure its Boost.',
+    postAlreadyCreated: 'This Post is already published. Continue to the Boost settings.',
+    createNote: 'The image and text will be published as an Author Post first. The Boost remains a draft until separately submitted and started.',
+    replaceImage: 'Change image', removeImage: 'Remove image', continueBoost: 'Continue to Boost',
+  },
+  km: {
+    createAd: 'Create New Ad', createImage: 'រូបពាណិជ្ជកម្មការ៉េ (1:1)', imageHint: 'ជ្រើស ឬទម្លាក់រូបមួយ។ ប្រព័ន្ធនឹងកាត់រូបឱ្យការ៉េមុនបង្ហោះ។',
+    writeAd: 'អត្ថបទពាណិជ្ជកម្ម', textPlaceholder: 'សរសេរអត្ថបទផ្សព្វផ្សាយខ្លីៗ...', publishContinue: 'បង្ហោះ Post និងបន្ត',
+    posting: 'កំពុងបង្ហោះ...', preparingImage: 'កំពុងរៀបចំរូបការ៉េ...', uploadingImage: 'កំពុង Upload រូប...',
+    photoNeeded: 'សូមបញ្ចូលរូបភាពមួយសិន។', textNeeded: 'សូមសរសេរអត្ថបទសិន។',
+    imageInvalid: 'មិនអាចរៀបចំរូបនេះបានទេ។ សូមជ្រើសរូបផ្សេង។',
+    publishFailed: 'មិនអាចបង្ហោះ Post បានទេ។ សូមពិនិត្យអ៊ីនធឺណិតហើយសាកម្តងទៀត។',
+    publishDone: 'បានបង្ហោះ Post រួច។ សូមបន្តកំណត់ Boost។',
+    postAlreadyCreated: 'Post នេះបានបង្ហោះរួច។ សូមបន្តទៅការកំណត់ Boost។',
+    createNote: 'រូប និងអត្ថបទនឹងត្រូវបង្ហោះជា Author Post ជាមុន។ Boost នៅជា Draft រហូតដល់ផ្ញើពិនិត្យ និង Start ដាច់ដោយឡែក។',
+    replaceImage: 'ប្ដូររូប', removeImage: 'ដករូប', continueBoost: 'បន្តទៅ Boost',
+  },
+  zh: {
+    createAd: '创建新广告', createImage: '正方形广告图片 (1:1)', imageHint: '选择或拖入一张图片，发布前将裁剪为居中正方形。',
+    writeAd: '广告文案', textPlaceholder: '写一段广告简介...', publishContinue: '发布帖子并继续', posting: '发布中...',
+    preparingImage: '正在准备方形图片...', uploadingImage: '上传图片中...', photoNeeded: '请添加一张图片。', textNeeded: '请填写文案。',
+    imageInvalid: '无法处理此图片，请更换。', publishFailed: '发布失败，请检查网络并重试。', publishDone: '帖子已发布，继续设置推广。',
+    postAlreadyCreated: '该帖子已发布，请继续设置推广。', createNote: '图片和文字先作为作者帖子发布；推广仍为草稿，需单独审核并启动。',
+    replaceImage: '更换图片', removeImage: '移除图片', continueBoost: '继续设置推广',
+  },
+  ja: {
+    createAd: '新規広告を作成', createImage: '正方形画像 (1:1)', imageHint: '画像を1枚選択またはドロップしてください。投稿前に中央で正方形に切り抜きます。',
+    writeAd: '広告テキスト', textPlaceholder: '広告文を入力...', publishContinue: '投稿して続行', posting: '投稿中...',
+    preparingImage: '正方形画像を準備中...', uploadingImage: '画像をアップロード中...', photoNeeded: '画像を1枚追加してください。',
+    textNeeded: 'テキストを入力してください。', imageInvalid: '画像を処理できません。他の画像を選択してください。',
+    publishFailed: '投稿できませんでした。接続を確認して再試行してください。', publishDone: '投稿しました。広告設定を続けてください。',
+    postAlreadyCreated: 'この投稿は公開済みです。広告設定に進んでください。', createNote: '画像とテキストは先に作者投稿として公開されます。広告は審査・開始まで下書きです。',
+    replaceImage: '画像を変更', removeImage: '画像を削除', continueBoost: '広告設定へ',
+  },
+  ko: {
+    createAd: '새 광고 만들기', createImage: '정사각형 광고 이미지 (1:1)', imageHint: '사진 한 장을 선택하거나 놓으면 게시 전에 정사각형으로 자릅니다.',
+    writeAd: '광고 문구', textPlaceholder: '광고 문구를 입력하세요...', publishContinue: '게시하고 계속', posting: '게시 중...',
+    preparingImage: '정사각형 이미지 준비 중...', uploadingImage: '이미지 업로드 중...', photoNeeded: '사진 한 장을 추가하세요.',
+    textNeeded: '광고 문구를 입력하세요.', imageInvalid: '이미지를 처리할 수 없습니다. 다른 사진을 선택하세요.',
+    publishFailed: '게시하지 못했습니다. 연결 확인 후 다시 시도하세요.', publishDone: '게시물이 등록되었습니다. 광고 설정을 계속하세요.',
+    postAlreadyCreated: '이미 게시되었습니다. 광고 설정을 계속하세요.', createNote: '이미지와 문구는 먼저 작가 게시물로 공개됩니다. 광고는 별도 검토와 시작 전까지 초안입니다.',
+    replaceImage: '사진 변경', removeImage: '사진 제거', continueBoost: '광고 설정 계속',
+  },
+})
+
+async function cropBoostImageSquare(file) {
+  const invalid = validateImageUploadFile(file, { maxSourceBytes: 10 * 1024 * 1024 })
+  if (invalid) throw new Error(invalid)
+  if (file.type === 'image/gif' || /\.gif$/i.test(file.name || '')) throw new Error('GIF_NOT_SUPPORTED')
+  const optimized = await optimizeImageForUpload(file, { preset: 'post' })
+  const url = URL.createObjectURL(optimized.file)
+  const image = new Image()
+  try {
+    await new Promise((resolve, reject) => {
+      image.onload = resolve
+      image.onerror = () => reject(new Error('IMAGE_DECODE_FAILED'))
+      image.src = url
+    })
+    const width = image.naturalWidth
+    const height = image.naturalHeight
+    if (!width || !height) throw new Error('IMAGE_DECODE_FAILED')
+    const side = Math.min(width, height)
+    const size = Math.min(1080, side)
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('CANVAS_UNAVAILABLE')
+    context.drawImage(image, (width - side) / 2, (height - side) / 2, side, side, 0, 0, size, size)
+    for (const quality of [0.88, 0.8, 0.72]) {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality))
+      if (blob?.size && blob.size <= 2 * 1024 * 1024 && blob.type === 'image/webp') {
+        return new File([blob], `shadow-boost-${Date.now()}.webp`, { type: 'image/webp', lastModified: Date.now() })
+      }
+    }
+    throw new Error('IMAGE_TOO_LARGE')
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 const API_ORIGIN = (import.meta.env.VITE_API_URL || (
   typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com'
@@ -154,6 +245,8 @@ function PostCard({ item, selected, onClick }) {
 export default function AuthorAdsPostEditorPage() {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isCreateMode = new URLSearchParams(location.search).get('mode') === 'create'
   const { t } = useDisplayTranslation()
   const tr = (key, options) => t(`boostPostEditor.${key}`, options)
   const [step, setStep] = useState(0)
@@ -177,6 +270,106 @@ export default function AuthorAdsPostEditorPage() {
   const [deviceId, setDeviceId] = useState('')
   const [saved, setSaved] = useState(false)
   const [notice, setNotice] = useState('')
+  const fileInputRef = useRef(null)
+  const imageSelectionRef = useRef(0)
+  const createInFlightRef = useRef(false)
+  const uploadedImageRef = useRef(null)
+  const [newAdText, setNewAdText] = useState('')
+  const [newAdImage, setNewAdImage] = useState(null)
+  const [newAdPreview, setNewAdPreview] = useState('')
+  const [newAdPreparing, setNewAdPreparing] = useState(false)
+  const [newAdPublishing, setNewAdPublishing] = useState(false)
+  const [newAdUploading, setNewAdUploading] = useState(false)
+  const [newAdProgress, setNewAdProgress] = useState(0)
+  const [publishedPostId, setPublishedPostId] = useState('')
+
+  useEffect(() => () => {
+    imageSelectionRef.current += 1
+  }, [])
+
+  useEffect(() => () => {
+    if (newAdPreview) URL.revokeObjectURL(newAdPreview)
+  }, [newAdPreview])
+
+  const selectNewAdImage = async file => {
+    if (!file || newAdPublishing || publishedPostId) return
+    const version = ++imageSelectionRef.current
+    setNewAdPreparing(true)
+    setNewAdImage(null)
+    setNewAdPreview('')
+    setNotice('')
+    try {
+      const square = await cropBoostImageSquare(file)
+      if (version !== imageSelectionRef.current) return
+      setNewAdImage(square)
+      setNewAdPreview(URL.createObjectURL(square))
+      uploadedImageRef.current = null
+    } catch {
+      if (version === imageSelectionRef.current) setNotice(tr('imageInvalid'))
+    } finally {
+      if (version === imageSelectionRef.current) setNewAdPreparing(false)
+    }
+  }
+
+  const publishNewAdPost = async () => {
+    if (publishedPostId) { setStep(1); return }
+    if (createInFlightRef.current || newAdPreparing) return
+    if (!newAdImage) { setNotice(tr('photoNeeded')); return }
+    if (!newAdText.trim()) { setNotice(tr('textNeeded')); return }
+    const token = getToken()
+    if (!token || !username) { navigate('/login'); return }
+    createInFlightRef.current = true
+    setNewAdPublishing(true)
+    setNotice('')
+    try {
+      let imageUrl = uploadedImageRef.current?.file === newAdImage ? uploadedImageRef.current.url : ''
+      if (!imageUrl) {
+        setNewAdUploading(true)
+        const uploaded = await uploadMediaWithFallback({
+          file: newAdImage,
+          category: 'author_post_image',
+          token,
+          apiBaseUrl: API_ORIGIN,
+          onProgress: value => setNewAdProgress(Math.max(0, Math.min(100, Number(value) || 0))),
+        })
+        imageUrl = String(uploaded?.image_url || uploaded?.imageUrl || '').trim()
+        if (!/^https?:\/\//i.test(imageUrl)) throw new Error('UPLOAD_URL_MISSING')
+        uploadedImageRef.current = { file: newAdImage, url: imageUrl }
+      }
+      setNewAdUploading(false)
+      if (getToken() !== token) throw new Error('ACCOUNT_CHANGED')
+      const response = await fetch(`${API_ORIGIN}/api/authors/me/posts`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          post_type: 'article', content: newAdText.trim(), image_urls: [imageUrl],
+          status: 'active', scheduled_at: null,
+        }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || result.ok === false || !result.post?.id) throw new Error(result.message || 'POST_FAILED')
+      const post = {
+        ...result.post,
+        content: result.post.content ?? newAdText.trim(),
+        image_urls: Array.isArray(result.post.image_urls) && result.post.image_urls.length
+          ? result.post.image_urls : [imageUrl],
+      }
+      const id = String(post.id)
+      setPosts(current => [post, ...current.filter(item => String(item.id) !== id)])
+      setSelectedId(id)
+      setPublishedPostId(id)
+      setSaved(false)
+      setStep(1)
+      setNotice(tr('publishDone'))
+    } catch {
+      setNotice(tr('publishFailed'))
+    } finally {
+      setNewAdUploading(false)
+      setNewAdPublishing(false)
+      createInFlightRef.current = false
+    }
+  }
+
 
   const loadFirst = useCallback(async signal => {
     setLoading(true)
@@ -186,6 +379,11 @@ export default function AuthorAdsPostEditorPage() {
       const name = String(account.author_page?.page_username || '').trim()
       if (!name) throw new Error('AUTHOR_REQUIRED')
       setUsername(name)
+      if (isCreateMode) {
+        setPosts([])
+        setNextCursor('')
+        return
+      }
       const response = await getJson(`/api/authors/page/${encodeURIComponent(name)}/posts?limit=20&content_library=1&status=active`, signal)
       setPosts((response.posts || []).filter(item =>
         Array.isArray(item.image_urls) && item.image_urls.some(x => typeof x === 'string' && safeImage(x))))
@@ -197,7 +395,7 @@ export default function AuthorAdsPostEditorPage() {
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
-  }, [navigate])
+  }, [navigate, isCreateMode])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -306,6 +504,7 @@ export default function AuthorAdsPostEditorPage() {
   }
 
   const next = () => {
+    if (step === 0 && isCreateMode && !publishedPostId) return publishNewAdPost()
     if (step === 0 && !selected) return setNotice(tr('selectFirst'))
     if (step === 2 && audience === 'genre' && !genre) return setNotice(tr('genreFirst'))
     if (step === 3) return saveDraft()
@@ -317,8 +516,8 @@ export default function AuthorAdsPostEditorPage() {
     <main className="min-h-[100dvh] bg-[#faf9ff] pb-[138px] text-[#1c1728] dark:bg-[#14111d] dark:text-white">
       <div className="mx-auto max-w-2xl px-4 pt-4 sm:px-6">
         <header className="mb-6 flex items-center gap-4">
-          <button type="button" aria-label={tr('back')} className="-ml-2 p-2" onClick={() => navigate('/author/page/ads/boost-content')}><ArrowLeft size={24} /></button>
-          <h1 className="text-[22px] font-bold">{tr('title')}</h1>
+          <button type="button" aria-label={tr('back')} className="-ml-2 p-2" onClick={() => navigate(isCreateMode ? '/author/page/ads' : '/author/page/ads/boost-content')}><ArrowLeft size={24} /></button>
+          <h1 className="text-[18px] font-bold">{tr(isCreateMode ? 'createAd' : 'title')}</h1>
         </header>
 
         <div className="mb-6 flex items-start justify-between gap-1" aria-label="Campaign steps">
@@ -330,7 +529,41 @@ export default function AuthorAdsPostEditorPage() {
           </button>)}
         </div>
 
-        {step === 0 && <section className={CARD}>
+        {step === 0 && isCreateMode && <section className={CARD}>
+          <h2 className="mb-3 text-base font-bold">{tr('createImage')}</h2>
+          {publishedPostId ? <div role="status" className="mb-4 rounded-xl bg-[#effaf2] p-4 text-sm text-[#236643]">{tr('postAlreadyCreated')}</div> : <>
+            <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" className="hidden"
+              onChange={event => { void selectNewAdImage(event.target.files?.[0]); event.target.value = '' }} />
+            <div role="button" tabIndex={0} aria-label={tr('createImage')}
+              onClick={() => !newAdPreparing && fileInputRef.current?.click()}
+              onKeyDown={event => { if ((event.key === 'Enter' || event.key === ' ') && !newAdPreparing) { event.preventDefault(); fileInputRef.current?.click() } }}
+              onDragOver={event => event.preventDefault()}
+              onDrop={event => { event.preventDefault(); void selectNewAdImage(event.dataTransfer.files?.[0]) }}
+              className="mx-auto flex aspect-square w-full max-w-[380px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-[#d9d1e9] bg-[#faf9fc] text-center dark:border-white/20 dark:bg-[#292332]">
+              {newAdPreview ? <img src={newAdPreview} alt="" className="h-full w-full object-cover" /> :
+                <div className="flex flex-col items-center gap-3 px-5 text-[#77698d]">
+                  {newAdPreparing ? <Loader2 size={36} className="animate-spin" /> : <UploadCloud size={36} />}
+                  <span className="text-sm font-medium">{newAdPreparing ? tr('preparingImage') : tr('imageHint')}</span>
+                </div>}
+            </div>
+            {newAdPreview && <div className="mt-3 flex items-center justify-center gap-5 text-xs font-semibold text-[#6840ce]">
+              <button type="button" disabled={newAdPreparing} onClick={() => fileInputRef.current?.click()}>{tr('replaceImage')}</button>
+              <button type="button" disabled={newAdPreparing} className="inline-flex items-center gap-1 text-[#a0474a]" onClick={() => {
+                imageSelectionRef.current += 1; setNewAdImage(null); setNewAdPreview(''); uploadedImageRef.current = null
+              }}><X size={15}/>{tr('removeImage')}</button>
+            </div>}
+            <label className="mt-5 block text-sm font-semibold">{tr('writeAd')}
+              <textarea rows={4} maxLength={10000} value={newAdText} disabled={newAdPublishing}
+                onChange={event => { setNewAdText(event.target.value); setNotice('') }}
+                placeholder={tr('textPlaceholder')}
+                className="mt-2 w-full resize-y rounded-xl border border-[#e8e2f0] bg-white p-3 text-sm outline-none focus:border-[#7045e8] dark:border-white/10 dark:bg-[#3c304a]" />
+            </label>
+            <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-[#898295]"><Info size={15} className="shrink-0"/>{tr('createNote')}</p>
+            {newAdUploading && <p role="status" className="mt-3 text-xs font-medium text-[#6840ce]">{tr('uploadingImage')} {Math.round(newAdProgress)}%</p>}
+          </>}
+        </section>}
+
+        {step === 0 && !isCreateMode && <section className={CARD}>
           <h2 className="mb-4 text-base font-bold">{tr('pick')}</h2>
           <div className="relative mb-3"><Search size={18} className="absolute left-3 top-3.5 text-[#9592a3]" />
             <input value={search} onChange={event => setSearch(event.target.value)} placeholder={tr('search')} className="w-full rounded-xl border border-[#e8e5ee] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8b62ea] dark:border-white/10 dark:bg-[#342b42]" />
@@ -408,7 +641,7 @@ export default function AuthorAdsPostEditorPage() {
               <div className="flex items-center gap-2 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#efe8ff] text-[#6a45cc]"><BarChart3 size={18} /></span>
                 <span className="text-xs font-semibold">Shadow <span className="block text-[10px] font-normal text-[#9990a6]">{tr('sponsored')}</span></span>
               </div>
-              <div className="flex aspect-[16/10] items-center justify-center bg-[#f0ecf7] dark:bg-[#332b3f]">
+              <div className={`flex ${isCreateMode ? 'aspect-square' : 'aspect-[16/10]'} items-center justify-center bg-[#f0ecf7] dark:bg-[#332b3f]`}>
                 {safeImage(previewImage) ? <img alt="" src={safeImage(previewImage)} className="h-full w-full object-contain" /> : <ImageIcon size={38} className="text-[#8f83a4]" />}
               </div>
               <div className="flex items-center justify-between gap-3 p-3">
@@ -423,7 +656,7 @@ export default function AuthorAdsPostEditorPage() {
         {notice && <div role="status" className={`mt-4 rounded-xl border p-3 text-sm ${saved ? 'border-[#d6c5ff] bg-[#f1eaff] text-[#6134ce] dark:bg-[#35284a] dark:text-[#e0d0ff]' : 'border-[#f2d6a3] bg-[#fff8e6] text-[#785116] dark:bg-[#4a3825] dark:text-[#ffe3a8]'}`}>
           {saved && <CircleCheck size={17} className="mr-2 inline-block" />}{notice}
         </div>}
-        {saved && <button type="button" className="mt-4 flex items-center gap-2 text-sm font-semibold text-[#6940d1]" onClick={() => navigate('/author/page/ads/boost-content')}>
+        {saved && <button type="button" className="mt-4 flex items-center gap-2 text-sm font-semibold text-[#6940d1]" onClick={() => navigate(isCreateMode ? '/author/page/ads' : '/author/page/ads/boost-content')}>
           {tr('finish')}<ChevronRight size={17} />
         </button>}
       </div>
@@ -431,9 +664,9 @@ export default function AuthorAdsPostEditorPage() {
       <footer className="fixed inset-x-0 bottom-0 z-[70] border-t border-[#edeaf3] bg-white/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-5px_24px_rgba(49,29,91,.05)] backdrop-blur dark:border-white/10 dark:bg-[#241d2f]/95">
         <div className="mx-auto flex max-w-2xl items-center gap-2.5">
           {step > 0 && !saved && <button type="button" onClick={() => { setStep(x => x - 1); setNotice('') }} aria-label={tr('back')} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#e7e3ef] dark:border-white/15"><ChevronLeft size={22} /></button>}
-          <button type="button" disabled={saving || !selected || saved} onClick={saveDraft} className="h-12 flex-1 rounded-xl border border-[#dfdbe8] bg-white px-2 text-xs font-semibold text-[#211829] disabled:opacity-45 dark:border-white/15 dark:bg-[#352b40] dark:text-white sm:text-sm">{saving ? tr('saving') : tr('draft')}</button>
-          <button type="button" disabled={saving || saved} onClick={next} className="flex h-12 flex-[1.6] items-center justify-center gap-1.5 rounded-xl bg-[#ffd43f] px-2 text-sm font-bold text-[#1e1721] disabled:opacity-50">
-            {saving && <Loader2 size={18} className="animate-spin" />}{step === 3 ? tr('review') : tr('next')}<ArrowRight size={18} />
+          <button type="button" disabled={saving || newAdPublishing || !selected || saved} onClick={saveDraft} className="h-12 flex-1 rounded-xl border border-[#dfdbe8] bg-white px-2 text-xs font-semibold text-[#211829] disabled:opacity-45 dark:border-white/15 dark:bg-[#352b40] dark:text-white sm:text-sm">{saving ? tr('saving') : tr('draft')}</button>
+          <button type="button" disabled={saving || newAdPublishing || newAdPreparing || saved} onClick={next} className="flex h-12 flex-[1.6] items-center justify-center gap-1.5 rounded-xl bg-[#ffd43f] px-2 text-sm font-bold text-[#1e1721] disabled:opacity-50">
+            {(saving || newAdPublishing) && <Loader2 size={18} className="animate-spin" />}{step === 3 ? tr('review') : isCreateMode && step === 0 ? newAdPublishing ? tr('posting') : publishedPostId ? tr('continueBoost') : tr('publishContinue') : tr('next')}<ArrowRight size={18} />
           </button>
         </div>
       </footer>
