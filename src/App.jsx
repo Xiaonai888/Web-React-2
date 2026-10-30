@@ -85,7 +85,7 @@ import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 import { syncReaderOneSignalIdentity } from './services/readerOneSignal.service'
-
+const AuthorAdsCampaignDetailPage = lazy(() => import('./pages/Author/AuthorAdsCampaignDetailPage'))
 
 const AuthorAdsProductEditorPage = lazy(() => import('./pages/Author/AuthorAdsProductEditorPage'))
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
@@ -1158,6 +1158,7 @@ const shouldShowOpeningAds =
 <Route path="/author/page/ads/boost-editor" element={<LazyPage><AuthorAdsPage /></LazyPage>} />
 <Route path="/author/page/ads/boost-story" element={<LazyPage><AuthorAdsStoryEditorPage /></LazyPage>} />
 <Route path="/author/page/ads/boost-post" element={<LazyPage><AuthorAdsPostEditorPage /></LazyPage>} />
+<Route path="/author/page/ads/campaign/:campaignId" element={<LazyPage><AuthorAdsCampaignDetailPage /></LazyPage>} />         
           
 <Route
   path="/game/spin"
