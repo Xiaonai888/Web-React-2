@@ -238,7 +238,10 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
     const current=selection?.getSelectedIds?.()||[];
     const nextIds=event.shiftKey?(current.includes(u.id)?current.filter(x=>x!==u.id):[...current,u.id]):[u.id];
     selection?.setSelectedIds?.(nextIds);
-    update();
+if (event.detail === 2 && Number.isFinite(u.x) && Number.isFinite(u.y)) {
+  engine.camera.centerOn(u.x, u.y);
+}
+update();
   }
   function onMapDown(event){
     const rect=mapCanvas.getBoundingClientRect();
