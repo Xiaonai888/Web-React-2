@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, BarChart3, BookCopy, BookOpen, ChevronRight, FileText,
   Image as ImageIcon, Megaphone, Plus, RefreshCw, X,
@@ -21,7 +21,7 @@ registerTranslationNamespace('authorAdsBoostSelection', {
     unavailable: 'Campaigns could not be checked. Try again.', retry: 'Retry',
     loadMore: 'Load more', localDraft: 'Device draft', draft: 'Draft',
     storeItem: 'Store book / PDF', insightsPending: 'Campaign results will appear here when delivery tracking is available.',
-    noInsights: 'No campaign insights yet',
+    noInsights: 'No campaign insights yet', refresh: 'Refresh campaigns',
   },
   km: {
     title: 'Boost Content', back: 'ត្រឡប់ក្រោយ', create: 'Create Boost', campaigns: 'My Campaigns', insights: 'Insights',
@@ -32,7 +32,7 @@ registerTranslationNamespace('authorAdsBoostSelection', {
     unavailable: 'មិនអាចពិនិត្យ Campaign បានទេ។ សូមសាកម្តងទៀត។', retry: 'សាកម្តងទៀត',
     loadMore: 'មើលបន្ថែម', localDraft: 'Draft ក្នុងឧបករណ៍', draft: 'Draft',
     storeItem: 'សៀវភៅ / PDF', insightsPending: 'លទ្ធផល Campaign នឹងបង្ហាញនៅទីនេះ ពេលប្រព័ន្ធតាមដាន Ads ដំណើរការ។',
-    noInsights: 'មិនទាន់មានស្ថិតិ Campaign',
+    noInsights: 'មិនទាន់មានស្ថិតិ Campaign', refresh: 'ធ្វើបច្ចុប្បន្នភាព Campaign',
   },
   zh: {
     title: '推广内容', back: '返回', create: '创建推广', campaigns: '我的广告活动', insights: '数据分析',
@@ -41,7 +41,8 @@ registerTranslationNamespace('authorAdsBoostSelection', {
     noCampaigns: '暂无广告活动', noCampaignsHint: '选择推广类型，创建第一个活动。',
     chooseBoost: '选择推广类型', close: '关闭', loading: '正在加载活动...',
     unavailable: '无法检查活动，请重试。', retry: '重试', loadMore: '加载更多', localDraft: '本地草稿', draft: '草稿',
-    storeItem: '书籍 / PDF', insightsPending: '广告投放数据追踪启用后，此处将显示活动结果。', noInsights: '暂无广告数据',
+    storeItem: '书籍 / PDF', insightsPending: '广告投放数据追踪启用后，此处将显示活动结果。',
+    noInsights: '暂无广告数据', refresh: '刷新活动',
   },
   ja: {
     title: 'コンテンツを宣伝', back: '戻る', create: '広告を作成', campaigns: 'マイキャンペーン', insights: '分析',
@@ -51,7 +52,8 @@ registerTranslationNamespace('authorAdsBoostSelection', {
     chooseBoost: '種類を選択', close: '閉じる', loading: '読み込み中...',
     unavailable: 'キャンペーンを確認できません。再試行してください。', retry: '再試行',
     loadMore: 'さらに表示', localDraft: '端末の下書き', draft: '下書き',
-    storeItem: '書籍 / PDF', insightsPending: '配信結果の追跡が利用可能になると、ここに表示されます。', noInsights: 'まだ分析データはありません',
+    storeItem: '書籍 / PDF', insightsPending: '配信結果の追跡が利用可能になると、ここに表示されます。',
+    noInsights: 'まだ分析データがありません', refresh: 'キャンペーンを更新',
   },
   ko: {
     title: '콘텐츠 홍보', back: '뒤로', create: '부스트 만들기', campaigns: '내 캠페인', insights: '통계',
@@ -61,7 +63,8 @@ registerTranslationNamespace('authorAdsBoostSelection', {
     chooseBoost: '부스트 선택', close: '닫기', loading: '캠페인 불러오는 중...',
     unavailable: '캠페인을 확인할 수 없습니다. 다시 시도하세요.', retry: '다시 시도',
     loadMore: '더 보기', localDraft: '기기 초안', draft: '초안',
-    storeItem: '도서 / PDF', insightsPending: '광고 게재 추적이 활성화되면 캠페인 결과가 여기에 표시됩니다.', noInsights: '캠페인 통계가 없습니다',
+    storeItem: '도서 / PDF', insightsPending: '광고 게재 추적이 활성화되면 캠페인 결과가 여기에 표시됩니다.',
+    noInsights: '캠페인 통계가 없습니다', refresh: '캠페인 새로고침',
   },
 })
 
@@ -71,6 +74,12 @@ const CHOICES = [
   { id: 'physical', icon: BookCopy, title: 'physical', hint: 'physicalHint', tint: 'amber' },
   { id: 'post', icon: ImageIcon, title: 'post', hint: 'postHint', tint: 'violet' },
 ]
+const EDITOR_PATHS = {
+  story: '/author/page/ads/boost-story',
+  pdf: '/author/page/ads/boost-pdf',
+  physical: '/author/page/ads/boost-physical',
+  post: '/author/page/ads/boost-post',
+}
 const API_BASE = (import.meta.env.VITE_API_URL || (
   typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com'
@@ -81,9 +90,14 @@ function readerToken() {
 }
 
 function readLocalDrafts(username) {
+  if (!username) return []
   try {
     const raw = JSON.parse(localStorage.getItem(`shadow_author_ads_drafts_v1_${username}`) || '[]')
-    return Array.isArray(raw) ? raw : []
+    if (!Array.isArray(raw)) return []
+    return raw.filter(item => item && typeof item === 'object' &&
+      typeof item.id === 'string' && item.id.trim() && item.status === 'draft')
+      .map(item => ({ ...item, deviceDraft: true }))
+      .slice(0, 200)
   } catch {
     return []
   }
@@ -97,6 +111,7 @@ async function getAuthorUsername(signal) {
   })
   if (!response.ok) throw new Error('AUTHOR_LOOKUP_FAILED')
   const data = await response.json()
+  if (data.ok === false) throw new Error('AUTHOR_LOOKUP_FAILED')
   const username = String(data.author_page?.page_username || '').trim()
   if (!username) throw new Error('AUTHOR_PAGE_MISSING')
   return username
@@ -131,91 +146,107 @@ function selectionCard(choice, t, onPick) {
 export default function AuthorAdsBoostContentPage() {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const tab = ['campaigns', 'insights'].includes(tabParam) ? tabParam : 'create'
   const { t } = useDisplayTranslation()
-  const tr = value => t(`authorAdsBoostSelection.${value}`)
-  const [tab, setTab] = useState(() =>
-  new URLSearchParams(window.location.search).get('tab') === 'campaigns'
-    ? 'campaigns'
-    : 'create'
-)
+  const tr = key => t(`authorAdsBoostSelection.${key}`)
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [page, setPage] = useState(1)
   const [showEmptyChooser, setShowEmptyChooser] = useState(false)
   const [refreshCount, setRefreshCount] = useState(0)
-  const usernameRef = useRef('')
+  const loadMoreControllerRef = useRef(null)
 
   const goToEditor = type => {
+    if (!Object.prototype.hasOwnProperty.call(EDITOR_PATHS, type)) return
     setShowEmptyChooser(false)
-    navigate(type === 'story'
-  ? '/author/page/ads/boost-story'
-  : type === 'pdf'
-    ? '/author/page/ads/boost-pdf'
-    : type === 'physical'
-      ? '/author/page/ads/boost-physical'
-      : type === 'post'
-  ? '/author/page/ads/boost-post'
-  : `/author/page/ads/boost-editor?type=${encodeURIComponent(type)}`)
+    navigate(EDITOR_PATHS[type])
   }
 
   useEffect(() => {
     if (tab !== 'campaigns') return undefined
     const controller = new AbortController()
-    let active = true
+    if (loadMoreControllerRef.current) loadMoreControllerRef.current.abort()
+    setLoadingMore(false)
     setLoading(true)
+    setLoaded(false)
     setLoadError(false)
+    setShowEmptyChooser(false)
+    setCampaigns([])
+    setHasMore(false)
+    setPage(1)
     Promise.allSettled([
-      listAuthorAdCampaigns({ page: 1, limit: 10, signal: controller.signal }),
-      usernameRef.current ? Promise.resolve(usernameRef.current) : getAuthorUsername(controller.signal),
+      listAuthorAdCampaigns({ page: 1, limit: 10, signal: controller.signal, refresh: refreshCount > 0 }),
+      getAuthorUsername(controller.signal),
     ]).then(([remote, account]) => {
-      if (!active) return
-      const username = account.status === 'fulfilled' ? account.value : ''
-      if (username) usernameRef.current = username
-      const local = username ? readLocalDrafts(username).map(item => ({ ...item, deviceDraft: true })) : []
-      const cloud = remote.status === 'fulfilled' ? remote.value.campaigns : []
+      if (controller.signal.aborted) return
+      const remoteOk = remote.status === 'fulfilled'
+      const accountOk = account.status === 'fulfilled'
+      const cloud = remoteOk ? remote.value.campaigns : []
+      const local = accountOk ? readLocalDrafts(account.value) : []
       const merged = new Map(cloud.map(item => [String(item.id), item]))
-      local.forEach(item => { if (item.id && !merged.has(String(item.id))) merged.set(String(item.id), item) })
+      local.forEach(item => {
+        if (!merged.has(String(item.id))) merged.set(String(item.id), item)
+      })
       const records = [...merged.values()]
+      const failed = !remoteOk || !accountOk
       setCampaigns(records)
       setPage(1)
-      setHasMore(remote.status === 'fulfilled' && remote.value.has_more)
-      setLoaded(true)
-      const failed = remote.status === 'rejected' || account.status === 'rejected'
+      setHasMore(remoteOk && Boolean(remote.value.has_more))
       setLoadError(failed)
+      setLoaded(true)
       if (records.length === 0 && !failed) setShowEmptyChooser(true)
-      setLoading(false)
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false)
     })
-    return () => { active = false; controller.abort() }
+    return () => controller.abort()
   }, [tab, refreshCount])
 
   const loadMore = async () => {
-    if (loading || !hasMore) return
-    setLoading(true)
+    if (tab !== 'campaigns' || loading || loadingMore || !hasMore || loadError) return
+    const controller = new AbortController()
+    if (loadMoreControllerRef.current) loadMoreControllerRef.current.abort()
+    loadMoreControllerRef.current = controller
+    setLoadingMore(true)
     try {
-      const data = await listAuthorAdCampaigns({ page: page + 1, limit: 10 })
+      const data = await listAuthorAdCampaigns({ page: page + 1, limit: 10, signal: controller.signal })
+      if (controller.signal.aborted) return
       setCampaigns(current => {
-        const records = new Map(current.map(item => [String(item.id), item]))
-        data.campaigns.forEach(item => records.set(String(item.id), item))
-        return [...records.values()]
+        const merged = new Map(current.map(item => [String(item.id), item]))
+        data.campaigns.forEach(item => merged.set(String(item.id), item))
+        return [...merged.values()]
       })
       setPage(data.page)
-      setHasMore(data.has_more)
+      setHasMore(Boolean(data.has_more))
     } catch {
-      setLoadError(true)
+      if (!controller.signal.aborted) setLoadError(true)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoadingMore(false)
+      if (loadMoreControllerRef.current === controller) loadMoreControllerRef.current = null
     }
   }
 
+  useEffect(() => () => {
+    if (loadMoreControllerRef.current) loadMoreControllerRef.current.abort()
+  }, [])
+
   const openTab = next => {
+    if (!['create', 'campaigns', 'insights'].includes(next)) return
     setShowEmptyChooser(false)
-    setTab(next)
-    if (next === 'campaigns' && loaded) {
-      if (!campaigns.length && !loadError) setShowEmptyChooser(true)
-    }
+    setSearchParams(next === 'create' ? {} : { tab: next }, { replace: true })
+  }
+
+  const manageCampaign = selected => {
+    if (!selected?.id) return
+    const id = encodeURIComponent(String(selected.id))
+    navigate(selected.deviceDraft
+      ? `/author/page/ads/boost-editor?tab=campaigns&edit=${id}`
+      : `/author/page/ads/campaign/${id}`)
   }
 
   return (
@@ -233,29 +264,35 @@ export default function AuthorAdsBoostContentPage() {
         </div>}
 
         {tab === 'campaigns' && <section className="space-y-3">
-          <h2 className="px-1 text-lg font-semibold">{tr('campaigns')}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="px-1 text-lg font-semibold">{tr('campaigns')}</h2>
+            <button type="button" disabled={loading || loadingMore} onClick={() => setRefreshCount(value => value + 1)}
+              aria-label={tr('refresh')} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9e6f3] bg-white text-[#6942c8] disabled:opacity-40 dark:border-white/10 dark:bg-[#231d30] dark:text-[#d9c5ff]">
+              <RefreshCw size={17} className={loading || loadingMore ? 'animate-spin' : ''} />
+            </button>
+          </div>
           {loadError && <div role="alert" className="rounded-2xl border border-[#e9dba8] bg-[#fff8de] p-4 text-sm text-[#6a5020] dark:bg-[#4b3a1b] dark:text-[#ffecbc]">
             {tr('unavailable')}
-            <button type="button" className="ml-3 font-semibold underline" onClick={() => { setLoaded(false); setRefreshCount(current => current + 1) }}>{tr('retry')}</button>
+            <button type="button" className="ml-3 font-semibold underline" onClick={() => setRefreshCount(value => value + 1)}>{tr('retry')}</button>
           </div>}
           {campaigns.map(item => (
-  <AuthorAdsCampaignCard
-    key={String(item.id)}
-    campaign={item}
-    onManage={selected => navigate(
-      selected.deviceDraft
-  ? `/author/page/ads/boost-editor?tab=campaigns&edit=${encodeURIComponent(selected.id)}`
-  : `/author/page/ads/campaign/${encodeURIComponent(selected.id)}`
-    )}
-  />
-))}
-          {loading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#8b849c]"><RefreshCw size={17} className="animate-spin" />{tr('loading')}</div>}
-          {!loading && loaded && !campaigns.length && !loadError && <button type="button" className="w-full rounded-2xl border border-dashed border-[#dcd4ee] bg-white px-5 py-10 text-center dark:bg-[#231d30]" onClick={() => setShowEmptyChooser(true)}>
+            <AuthorAdsCampaignCard key={String(item.id)} campaign={item} onManage={manageCampaign} />
+          ))}
+          {loading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#8b849c]">
+            <RefreshCw size={17} className="animate-spin" />{tr('loading')}
+          </div>}
+          {!loading && loaded && !campaigns.length && !loadError && <button type="button"
+            className="w-full rounded-2xl border border-dashed border-[#dcd4ee] bg-white px-5 py-10 text-center dark:bg-[#231d30]"
+            onClick={() => setShowEmptyChooser(true)}>
             <Megaphone size={28} className="mx-auto mb-3 text-[#6d4ccb]" />
             <span className="block font-semibold">{tr('noCampaigns')}</span>
             <span className="mt-2 block text-xs text-[#827b92]">{tr('noCampaignsHint')}</span>
           </button>}
-          {!loading && hasMore && <button type="button" className="w-full rounded-xl border border-[#e9e6f3] bg-white py-3 text-sm font-medium dark:bg-[#231d30]" onClick={loadMore}>{tr('loadMore')}</button>}
+          {!loading && hasMore && <button type="button" disabled={loadingMore}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e9e6f3] bg-white py-3 text-sm font-medium disabled:opacity-50 dark:border-white/10 dark:bg-[#231d30]"
+            onClick={loadMore}>
+            {loadingMore && <RefreshCw size={14} className="animate-spin" />}{tr('loadMore')}
+          </button>}
         </section>}
 
         {tab === 'insights' && <AuthorAdsInsightsPanel />}
@@ -274,20 +311,27 @@ export default function AuthorAdsBoostContentPage() {
         </div>
       </nav>
 
-      {showEmptyChooser && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 px-4" onMouseDown={event => { if (event.target === event.currentTarget) setShowEmptyChooser(false) }}>
-        <div role="dialog" aria-modal="true" aria-labelledby="boost-picker-title" className="w-full max-w-sm rounded-[26px] bg-white p-5 shadow-xl dark:bg-[#251e33]">
+      {showEmptyChooser && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 px-4"
+        onMouseDown={event => { if (event.target === event.currentTarget) setShowEmptyChooser(false) }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="boost-picker-title"
+          className="w-full max-w-sm rounded-[26px] bg-white p-5 shadow-xl dark:bg-[#251e33]">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <h2 id="boost-picker-title" className="text-lg font-bold">{tr('noCampaigns')}</h2>
               <p className="mt-1 text-xs leading-5 text-[#898294] dark:text-[#c5bcce]">{tr('noCampaignsHint')}</p>
             </div>
-            <button type="button" aria-label={tr('close')} onClick={() => setShowEmptyChooser(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3effa] text-[#6c6479] dark:bg-[#3a2f4c] dark:text-white"><X size={17} /></button>
+            <button type="button" aria-label={tr('close')} onClick={() => setShowEmptyChooser(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3effa] text-[#6c6479] dark:bg-[#3a2f4c] dark:text-white"><X size={17} /></button>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {CHOICES.map(choice => <button key={choice.id} type="button" onClick={() => goToEditor(choice.id)} className="flex flex-col items-center gap-2 rounded-2xl border border-[#eee8f8] bg-[#faf8ff] px-2 py-4 text-center dark:border-white/10 dark:bg-[#342a45]">
-              <choice.icon size={26} className="text-[#6840cd] dark:text-[#c6a8ff]" />
-              <span className="text-xs font-semibold">{tr(choice.title)}</span>
-            </button>)}
+            {CHOICES.map(choice => {
+              const Icon = choice.icon
+              return <button key={choice.id} type="button" onClick={() => goToEditor(choice.id)}
+                className="flex flex-col items-center gap-2 rounded-2xl border border-[#eee8f8] bg-[#faf8ff] px-2 py-4 text-center dark:border-white/10 dark:bg-[#342a45]">
+                <Icon size={26} className="text-[#6840cd] dark:text-[#c6a8ff]" />
+                <span className="text-xs font-semibold">{tr(choice.title)}</span>
+              </button>
+            })}
           </div>
         </div>
       </div>}
