@@ -38,7 +38,7 @@ export function installAuthorNotificationDiagnostics() {
   const recoveryNeeded = isNotificationsPage() &&
     navigationType === 'reload' &&
     previous?.active === true &&
-    (previous.pending === true || Boolean(previous.lastError) || recoveryGap > 8000)
+    Boolean(previous.lastError)
 
   let active = false
   let lastPulse = 0
@@ -65,7 +65,11 @@ export function installAuthorNotificationDiagnostics() {
   }
 
   function showReport(reason, snapshot = readDiagnostic()) {
-    if (!isNotificationsPage() || document.getElementById('shadow-author-notification-diagnostic')) return
+    if (
+  !isNotificationsPage() ||
+  new URLSearchParams(window.location.search).get('notification_debug') !== '1' ||
+  document.getElementById('shadow-author-notification-diagnostic')
+) return
 
     const report = {
       reason,
@@ -227,7 +231,7 @@ export function installAuthorNotificationDiagnostics() {
       record(event, detail, {
         pending: false,
         pendingSince: null,
-        ...(failed ? { lastError: safeDetail(detail) } : {}),
+        lastError: failed ? safeDetail(detail) : null,
       })
       if (failed) showReport(event)
     }
