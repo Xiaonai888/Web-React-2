@@ -7127,13 +7127,41 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     episodeId,
   ])
 
-      const viewEpisodeId = String(episode?.id || episode?.episode_id || '')
+    const viewEpisodeId = String(episode?.id || episode?.episode_id || '')
   const viewCharacterCount = Number(
     episode?.character_count || episode?.content?.length || 0
   )
 
   useEffect(() => {
     const token = getReaderToken()
+    const viewDiagnostic = (event, details = {}) => {
+      const entry = {
+        at: new Date().toISOString(),
+        event,
+        story_id: String(storyId || ''),
+        episode_id: String(episodeId || ''),
+        ...details,
+      }
+      if (event === 'POST_ERROR' || event === 'POST_UNEXPECTED') {
+        console.warn('SHADOW_READER_VIEW_DIAG', entry)
+      }
+      try {
+        const key = 'shadow_reader_view_diagnostics_v1'
+        const existing = JSON.parse(sessionStorage.getItem(key) || '[]')
+        const records = Array.isArray(existing) ? existing : []
+        const previous = records[records.length - 1]
+        if (
+          event === 'SKIPPED' &&
+          previous?.event === event &&
+          previous?.story_id === entry.story_id &&
+          previous?.episode_id === entry.episode_id &&
+          previous?.reason === entry.reason &&
+          Date.now() - Date.parse(previous.at || '') < 30000
+        ) return
+        sessionStorage.setItem(key, JSON.stringify([...records.slice(-39), entry]))
+      } catch {}
+    }
+
     if (
       !storyId ||
       !episodeId ||
@@ -7144,6 +7172,16 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       !token ||
       offlineMode
     ) {
+      if (storyId && episodeId && !loading && adultAccepted && !offlineMode) {
+        const reason = viewEpisodeId !== String(episodeId)
+          ? 'EPISODE_MISMATCH'
+          : lockedEpisode
+            ? 'EPISODE_LOCKED'
+            : !token
+              ? 'MISSING_TOKEN'
+              : null
+        if (reason) viewDiagnostic('SKIPPED', { reason })
+      }
       return undefined
     }
 
@@ -7165,6 +7203,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     let finished = false
 
     async function requestView(mode) {
+      const startedAt = Date.now()
       const response = await fetch(
         `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`,
         {
@@ -7178,6 +7217,13 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       )
 
       const data = await response.json().catch(() => ({}))
+      viewDiagnostic('POST_RESULT', {
+        mode,
+        status: response.status,
+        counted: data?.view?.counted === true,
+        reason: String(data?.view?.reason || data?.code || '').slice(0, 80),
+        duration_ms: Date.now() - startedAt,
+      })
       if (!response.ok || data.ok === false) {
         throw Object.assign(
           new Error(data.message || 'Failed to count view'),
@@ -7215,6 +7261,11 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           await requestView('qualified')
         } catch (error) {
           if (!cancelled) {
+            viewDiagnostic('POST_ERROR', {
+              mode: 'qualified',
+              status: Number(error?.status || 0),
+              reason: String(error?.code || error?.name || 'REQUEST_FAILED').slice(0, 80),
+            })
             console.error('VIEW FLOW ERROR:', error)
           }
         } finally {
@@ -7226,7 +7277,10 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     async function beginViewFlow() {
       try {
         const result = await requestView('fast')
-        if (cancelled) return
+        if (cancelled) {
+          viewDiagnostic('CANCELLED_AFTER_RESPONSE', { mode: 'fast' })
+          return
+        }
 
         if (
           result.counted ||
@@ -7244,9 +7298,18 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           return
         }
 
+        viewDiagnostic('POST_UNEXPECTED', {
+          mode: 'fast',
+          reason: String(result?.reason || 'NO_VIEW_REASON').slice(0, 80),
+        })
         finished = true
       } catch (error) {
         if (!cancelled) {
+          viewDiagnostic('POST_ERROR', {
+            mode: 'fast',
+            status: Number(error?.status || 0),
+            reason: String(error?.code || error?.name || 'REQUEST_FAILED').slice(0, 80),
+          })
           console.error('VIEW FLOW ERROR:', error)
         }
         finished = true
@@ -7259,6 +7322,9 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       cancelled = true
       if (qualifiedTimer) {
         window.clearInterval(qualifiedTimer)
+      }
+      if (!finished) {
+        viewDiagnostic('CLEANUP_BEFORE_FINISH', { mode: qualifiedTimer ? 'qualified' : 'fast' })
       }
       if (!finished && qualifiedViewSentRef.current === viewKey) {
         qualifiedViewSentRef.current = false
@@ -7274,6 +7340,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
     viewEpisodeId,
     viewCharacterCount,
   ])
+  
 
 
   useEffect(() => {
