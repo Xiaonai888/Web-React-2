@@ -697,7 +697,7 @@ export default function AuthorAdsPage() {
     }
   }
 
-  const editDraft = draft => {
+  const editDraft = useCallback(draft => {
     setKind(draft.kind)
     setSelectedKey(draft.contentKey)
     setGoal(draft.goal)
@@ -711,7 +711,20 @@ export default function AuthorAdsPage() {
     setEditingId(draft.id)
     setSection('create')
     setMessage('')
-  }
+  }, [])
+
+  useEffect(() => {
+  const id = new URLSearchParams(window.location.search).get('edit')
+  if (!id || section !== 'campaigns' || !campaignsLoaded) return
+  const draft = campaigns.find(item =>
+    item.id === id &&
+    item.status === 'draft' &&
+    item.reviewStatus === 'not_submitted'
+  )
+  if (!draft) return
+  editDraft(draft)
+  navigate('/author/page/ads/boost-editor', { replace: true })
+}, [campaigns, campaignsLoaded, editDraft, navigate, section])
 
   const deleteDraft = id => {
     if (!window.confirm(t('authorAds.confirmDelete'))) return
