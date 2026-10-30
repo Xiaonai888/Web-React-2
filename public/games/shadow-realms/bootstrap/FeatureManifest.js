@@ -18,9 +18,12 @@ export function defineGameFeature(definition) {
     throw new TypeError('A feature must implement create() or load()');
   }
   const dependencies = definition.dependsOn ?? [];
-  if (!Array.isArray(dependencies) || dependencies.some(d => !validId(d)) ||
+  if (!Array.isArray(dependencies) || dependencies.some(d => !validId(d) || d === definition.id) ||
       new Set(dependencies).size !== dependencies.length) {
     throw new TypeError('dependsOn must be an array of unique feature IDs');
+  }
+  if (dependencies.some(id => !ids.has(id))) {
+    throw new TypeError('Feature dependencies must be registered before dependents');
   }
   ids.add(definition.id);
   catalog.push(Object.freeze({ ...definition, dependsOn: Object.freeze([...dependencies]) }));
