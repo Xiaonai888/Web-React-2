@@ -30,9 +30,19 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 export const BUILDING_TYPES = Object.freeze({
   house: Object.freeze({
-    name: 'House', width: 94, depth: 70, seconds: 25,
-    cost: Object.freeze({ rice: 30, wood: 45 }),
-    population: 4, riceStorage: 0,
+    name: 'Farmer House', width: 94, depth: 70, seconds: 10,
+    cost: Object.freeze({ rice: 100, wood: 100 }),
+    population: 4, riceStorage: 150,
+  }),
+  swordHouse: Object.freeze({
+    name: 'Sword House', width: 106, depth: 78, seconds: 10,
+    cost: Object.freeze({ rice: 0, wood: 150 }),
+    population: 0, riceStorage: 0,
+  }),
+  archerHouse: Object.freeze({
+    name: 'Archer House', width: 108, depth: 80, seconds: 10,
+    cost: Object.freeze({ rice: 0, wood: 250 }),
+    population: 0, riceStorage: 0,
   }),
   barn: Object.freeze({
     name: 'Barn', width: 108, depth: 80, seconds: 32,
@@ -40,6 +50,7 @@ export const BUILDING_TYPES = Object.freeze({
     population: 0, riceStorage: 200,
   }),
 });
+
 
 function poly(ctx, vertices, fill, line = null) {
   if (!vertices.length) return;
@@ -462,7 +473,7 @@ export class ConstructionSystem {
       }
       if (!working) continue;
       // Secondary workers build faster, but without unbounded linear scaling.
-      const multiplier = 1 + (working - 1) * 0.65;
+      const multiplier = 1;
       building.elapsedWork = Math.min(building.secondsRequired,
         building.elapsedWork + seconds * multiplier);
       building.progress = building.elapsedWork / building.secondsRequired;
