@@ -9,7 +9,8 @@ const finite = Number.isFinite;
 const pos = p => finite(p?.x) && finite(p?.y);
 const dist = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
 const alive = u => u?.id != null && u.team === 'red' && u.alive !== false &&
-  finite(u.hp) && u.hp > 0 && pos(u);
+  finite(u.hp) && u.hp > 0 && pos(u) &&
+  u.trainingInside !== true && u.trainingState !== 'training';
 const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
 const safe = (n,fallback) => finite(n) ? n : fallback;
 
@@ -111,7 +112,14 @@ export class EnemySquadSystem {
       for (const unit of soldiers) {center.x += unit.x;center.y += unit.y;}
       center.x /= soldiers.length;center.y /= soldiers.length;
       let target = this.threat.choose(center,focusId);
-      if (!target) {group.targetId = null;continue;}
+      if (!target) {
+        group.targetId = null;
+        for (const soldier of soldiers) {
+          if (this.combat.getOrder?.(soldier.id)?.type === 'attack')
+            this.combat.orderStop?.([soldier.id]);
+        }
+        continue;
+      }
       const existing = this.threat.players().find(u => u.id === group.targetId);
       // Don't oscillate between nearly equivalent targets every decision tick.
       // Active bridge ambush focus retains its deliberate high priority.
