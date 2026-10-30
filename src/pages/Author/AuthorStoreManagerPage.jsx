@@ -11,6 +11,7 @@ import { readMediaUploadFile, requestUploadStoragePersistence } from '../../util
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 import { LanguageWheelPicker } from './EpisodeEditorPage'
+import StorySettingSheet from '../../components/author/StorySettingSheet'
 import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import {
   AUTHOR_STORE_PRODUCT_PAGE_SIZE,
@@ -187,6 +188,10 @@ registerTranslationNamespace('authorStoreManager', {
     "publisher": "Publisher",
     "novelType": "Novel type",
     "storyLanguage": "Story Language",
+    "storySetting": "Story Setting",
+    "storySettingHelp": "Choose the story background or cultural setting (1–6). This is separate from the writing language.",
+    "chooseStorySetting": "Choose Story Setting",
+    "storySettingRequired": "Please choose at least 1 Story Setting.",
     "storyLanguageHelp": "Choose the language used inside the book. This is separate from Story Setting.",
     "category": "Category",
     "selectCategory": "Select category",
@@ -483,6 +488,10 @@ registerTranslationNamespace('authorStoreManager', {
     "publisher": "អ្នកបោះពុម្ព",
     "novelType": "ប្រភេទប្រលោមលោក",
     "storyLanguage": "ភាសារឿង",
+    "storySetting": "បរិបទសាច់រឿង",
+    "storySettingHelp": "ជ្រើសបរិបទ ឬវប្បធម៌ក្នុងសាច់រឿង (1–6)។ វាផ្សេងពីភាសាសាច់រឿង។",
+    "chooseStorySetting": "ជ្រើសបរិបទសាច់រឿង",
+    "storySettingRequired": "សូមជ្រើសបរិបទសាច់រឿងយ៉ាងតិច 1។",
     "storyLanguageHelp": "ជ្រើសភាសាអក្សរនៅក្នុងសៀវភៅ។ វាខុសពីបរិបទសាច់រឿង (Story Setting)។",
     "category": "ប្រភេទ",
     "selectCategory": "ជ្រើសប្រភេទ",
@@ -779,6 +788,10 @@ registerTranslationNamespace('authorStoreManager', {
     "publisher": "出版社",
     "novelType": "小说类型",
     "storyLanguage": "故事语言",
+    "storySetting": "故事背景",
+    "storySettingHelp": "选择故事背景或文化设定（1–6 个），与正文语言不同。",
+    "chooseStorySetting": "选择故事背景",
+    "storySettingRequired": "请至少选择 1 个故事背景。",
     "storyLanguageHelp": "选择书籍正文使用的语言。这与故事背景不同。",
     "category": "分类",
     "selectCategory": "选择分类",
@@ -1075,6 +1088,10 @@ registerTranslationNamespace('authorStoreManager', {
     "publisher": "出版社",
     "novelType": "小説タイプ",
     "storyLanguage": "ストーリー言語",
+    "storySetting": "ストーリー設定",
+    "storySettingHelp": "物語の舞台や文化設定（1〜6 個）を選びます。本文の言語とは別です。",
+    "chooseStorySetting": "ストーリー設定を選択",
+    "storySettingRequired": "ストーリー設定を1つ以上選択してください。",
     "storyLanguageHelp": "本の本文で使われる言語を選択します。ストーリー設定とは別です。",
     "category": "カテゴリ",
     "selectCategory": "カテゴリを選択",
@@ -1371,6 +1388,10 @@ registerTranslationNamespace('authorStoreManager', {
     "publisher": "출판사",
     "novelType": "소설 유형",
     "storyLanguage": "스토리 언어",
+    "storySetting": "스토리 배경",
+    "storySettingHelp": "스토리의 배경 또는 문화 설정을 1~6개 선택하세요. 본문 언어와는 별개입니다.",
+    "chooseStorySetting": "스토리 배경 선택",
+    "storySettingRequired": "스토리 배경을 1개 이상 선택하세요.",
     "storyLanguageHelp": "책 본문에 사용된 언어를 선택하세요. 스토리 배경과는 별개입니다.",
     "category": "카테고리",
     "selectCategory": "카테고리 선택",
@@ -1565,6 +1586,14 @@ function withSystemCategories(categories) {
   ]
 }
 
+function canSellPrintedBooks(settings) {
+  return settings?.countryVerified === true &&
+    settings?.countrySource === 'reader_classification' &&
+    settings?.region === 'kh' &&
+    settings?.effective?.physicalBooks === true &&
+    getCountryFeature(settings, 'physicalBooks', false) === true
+}
+
 function getAuthToken() {
   return (
     localStorage.getItem('shadow_reader_token') ||
@@ -1596,6 +1625,7 @@ function formatProductForUi(product) {
     authorName: product.author_name || product.authorName || '',
     publisher: product.publisher || '',
     novelType: product.novel_type || product.novelType || '',
+    storySettings: Array.isArray(product.story_settings ?? product.storySettings) ? (product.story_settings ?? product.storySettings).slice(0, 6) : [],
     category: product.category || 'New Books',
     genre: product.genre || '',
     description: product.description || '',
@@ -2326,6 +2356,7 @@ async function createStoreProduct(product) {
       author_name: product.authorName,
       publisher: product.publisher,
       novel_type: product.novelType,
+      story_settings: product.storySettings || [],
       category: product.category,
       genre: product.genre,
       description: product.description,
@@ -2377,6 +2408,7 @@ async function updateStoreProduct(productId, product) {
       author_name: product.authorName,
       publisher: product.publisher,
       novel_type: product.novelType,
+      story_settings: product.storySettings || [],
       category: product.category,
       genre: product.genre,
       description: product.description,
@@ -4320,7 +4352,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
     let cancelled = false
     loadCountrySettings().then((settings) => {
       if (cancelled) return
-      const allowed = Boolean(settings && getCountryFeature(settings, 'physicalBooks', false) === true)
+      const allowed = canSellPrintedBooks(settings)
       setBookAllowed(allowed)
       if (!allowed && !productToEdit) setType('PDF')
     }).catch(() => {
@@ -4337,6 +4369,8 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [publisher, setPublisher] = useState(productToEdit?.publisher || '')
   const [novelType, setNovelType] = useState(productToEdit?.novelType || 'Khmer')
   const [storyLanguageOpen, setStoryLanguageOpen] = useState(false)
+  const [storySettings, setStorySettings] = useState(Array.isArray(productToEdit?.storySettings) ? productToEdit.storySettings.slice(0, 6) : [])
+  const [storySettingOpen, setStorySettingOpen] = useState(false)
   const [coverType, setCoverType] = useState(productToEdit?.coverType || '')
   const [sortOrder, setSortOrder] = useState(String(productToEdit?.sortOrder ?? '0'))
   const [bestSeller, setBestSeller] = useState(Boolean(productToEdit?.bestSeller))
@@ -4753,6 +4787,10 @@ const stockNumber = Number(stock || 0)
       onNotify?.(bookCountryMessage, 'error')
       return
     }
+    if (!productToEdit && storySettings.length === 0) {
+      onNotify?.(storeText('storySettingRequired'), 'error')
+      return
+    }
     if (type === 'PDF' && !pdfReady) {
       onNotify?.(pdfUploadError || (pdfUploading ? storeText('pdfUploadingWait') : storeText('pdfFileRequired')), 'error')
       return
@@ -4821,6 +4859,7 @@ if (type === 'PDF' && !uploadedPdf?.storage_key && !hasExistingPdf) {
         authorName: authorName.trim(),
         publisher: publisher.trim(),
         novelType: novelType.trim(),
+        storySettings,
         category,
         genre: genre.trim(),
         description,
@@ -4885,6 +4924,15 @@ accessRule,
         onSave={(language) => {
           setNovelType(language)
           setStoryLanguageOpen(false)
+        }}
+      />
+      <StorySettingSheet
+        open={storySettingOpen}
+        value={storySettings}
+        onClose={() => setStorySettingOpen(false)}
+        onSave={(value) => {
+          setStorySettings(value)
+          setStorySettingOpen(false)
         }}
       />
 <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -5055,6 +5103,22 @@ accessRule,
   .map((item) => <option key={item} value={item}>{storeValueLabel(item)}</option>)}
 </SelectInput>
   </div>
+</div>
+
+<div>
+  <FieldLabel>{storeText('storySetting')}{!productToEdit ? ' *' : ''}</FieldLabel>
+  <button
+    type="button"
+    onClick={() => setStorySettingOpen(true)}
+    className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-2.5 text-left text-[13px] text-[var(--shadow-text-primary)]"
+  >
+    <span className={`min-w-0 flex-1 truncate ${storySettings.length ? '' : 'text-[var(--shadow-text-tertiary)]'}`}>
+      {storySettings.length ? storySettings.join(', ') : storeText('chooseStorySetting')}
+    </span>
+    <span className="shrink-0 text-[11px] text-[var(--shadow-text-tertiary)]">{storySettings.length}/6</span>
+    <i className="fa-solid fa-chevron-right shrink-0 text-[11px] text-[var(--shadow-text-tertiary)]" />
+  </button>
+  <p className="mt-1.5 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{storeText('storySettingHelp')}</p>
 </div>
 
 <div className="grid gap-3 sm:grid-cols-2">
@@ -5839,7 +5903,7 @@ const saveCategoryOrder = async () => {
     const isEditing = Boolean(editingProduct?.id)
     if (product.type === 'Book') {
       const settings = await loadCountrySettings({ force: true })
-      if (!settings || getCountryFeature(settings, 'physicalBooks', false) !== true) {
+      if (!canSellPrintedBooks(settings)) {
         throw new Error(getDisplayLanguageId() === 'km'
           ? 'ការលក់សៀវភៅក្រដាសមានតែនៅកម្ពុជាប៉ុណ្ណោះ។'
           : 'Printed books can only be sold in Cambodia.')
