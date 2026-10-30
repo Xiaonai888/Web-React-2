@@ -718,7 +718,14 @@ function PaymentStatusModal({ payment, secondsLeft, checking, message, onClose, 
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--shadow-text-secondary)]">{t('purchaseSection.amount')}</p>
-              <p className="mt-1 text-[26px] font-bold text-[var(--shadow-text-primary)]">{isBinance ? `${Number(payment.amount_usdt || 0).toFixed(2)} USDT` : formatMoney(payment.amount_usd)}</p>
+              <p className="mt-1 text-[26px] font-bold text-[var(--shadow-text-primary)]">
+  {isBinance ? (
+    <span className="inline-flex items-center gap-1">
+      {Number(payment.amount_usdt || 0).toFixed(2)} USDT
+      <img src="/assets/Icons/Picture/USDT.webp" alt="" className="h-4 w-4 object-contain" />
+    </span>
+  ) : formatMoney(payment.amount_usd)}
+</p>
             </div>
             <StatusBadge status={payment.status} t={t} />
           </div>
