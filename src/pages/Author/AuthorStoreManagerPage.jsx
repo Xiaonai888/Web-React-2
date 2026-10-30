@@ -10,6 +10,7 @@ import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { readMediaUploadFile, requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawalCard'
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import {
   AUTHOR_STORE_PRODUCT_PAGE_SIZE,
   fetchAuthorStoreProductPage,
@@ -4299,6 +4300,26 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const galleryInputRefs = useRef([])
   const pdfInputRef = useRef(null)
   const [type, setType] = useState(productToEdit?.type || 'Book')
+  const [bookAllowed, setBookAllowed] = useState(null)
+  const bookCountryMessage = getDisplayLanguageId() === 'km'
+    ? 'ការលក់សៀវភៅក្រដាសមានតែនៅកម្ពុជាប៉ុណ្ណោះ។'
+    : 'Printed books can only be sold in Cambodia.'
+
+  useEffect(() => {
+    let cancelled = false
+    loadCountrySettings().then((settings) => {
+      if (cancelled) return
+      const allowed = Boolean(settings && getCountryFeature(settings, 'physicalBooks', false) === true)
+      setBookAllowed(allowed)
+      if (!allowed && !productToEdit) setType('PDF')
+    }).catch(() => {
+      if (cancelled) return
+      setBookAllowed(false)
+      if (!productToEdit) setType('PDF')
+    })
+    return () => { cancelled = true }
+  }, [productToEdit])
+
   const [title, setTitle] = useState(productToEdit?.title || '')
   const [category, setCategory] = useState(productToEdit?.category || '')
   const [authorName, setAuthorName] = useState(productToEdit?.authorName || '')
@@ -4716,6 +4737,10 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
 const stockNumber = Number(stock || 0)
 
     if (saving) return
+    if (type === 'Book' && bookAllowed !== true) {
+      onNotify?.(bookCountryMessage, 'error')
+      return
+    }
     if (type === 'PDF' && !pdfReady) {
       onNotify?.(pdfUploadError || (pdfUploading ? storeText('pdfUploadingWait') : storeText('pdfFileRequired')), 'error')
       return
@@ -4949,8 +4974,15 @@ accessRule,
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[var(--shadow-bg-soft)] p-1">
             <button
               type="button"
-              onClick={() => setType('Book')}
-              className={`h-11 rounded-xl text-[13px] font-black ${type === 'Book' ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'text-[var(--shadow-text-secondary)]'}`}
+              onClick={() => {
+                if (bookAllowed !== true) {
+                  onNotify?.(bookCountryMessage, 'error')
+                  return
+                }
+                setType('Book')
+              }}
+              aria-disabled={bookAllowed !== true}
+              className={`h-11 rounded-xl text-[13px] font-black ${bookAllowed !== true ? 'opacity-40' : ''} ${type === 'Book' ? 'bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm' : 'text-[var(--shadow-text-secondary)]'}`}
             >{storeText('book')}</button>
             <button
               type="button"
@@ -5775,6 +5807,14 @@ const saveCategoryOrder = async () => {
 
   const saveProduct = async (product, onPdfUploadProgress) => {
     const isEditing = Boolean(editingProduct?.id)
+    if (product.type === 'Book') {
+      const settings = await loadCountrySettings({ force: true })
+      if (!settings || getCountryFeature(settings, 'physicalBooks', false) !== true) {
+        throw new Error(getDisplayLanguageId() === 'km'
+          ? 'ការលក់សៀវភៅក្រដាសមានតែនៅកម្ពុជាប៉ុណ្ណោះ។'
+          : 'Printed books can only be sold in Cambodia.')
+      }
+    }
     const hasNewPrivatePdf = product.type === 'PDF' && Boolean(product.uploadedPdf?.storage_key)
     let savedProduct = null
     let pdfAttached = false
