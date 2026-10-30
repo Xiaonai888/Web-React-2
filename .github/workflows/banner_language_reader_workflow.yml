@@ -1,0 +1,133 @@
+name: Install Story Language Banners for Readers
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-reader-banners:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Update language-aware reader banners
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          
+          sources = {
+              'src/components/ShadowSpotlight.jsx': ('shadow_spotlight', 'setSpotlights([])', 'setLoading(true)'),
+              'src/components/EditorWeeklyPicksSection.jsx': ('editor_weekly_picks', 'setItems([])', 'setLoading(true)'),
+              'src/components/EventPerksHubSection.jsx': ('event_perks_hub', 'setItems([])', 'setLoading(true)'),
+          }
+          
+          def replace_one(source, old, new, path):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one occurrence, found {count} for {old[:70]!r}')
+              return source.replace(old, new, 1)
+          
+          hook_path = Path('src/hooks/useStoryLanguageId.js')
+          if hook_path.exists():
+              raise SystemExit('Story language hook already exists. Stopping to avoid overwriting.')
+          
+          updated = {}
+          for filename, (section, clear_items, reset_loading) in sources.items():
+              path = Path(filename)
+              data = path.read_text(encoding='utf-8')
+              if "import useStoryLanguageId from '../hooks/useStoryLanguageId'" in data:
+                  raise SystemExit(f'{filename}: already modified. No changes made.')
+          
+              data = replace_one(data,
+                  "import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'",
+                  "import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'\nimport useStoryLanguageId from '../hooks/useStoryLanguageId'",
+                  filename,
+              )
+          
+              data = replace_one(data,
+                  '  const navigate = useNavigate()',
+                  f"  const navigate = useNavigate()\n  const storyLanguage = useStoryLanguageId()\n  const sectionKey = storyLanguage === 'km' ? '{section}' : `{section}_${{storyLanguage}}`",
+                  filename,
+              )
+          
+              data = replace_one(data,
+                  '  useEffect(() => {\n  let ignore = false',
+                  f'  useEffect(() => {{\n  let ignore = false\n  firstBannerIndexRef.current = null\n  {clear_items}\n  {reset_loading}',
+                  filename,
+              )
+          
+              data = replace_one(data,
+                  f"        section_key: '{section}',",
+                  '        section_key: sectionKey,',
+                  filename,
+              )
+              data = replace_one(data,
+                  f'?section_key={section}`',
+                  '?section_key=${encodeURIComponent(sectionKey)}`',
+                  filename,
+              )
+              data = replace_one(data,
+                  '}, [])',
+                  '}, [sectionKey])',
+                  filename,
+              )
+              data = replace_one(data,
+                  f"getDailyBannerStartIndex('{section}',",
+                  'getDailyBannerStartIndex(sectionKey,',
+                  filename,
+              )
+              if section == 'event_perks_hub':
+                  data = replace_one(data,
+                      'const displayItems = items.length ? items : fallbackEventPerksData',
+                      "const displayItems = items.length ? items : (storyLanguage === 'km' ? fallbackEventPerksData : [])",
+                      filename,
+                  )
+          
+              if "section_key: sectionKey" not in data or '}, [sectionKey])' not in data:
+                  raise SystemExit(f'{filename}: section key dependency incomplete')
+              updated[path] = data
+          
+          hook_code = """import { useEffect, useState } from 'react'
+          import { getStoryLanguageId } from '../utils/storyLanguage'
+          
+          export default function useStoryLanguageId() {
+            const [language, setLanguage] = useState(getStoryLanguageId)
+          
+            useEffect(() => {
+              const syncLanguage = () => setLanguage(getStoryLanguageId())
+              const handleStorage = (event) => {
+                if (event.key === 'shadow_story_language' || event.key === null) syncLanguage()
+              }
+          
+              window.addEventListener('shadow:story-language-initialized', syncLanguage)
+              window.addEventListener('storage', handleStorage)
+              syncLanguage()
+              return () => {
+                window.removeEventListener('shadow:story-language-initialized', syncLanguage)
+                window.removeEventListener('storage', handleStorage)
+              }
+            }, [])
+          
+            return language
+          }
+          """
+          
+          for filename, data in updated.items():
+              filename.write_text(data, encoding='utf-8')
+          hook_path.parent.mkdir(parents=True, exist_ok=True)
+          hook_path.write_text(hook_code, encoding='utf-8')
+          print('Language-aware banner reader components and hook installed.')
+          PY
+      - name: Validate and commit
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          git diff --check
+          git add src/components/ShadowSpotlight.jsx src/components/EditorWeeklyPicksSection.jsx src/components/EventPerksHubSection.jsx src/hooks/useStoryLanguageId.js
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Show language-specific Home banners to readers"
+          git push
