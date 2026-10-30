@@ -224,6 +224,7 @@ export class GameEngine {
     const point = this.clientPoint(event)
     const isTouch = event.pointerType !== 'mouse'
     const pan = isTouch || event.button === 1 || (event.button === 0 && this.spaceDown)
+if (event.button === 0 && this.spaceDown) this.canvas.style.cursor = 'grabbing'
     const item = { ...point, startX: point.x, startY: point.y,
       pointerType: event.pointerType, button: event.button, pan, moved: false }
     this.pointers.set(event.pointerId, item)
@@ -265,7 +266,7 @@ export class GameEngine {
         this.camera.zoomAt(this.camera.zoom * distance / oldMidpoint.distance, center.x, center.y)
       }
       for (const touch of touches) touch.moved = true
-    } else if (pointer.pan && pointer.moved) {
+    } else if (pointer.pan && (pointer.moved || pointer.pointerType === 'mouse')) {
       // Do not pan a few pixels while a mobile user is trying to tap/select.
       // On first drag apply the whole distance since pointerDown to avoid a jump.
       const dx = movedBefore ? next.x - previous.x : next.x - pointer.startX
@@ -278,6 +279,7 @@ export class GameEngine {
     const pointer = this.pointers.get(event.pointerId)
     if (!pointer) return
     this.pointers.delete(event.pointerId)
+    this.canvas.style.cursor = this.spaceDown ? 'grab' : ''
     const canceled = event.type === 'pointercancel' || event.type === 'lostpointercapture'
     const point = this.clientPoint(event)
     const releasedAway = length(point.x - pointer.startX, point.y - pointer.startY) > this.dragThreshold
@@ -305,6 +307,7 @@ export class GameEngine {
     const key = String(event.key || '').toLowerCase()
     if (key === ' ') {
       this.spaceDown = true
+      this.canvas.style.cursor = 'grab'
       event.preventDefault()
     } else if ('wasd'.includes(key) && key.length === 1 || key.startsWith('arrow')) {
       this.keys.add(key)
@@ -314,7 +317,10 @@ export class GameEngine {
 
   keyUp(event) {
     const key = String(event.key || '').toLowerCase()
-    if (key === ' ') this.spaceDown = false
+    if (key === ' ') {
+  this.spaceDown = false
+  this.canvas.style.cursor = ''
+}
     this.keys.delete(key)
   }
 }
