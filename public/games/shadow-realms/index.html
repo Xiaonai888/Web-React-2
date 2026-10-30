@@ -302,7 +302,10 @@
   </script>
   <script type="module">
     try {
-      const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib, missionLib, bootstrapLib] = await Promise.all([
+  const { showShadowRealmsMenu } = await import('./ui/GameMainMenu.js');
+  const gameSetup = await showShadowRealmsMenu();
+
+  const [engineLib, farmerLib, routeLib, selectionLib, footerLib, riceLib, constructionLib, woodLib, healthLib, projectileLib, combatLib, enemyLib, waveLib, visualLib, missionLib, bootstrapLib] = await Promise.all([
         import('./core/GameEngine.js'),
         import('./characters/Farmer.js'),
         import('./core/Pathfinding.js'),
@@ -375,7 +378,7 @@
       // Presentation-only: preserve combat AI, input, farming and building logic.
       const visual = new VisualSystem({
         map, getUnits:allUnits,
-        reducedMotion:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+        reducedMotion:gameSetup.reducedMotion || Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
         replaceExisting:true,
       });
       const health = new HealthSystem({getUnits:allUnits,onEvent:(event,info)=>{
@@ -392,8 +395,12 @@
       const combat = new CombatSystem({health,projectiles,navigation:route,getUnits:allUnits,
         autoDefend:true,onEvent:(event,info)=>visual.onCombatEvent(event,info)});
       enemyAI = new EnemyAI({map,navigation:route,combat,getPlayerUnits:()=>farmers.filter(f=>f.alive)});
-      const waves = new WaveSystem({enemyAI,totalWaves:6,firstDelay:23,restSeconds:14,
-        baseEnemies:3,extraPerWave:2,maxConcurrent:20,
+      const waves = new WaveSystem({
+  enemyAI,totalWaves:6,
+  firstDelay:gameSetup.firstDelay,
+  restSeconds:gameSetup.restSeconds,
+  difficulty:gameSetup.difficulty,
+  baseEnemies:3,extraPerWave:2,maxConcurrent:20,
         onEvent:(event,info)=>{
           if (event==='wave_started') message(`${tr.combatWave} ${info.wave}/${info.totalWaves}`);
           if (event==='victory') {battleOver='victory';message(tr.combatVictory);}
@@ -1301,7 +1308,7 @@
       };
       window.addEventListener('keydown',onEscape);
 
-      for (let i=0;i<3;i++) spawnFarmer();
+      for (let i=0;i<gameSetup.farmers;i++) spawnFarmer();
       visual.syncUnits(); // First rendered frame uses new chibi art, not the old placeholder.
       // Starts automatically; no extra Start button or network calls.
       waves.start();
