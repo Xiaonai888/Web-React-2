@@ -547,6 +547,12 @@
         mobilePad.appendChild(actions);
       }
 
+      if (!gameSetup.enemiesEnabled) {
+        for (const btn of footer.nodes.shell.querySelectorAll('[data-action="nextWave"]')) {
+          btn.remove();
+        }
+      }
+
       function syncHud() {
         const stats = rice.getSummary();
         const carry = farmers.reduce((total,farmer)=> total + (farmer.carry || 0),0);
@@ -1119,6 +1125,7 @@
           trainSelected(action==='trainArcher'?'ranged':'melee');return;
         }
         if (action==='nextWave') {
+          if (!gameSetup.enemiesEnabled) return;
           if (battleOver) {message(tr.combatPending);return;}
           if (!waves.startNextWave()) {message(tr.combatPending);return;}
           message(`${tr.combatWave} ${waves.wave}/${waves.totalWaves}`);return;
@@ -1311,7 +1318,7 @@
       for (let i=0;i<gameSetup.farmers;i++) spawnFarmer();
       visual.syncUnits(); // First rendered frame uses new chibi art, not the old placeholder.
       // Starts automatically; no extra Start button or network calls.
-      waves.start();
+      if (gameSetup.enemiesEnabled === true) waves.start();
       const firstMission=missions.startStage('stage-1');
       if(!firstMission.ok)message(`Mission setup: ${firstMission.reason}`);
       if (farmers.length) selection.setSelectedIds([farmers[0].id]);
