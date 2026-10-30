@@ -59,7 +59,7 @@ export default function AuthorAdsCampaignActionPanel({ campaign, onUpdated, onDe
   const execute = async action => {
     if (isBusy || !actions.includes(action)) return
     if (action === 'edit') {
-      navigate('/author/page/ads/boost-editor?tab=campaigns')
+      navigate(`/author/page/ads/boost-editor?tab=campaigns&edit=${encodeURIComponent(campaign.id)}`)
       return
     }
     if (!window.confirm(confirmMessage(action))) return
