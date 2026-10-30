@@ -9,6 +9,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { listAuthorAdCampaigns } from '../../services/authorAdsApi'
 import AuthorAdsInsightsPanel from './AuthorAdsInsightsPanel'
+import AuthorAdsCampaignCard from '../../components/authorAds/AuthorAdsCampaignCard'
 
 registerTranslationNamespace('authorAdsBoostSelection', {
   en: {
@@ -132,7 +133,11 @@ export default function AuthorAdsBoostContentPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const tr = value => t(`authorAdsBoostSelection.${value}`)
-  const [tab, setTab] = useState('create')
+  const [tab, setTab] = useState(() =>
+  new URLSearchParams(window.location.search).get('tab') === 'campaigns'
+    ? 'campaigns'
+    : 'create'
+)
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -234,27 +239,16 @@ export default function AuthorAdsBoostContentPage() {
             <button type="button" className="ml-3 font-semibold underline" onClick={() => { setLoaded(false); setRefreshCount(current => current + 1) }}>{tr('retry')}</button>
           </div>}
           {campaigns.map(item => (
-            <div key={String(item.id)} className="rounded-2xl border border-[#e9e6f3] bg-white p-4 dark:border-white/10 dark:bg-[#231d30]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h3 className="line-clamp-2 text-sm font-semibold">{String(item.content_title || item.contentTitle || item.title || tr('campaigns'))}</h3>
-                  <p className="mt-2 text-xs text-[#888398] dark:text-[#c1bad0]">{item.deviceDraft ? tr('localDraft') : String(item.status || tr('draft')).replaceAll('_', ' ')}</p>
-                </div>
-                <span className="rounded-full bg-[#f1ebff] px-2.5 py-1 text-[11px] font-medium text-[#6335d7] dark:bg-[#36294e] dark:text-[#d4baff]">
-                  {item.kind === 'post' ? tr('post') : item.content_type === 'product' || item.contentType === 'product' ? tr('storeItem') : tr('story')}
-                </span>
-              </div>
-              <div className="mt-3 flex gap-4 text-xs text-[#817b91] dark:text-[#b9b0cc]">
-                {Number.isFinite(Number(item.budget_usd ?? item.budgetUsd)) && <span>{Math.round(Number(item.budget_usd ?? item.budgetUsd) * 100).toLocaleString()} 💎</span>}
-                {(item.duration_days || item.durationDays) && <span>{item.duration_days || item.durationDays} days</span>}
-              </div>
-              <button type="button"
-  onClick={() => navigate('/author/page/ads/boost-editor?tab=campaigns')}
-  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f1eaff] px-4 py-3 text-sm font-semibold text-[#6335d7] dark:bg-[#42325b] dark:text-[#decfff]">
-  Manage Campaign <ChevronRight size={16} />
-</button>
-            </div>
-          ))}
+  <AuthorAdsCampaignCard
+    key={String(item.id)}
+    campaign={item}
+    onManage={selected => navigate(
+      selected.deviceDraft
+        ? '/author/page/ads/boost-editor?tab=campaigns'
+        : `/author/page/ads/campaign/${encodeURIComponent(selected.id)}`
+    )}
+  />
+))}
           {loading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#8b849c]"><RefreshCw size={17} className="animate-spin" />{tr('loading')}</div>}
           {!loading && loaded && !campaigns.length && !loadError && <button type="button" className="w-full rounded-2xl border border-dashed border-[#dcd4ee] bg-white px-5 py-10 text-center dark:bg-[#231d30]" onClick={() => setShowEmptyChooser(true)}>
             <Megaphone size={28} className="mx-auto mb-3 text-[#6d4ccb]" />
