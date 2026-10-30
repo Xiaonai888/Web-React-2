@@ -197,8 +197,11 @@ export class WaveSystem {
     const type = this.#chooseType(this.spawnedThisWave);
     const level = clamp(this.wave + Math.floor((this.difficulty - 1) * 2) +
       (this.currentProfile?.levelBonus || 0), 1, 30);
-    const unit = this.enemyAI.spawn({ type, level });
+    let unit = null;
+    try { unit = this.enemyAI.spawn({ type, level }); }
+    catch { return this.#blocked('spawn_failed'); }
     if (!unit || unit.id == null) return this.#blocked('no_spawn_point');
+    if (this.ids.has(unit.id)) return this.#blocked('duplicate_enemy_id');
     this.ids.add(unit.id);
     this.spawnedThisWave++;
     this.toSpawn--;
