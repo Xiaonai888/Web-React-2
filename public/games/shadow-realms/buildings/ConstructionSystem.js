@@ -1,27 +1,3 @@
-/**
- * Shadow Realms — ConstructionSystem (Stage 1, Step 12).
- * Independent local-only building economy, placement, worker construction,
- * collision/pathfinding, and 2.5D Canvas art. No DOM, fetch, storage or APIs.
- *
- * Usage with current modules (wire in a later index.html integration):
- *   const building = new ConstructionSystem(engine.map, {
- *     riceSystem: rice, navigation: route, getUnits: () => farmers,
- *   });
- *   building.startPlacement('house');
- *   building.setPreview(worldPoint);       // mousemove/touchmove
- *   building.confirmPlacement(selection.getSelectedIds());
- *   // Or: building.place('house', worldPoint, { builderIds: selectedIds });
- *   // game.onUpdate: building.update(dt)
- *   // game.onRender: building.draw(ctx,camera)
- *   // cleanup: building.destroy()
- *
- * The farmer starts/keeps working only while in work range. A site with no
- * workers stays unfinished. Wood is initially a local demo supply until a
- * gathering system exists; rice is debited from RiceSystem when provided.
- * Buildings block map.isWalkable and cached Pathfinding navigation grids are
- * invalidated on changes. Destroy restores the original map method.
- */
-
 const TAU = Math.PI * 2;
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 const finite = n => Number.isFinite(n);
@@ -30,17 +6,17 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 export const BUILDING_TYPES = Object.freeze({
   house: Object.freeze({
-    name: 'Farmer House', width: 94, depth: 70, seconds: 10,
+    name: 'Farmer House', width: 94, depth: 70, seconds: 10, productionSeconds: 10,
     cost: Object.freeze({ rice: 100, wood: 100 }),
     population: 4, riceStorage: 150,
   }),
   swordHouse: Object.freeze({
-    name: 'Sword House', width: 106, depth: 78, seconds: 10,
+    name: 'Sword House', width: 106, depth: 78, seconds: 10, trainingSeconds: 10,
     cost: Object.freeze({ rice: 0, wood: 150 }),
     population: 0, riceStorage: 0,
   }),
   archerHouse: Object.freeze({
-    name: 'Archer House', width: 108, depth: 80, seconds: 10,
+    name: 'Archer House', width: 108, depth: 80, seconds: 10, trainingSeconds: 10,
     cost: Object.freeze({ rice: 0, wood: 250 }),
     population: 0, riceStorage: 0,
   }),
@@ -89,10 +65,11 @@ export class ConstructionSystem {
     getUnits = () => [],
     startingRice = 80,
     startingWood = 180,
-    maxBuildings = 24,
+    maxBuildings = 10,
     basePopulation = 8,
-    baseRiceStorage = 300,
+    baseRiceStorage = 0,
     maxBuilders = 4,
+    autoStarterHouse = true,
     renderer = null,
     onEvent = null,
     onChange = null,
@@ -118,7 +95,7 @@ export class ConstructionSystem {
     this.getUnits = typeof getUnits === 'function' ? getUnits : () => getUnits;
     this.rice = Math.max(0, Math.floor(finite(startingRice) ? startingRice : 80));
     this.wood = Math.max(0, Math.floor(finite(startingWood) ? startingWood : 180));
-    this.maxBuildings = Math.floor(clamp(finite(maxBuildings) ? maxBuildings : 24, 1, 150));
+    this.maxBuildings = Math.floor(clamp(finite(maxBuildings) ? maxBuildings : 10, 1, 10));
     this.basePopulation = Math.max(0, Math.floor(basePopulation) || 0);
     this.baseRiceStorage = Math.max(0, Math.floor(baseRiceStorage) || 0);
     this.maxBuilders = clamp(Math.floor(maxBuilders) || 4, 1, 12);
@@ -132,8 +109,6 @@ export class ConstructionSystem {
     this.preview = null;
     this.destroyed = false;
     this.placing = false;
-
-    // Instance-scoped collision wrapper. Original terrain never mutates.
     this.originalWalkable = map.isWalkable;
     const owner = this;
     const wrapped = function (x, y, radius = 13) {
@@ -149,6 +124,10 @@ export class ConstructionSystem {
     this.wrappedWalkable = wrapped;
     map.isWalkable = wrapped;
     this.#invalidateNavigation();
+    if (autoStarterHouse) {
+      const starter = this.createStarterHouse();
+      if (!starter.ok) console.warn('Shadow Realms starter house unavailable:', starter.reason);
+    }
   }
 
   #checkLive() {
@@ -174,8 +153,6 @@ export class ConstructionSystem {
     const value = this.riceSystem?.getResources()?.rice ?? this.rice;
     return Math.max(0, Math.floor(finite(value) ? value : 0));
   }
-
-  /** Direct local wood stock for construction; collecting wood comes later. */
   setWood(value) {
     this.#checkLive();
     if (!finite(value) || value < 0 || !Number.isSafeInteger(Math.floor(value))) return false;
@@ -192,8 +169,6 @@ export class ConstructionSystem {
     this.#changed();
     return true;
   }
-
-  /** The same rice balance as RiceSystem is used; never silently double count. */
   #setRice(value) {
     const amount = Math.max(0, Math.floor(value));
     if (this.riceSystem) return this.riceSystem.setStorageRice(amount) === true;
@@ -223,7 +198,49 @@ export class ConstructionSystem {
   getBuildings() { return this.buildings; }
   getBuildingById(id) { return this.byId.get(id) || null; }
 
-  /** Position / terrain validation, including overlapping sites and rice fields. */
+  createStarterHouse(origin = this.map.getSpawnPoint?.('blue')) {
+    this.#checkLive();
+    const existing = this.buildings.find(b => b.isStarter === true);
+    if (existing) return { ok: true, reason: 'already_exists', building: existing };
+    if (this.buildings.length >= this.maxBuildings) {
+      return { ok: false, reason: 'limit_reached' };
+    }
+    if (!pointOK(origin)) return { ok: false, reason: 'invalid_origin' };
+    const position = this.findNearbyPosition('house', origin, 900);
+    if (!position) return { ok: false, reason: 'no_safe_position' };
+    const spec = BUILDING_TYPES.house;
+    const building = {
+      id: `building-${this.nextId++}`, type: 'house',
+      x: position.x, y: position.y,
+      width: spec.width, depth: spec.depth,
+      state: 'complete', progress: 1,
+      secondsRequired: spec.seconds, elapsedWork: spec.seconds,
+      cost: { rice: 0, wood: 0 },
+      builders: new Set(),
+      builtAt: this.time, completedAt: this.time,
+      isStarter: true,
+      _lastProgressSignal: 20,
+      _nextRoute: new Map(),
+    };
+    this.buildings.push(building);
+    this.byId.set(building.id, building);
+    this.#invalidateNavigation();
+    this.#emit('starter_created', { building, resources: this.getResources() });
+    this.#changed();
+    return { ok: true, reason: 'created', building };
+  }
+
+  getCompletedHouses(type = 'house') {
+    return this.buildings.filter(b => b.state === 'complete' && b.type === type);
+  }
+
+  getNearestHouse(point, type = 'house') {
+    if (!pointOK(point)) return null;
+    const houses = this.getCompletedHouses(type);
+    if (!houses.length) return null;
+    return houses.reduce((best, next) =>
+      dist(next, point) < dist(best, point) ? next : best);
+  }
   validatePlacement(type, position) {
     if (!BUILDING_TYPES[type]) return { ok: false, reason: 'unknown_type' };
     if (this.destroyed) return { ok: false, reason: 'destroyed' };
@@ -245,9 +262,6 @@ export class ConstructionSystem {
     if (pointOK(redBase) && dist(position, redBase) < 125) {
       return { ok: false, reason: 'base_clearance' };
     }
-
-    // Check every area of the footprint; center-only checks could cover a river,
-    // road, tree trunk, or the narrow side of a bridge.
     for (let sy = y - hd - 7; sy <= y + hd + 8; sy += 12) {
       for (let sx = x - hw - 7; sx <= x + hw + 8; sx += 12) {
         if (this.map.getTerrainAt(sx, sy) !== 'grass') {
@@ -258,7 +272,6 @@ export class ConstructionSystem {
         }
       }
     }
-    // Extra explicit corner tests for sizes not divisible by the sample step.
     for (const sx of [x - hw - 7, x + hw + 7]) {
       for (const sy of [y - hd - 7, y + hd + 7]) {
         if (this.map.getTerrainAt(sx, sy) !== 'grass' ||
@@ -316,8 +329,6 @@ export class ConstructionSystem {
     if (result.ok) this.cancelPlacement();
     return result;
   }
-
-  /** Place a paid foundation; idle until one or more builders are assigned. */
   place(type, point, { builderIds = [] } = {}) {
     this.#checkLive();
     const status = this.validatePlacement(type, point);
@@ -326,8 +337,6 @@ export class ConstructionSystem {
     const spec = BUILDING_TYPES[type];
     const before = this.#riceBalance();
     const beforeWood = this.wood;
-    // Keep a synchronous, non-reentrant wallet transaction; no second house
-    // may be purchased from a RiceSystem callback before the first is recorded.
     this.placing = true;
     try {
       let paid = false;
@@ -335,7 +344,7 @@ export class ConstructionSystem {
       catch { paid = false; }
       if (!paid) {
         let restored = false;
-        try { restored = this.#setRice(before) === true; } catch { /* failed rollback */ }
+        try { restored = this.#setRice(before) === true; } catch { }
         return { ok: false, reason: restored ? 'rice_payment_failed' : 'rollback_failed' };
       }
       this.wood = beforeWood - spec.cost.wood;
@@ -359,8 +368,6 @@ export class ConstructionSystem {
     return { ok: true, reason: 'placed', building };
     } finally { this.placing = false; }
   }
-
-  /** Suggest a safe build spot near a camera/unit, without modifying state. */
   findNearbyPosition(type, origin, maxDistance = 420) {
     if (!BUILDING_TYPES[type] || !pointOK(origin)) return null;
     const limit = finite(maxDistance) ? clamp(maxDistance, 0, 3000) : 420;
@@ -375,8 +382,6 @@ export class ConstructionSystem {
     }
     return null;
   }
-
-  /** Locate worker standing points OUTSIDE the building collision footprint. */
   findWorkPosition(building, unit) {
     if (!building || !pointOK(unit)) return null;
     const margin = Math.max(17, unit.radius || 14) + 9;
@@ -393,8 +398,6 @@ export class ConstructionSystem {
     positions.sort((a, b) => dist(a, unit) - dist(b, unit));
     return positions.find(p => this.map.isWalkable(p.x, p.y, unit.radius || 14)) || null;
   }
-
-  /** Builder assignment never mutates unrelated farmer data or harvest jobs. */
   assignBuilders(id, ids = []) {
     this.#checkLive();
     const building = this.byId.get(id);
@@ -403,7 +406,8 @@ export class ConstructionSystem {
     }
     const available = new Map((this.getUnits() || [])
       .filter(u => u && u.alive !== false && u.team === 'blue' &&
-        u.selectable !== false && typeof u.setPath === 'function')
+        u.selectable !== false && u.isCivilian !== false && !u.combatTraining &&
+        !u.training && typeof u.setPath === 'function')
       .map(unit => [unit.id, unit]));
     const requested = [...new Set(Array.isArray(ids) ? ids : [ids])];
     let accepted = 0;
@@ -416,7 +420,6 @@ export class ConstructionSystem {
       }
       if (!building.builders.has(unitId)) {
         building.builders.add(unitId);
-        // Construction explicitly takes precedence over the previous order.
         unit.setHarvestAnimation?.(false);
         unit.stop?.();
         accepted++;
@@ -443,8 +446,6 @@ export class ConstructionSystem {
     }
     return removed;
   }
-
-  /** Builders must be nearby, alive, and stopped to make genuine progress. */
   update(dt) {
     if (this.destroyed || !finite(dt) || dt <= 0) return;
     const seconds = clamp(dt, 0, 0.1);
@@ -455,7 +456,11 @@ export class ConstructionSystem {
       let working = 0;
       for (const unitId of [...building.builders]) {
         const farmer = units.get(unitId);
-        if (!farmer || farmer.alive === false) { building.builders.delete(unitId); continue; }
+        if (!farmer || farmer.alive === false || farmer.isCivilian === false ||
+            farmer.combatTraining || farmer.training) {
+          building.builders.delete(unitId);
+          continue;
+        }
         const workPoint = this.findWorkPosition(building, farmer);
         if (!workPoint) continue;
         const reach = Math.hypot(building.width / 2 + 34, building.depth / 2 + 34);
@@ -472,10 +477,12 @@ export class ConstructionSystem {
         if (!moved) this.#emit('builder_route_failed', { id: building.id, unitId });
       }
       if (!working) continue;
-      // Secondary workers build faster, but without unbounded linear scaling.
       const multiplier = 1;
       building.elapsedWork = Math.min(building.secondsRequired,
         building.elapsedWork + seconds * multiplier);
+      if (building.elapsedWork >= building.secondsRequired - 1e-8) {
+        building.elapsedWork = building.secondsRequired;
+      }
       building.progress = building.elapsedWork / building.secondsRequired;
       const milestone = Math.floor(building.progress * 20);
       if (milestone > building._lastProgressSignal) {
@@ -492,8 +499,6 @@ export class ConstructionSystem {
       }
     }
   }
-
-  /** Cancel unfinished site. Full refund only before any labor was performed. */
   cancelConstruction(id) {
     this.#checkLive();
     const building = this.byId.get(id);
@@ -514,14 +519,13 @@ export class ConstructionSystem {
     this.#changed();
     return { ok: true, refund };
   }
-
-  /** Demolish a finished building. No refund or worker assignment. */
   demolish(id) {
     this.#checkLive();
     const building = this.byId.get(id);
     if (!building || building.state !== 'complete') {
       return { ok: false, reason: 'not_complete' };
     }
+    if (building.isStarter) return { ok: false, reason: 'starter_protected' };
     this.#removeBuilding(building);
     this.#emit('demolished', { id, type: building.type });
     this.#changed();
@@ -553,6 +557,9 @@ export class ConstructionSystem {
       sites: this.buildings.filter(b => b.state === 'construction').length,
       houses: this.buildings.filter(b => b.type === 'house' && b.state === 'complete').length,
       barns: this.buildings.filter(b => b.type === 'barn' && b.state === 'complete').length,
+      swordHouses: this.getCompletedHouses('swordHouse').length,
+      archerHouses: this.getCompletedHouses('archerHouse').length,
+      starterHouse: this.buildings.find(b => b.isStarter === true)?.id || null,
       resources: this.getResources(),
       maxBuildings: this.maxBuildings,
     };
@@ -592,7 +599,6 @@ export class ConstructionSystem {
       4, '#c6a57b');
     poly(ctx, [[-half + 12, -height + 6], [half - 12, -height + 6],
       [half - 12, 5], [12, 10], [12, -6], [-12, -6], [-12, 10], [-half + 12, 5]], '#a98055');
-    // Side wall is darker to give a three-dimensional silhouette.
     poly(ctx, [[half - 12, -height + 6], [half - 4, -height + 16],
       [half - 4, -3], [half - 12, 5]], '#8c684b');
     poly(ctx, [[-half - 5, -height + 11], [0, -height - 29],
@@ -617,6 +623,30 @@ export class ConstructionSystem {
       ctx.beginPath(); ctx.moveTo(x + 7, -32); ctx.lineTo(x + 7, -23); ctx.stroke();
     }
     if (buildingProgress < 1) this.#drawScaffolding(ctx, b, buildingProgress);
+  }
+
+  #drawTrainingHouse(ctx, b, progress) {
+    this.#drawHouse(ctx, b, progress);
+    const sword = b.type === 'swordHouse';
+    ctx.save();
+    ctx.fillStyle = sword ? '#4f557d' : '#466b62';
+    ctx.fillRect(-b.width / 2 + 15, -45, b.width - 30, 5);
+    ctx.strokeStyle = sword ? '#e2d3fb' : '#d2f1cb';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (sword) {
+      ctx.moveTo(-16, -68); ctx.lineTo(16, -43);
+      ctx.moveTo(16, -68); ctx.lineTo(-16, -43);
+      ctx.moveTo(-19, -47); ctx.lineTo(-10, -56);
+      ctx.moveTo(19, -47); ctx.lineTo(10, -56);
+    } else {
+      ctx.arc(-4, -55, 17, -Math.PI * 0.52, Math.PI * 0.52);
+      ctx.moveTo(-5, -72); ctx.lineTo(-5, -38);
+      ctx.moveTo(-5, -72); ctx.lineTo(17, -55);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   #drawBarn(ctx, b, buildingProgress) {
@@ -656,8 +686,6 @@ export class ConstructionSystem {
     ctx.fillStyle = '#eac45c';
     ctx.fillRect(-b.width / 2, 14, b.width * progress, 8);
   }
-
-  /** Finished buildings are fully opaque. Active sites grow from scaffold. */
   drawBuildings(ctx, camera) {
     if (!ctx || !camera) return;
     for (const b of [...this.buildings].sort((a, b) => a.y - b.y)) {
@@ -672,12 +700,13 @@ export class ConstructionSystem {
       ctx.beginPath();
       ctx.ellipse(6, 3, b.width * 0.52, 9, 0, 0, TAU);
       ctx.fill();
-      // A site is not a completed house; show frame and gradually reveal walls.
       const progress = b.state === 'complete' ? 1 : b.progress;
       if (progress < 1) ctx.globalAlpha = 0.2 + progress * 0.72;
       if (this.renderer) this.renderer(ctx, b, camera);
       else if (b.type === 'house') this.#drawHouse(ctx, b, progress);
-      else this.#drawBarn(ctx, b, progress);
+      else if (b.type === 'swordHouse' || b.type === 'archerHouse') {
+        this.#drawTrainingHouse(ctx, b, progress);
+      } else this.#drawBarn(ctx, b, progress);
       ctx.restore();
     }
   }
