@@ -339,6 +339,21 @@
       const { VisualSystem } = visualLib;
       const { GameBootstrap } = bootstrapLib;
       const { MissionDirector } = missionLib;
+      const realmLabels = language === 'km' ? {
+        farmer:'ផ្ទះកសិករ', sword:'ផ្ទះដាវ', archer:'ផ្ទះព្រួញ',
+        produce:'ផលិតកសិករ 10s', training:'កំពុងហ្វឹកហាត់',
+        noHouse:'ត្រូវសាងសង់ផ្ទះប្រភេទនេះសិន',
+        busy:'ផ្ទះនេះកំពុងផលិតកសិករ', full:'ឃ្លាំងស្រូវពេញ',
+        capacity:'មនុស្សគ្រប់ចំនួនហើយ', returnRice:'សូមយកស្រូវ/ឈើទៅដាក់ផ្ទះជាមុន',
+        trained:'បានបញ្ចប់ការហ្វឹកហាត់', protected:'មិនអាចរុះរើផ្ទះដើម ឬផ្ទះដែលមានធនធាន/អ្នកហ្វឹកហាត់បាន',
+      } : {
+        farmer:'Farmer House', sword:'Sword House', archer:'Archer House',
+        produce:'Train Farmer 10s', training:'Training',
+        noHouse:'Build the required training house first',
+        busy:'This house is already producing a farmer', full:'Rice storage full',
+        capacity:'Population capacity reached', returnRice:'Deliver carried supplies before training',
+        trained:'Training complete', protected:'Cannot demolish a starter, occupied, or stocked house',
+      };
 
       const canvas = document.getElementById('game');
       const game = new GameEngine({ canvas });
@@ -349,15 +364,19 @@
       const farmers = [];
       const jobs = new Map();
       const missionTasks = new Map();
+      const farmerProduction = new Map();
+      const trainingQueues = new Map();
+      const trainingJobs = new Map();
       const MAX_FARMERS = 24;
       // One local resource ledger: ConstructionSystem debits RiceSystem in place.
       const construction = new ConstructionSystem(map, {
         riceSystem:rice, navigation:route, getUnits:()=>farmers,
-        startingWood:180, basePopulation:8,
+        startingWood:180, basePopulation:8, maxBuildings:10,
         onEvent:(event,info)=>{
           if (event==='completed') message(`${tr.buildReady}: ${info.building.type}`);
         },
       });
+      rice.setConstructionSystem(construction);
       const wood = new WoodSystem(map, {
         navigation:route, construction, getUnits:()=>farmers, home,
         onClaimUnit:unit=>{
@@ -433,6 +452,9 @@
       const dist = (a,b) => Math.hypot(a.x - b.x, a.y - b.y);
       const reserveOf = id => [...jobs.values()].some(job => job.plantId === id && job.phase !== 'seek');
       const selectedFarmers = () => selection ? selection.selectedUnits() : [];
+      const civilian = unit => unit?.alive && unit.isCivilian !== false &&
+        !unit.combatTraining && !unit.trainingState;
+      const selectedCivilians = () => selectedFarmers().filter(civilian);
       const message = text => {
         if (text === currentMessage) return;
         currentMessage = text;
@@ -464,8 +486,8 @@
         tools.className='sr-combat-tools';
         for (const [action,label] of [
           ['attackTarget',tr.attack],['attackMove',tr.attackMove],['guardBase',tr.guard],
-          ['stopFight',tr.stopFight],['trainGuard',`${tr.guardTrain} (10🌾 10🪵)`],
-          ['trainArcher',`${tr.archerTrain} (15🌾 15🪵)`],['nextWave',tr.nextWave],
+          ['stopFight',tr.stopFight],['trainGuard',`${tr.guardTrain} · 10s`],
+          ['trainArcher',`${tr.archerTrain} · 10s`],['nextWave',tr.nextWave],
         ]) {
           const button=document.createElement('button');button.type='button';
           button.dataset.action=action;button.className='sr-combat-tool';
@@ -488,14 +510,17 @@
         farmerGroup.appendChild(tools);
       }
 
-      // Existing build/house/barn/cancel buttons are now functional.
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostHouse"]')) {
-        button.textContent = `${tr.house} (30🌾 45🪵)`;
+        button.textContent = `${realmLabels.farmer} (100🌾 100🪵)`;
         button.title = tr.buildHelp;
       }
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="ghostBarn"]')) {
-        button.textContent = `${tr.barn} (20🌾 60🪵)`;
+        button.dataset.action = 'ghostSword';
+        button.textContent = `${realmLabels.sword} (150🪵)`;
         button.title = tr.buildHelp;
+      }
+      for (const button of footer.nodes.shell.querySelectorAll('[data-action="spawnFarmer"]')) {
+        button.textContent = realmLabels.produce;
       }
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="cancelBuild"]')) {
         button.textContent = tr.cancel;
@@ -507,13 +532,17 @@
       if (buildGroup) {
         const tools = document.createElement('div');
         tools.className = 'sr-build-tools';
-        for (const [action,label] of [['assignBuilders',tr.assign],['demolishBuilding',tr.demolish]]) {
+        for (const [action,label] of [
+          ['ghostArcher',`${realmLabels.archer} (250🪵)`],
+          ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish],
+        ]) {
           const button = document.createElement('button');
           button.type='button'; button.dataset.action=action; button.className='sr-build-tool';
           button.textContent=label; tools.appendChild(button);
         }
         buildGroup.appendChild(tools);
       }
+
       // Use existing, functional command buttons rather than inventing a parallel UI.
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="sendToField"]')) button.textContent = tr.auto;
       for (const button of footer.nodes.shell.querySelectorAll('[data-action="returnHome"]')) button.textContent = tr.home;
@@ -526,12 +555,14 @@
       if (mobilePad) {
         const actions = document.createElement('div');
         actions.className = 'sr-farm-mobile-actions';
-        for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer','+ Farmer'],
-          ['ghostHouse',tr.house],['ghostBarn',tr.barn],['cancelBuild',tr.cancel],
+        for (const [action, title] of [['sendToField',tr.auto],['returnHome',tr.home],['spawnFarmer',realmLabels.produce],
+          ['ghostHouse',realmLabels.farmer],['ghostSword',realmLabels.sword],
+          ['ghostArcher',realmLabels.archer],['cancelBuild',tr.cancel],
           ['assignBuilders',tr.assign],['demolishBuilding',tr.demolish],
           ['chopWood',tr.woodChop],['autoWood',tr.woodAuto],
           ['combatMenu',`⚔ ${tr.combat}`],['attackTarget',tr.attack],['attackMove',tr.attackMove],['guardBase',tr.guard],
-          ['stopFight',tr.stopFight],['trainGuard',tr.guardTrain],['trainArcher',tr.archerTrain],
+          ['stopFight',tr.stopFight],['trainGuard',`${tr.guardTrain} · 10s`],
+          ['trainArcher',`${tr.archerTrain} · 10s`],
           ['nextWave',tr.nextWave],['missionMenu',`📜 ${mt.mission}`],
           ['missionFind',mt.find],['missionNext',mt.next],['missionCancel',mt.cancel]]) {
           const button = document.createElement('button');
@@ -560,16 +591,25 @@
         footer.setResources({rice:resources.rice,wood:resources.wood,villagers:farmers.length,zoom:camera.zoom});
         const site=selectedBuilding();
         if (site && !selectedFarmers().length) {
-          footer.setResources({selected:`${site.type} · ${Math.round(site.progress*100)}%`});
+          const progress=site.state==='construction' ? `${Math.round(site.progress*100)}%` : 'ready';
+          const produce=farmerProduction.get(site.id);
+          const training=trainingQueues.get(site.id)?.length || 0;
+          footer.setResources({selected:`${BUILDING_TYPES[site.type]?.name||site.type} · ${progress}`+
+            `${produce ? ` · Farmer ${Math.ceil(produce.remaining)}s` : ''}`+
+            `${training ? ` · ${realmLabels.training}: ${training}` : ''}`});
         }
         const buildings=construction.getSummary();
+        const storage=rice.getStorageStatus();
+        const trainingCount=trainingJobs.size;
+        const producing=farmerProduction.size;
         const lumber=wood.getSummary();
         const battle=waves.getSummary();
         const allyAlive=farmers.filter(f=>f.alive).length;
         const line = `${tr.fields}: ${stats.fields} · ${tr.ripe}: ${stats.plants.ripe}/${stats.plants.total}` +
           ` · ${tr.carrying}: ${carry} · ${tr.houses}: ${buildings.houses}` +
-          ` · ${tr.barns}: ${buildings.barns} · ${tr.sites}: ${buildings.sites}` +
-          ` · ${tr.capacity}: ${farmers.length}/${resources.populationCapacity}` +
+          ` · Buildings: ${buildings.count}/${buildings.maxBuildings} · ${tr.sites}: ${buildings.sites}` +
+          ` · 🌾 ${storage.stored}/${storage.capacity} · ${realmLabels.training}: ${trainingCount} · +Farmer: ${producing}` +
+          ` · ${tr.capacity}: ${farmers.filter(f=>f.alive).length}/${resources.populationCapacity}` +
           ` · ${tr.woodTrees}: ${lumber.alive}/${lumber.trees}` +
           ` · ${tr.woodWorkers}: ${lumber.workers} · ${tr.woodCarry}: ${lumber.carried}`;
         const status = battleOver==='defeat' ? tr.combatDefeat :
@@ -608,9 +648,11 @@
         return null;
       }
 
-      function spawnFarmer() {
-        if (farmers.length >= Math.min(MAX_FARMERS,construction.getResources().populationCapacity)) { message(tr.maximum);return null; }
-        const pos = freePosition(home);
+      function spawnFarmer(sourceHouse = construction.getNearestHouse(home,'house')) {
+        if (farmers.filter(f=>f.alive).length >= Math.min(MAX_FARMERS,construction.getResources().populationCapacity)) {
+          message(realmLabels.capacity);return null;
+        }
+        const pos = freePosition(sourceHouse || home);
         if (!pos) {message(tr.noRoute);return null;}
         const farmer = new Farmer({id:`farmer-${++farmerNumber}`,name:`Farmer ${farmerNumber}`,team:'blue',...pos});
         farmer.onBlocked = () => {
@@ -657,31 +699,144 @@
         else {ctx.moveTo(16,-22);ctx.lineTo(19,-54);}
         ctx.stroke();ctx.restore();
       }
+      function drawHouseStatus(ctx, camera) {
+        for (const house of construction.getBuildings()) {
+          if (house.state !== 'complete') continue;
+          const production=farmerProduction.get(house.id);
+          const activeId=trainingQueues.get(house.id)?.[0];
+          const training=activeId ? trainingJobs.get(activeId) : null;
+          const role=house.type==='swordHouse'?'⚔':house.type==='archerHouse'?'🏹':'⌂';
+          const label=production?`Farmer ${Math.ceil(production.remaining)}s`:
+            training ? `${training.phase==='training'?'Training':'Arriving'} ${Math.ceil(training.remaining)}s`:
+            house.type==='swordHouse'?'Sword House':house.type==='archerHouse'?'Archer House':null;
+          if (!label) continue;
+          const p=camera.worldToScreen(house.x,house.y-house.depth/2);
+          if (p.x < -150 || p.x > camera.viewportWidth+150 || p.y < -80 || p.y > camera.viewportHeight+90) continue;
+          ctx.save();
+          ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';
+          const width=Math.max(95,ctx.measureText(`${role} ${label}`).width+20);
+          ctx.fillStyle='rgba(13,24,31,.88)';ctx.fillRect(p.x-width/2,p.y-99,width,22);
+          ctx.strokeStyle='rgba(191,205,176,.55)';ctx.strokeRect(p.x-width/2,p.y-99,width,22);
+          ctx.fillStyle='#fff0c4';ctx.fillText(`${role} ${label}`,p.x,p.y-84);
+          ctx.restore();
+        }
+      }
+      function queueFarmer() {
+        const houses=construction.getCompletedHouses('house');
+        const selected=selectedBuilding();
+        const house=selected?.type==='house' && selected.state==='complete'
+          ? selected : houses.find(h=>!farmerProduction.has(h.id));
+        if (!house) {message(houses.length?realmLabels.busy:realmLabels.noHouse);return;}
+        if (farmerProduction.has(house.id)) {message(realmLabels.busy);return;}
+        const used=farmers.filter(f=>f.alive).length+farmerProduction.size;
+        if (used>=Math.min(MAX_FARMERS,construction.getResources().populationCapacity)) {
+          message(realmLabels.capacity);return;
+        }
+        farmerProduction.set(house.id,{remaining:BUILDING_TYPES.house.productionSeconds||10});
+        message(`${realmLabels.produce} · ${BUILDING_TYPES.house.name}`);
+      }
+      function updateProduction(dt) {
+        for (const [id,job] of farmerProduction) {
+          const house=construction.getBuildingById(id);
+          if (!house || house.state!=='complete') {farmerProduction.delete(id);continue;}
+          job.remaining=Math.max(0,job.remaining-dt);
+          if (job.remaining>0) continue;
+          if (farmers.filter(f=>f.alive).length>=Math.min(MAX_FARMERS,construction.getResources().populationCapacity)) continue;
+          const unit=spawnFarmer(house);
+          if (!unit) {job.remaining=1;continue;}
+          farmerProduction.delete(id);
+          autoHarvest([unit]);
+          message(`${tr.spawned}: ${unit.name}`);
+        }
+      }
       function trainSelected(kind) {
-        const chosen=selectedFarmers().filter(f=>f.alive && !f.combatTraining);
-        if (!chosen.length) {message(tr.combatAlready);return;}
-        const cost=kind==='ranged'?{rice:15,wood:15}:{rice:10,wood:10};
-        const available=construction.getResources();
-        let count=Math.min(chosen.length,Math.floor(available.rice/cost.rice),Math.floor(available.wood/cost.wood));
-        if (!count) {message(tr.combatPoor);return;}
         if (battleOver) {message(tr.combatPending);return;}
-        const riceBefore=available.rice,woodBefore=available.wood;
-        if (!rice.setStorageRice(riceBefore-count*cost.rice)) {message(tr.combatPoor);return;}
-        if (!construction.setWood(woodBefore-count*cost.wood)) {
-          rice.setStorageRice(riceBefore);message(tr.combatPoor);return;
+        const type=kind==='ranged'?'archerHouse':'swordHouse';
+        const available=construction.getCompletedHouses(type);
+        if (!available.length) {message(realmLabels.noHouse);return;}
+        const chosen=selectedCivilians();
+        if (!chosen.length) {message(tr.noSelected);return;}
+        let accepted=0;
+        for (const farmer of chosen) {
+          if ((farmer.carry||0)>0 || (farmer.woodCarry||0)>0) continue;
+          const selected=selectedBuilding();
+          const house=selected?.type===type && selected.state==='complete' ? selected :
+            [...available].sort((a,b)=>
+              (trainingQueues.get(a.id)?.length||0)-(trainingQueues.get(b.id)?.length||0) ||
+              dist(a,farmer)-dist(b,farmer))[0];
+          releaseMission([farmer]);
+          wood.cancel(farmer.id,{stop:false});jobs.delete(farmer.id);
+          construction.removeBuilderFromAll(farmer.id);
+          combat.orderStop([farmer.id]);farmer.setHarvestAnimation(false);farmer.stop();
+          farmer.trainingState='queued';farmer.selectable=false;
+          trainingJobs.set(farmer.id,{houseId:house.id,kind,phase:'queued',remaining:10,retry:0});
+          const queue=trainingQueues.get(house.id)||[];
+          queue.push(farmer.id);trainingQueues.set(house.id,queue);
+          accepted++;
         }
-        for (const farmer of chosen.slice(0,count)) {
-          farmer.combatTraining=kind;
-          farmer.isCivilian=false;
-          farmer.attackType=kind;
-          farmer.attackRange=kind==='ranged'?240:45;
-          farmer.attackDamage=kind==='ranged'?17:17;
-          farmer.attackCooldown=kind==='ranged'?1.35:.83;
-          farmer.aggroRange=kind==='ranged'?280:155;
-          farmer.name=(kind==='ranged'?'Archer ':'Guard ')+farmer.id.split('-').pop();
-          farmer.renderer=renderFighter;
+        selection.setSelectedIds([]);
+        message(accepted ? `${realmLabels.training}: ${accepted} · 10s` : realmLabels.returnRice);
+      }
+      function finishTraining(unit,job,house) {
+        unit.trainingInside=false;
+        unit.trainingState=null;
+        unit.selectable=true;
+        unit.isCivilian=false;
+        unit.combatTraining=job.kind;
+        unit.attackType=job.kind;
+        unit.attackRange=job.kind==='ranged'?240:45;
+        unit.attackDamage=17;
+        unit.attackCooldown=job.kind==='ranged'?1.35:.83;
+        unit.aggroRange=job.kind==='ranged'?280:155;
+        unit.name=(job.kind==='ranged'?'Archer ':'Guard ')+unit.id.split('-').pop();
+        unit.renderer=renderFighter;
+        const pos=freePosition(house);
+        if (pos) {unit.x=pos.x;unit.y=pos.y;}
+        unit.stop();
+        selection.syncFooter();
+        message(`${realmLabels.trained}: ${unit.name}`);
+      }
+      function updateTrainings(dt) {
+        for (const [houseId,queue] of trainingQueues) {
+          const house=construction.getBuildingById(houseId);
+          if (!house || house.state!=='complete') {
+            for (const id of queue) {
+              const unit=farmers.find(u=>u.id===id);
+              if (unit) {unit.trainingState=null;unit.trainingInside=false;unit.selectable=true;}
+              trainingJobs.delete(id);
+            }
+            trainingQueues.delete(houseId);
+            continue;
+          }
+          while (queue.length && (!trainingJobs.has(queue[0]) || !farmers.some(u=>u.id===queue[0] && u.alive))) {
+            const id=queue.shift(),unit=farmers.find(u=>u.id===id);
+            if (unit) {unit.trainingState=null;unit.trainingInside=false;unit.selectable=true;}
+            trainingJobs.delete(id);
+          }
+          if (!queue.length) {trainingQueues.delete(houseId);continue;}
+          const unit=farmers.find(u=>u.id===queue[0]);
+          const job=trainingJobs.get(unit.id);
+          if (job.phase==='training') {
+            job.remaining-=dt;
+            if (job.remaining<=0) {
+              finishTraining(unit,job,house);
+              trainingJobs.delete(unit.id);
+              queue.shift();
+              if (!queue.length) trainingQueues.delete(houseId);
+            }
+            continue;
+          }
+          job.retry=Math.max(0,job.retry-dt);
+          const stand=construction.findWorkPosition(house,unit);
+          if (!stand) continue;
+          if (dist(unit,stand)<=22 && unit.state!=='walking') {
+            unit.stop();unit.trainingState='training';unit.trainingInside=true;
+            job.phase='training';job.remaining=BUILDING_TYPES[house.type].trainingSeconds||10;
+          } else if (unit.state!=='walking' && job.retry<=0) {
+            if (route.moveUnit(unit,stand)) job.phase='travel';
+            job.retry=1.5;
+          }
         }
-        selection.syncFooter();syncHud();message(`${tr.combatTrain}: ${count}`);
       }
       function orderCombat(type,units,point=null,targetId=null) {
         releaseMission(units);
@@ -759,52 +914,73 @@
         return null;
       }
 
+      function riceDropoff(farmer, needsSpace = true) {
+        return rice.getNearestRiceHouse(farmer,{needsSpace});
+      }
       function beginReturn(farmer, resume=false) {
+        if (!civilian(farmer)) return;
         farmer.setHarvestAnimation(false);
         const existing=jobs.get(farmer.id);
         const job=existing || {type:'return',fieldId:null,timer:0};
         job.phase='return';job.plantId=null;job.resume=Boolean(resume && job.fieldId);
         jobs.set(farmer.id,job);
-        if (dist(farmer,home)<=rice.config.depositRange) {
+        const house=riceDropoff(farmer,farmer.carry>0);
+        if (!house) {job.phase='returnRetry';job.timer=2;return;}
+        const stand=construction.findWorkPosition(house,farmer);
+        if (!stand) {job.phase='returnRetry';job.timer=2;return;}
+        job.houseId=house.id;
+        if (dist(farmer,house)<=rice.config.depositRange+house.width/2) {
           completeReturn(farmer,job);
           return;
         }
-        if (!route.moveUnit(farmer,home)) {
-          job.phase='returnRetry';job.timer=1.5;
-          message(tr.noRoute);
-        } else message(tr.returning);
+        if (!route.moveUnit(farmer,stand)) {
+          job.phase='returnRetry';job.timer=2;
+        }
       }
-
       function completeReturn(farmer,job) {
-        const result=rice.deposit(farmer,home);
-        wood.deposit(farmer,home);
-        if (result.ok) message(`${tr.deposited}: +${result.amount}`);
-        else if (!job.resume) message(tr.home);
+        const house=construction.getBuildingById(job.houseId)||riceDropoff(farmer,true);
+        if (!house || (farmer.carry>0 && dist(farmer,house)>rice.config.depositRange+house.width/2)) {
+          job.phase='returnRetry';job.timer=2;return;
+        }
+        const result=farmer.carry>0 ? rice.deposit(farmer,house) : {ok:true,amount:0};
+        if (farmer.woodCarry>0) wood.deposit(farmer,home);
+        if (result.ok && result.amount>0) message(`${tr.deposited}: +${result.amount}`);
+        if (farmer.carry>0) {beginReturn(farmer,job.resume);return;}
         farmer.setHarvestAnimation(false);
         if (job.resume && job.fieldId) {
           job.phase='seek';job.timer=0;job.plantId=null;
         } else jobs.delete(farmer.id);
       }
-
       function seekHarvest(farmer,job) {
-        if (farmer.carry + rice.config.yieldPerPlant > rice.config.carryingCapacity) {
-          beginReturn(farmer,true);
+        if (!civilian(farmer)) {jobs.delete(farmer.id);return;}
+        if (farmer.carry>=rice.config.carryingCapacity ||
+            farmer.carry+rice.config.yieldPerPlant>rice.config.carryingCapacity) {
+          beginReturn(farmer,true);return;
+        }
+        if (rice.getStorageStatus().free<=0) {
+          if (farmer.carry>0) beginReturn(farmer,true);
+          else {job.phase='waiting';job.timer=2;farmer.setHarvestAnimation(false);}
           return;
         }
         let planned=false;
+        const fields=rice.getFields().filter(f=>f.x<map.width*.5);
+        const field=fields.find(f=>f.id===job.fieldId);
+        const preferred=field && field.plants.some(p=>rice.isRipe(p) && !reserveOf(p.id));
+        if (!preferred && fields.length) {
+          const active=fields.filter(f=>f.plants.some(p=>rice.isRipe(p) && !reserveOf(p.id)));
+          if (active.length) job.fieldId=[...active].sort((a,b)=>dist(a,farmer)-dist(b,farmer))[0].id;
+        }
         for (const plant of pickPlant(farmer,job.fieldId)) {
           const target=safeStand(plant,farmer);
           if (!target) continue;
           if (dist(farmer,plant)<=rice.config.harvestRange-5) {
             farmer.setHarvestAnimation(true);
             job.phase='swing';job.plantId=plant.id;job.timer=.62;
-            planned=true;
-            break;
+            planned=true;break;
           }
           if (route.moveUnit(farmer,target)) {
             job.phase='travel';job.plantId=plant.id;
-            planned=true;
-            break;
+            planned=true;break;
           }
         }
         if (!planned) {
@@ -813,8 +989,8 @@
           else {farmer.setHarvestAnimation(false);job.phase='waiting';job.timer=1.8;}
         }
       }
-
       function startHarvest(farmersToSend,point) {
+        farmersToSend=farmersToSend.filter(civilian);
         releaseMission(farmersToSend);
         stopCombatTarget();combat.orderStop(farmersToSend.map(u=>u.id));
         if (!farmersToSend.length) {message(tr.noSelected);return;}
@@ -834,6 +1010,7 @@
       }
 
       function autoHarvest(units) {
+        units=units.filter(civilian);
         releaseMission(units);
         stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return;}
@@ -853,15 +1030,16 @@
       }
 
       function runJob(farmer,dt) {
-        if (!farmer.alive) return;
+        if (!farmer.alive || !civilian(farmer)) {jobs.delete(farmer.id);return;}
         const job=jobs.get(farmer.id);
         if (!job) {
           if (farmer.woodCarry>0 && dist(farmer,home)<=wood.config.depositRange && !wood.jobs.has(farmer.id)) {
             wood.deposit(farmer,home);
           }
-          if (farmer.carry>0 && dist(farmer,home)<=rice.config.depositRange) {
-            const result=rice.deposit(farmer,home);
-            if (result.ok) message(`${tr.deposited}: +${result.amount}`);
+          if (farmer.carry>0) {
+            const house=riceDropoff(farmer,true);
+            if (house && dist(farmer,house)<=rice.config.depositRange+house.width/2)
+              rice.deposit(farmer,house);
           }
           return;
         }
@@ -872,7 +1050,7 @@
           farmer.setHarvestAnimation(false);
           job.plantId=null;
           job.phase='seek';job.timer=0.12;
-          if (!result.ok && result.reason==='full') beginReturn(farmer,true);
+          if (!result.ok && ['full','not_enough_capacity'].includes(result.reason)) beginReturn(farmer,true);
           return;
         }
         if (job.phase==='travel' && farmer.state!=='walking') {
@@ -883,9 +1061,8 @@
           } else {job.plantId=null;job.phase='seek';job.timer=.3;}
           return;
         }
-        if (job.phase==='return' && (dist(farmer,home)<=rice.config.depositRange || farmer.state!=='walking')) {
-          if (dist(farmer,home)<=rice.config.depositRange) completeReturn(farmer,job);
-          else {job.phase='returnRetry';job.timer=1.5;}
+        if (job.phase==='return' && farmer.state!=='walking') {
+          completeReturn(farmer,job);
           return;
         }
         if (job.phase==='seek'||job.phase==='waiting'||job.phase==='returnRetry') {
@@ -906,7 +1083,7 @@
       function beginBuild(type) {
         stopCombatTarget();
         woodTargeting=false;document.body.classList.remove('sr-wood-targeting');
-        if (!selectedFarmers().length) {message(tr.needBuilder);return;}
+        if (!selectedCivilians().length) {message(tr.needBuilder);return;}
         if (!construction.canAfford(type)) {message(tr.buildPoor);return;}
         construction.cancelPlacement();
         construction.startPlacement(type);
@@ -933,6 +1110,8 @@
         }
         if (!construction.canAfford(construction.preview.type)) {message(tr.buildPoor);return;}
         combat.orderStop(units.map(u=>u.id));
+        units=units.filter(civilian);
+        if (!units.length) {message(tr.needBuilder);return;}
         const result=construction.confirmPlacement(units.map(u=>u.id));
         if (!result.ok) {message(constructionError(result.reason));return;}
         for (const unit of units) {
@@ -962,7 +1141,7 @@
         releaseMission(selectedFarmers());
         const site=selectedBuilding();
         if (!site || site.state!=='construction') {message(tr.needBuilding);return;}
-        const chosen=selectedFarmers();
+        const chosen=selectedCivilians();
         if (!chosen.length) {message(tr.needBuilder);return;}
         combat.orderStop(chosen.map(u=>u.id));
         const result=construction.assignBuilders(site.id,chosen.map(u=>u.id));
@@ -974,6 +1153,10 @@
       function demolishBuilding() {
         const site=selectedBuilding();
         if (!site || site.state!=='complete') {message(tr.needBuilding);return;}
+        const stocked=rice.getStorageStatus().houses.find(h=>h.id===site.id)?.stored||0;
+        if (site.isStarter || stocked>0 || (trainingQueues.get(site.id)?.length||0)>0 || farmerProduction.has(site.id)) {
+          message(realmLabels.protected);return;
+        }
         if (!window.confirm(tr.demolishAsk)) return;
         const result=construction.demolish(site.id);
         if (!result.ok) {message(constructionError(result.reason));return;}
@@ -987,6 +1170,7 @@
       }
 
       function orderWood(units, point=null) {
+        units=units.filter(civilian);
         releaseMission(units);
         stopCombatTarget();combat.orderStop(units.map(u=>u.id));
         if (!units.length) {message(tr.noSelected);return false;}
@@ -1148,19 +1332,16 @@
         }
         if (action==='zoomIn') {zoomBy(1.18);return;}
         if (action==='zoomOut') {zoomBy(1/1.18);return;}
-        if (action==='spawnFarmer') {
-          const f=spawnFarmer();
-          if (f) {selection.setSelectedIds([f.id]);message(`${tr.spawned}: ${farmers.length}`);}
-          return;
-        }
+        if (action==='spawnFarmer') {queueFarmer();return;}
         if (action==='sendToField') {autoHarvest(selectedFarmers());return;}
         if (action==='ghostHouse') {beginBuild('house');return;}
-        if (action==='ghostBarn') {beginBuild('barn');return;}
+        if (action==='ghostBarn'||action==='ghostSword') {beginBuild('swordHouse');return;}
+        if (action==='ghostArcher') {beginBuild('archerHouse');return;}
         if (action==='cancelBuild') {cancelBuild();return;}
         if (action==='assignBuilders') {assignBuilders();return;}
         if (action==='demolishBuilding') {demolishBuilding();return;}
         if (action==='returnHome') {
-          const chosen=selectedFarmers();
+          const chosen=selectedCivilians();
           releaseMission(chosen);
           if (!chosen.length) {message(tr.noSelected);return;}
           stopWoodTarget();
@@ -1185,6 +1366,8 @@
           missionJobTick(farmer,dt);
         }
         construction.update(dt);
+        updateProduction(dt);
+        updateTrainings(dt);
         wood.update(dt);
         enemyAI.update(dt);
         combat.update(dt);
@@ -1204,10 +1387,12 @@
         rice.drawGround(ctx,currentCamera);
         rice.drawCrops(ctx,currentCamera);
         construction.drawBuildings(ctx,currentCamera);
+        drawHouseStatus(ctx,currentCamera);
         wood.draw(ctx,currentCamera);
         missions.draw(ctx,currentCamera);
         visual.drawAtmosphere(ctx,currentCamera);
-        for (const unit of allUnits().filter(u=>u.alive).sort((a,b)=>a.y-b.y)) unit.draw(ctx,currentCamera);
+        for (const unit of allUnits().filter(u=>u.alive && !u.trainingInside).sort((a,b)=>a.y-b.y))
+          unit.draw(ctx,currentCamera);
         projectiles.draw(ctx,currentCamera);
         health.draw(ctx,currentCamera,{showFull:false});
         visual.drawOverlay(ctx,currentCamera);
@@ -1316,6 +1501,7 @@
       window.addEventListener('keydown',onEscape);
 
       for (let i=0;i<gameSetup.farmers;i++) spawnFarmer();
+      autoHarvest(farmers.filter(civilian));
       visual.syncUnits(); // First rendered frame uses new chibi art, not the old placeholder.
       // Starts automatically; no extra Start button or network calls.
       if (gameSetup.enemiesEnabled === true) waves.start();
@@ -1393,6 +1579,8 @@
       window.shadowRealmsBootstrap=features;
       window.shadowRealmsGame=game;
       window.shadowRealmsRice=rice;
+      window.shadowRealmsProduction=farmerProduction;
+      window.shadowRealmsTraining=trainingJobs;
       window.shadowRealmsConstruction=construction;
       window.shadowRealmsWood=wood;
       window.shadowRealmsCombat={health,projectiles,combat,enemyAI,waves};
