@@ -19,28 +19,28 @@ const MODES = ['select', 'move', 'harvest', 'build']
 const LOCALES = {
   en: {resources:'Resources',rice:'Rice',wood:'Wood',villagers:'Villagers',commands:'Commands',
     selection:'Selection',select:'Select',move:'Move',harvest:'Harvest',build:'Build',
-    farmer:'Farmer',spawn:'Spawn Farmer',field:'Go Field',return:'Return',
-    house:'House',barn:'Barn',cancel:'Cancel',ready:'Ready for command',touch:'Touch Control',
+    farmer:'Farmer',spawn:'Produce Farmer · 10s',field:'Auto Harvest',return:'Return',
+    house:'Farmer House',barn:'Sword House',archer:'Archer House',cancel:'Cancel',ready:'Ready for command',touch:'Touch Control',
     touchNote:'Use these buttons instead of right-click.',hint:'Left click select • Right click move'},
   km: {resources:'ធនធាន',rice:'ស្រូវ',wood:'ឈើ',villagers:'កសិករ',commands:'បញ្ជា',
     selection:'ការជ្រើសរើស',select:'ជ្រើសរើស',move:'ផ្លាស់ទី',harvest:'ប្រមូលផល',build:'សាងសង់',
-    farmer:'កសិករ',spawn:'បន្ថែមកសិករ',field:'ទៅវាលស្រែ',return:'ត្រឡប់',
-    house:'ផ្ទះ',barn:'ឃ្លាំង',cancel:'បោះបង់',ready:'រង់ចាំបញ្ជា',touch:'បញ្ជាប៉ះ',
+    farmer:'កសិករ',spawn:'ផលិតកសិករ 10s',field:'ច្រូតស្វ័យប្រវត្តិ',return:'ត្រឡប់',
+    house:'ផ្ទះកសិករ',barn:'ផ្ទះដាវ',archer:'ផ្ទះព្រួញ',cancel:'បោះបង់',ready:'រង់ចាំបញ្ជា',touch:'បញ្ជាប៉ះ',
     touchNote:'ប្រើប៊ូតុងនេះជំនួសចុចកណ្ដុរស្ដាំ',hint:'ចុចឆ្វេងជ្រើសរើស • ចុចស្ដាំផ្លាស់ទី'},
   zh: {resources:'资源',rice:'稻米',wood:'木材',villagers:'村民',commands:'命令',
     selection:'选择',select:'选择',move:'移动',harvest:'收获',build:'建造',
-    farmer:'农民',spawn:'添加农民',field:'去稻田',return:'返回',
-    house:'房屋',barn:'仓库',cancel:'取消',ready:'等待命令',touch:'触控',
+    farmer:'农民',spawn:'生产农民 · 10秒',field:'自动收割',return:'返回',
+    house:'农民小屋',barn:'剑士兵营',archer:'弓箭兵营',cancel:'取消',ready:'等待命令',touch:'触控',
     touchNote:'使用按钮代替鼠标右键',hint:'左键选择 • 右键移动'},
   ja: {resources:'資源',rice:'米',wood:'木材',villagers:'村人',commands:'指示',
     selection:'選択',select:'選択',move:'移動',harvest:'収穫',build:'建設',
-    farmer:'農民',spawn:'農民を追加',field:'田んぼへ',return:'戻る',
-    house:'家',barn:'倉庫',cancel:'取消',ready:'指示待ち',touch:'タッチ操作',
+    farmer:'農民',spawn:'農民を生産 · 10秒',field:'自動収穫',return:'戻る',
+    house:'農民の家',barn:'剣兵舎',archer:'弓兵舎',cancel:'取消',ready:'指示待ち',touch:'タッチ操作',
     touchNote:'右クリックの代わりに操作ボタンを使用',hint:'左クリックで選択 • 右クリックで移動'},
   ko: {resources:'자원',rice:'쌀',wood:'나무',villagers:'주민',commands:'명령',
     selection:'선택',select:'선택',move:'이동',harvest:'수확',build:'건설',
-    farmer:'농부',spawn:'농부 추가',field:'논으로',return:'귀환',
-    house:'집',barn:'창고',cancel:'취소',ready:'명령 대기',touch:'터치 조작',
+    farmer:'농부',spawn:'농부 생산 · 10초',field:'자동 수확',return:'귀환',
+    house:'농부 집',barn:'검병 훈련소',archer:'궁수 훈련소',cancel:'취소',ready:'명령 대기',touch:'터치 조작',
     touchNote:'오른쪽 클릭 대신 버튼 사용',hint:'왼쪽 클릭 선택 • 오른쪽 클릭 이동'},
 };
 
@@ -110,7 +110,7 @@ export class CommandFooter {
     }
     const commands = {
       spawnFarmer: t.spawn, sendToField: t.field, returnHome: t.return,
-      ghostHouse: t.house, ghostBarn: t.barn, cancelBuild: t.cancel,
+      ghostHouse: `${t.house} (100🌾 100🪵)`, ghostBarn: `${t.barn} (150🪵)`, cancelBuild: t.cancel,
     }
     for (const button of shell.querySelectorAll('[data-action]')) {
       if (commands[button.dataset.action]) button.textContent = commands[button.dataset.action]
@@ -167,16 +167,16 @@ export class CommandFooter {
             <div class="sr-ui-action-group">
               <div class="sr-ui-group-label">Farmer</div>
               <div class="sr-ui-action-list">
-                <button type="button" class="sr-ui-square-btn" data-action="spawnFarmer">Spawn Farmer</button>
-                <button type="button" class="sr-ui-square-btn" data-action="sendToField">Go Field</button>
+                <button type="button" class="sr-ui-square-btn" data-action="spawnFarmer">Produce Farmer · 10s</button>
+                <button type="button" class="sr-ui-square-btn" data-action="sendToField">Auto Harvest</button>
                 <button type="button" class="sr-ui-square-btn" data-action="returnHome">Return</button>
               </div>
             </div>
             <div class="sr-ui-action-group">
               <div class="sr-ui-group-label">Build</div>
               <div class="sr-ui-action-list">
-                <button type="button" class="sr-ui-square-btn" data-action="ghostHouse">House</button>
-                <button type="button" class="sr-ui-square-btn" data-action="ghostBarn">Barn</button>
+                <button type="button" class="sr-ui-square-btn" data-action="ghostHouse" data-building="house">Farmer House (100🌾 100🪵)</button>
+                <button type="button" class="sr-ui-square-btn" data-action="ghostBarn" data-building="swordHouse">Sword House (150🪵)</button>
                 <button type="button" class="sr-ui-square-btn" data-action="cancelBuild">Cancel</button>
               </div>
             </div>
@@ -328,6 +328,8 @@ export class CommandFooter {
       .sr-ui-action-list{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:8px}
       .sr-ui-square-btn{pointer-events:auto;border:1px solid rgba(255,255,255,.08);background:rgba(35,47,63,.9);color:#f8fafc;padding:11px 12px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer}
       .sr-ui-square-btn:hover,.sr-ui-zoom-btn:hover,.sr-ui-mobile-btn:hover{filter:brightness(1.08)}
+      .sr-ui-square-btn{line-height:1.35;overflow-wrap:anywhere;min-height:40px}
+      .sr-ui-square-btn[data-building]{border-color:rgba(231,188,107,.38);background:rgba(65,59,46,.95)}
       .sr-ui-selected-card{padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(246,184,0,.2),rgba(255,255,255,.04));border:1px solid rgba(246,184,0,.34)}
       .sr-ui-selected-name{font-size:18px;font-weight:900}
       .sr-ui-selected-sub{font-size:12px;color:rgba(255,255,255,.62);margin-top:4px}
