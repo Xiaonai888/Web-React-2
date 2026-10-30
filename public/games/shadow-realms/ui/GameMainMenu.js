@@ -11,6 +11,7 @@ const PRESETS = Object.freeze({
 
 const TEXT = Object.freeze({
   en: {
+    enemiesLabel: 'Enemy attacks (optional)', enemiesHint: 'Off by default. Turn on only when you want enemies and battle waves.',
     tag: 'THE REALM AWAITS', titleTop: 'SHADOW', titleBottom: 'REALMS', subtitle: 'Rise · Build · Defend',
     quick: 'Quick Game', custom: 'Custom Game', guide: 'How to Play', options: 'Game Options',
     credits: 'About the Realm', exit: 'Back to Games', quickNote: 'Start a balanced battle',
@@ -35,6 +36,7 @@ const TEXT = Object.freeze({
     live: 'No account or server required to start the battle',
   },
   km: {
+    enemiesLabel: 'អនុញ្ញាតឱ្យសត្រូវវាយប្រហារ', enemiesHint: 'បិទជាលំនាំដើម។ បើកតែពេលចង់សាកការប្រយុទ្ធ និងរលកសត្រូវ។',
     tag: 'ពិភពថ្មីកំពុងរង់ចាំ', titleTop: 'SHADOW', titleBottom: 'REALMS', subtitle: 'កសាង · រុករក · ការពារ',
     quick: 'ចាប់ផ្តើមលឿន', custom: 'កំណត់ហ្គេម', guide: 'របៀបលេង', options: 'ការកំណត់ហ្គេម',
     credits: 'អំពីពិភពហ្គេម', exit: 'ត្រឡប់ទៅ Game', quickNote: 'ចាប់ផ្តើមលេងតាមកម្រិតធម្មតា',
@@ -59,6 +61,7 @@ const TEXT = Object.freeze({
     live: 'ចាប់ផ្តើមហ្គេមបានដោយមិនចាំបាច់ប្រើ Backend',
   },
   zh: {
+    enemiesLabel: '启用敌人进攻', enemiesHint: '默认关闭；只在想测试战斗和敌人波次时开启。',
     tag: '新的领域正在等待', titleTop: 'SHADOW', titleBottom: 'REALMS', subtitle: '崛起 · 建造 · 守护',
     quick: '快速游戏', custom: '自定义游戏', guide: '玩法教程', options: '游戏设置', credits: '关于游戏', exit: '返回游戏列表',
     quickNote: '开始标准战斗', customNote: '选择初始挑战', guideNote: '学习基本操作', optionsNote: '动画和无障碍', creditsNote: '探索这个世界', exitNote: '返回 Shadow',
@@ -71,6 +74,7 @@ const TEXT = Object.freeze({
     aboutFoot: '之后可以更换专属美术素材，而无需修改游戏引擎。', live: '无需后台服务即可开始',
   },
   ja: {
+    enemiesLabel: '敵の攻撃を有効にする', enemiesHint: '初期設定はオフ。戦闘をテストするときだけオンにしてください。',
     tag: '新しい世界が待っている', titleTop: 'SHADOW', titleBottom: 'REALMS', subtitle: '育成 · 建設 · 防衛',
     quick: 'クイックゲーム', custom: 'カスタムゲーム', guide: '遊び方', options: 'ゲーム設定', credits: 'ゲームについて', exit: 'ゲーム一覧へ',
     quickNote: '標準の戦いを開始', customNote: '開始条件を選択', guideNote: '基本操作を学ぶ', optionsNote: '表示とアクセシビリティ', creditsNote: '世界を知る', exitNote: 'Shadow に戻る',
@@ -83,6 +87,7 @@ const TEXT = Object.freeze({
     aboutFoot: '後からゲームエンジンを変更せずに画像を追加できます。', live: 'サーバーなしで開始できます',
   },
   ko: {
+    enemiesLabel: '적 공격 활성화', enemiesHint: '기본값은 꺼짐. 전투와 적 웨이브를 테스트할 때만 켜세요.',
     tag: '새로운 세계가 기다립니다', titleTop: 'SHADOW', titleBottom: 'REALMS', subtitle: '성장 · 건설 · 방어',
     quick: '빠른 게임', custom: '사용자 설정', guide: '게임 방법', options: '게임 옵션', credits: '세계 소개', exit: '게임 목록으로',
     quickNote: '기본 전투 시작', customNote: '시작 난이도 설정', guideNote: '기본 조작 배우기', optionsNote: '화면 및 접근성', creditsNote: '세계 살펴보기', exitNote: 'Shadow로 돌아가기',
@@ -165,6 +170,7 @@ export function showShadowRealmsMenu({ mount = document.body } = {}) {
   const t = TEXT[lang] || TEXT.en;
   let reducedMotion = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   let selectedPreset = 'balanced';
+  let enemiesEnabled = false;
   const previousFocus = document.activeElement;
   const previousOverflow = document.body.style.overflow;
   let finished = false;
@@ -269,6 +275,15 @@ export function showShadowRealmsMenu({ mount = document.body } = {}) {
         choices.append(option);
       }
       body.append(choices);
+      const enemyRow = node('label', 'srm-switch-row');
+      const enemyInfo = node('span');
+      enemyInfo.append(node('strong', '', t.enemiesLabel), node('small', '', t.enemiesHint));
+      const enemyToggle = node('input');
+      enemyToggle.type = 'checkbox';
+      enemyToggle.checked = enemiesEnabled;
+      enemyToggle.addEventListener('change', () => { enemiesEnabled = enemyToggle.checked; });
+      enemyRow.append(enemyInfo, enemyToggle);
+      body.append(enemyRow);
       const actions = node('div', 'srm-panel-actions');
       actions.append(button(t.back, 'srm-action', removePanel));
       actions.append(button(t.start, 'srm-action srm-action--gold', () => finish(selectedPreset)));
@@ -332,7 +347,7 @@ export function showShadowRealmsMenu({ mount = document.body } = {}) {
     finished = true;
     const preset = PRESETS[id] || PRESETS.balanced;
     root.classList.add('is-closing');
-    const outcome = { ...preset, reducedMotion, mode };
+    const outcome = { ...preset, reducedMotion, mode, enemiesEnabled: mode === 'custom' && enemiesEnabled };
     if (reducedMotion) {
       cleanup();
       resolveStart(outcome);
