@@ -142,9 +142,9 @@ function getCacheRule(url) {
       url.searchParams.get('section_key') ||
       'home_top_slider'
 
-    if (sectionKey === 'home_top_slider') {
-      return null
-    }
+    if (/^home_top_slider(?:_(?:en|zh|ja|ko))?$/.test(sectionKey)) {
+  return null
+}
 
     return {
       section: 'slides',
