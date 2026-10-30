@@ -1304,6 +1304,9 @@ nextCursor: preserveCursor ? existing.nextCursor : data.nextCursor,
         revision: mountRevisionRef.current,
       }
       writeNotificationCache(key, revised)
+      window.dispatchEvent(new CustomEvent('shadow-author-notification-stage', {
+        detail: { stage: 'DATA_READY' },
+      }))
       cacheReadyRef.current = true
       setViewKey(key)
       setNotifications(revised.notifications)
@@ -1378,6 +1381,16 @@ nextCursor: preserveCursor ? existing.nextCursor : data.nextCursor,
       notificationPageViews.delete(notificationPageViews.keys().next().value)
     }
   }, [token])
+
+    useEffect(() => {
+    if (loading) return
+    const frame = requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('shadow-author-notification-stage', {
+        detail: { stage: 'PAGE_RENDERED' },
+      }))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [loading, notifications])
 
   const filteredNotifications = activeFilter === 'unread'
     ? notifications.filter((item) => item.unread)
