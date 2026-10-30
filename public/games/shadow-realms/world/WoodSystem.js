@@ -112,8 +112,11 @@ export class WoodSystem {
   }
   #findUnit(id) { return this.#units().find(unit => unit.id === id) || null; }
   #canWork(unit) {
-    return unit && unit.id != null && unit.team === this.team &&
-      unit.alive !== false && unit.selectable !== false &&
+    return unit && unit.id != null && unit.type === 'farmer' &&
+      unit.team === this.team && unit.alive !== false &&
+      unit.selectable !== false && unit.isCivilian !== false &&
+      !unit.combatTraining && !unit.trainingState &&
+      !unit.trainingInside && !unit.training &&
       pointOK(unit) && typeof unit.setPath === 'function';
   }
   #isFull(unit) {
