@@ -4,7 +4,7 @@ import { ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Image as ImageIcon
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { createAuthorAdDraft, deleteAuthorAdDraft, listAuthorAdCampaigns, submitAuthorAdForReview, transitionAuthorAdCampaign, updateAuthorAdDraft } from '../../services/authorAdsApi'
+import { createAuthorAdDraft, deleteAuthorAdDraft, getAuthorAdCampaign, listAuthorAdCampaigns, submitAuthorAdForReview, transitionAuthorAdCampaign, updateAuthorAdDraft } from '../../services/authorAdsApi'
 
 registerTranslationNamespace('authorAds', {
   en: {
@@ -715,28 +715,34 @@ export default function AuthorAdsPage() {
 
   useEffect(() => {
   const id = new URLSearchParams(window.location.search).get('edit')
-  if (!id || section !== 'campaigns' || !campaignsLoaded) return
-  const draft = campaigns.find(item =>
-    item.id === id &&
-    item.status === 'draft' &&
-    item.reviewStatus === 'not_submitted'
-  )
-  if (!draft) return
-  editDraft(draft)
-  navigate('/author/page/ads/boost-editor', { replace: true })
-}, [campaigns, campaignsLoaded, editDraft, navigate, section])
+  if (!id || section !== 'campaigns' || !campaignsLoaded) return undefined
 
-  const deleteDraft = id => {
-    if (!window.confirm(t('authorAds.confirmDelete'))) return
-    const next = drafts.filter(item => item.id !== id)
-    try {
-      writeDrafts(username, next)
-      setDrafts(next)
-      if (editingId === id) setEditingId('')
-    } catch {
-      setMessage(t('authorAds.localSaveFailed'))
+  const controller = new AbortController()
+  const selected = campaigns.find(item => item.id === id)
+  const request = selected
+    ? Promise.resolve(selected)
+    : getAuthorAdCampaign(id, { signal: controller.signal })
+
+  request.then(draft => {
+    if (controller.signal.aborted) return
+    if (draft.status !== 'draft' || draft.reviewStatus !== 'not_submitted') {
+      setCampaignsError(t('authorAds.lifecycleBlocked'))
+      return
     }
-  }
+
+    setCampaigns(items =>
+      items.some(item => item.id === id) ? items : [draft, ...items]
+    )
+    editDraft(draft)
+    navigate('/author/page/ads/boost-editor', { replace: true })
+  }).catch(() => {
+    if (!controller.signal.aborted) {
+      setCampaignsError(t('authorAds.campaignLoadFailed'))
+    }
+  })
+
+  return () => controller.abort()
+}, [campaigns, campaignsLoaded, editDraft, navigate, section, t])
 
   const deleteCampaign = async id => {
     if (processingId || !window.confirm(t('authorAds.confirmDelete'))) return
