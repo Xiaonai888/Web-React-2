@@ -69,9 +69,9 @@ export class RiceSystem {
     columns = 5,
     growSeconds = 75,
     restSeconds = 9,
-    yieldPerPlant = 3,
+    yieldPerPlant = 2,
     harvestRange = 48,
-    carryingCapacity = 24,
+    carryingCapacity = 10,
     depositRange = 70,
     startingRice = 80,
     initialReadyFraction = 0.34,
@@ -94,15 +94,17 @@ export class RiceSystem {
       columns: Math.floor(clamp(finite(columns) ? columns : 5, 2, 12)),
       growSeconds: clamp(finite(growSeconds) ? growSeconds : 75, 5, 3600),
       restSeconds: clamp(finite(restSeconds) ? restSeconds : 9, 0, 300),
-      yieldPerPlant: Math.floor(clamp(finite(yieldPerPlant) ? yieldPerPlant : 3, 1, 99)),
+      yieldPerPlant: Math.floor(clamp(finite(yieldPerPlant) ? yieldPerPlant : 2, 1, 99)),
       harvestRange: clamp(finite(harvestRange) ? harvestRange : 48, 10, 160),
-      carryingCapacity: Math.floor(clamp(finite(carryingCapacity) ? carryingCapacity : 24, 1, 500)),
+      carryingCapacity: Math.floor(clamp(finite(carryingCapacity) ? carryingCapacity : 10, 1, 500)),
       depositRange: clamp(finite(depositRange) ? depositRange : 70, 12, 300),
       initialReadyFraction: clamp(finite(initialReadyFraction) ? initialReadyFraction : 0.34, 0, 1),
     }
 
     this.initialRice = Math.max(0, Math.floor(finite(startingRice) ? startingRice : 80))
     this.rice = this.initialRice
+    this.houseStocks = new Map()
+    this.construction = null
     this.totalHarvested = 0
     this.totalDeposited = 0
     this.harvestCount = 0
@@ -171,6 +173,75 @@ export class RiceSystem {
       }
       if (field.plants.length) this.fields.push(field)
     }
+  }
+
+  setConstructionSystem(construction) {
+    if (construction != null && (typeof construction.getBuildings !== 'function' ||
+        construction.map !== this.map)) return false
+    this.construction = construction
+    this.getStorageStatus()
+    return true
+  }
+
+  #houseInventory() {
+    const owner = this.construction || this.map.isWalkable?.__shadowConstructionOwner
+    if (!owner || owner.destroyed || typeof owner.getBuildings !== 'function') return null
+    const houses = owner.getBuildings().filter(b =>
+      b && b.type === 'house' && b.state === 'complete' && at(b))
+    const live = new Set(houses.map(b => b.id))
+    for (const id of this.houseStocks.keys()) {
+      if (!live.has(id)) this.houseStocks.delete(id)
+    }
+    for (const house of houses) {
+      if (!this.houseStocks.has(house.id)) this.houseStocks.set(house.id, 0)
+    }
+    let assigned = houses.reduce((sum, b) => sum + this.houseStocks.get(b.id), 0)
+    if (assigned > this.rice) {
+      let excess = assigned - this.rice
+      for (const house of [...houses].reverse()) {
+        const old = this.houseStocks.get(house.id)
+        const taken = Math.min(old, excess)
+        this.houseStocks.set(house.id, old - taken)
+        excess -= taken
+        if (!excess) break
+      }
+    } else if (assigned < this.rice) {
+      let unassigned = this.rice - assigned
+      for (const house of houses) {
+        const old = this.houseStocks.get(house.id)
+        const added = Math.min(150 - old, unassigned)
+        if (added > 0) this.houseStocks.set(house.id, old + added)
+        unassigned -= added
+        if (!unassigned) break
+      }
+    }
+    const detail = houses.map(b => ({
+      id: b.id, x: b.x, y: b.y, capacity: 150,
+      stored: this.houseStocks.get(b.id),
+      free: 150 - this.houseStocks.get(b.id),
+    }))
+    const capacity = houses.length * 150
+    return {
+      capacity, free: Math.max(0, capacity - this.rice),
+      stored: this.rice, overflow: Math.max(0, this.rice - capacity),
+      houses: detail,
+    }
+  }
+
+  getStorageStatus() {
+    return this.#houseInventory() || {
+      capacity: Infinity, free: Infinity, stored: this.rice, overflow: 0, houses: [],
+    }
+  }
+
+  getNearestRiceHouse(point, { needsSpace = true } = {}) {
+    if (!at(point)) return null
+    const owner = this.construction || this.map.isWalkable?.__shadowConstructionOwner
+    const status = this.#houseInventory()
+    if (!status) return null
+    const candidates = status.houses.filter(h => !needsSpace || h.free > 0)
+    candidates.sort((a, b) => distance(a, point) - distance(b, point))
+    return candidates.length ? owner.getBuildingById?.(candidates[0].id) || null : null
   }
 
   getFields() { return this.fields }
@@ -259,7 +330,8 @@ export class RiceSystem {
     if (!plant) return { ok: false, reason: 'not_found', amount: 0 }
     if (!this.isRipe(plant)) return { ok: false, reason: 'not_ripe', amount: 0 }
     if (!farmer || !at(farmer) || farmer.alive === false ||
-        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red') {
+        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red' ||
+        farmer.isCivilian === false || farmer.combatTraining) {
       return { ok: false, reason: 'invalid_farmer', amount: 0 }
     }
     if (distance(plant, farmer) > this.config.harvestRange) {
@@ -292,32 +364,72 @@ export class RiceSystem {
     return this.harvestPlant(plant, farmer)
   }
 
-  /** Deposit only if the farmer reached the base. Prevents remote deposits. */
   deposit(farmer, home = this.map.getSpawnPoint?.(farmer?.team || 'blue')) {
     if (!farmer || !at(farmer) || !at(home) || farmer.alive === false ||
-        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red') {
+        (finite(farmer.hp) && farmer.hp <= 0) || farmer.team === 'red' ||
+        farmer.isCivilian === false || farmer.combatTraining) {
       return { ok: false, reason: 'invalid_farmer_or_home', amount: 0 }
     }
-    if (distance(farmer, home) > this.config.depositRange) {
+    const isHouse = home?.type === 'house' && home?.state === 'complete'
+    const arrivalRange = isHouse
+      ? this.config.depositRange + Math.max(home.width || 0, home.depth || 0) / 2
+      : this.config.depositRange
+    if (distance(farmer, home) > arrivalRange) {
       return { ok: false, reason: 'too_far', amount: 0 }
     }
-    const amount = Math.max(0, Math.floor(finite(farmer.carry) ? farmer.carry : 0))
-    if (!amount) return { ok: false, reason: 'empty', amount: 0 }
-    farmer.carry = 0
-    this.rice += amount
-    this.totalDeposited += amount
-    return { ok: true, reason: 'deposited', amount, rice: this.rice }
+    const carrying = Math.max(0, Math.floor(finite(farmer.carry) ? farmer.carry : 0))
+    if (!carrying) return { ok: false, reason: 'empty', amount: 0 }
+    const status = this.#houseInventory()
+    if (!status) {
+      if (!Number.isSafeInteger(this.rice + carrying)) {
+        return { ok: false, reason: 'overflow', amount: 0 }
+      }
+      farmer.carry = 0
+      this.rice += carrying
+      this.totalDeposited += carrying
+      return { ok: true, reason: 'deposited', amount: carrying, rice: this.rice }
+    }
+    if (isHouse && !status.houses.some(h => h.id === home.id)) {
+      return { ok: false, reason: 'invalid_house', amount: 0 }
+    }
+    const possible = isHouse ? status.houses.filter(h => h.id === home.id)
+      : [...status.houses].sort((a, b) => distance(a, home) - distance(b, home))
+    let remaining = Math.min(carrying, status.free)
+    let deposited = 0
+    let houseId = null
+    for (const house of possible) {
+      const value = Math.min(remaining, house.free)
+      if (value <= 0) continue
+      if (houseId === null) houseId = house.id
+      this.houseStocks.set(house.id, house.stored + value)
+      remaining -= value
+      deposited += value
+      if (remaining <= 0) break
+    }
+    if (!deposited) return { ok: false, reason: 'storage_full', amount: 0 }
+    farmer.carry = carrying - deposited
+    this.rice += deposited
+    this.totalDeposited += deposited
+    return {
+      ok: true, reason: farmer.carry ? 'partial_deposit' : 'deposited',
+      amount: deposited, rice: this.rice, houseId, carrying: farmer.carry,
+    }
   }
 
-  /** Admin/test economy hook. This does not create any database request. */
   setStorageRice(amount) {
     if (!finite(amount) || amount < 0 || !Number.isSafeInteger(Math.floor(amount))) return false
-    this.rice = Math.floor(amount)
+    const value = Math.floor(amount)
+    const status = this.#houseInventory()
+    if (status && value > status.capacity && value > this.rice) return false
+    this.rice = value
+    this.#houseInventory()
     return true
   }
 
   getResources() {
-    return { rice: this.rice }
+    const storage = this.getStorageStatus()
+    return { rice: this.rice, riceStorageCapacity: storage.capacity,
+      riceStorageFree: storage.free }
   }
 
   getSummary() {
@@ -326,12 +438,13 @@ export class RiceSystem {
     for (const plant of this.plants) plants[this.getPhase(plant)] += 1
     return { fields: this.fields.length, plants, rice: this.rice,
       totalHarvested: this.totalHarvested, totalDeposited: this.totalDeposited,
-      harvestCount: this.harvestCount, elapsedSeconds: this.time }
+      harvestCount: this.harvestCount, elapsedSeconds: this.time,
+      storage: this.getStorageStatus() }
   }
 
   reset() {
-    // Full deterministic reset; keeps the same config and map.
     this.rice = this.initialRice
+    this.houseStocks.clear()
     this.totalHarvested = 0
     this.totalDeposited = 0
     this.harvestCount = 0
