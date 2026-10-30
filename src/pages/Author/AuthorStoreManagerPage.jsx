@@ -1587,11 +1587,12 @@ function withSystemCategories(categories) {
 }
 
 function canSellPrintedBooks(settings) {
-  return settings?.countryVerified === true &&
-    settings?.countrySource === 'reader_classification' &&
-    settings?.region === 'kh' &&
-    settings?.effective?.physicalBooks === true &&
-    getCountryFeature(settings, 'physicalBooks', false) === true
+  if (settings?.countryVerified !== true ||
+      settings?.countrySource !== 'reader_classification') return false
+  if (settings.countryPolicyEnabled === true) {
+    return getCountryFeature(settings, 'physicalBooks', false) === true
+  }
+  return settings.region === 'kh'
 }
 
 function getAuthToken() {
