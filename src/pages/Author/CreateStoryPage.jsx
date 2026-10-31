@@ -698,11 +698,20 @@ function safeCreateStoryImageUrl(value) {
 function setSafeCreateStoryImage(node, value) {
   if (!node) return
   const src = safeCreateStoryImageUrl(value)
-  if (!src) {
-  node.removeAttribute('src')
-  return
-}
-if (node.getAttribute('src') !== src) node.src = src
+  if (node.dataset.storyImageSource !== src) {
+    node.dataset.storyImageSource = src
+    node.dataset.storyImageRetry = '0'
+    if (src) node.src = src
+    else node.removeAttribute('src')
+  }
+  node.onerror = () => {
+    if (node.dataset.storyImageRetry !== '0' || !/^https:\/\//i.test(src)) return
+    node.dataset.storyImageRetry = '1'
+    window.setTimeout(() => {
+      if (!node.isConnected || node.dataset.storyImageSource !== src) return
+      node.src = `${src}${src.includes('?') ? '&' : '?'}retry=${Date.now()}`
+    }, 1500)
+  }
 }
 
 function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
