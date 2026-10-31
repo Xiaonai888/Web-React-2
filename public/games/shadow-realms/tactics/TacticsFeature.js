@@ -13,17 +13,27 @@ export function createFeature(scope) {
   if (typeof navigation?.moveUnit !== 'function') {
     throw new Error('TacticsFeature requires existing navigation service');
   }
+  // A newly created farmer remains a civilian until the full barracks training ends.
+  // Retain RED units in this roster: PatrolSystem still needs visible enemies.
+  const tacticalUnit = unit => {
+    if (!unit || unit.alive === false || unit.trainingInside ||
+        unit.trainingState || unit.training === true) return false;
+    if (unit.team !== 'blue') return true;
+    if (unit.isCivilian !== false) return false;
+    return unit.type !== 'farmer' ||
+      unit.combatTraining === 'melee' || unit.combatTraining === 'ranged';
+  };
   const allUnits = () => {
     const get = scope.get('getUnits', null);
     if (typeof get === 'function') {
       const roster = get();
-      return Array.isArray(roster) ? roster : [];
+      return Array.isArray(roster) ? roster.filter(tacticalUnit) : [];
     }
     const farmers = scope.get('farmers', []);
     const ai = scope.get('enemyAI', null);
     const enemies = ai?.getUnits?.() || [];
     return [...(Array.isArray(farmers) ? farmers : []),
-      ...(Array.isArray(enemies) ? enemies : [])];
+      ...(Array.isArray(enemies) ? enemies : [])].filter(tacticalUnit);
   };
   const emit = (name, payload) => {
     try { scope.emit(name, payload); }
