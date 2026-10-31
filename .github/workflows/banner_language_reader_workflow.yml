@@ -51,7 +51,7 @@ jobs:
           
               data = replace_one(data,
                   '  const navigate = useNavigate()',
-                  f"  const navigate = useNavigate()\n  const storyLanguage = useStoryLanguageId()\n  const sectionKey = storyLanguage === 'km' ? '{section}' : `{section}_${{storyLanguage}}`",
+                  f"  const navigate = useNavigate()\n  const storyLanguage = useStoryLanguageId()\n  const sectionKey = storyLanguage === 'km' ? '{section}' : '{section}_' + storyLanguage",
                   filename,
               )
           
