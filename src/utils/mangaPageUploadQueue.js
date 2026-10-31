@@ -29,7 +29,7 @@ function fileFingerprint(file) {
 function uncertainUpload(error) {
   const message = String(error?.message || '')
   return error?.stage === 'finalize' ||
-    /MANGA_PROCESSING_TIMEOUT|MANGA_JOB_ID_MISSING|IMAGE_URL_MISSING|IMAGE_REQUEST_FAILED|IMAGE_UPLOAD_INTERRUPTED|MANGA_DIRECT_JOB_MISSING/.test(message)
+    /MANGA_PROCESSING_TIMEOUT|MANGA_JOB_ID_MISSING|IMAGE_URL_MISSING|IMAGE_REQUEST_FAILED|IMAGE_UPLOAD_INTERRUPTED|IMAGE_UPLOAD_TIMEOUT|MANGA_DIRECT_JOB_MISSING/.test(message)
 }
 
 export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChange } = {}) {
@@ -71,9 +71,32 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
       }
 
       try {
+        if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+
+        let prepared
+        const previousWidth = Number(task.context?.width || 0)
+        const previousHeight = Number(task.context?.height || 0)
+        if (previousWidth > 0 && previousHeight > 0) {
+          prepared = { file, width: previousWidth, height: previousHeight }
+        } else {
+          try {
+            prepared = await optimizeMangaImage(file)
+          } catch (error) {
+            if (!signal.aborted) error.permanent = true
+            throw error
+          }
+        }
+        const selected = prepared?.file
+        if (!(selected instanceof Blob) || !selected.size || selected.size > MANGA_INPUT_MAX_BYTES) {
+          const error = new Error('Manga optimization did not produce a valid file')
+          error.permanent = true
+          throw error
+        }
+        if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+
         const uploaded = await uploadMangaPageFile({
-          token: currentToken,
-          file,
+          token: requireCurrentAccount(),
+          file: selected,
           signal,
           onProgress,
           useV2: true,
@@ -91,10 +114,10 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
         return {
           imageUrl: uploaded.imageUrl,
           storagePath: uploaded.storagePath || null,
-          width: uploaded.width || task.context.width || null,
-          height: uploaded.height || task.context.height || null,
-          fileSize: uploaded.fileSize || file.size,
-          mimeType: uploaded.mimeType || file.type,
+          width: uploaded.width || prepared.width || null,
+          height: uploaded.height || prepared.height || null,
+          fileSize: uploaded.fileSize || selected.size,
+          mimeType: uploaded.mimeType || selected.type,
           parts: Array.isArray(uploaded.parts) ? uploaded.parts : [],
         }
       } catch (error) {
@@ -145,15 +168,10 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
         return previous
       }
 
-      const optimized = await optimizeMangaImage(file)
       requireCurrentAccount()
-      const prepared = optimized?.file
-      if (!(prepared instanceof Blob) || !prepared.size || prepared.size > MANGA_INPUT_MAX_BYTES) {
-        throw new Error('Manga optimization did not produce a valid file')
-      }
-      const selected = prepared instanceof File ? prepared : new File(
-        [prepared], String(file.name || `manga-${page}`),
-        { type: String(prepared.type || file.type || 'application/octet-stream') }
+      const selected = file instanceof File ? file : new File(
+        [file], String(file.name || `manga-${page}`),
+        { type: String(file.type || 'application/octet-stream') }
       )
       void requestUploadStoragePersistence()
       return manager.enqueue({
@@ -167,8 +185,6 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
           revisionId: revision,
           position: Number.isInteger(position) && position >= 0 ? position : null,
           fingerprint,
-          width: optimized.width || null,
-          height: optimized.height || null,
         },
       })
     })()
