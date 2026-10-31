@@ -743,10 +743,14 @@ export async function uploadMangaPageFile({
       'Authorization',
       `Bearer ${token}`
     )
-    xhr.setRequestHeader(
+        xhr.setRequestHeader(
       'Content-Type',
       file.type || 'application/octet-stream'
     )
+    xhr.timeout = 90000
+    xhr.ontimeout = () => {
+      fail(new Error('Manga upload timed out. The local file is preserved. Check upload status before retrying. [network: IMAGE_UPLOAD_TIMEOUT]'))
+    }
 
     xhr.upload.onprogress = (event) => {
       const total = event.lengthComputable
