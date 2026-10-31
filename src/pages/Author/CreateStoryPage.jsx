@@ -698,8 +698,11 @@ function safeCreateStoryImageUrl(value) {
 function setSafeCreateStoryImage(node, value) {
   if (!node) return
   const src = safeCreateStoryImageUrl(value)
-  if (src && node.getAttribute('src') !== src) node.src = src
-  else node.removeAttribute('src')
+  if (!src) {
+  node.removeAttribute('src')
+  return
+}
+if (node.getAttribute('src') !== src) node.src = src
 }
 
 function SlideRow({ slide, index, onEdit, onDelete, onToggle }) {
