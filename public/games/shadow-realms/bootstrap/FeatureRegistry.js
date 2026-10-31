@@ -84,6 +84,9 @@ export class FeatureRegistry {
     if (this.started) return this;
     if (this.startPromise) return this.startPromise;
     if (this.stopPromise) await this.stopPromise;
+    // A second start() may have been waiting on the same stop promise.
+    if (this.started) return this;
+    if (this.startPromise) return this.startPromise;
     this.startPromise = this.#initialize();
     try { return await this.startPromise; }
     finally { this.startPromise = null; }
@@ -198,10 +201,14 @@ export class FeatureRegistry {
   }
 
   async stop() {
-    if (this.startPromise) await this.startPromise.catch(() => {});
-    if (this.stopPromise) { await this.stopPromise; return this; }
-    this.stopPromise = this.#stop();
-    try { await this.stopPromise; return this; }
+    if (this.stopPromise) return this.stopPromise;
+    // Lock before awaiting start(), so concurrent stops cannot dispose twice.
+    this.stopPromise = (async () => {
+      if (this.startPromise) await this.startPromise.catch(() => {});
+      await this.#stop();
+      return this;
+    })();
+    try { return await this.stopPromise; }
     finally { this.stopPromise = null; }
   }
 
