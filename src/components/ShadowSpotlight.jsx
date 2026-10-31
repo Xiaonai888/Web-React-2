@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 
 registerTranslationNamespace('shadowSpotlight', {
   en: {
@@ -76,6 +77,8 @@ function getBadgeClass(badge) {
 export default function ShadowSpotlight() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const storyLanguage = useStoryLanguageId()
+  const sectionKey = storyLanguage === 'km' ? 'shadow_spotlight' : 'shadow_spotlight_' + storyLanguage
   const swiperRef = useRef(null)
   const firstBannerIndexRef = useRef(null)
   const [spotlights, setSpotlights] = useState([])
@@ -83,13 +86,16 @@ export default function ShadowSpotlight() {
 
   useEffect(() => {
   let ignore = false
+  firstBannerIndexRef.current = null
+  setSpotlights([])
+  setLoading(true)
 
   async function loadSpotlights() {
     const cacheKey = getHomeCacheKey({
       section: 'slides',
       params: {
         home_section: 'shadow-spotlight',
-        section_key: 'shadow_spotlight',
+        section_key: sectionKey,
         schema: 1,
       },
     })
@@ -116,7 +122,7 @@ export default function ShadowSpotlight() {
       }
 
       const response = await fetch(
-        `${API_URL}/api/slides?section_key=shadow_spotlight`
+        `${API_URL}/api/slides?section_key=${encodeURIComponent(sectionKey)}`
       )
 
       const data = await response.json().catch(() => ({}))
@@ -159,7 +165,7 @@ export default function ShadowSpotlight() {
   return () => {
     ignore = true
   }
-}, [])
+}, [sectionKey])
 
   useEffect(() => {
     if (!window.Swiper || spotlights.length === 0) return
@@ -170,7 +176,7 @@ export default function ShadowSpotlight() {
     }
 
     if (firstBannerIndexRef.current === null) {
-  firstBannerIndexRef.current = getDailyBannerStartIndex('shadow_spotlight', spotlights.length)
+  firstBannerIndexRef.current = getDailyBannerStartIndex(sectionKey, spotlights.length)
 }
 const initialSlide = Number(firstBannerIndexRef.current || 0) % spotlights.length
 

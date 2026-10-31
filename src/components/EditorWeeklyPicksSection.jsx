@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 
 registerTranslationNamespace('editorWeeklyPicksSection', {
   en: {
@@ -107,6 +108,8 @@ function normalizeSlide(slide, index = 0) {
 export default function EditorWeeklyPicksSection() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const storyLanguage = useStoryLanguageId()
+  const sectionKey = storyLanguage === 'km' ? 'editor_weekly_picks' : 'editor_weekly_picks_' + storyLanguage
   const scrollRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [items, setItems] = useState([])
@@ -120,13 +123,16 @@ export default function EditorWeeklyPicksSection() {
 
   useEffect(() => {
   let ignore = false
+  firstBannerIndexRef.current = null
+  setItems([])
+  setLoading(true)
 
   async function loadWeeklyPicks() {
     const cacheKey = getHomeCacheKey({
       section: 'slides',
       params: {
         home_section: 'editor-weekly-picks',
-        section_key: 'editor_weekly_picks',
+        section_key: sectionKey,
         schema: 1,
       },
     })
@@ -154,7 +160,7 @@ export default function EditorWeeklyPicksSection() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/slides?section_key=editor_weekly_picks`
+        `${API_BASE_URL}/api/slides?section_key=${encodeURIComponent(sectionKey)}`
       )
       const data = await response.json().catch(() => ({}))
 
@@ -198,13 +204,13 @@ export default function EditorWeeklyPicksSection() {
   return () => {
     ignore = true
   }
-}, [])
+}, [sectionKey])
 
   const displayItems = items
   useEffect(() => {
   if (!displayItems.length || !scrollRef.current) return
   if (firstBannerIndexRef.current === null) {
-    firstBannerIndexRef.current = getDailyBannerStartIndex('editor_weekly_picks', displayItems.length)
+    firstBannerIndexRef.current = getDailyBannerStartIndex(sectionKey, displayItems.length)
   }
   const index = Number(firstBannerIndexRef.current || 0) % displayItems.length
   const frame = window.requestAnimationFrame(() => {

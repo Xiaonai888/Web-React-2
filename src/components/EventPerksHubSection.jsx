@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { getDailyBannerStartIndex } from '../utils/dailyBannerRotation'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 
 registerTranslationNamespace('eventPerksHubSection', {
   en: {
@@ -83,6 +84,8 @@ function normalizeSlide(slide, index = 0) {
 export default function EventPerksHubSection() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const storyLanguage = useStoryLanguageId()
+  const sectionKey = storyLanguage === 'km' ? 'event_perks_hub' : 'event_perks_hub_' + storyLanguage
   const scrollRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [items, setItems] = useState([])
@@ -96,13 +99,16 @@ export default function EventPerksHubSection() {
 
   useEffect(() => {
   let ignore = false
+  firstBannerIndexRef.current = null
+  setItems([])
+  setLoading(true)
 
   async function loadEventPerks() {
     const cacheKey = getHomeCacheKey({
       section: 'slides',
       params: {
         home_section: 'event-perks',
-        section_key: 'event_perks_hub',
+        section_key: sectionKey,
         schema: 1,
       },
     })
@@ -130,7 +136,7 @@ export default function EventPerksHubSection() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/slides?section_key=event_perks_hub`
+        `${API_BASE_URL}/api/slides?section_key=${encodeURIComponent(sectionKey)}`
       )
 
       const data = await response.json().catch(() => ({}))
@@ -174,13 +180,13 @@ export default function EventPerksHubSection() {
   return () => {
     ignore = true
   }
-}, [])
+}, [sectionKey])
 
-  const displayItems = items.length ? items : fallbackEventPerksData
+  const displayItems = items.length ? items : (storyLanguage === 'km' ? fallbackEventPerksData : [])
   useEffect(() => {
   if (loading || !displayItems.length || !scrollRef.current) return
   if (firstBannerIndexRef.current === null) {
-    firstBannerIndexRef.current = getDailyBannerStartIndex('event_perks_hub', displayItems.length)
+    firstBannerIndexRef.current = getDailyBannerStartIndex(sectionKey, displayItems.length)
   }
   const index = Number(firstBannerIndexRef.current || 0) % displayItems.length
   const frame = window.requestAnimationFrame(() => {
