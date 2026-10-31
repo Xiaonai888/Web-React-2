@@ -36,11 +36,29 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
 
   const ownerId = `${accountId}:chat-inline`
   const previews = new Map()
+  let viewReleased = false
+  let checkingIdle = false
+
   const matches = (task) => Boolean(
     task && task.ownerId === ownerId && task.category === CATEGORY &&
     task.context?.storyId === scopedStoryId &&
     task.context?.draftKey === scopedDraftKey
   )
+
+  async function stopIfIdle() {
+    if (!viewReleased || checkingIdle) return
+    checkingIdle = true
+    try {
+      const tasks = await manager.list()
+      if (!tasks.some((task) => ['queued', 'retry_wait', 'uploading'].includes(task.status))) {
+        manager.stop()
+      }
+    } catch {
+      manager.stop()
+    } finally {
+      checkingIdle = false
+    }
+  }
 
   const manager = createUploadQueueManager({
     ownerId,
@@ -51,8 +69,26 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
         error.status = 401
         throw error
       }
+
+      let selected = file
+      try {
+        const optimized = await optimizeImageForUpload(file, { preset: 'post', signal })
+        selected = optimized?.file || file
+      } catch (error) {
+        if (signal?.aborted) throw error
+        if (DIRECT_TYPES.has(file.type)) {
+          error.permanent = true
+          throw error
+        }
+      }
+      if (DIRECT_TYPES.has(selected.type) && selected.size > MAX_DIRECT_BYTES) {
+        const error = new Error('This image is too large to upload after optimization')
+        error.permanent = true
+        throw error
+      }
+
       const result = await uploadMediaWithFallback({
-        file,
+        file: selected,
         category: CATEGORY,
         token: currentToken,
         apiBaseUrl,
@@ -68,8 +104,11 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
       return { image_url: imageUrl }
     },
     onChange: (event) => {
-      if (matches(event?.task) && typeof onChange === 'function') {
+      if (!viewReleased && matches(event?.task) && typeof onChange === 'function') {
         onChange(event)
+      }
+      if (viewReleased && ['uploaded', 'failed', 'removed'].includes(event?.type)) {
+        void stopIfIdle()
       }
     },
   })
@@ -80,17 +119,8 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
       throw new Error('Choose an image that is 8 MB or smaller')
     }
     if (!String(messageId || '').trim()) throw new Error('Chat image message ID is required')
-    let selected = file
-    try {
-      selected = (await optimizeImageForUpload(file, { preset: 'post' })).file
-    } catch (error) {
-      if (DIRECT_TYPES.has(file.type)) throw error
-    }
-    if (DIRECT_TYPES.has(selected.type) && selected.size > MAX_DIRECT_BYTES) {
-      throw new Error('This image is too large to upload after optimization')
-    }
     return manager.enqueue({
-      file: selected,
+      file,
       category: CATEGORY,
       kind: 'image',
       context: {
@@ -112,7 +142,10 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
 
   async function preview(taskId) {
     const task = await get(taskId)
-    if (!task || task.status === 'uploaded') return ''
+    if (!task) return ''
+    if (task.status === 'uploaded') {
+      return String(task.result?.image_url || task.result?.imageUrl || '')
+    }
     if (previews.has(taskId)) return previews.get(taskId)
     const file = await readMediaUploadFile(taskId, ownerId)
     if (!file) return ''
@@ -167,9 +200,10 @@ export function createChatStoryInlineUploadQueue({ storyId, draftKey, getToken, 
   }
 
   function stop() {
-    manager.stop()
+    viewReleased = true
     for (const url of previews.values()) URL.revokeObjectURL(url)
     previews.clear()
+    void stopIfIdle()
   }
 
   return {
