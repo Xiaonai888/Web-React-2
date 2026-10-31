@@ -12,10 +12,10 @@ import {
   setMediaUploadProgress,
 } from './uploadQueueDB'
 
-const CHECK_INTERVAL_MS = 10000
-const LEASE_DURATION_MS = 120000
-const LEASE_RENEW_INTERVAL_MS = 20000
-const MAX_RETRY_DELAY_MS = 300000
+const CHECK_INTERVAL_MS = 5000
+const LEASE_DURATION_MS = 60000
+const LEASE_RENEW_INTERVAL_MS = 15000
+const MAX_RETRY_DELAY_MS = 60000
 
 function newWorkerId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
