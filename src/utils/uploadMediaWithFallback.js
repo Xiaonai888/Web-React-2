@@ -311,7 +311,10 @@ export async function uploadMediaWithFallback({
   } catch (error) {
     if (isCanceled(error, signal) || error?.code === 'DIRECT_UPLOAD_CANCELED') throw error
     if (!allowLegacyFallback(error, stage)) throw error
-    if (stage === 'init') temporarilyUnavailableUntil = Date.now() + 60000
+    if (stage === 'init' && (
+  ['DIRECT_UPLOAD_NOT_ENABLED', 'DIRECT_UPLOAD_UNAVAILABLE'].includes(error?.code) ||
+  [404, 405].includes(error?.status)
+)) temporarilyUnavailableUntil = Date.now() + 60000
     return uploadLegacy()
   }
 }
