@@ -1004,11 +1004,11 @@ export default function CreateStoryPage() {
         recovered = await restoreStoryMediaSnapshot(draftKey)
         if (canceled) return
         if (recovered) {
-          setCoverOriginal(recovered.media.cover.original)
-          setCoverPreview(recovered.media.cover.preview)
-          setLandscapeOriginal(recovered.media.landscape.original)
-          setLandscapePreview(recovered.media.landscape.preview)
-          setSlides(recovered.media.slides)
+          setCoverOriginal(v => recovered.media.cover.original || (isEditMode ? v : ''))
+          setCoverPreview(v => recovered.media.cover.preview || (isEditMode ? v : ''))
+          setLandscapeOriginal(v => recovered.media.landscape.original || (isEditMode ? v : ''))
+          setLandscapePreview(v => recovered.media.landscape.preview || (isEditMode ? v : ''))
+          setSlides(v => isEditMode && !recovered.media.slides.length ? v : recovered.media.slides)
           setCoverChanged(Boolean(recovered.media.cover.preview && !/^https?:\/\//i.test(recovered.media.cover.preview)))
           setLandscapeChanged(Boolean(recovered.media.landscape.preview && !/^https?:\/\//i.test(recovered.media.landscape.preview)))
           setStoryMediaTouched(true)
