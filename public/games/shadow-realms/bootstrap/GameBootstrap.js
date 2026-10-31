@@ -36,12 +36,13 @@ export class GameBootstrap {
     this.handlers = null;
     this.installed = false;
     this.startPromise = null;
+    this.destroyPromise = null;
     this.registered = false;
     this.destroyed = false;
   }
 
   async start() {
-    if (this.destroyed) throw new Error('GameBootstrap is destroyed');
+    if (this.destroyed || this.destroyPromise) throw new Error('GameBootstrap is stopping or destroyed');
     if (this.installed) return this;
     if (this.startPromise) return this.startPromise;
     this.startPromise = this.#start();
@@ -115,13 +116,18 @@ export class GameBootstrap {
 
   async destroy() {
     if (this.destroyed) return;
-    if (this.startPromise) await this.startPromise.catch(() => {});
-    this.detach();
-    try { await this.registry.destroy(); }
-    finally {
-      this.context.destroy();
-      this.destroyed = true;
-    }
+    if (this.destroyPromise) return this.destroyPromise;
+    // One teardown path even when pagehide and another caller race.
+    this.destroyPromise = (async () => {
+      if (this.startPromise) await this.startPromise.catch(() => {});
+      this.detach();
+      try { await this.registry.destroy(); }
+      finally {
+        this.context.destroy();
+        this.destroyed = true;
+      }
+    })();
+    return this.destroyPromise;
   }
 }
 
