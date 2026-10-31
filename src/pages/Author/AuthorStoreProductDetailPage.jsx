@@ -247,7 +247,7 @@ registerTranslationNamespace('authorStoreProductDetail', {
     "bookInformation": "도서 정보",
     "storyLanguage": "스토리 언어",
     "storySetting": "스토리 배경",
-    "category": "카테고리",,
+    "category": "카테고리",
     "productType": "상품 유형",
     "condition": "상태",
     "paperType": "종이 종류",
