@@ -6,33 +6,33 @@ const LOCALES = {
   km: {title:'យុទ្ធសាស្ត្រ',defense:'ការការពារ',research:'ស្រាវជ្រាវ',tactics:'បញ្ជាកងទ័ព',
     trap:'អន្ទាក់',wall:'របាំង',tower:'ប៉មបាញ់',line:'ជួរដេក',column:'ជួរឈរ',wedge:'ក្បាលព្រួញ',box:'ការ៉េ',guard:'ការពារ',patrol:'ល្បាត',
     drills:'ហ្វឹកហាត់ប្រយុទ្ធ',armor:'ពាសដែក',vitality:'សុខភាព',mobility:'ល្បឿន',archery:'បាញ់ធ្នូ',
-    cancel:'បោះបង់',close:'បិទ',selected:'សូមជ្រើសកងទ័ពខៀវសិន',point:'ចុចលើដីដើម្បីបញ្ជា',placed:'បានបញ្ជាជោគជ័យ',
+    cancel:'បោះបង់',close:'បិទ',selected:'សូមជ្រើសទ័ពដែលហ្វឹកហាត់ចប់សិន',point:'ចុចលើដីដើម្បីបញ្ជា',placed:'បានបញ្ជាជោគជ័យ',
     failed:'មិនអាចធ្វើបាន',bought:'ស្រាវជ្រាវជោគជ័យ',busy:'កងទ័ពខ្លះស្ថិតក្នុង Squad ផ្សេង។ សូមជ្រើសក្រុមដើម ឬកងទ័ពដែលមិនទាន់មាន Squad។',
     blocked:'ទីតាំងនេះមិនអាចទៅដល់បាន',poor:'ធនធានមិនគ្រប់',limit:'បានដល់កម្រិតអតិបរមា',resources:'ធនធាន',rank:'កម្រិត',
     cost:'តម្លៃ',rice:'ស្រូវ',wood:'ឈើ',retry:'ចុចទីតាំងផ្សេង ឬបោះបង់បញ្ជា',none:'មិនមានកងទ័ពសម្រាប់បញ្ជា'},
   en: {title:'Strategy',defense:'Defenses',research:'Research',tactics:'Squad Commands',
     trap:'Spike Trap',wall:'Barricade',tower:'Watchtower',line:'Line',column:'Column',wedge:'Wedge',box:'Box',guard:'Guard',patrol:'Patrol',
     drills:'Combat Drills',armor:'Armor',vitality:'Vitality',mobility:'Mobility',archery:'Archery',
-    cancel:'Cancel',close:'Close',selected:'Select blue units first',point:'Tap terrain to issue the order',placed:'Command issued',
+    cancel:'Cancel',close:'Close',selected:'Select trained soldiers first',point:'Tap terrain to issue the order',placed:'Command issued',
     failed:'Unavailable',bought:'Research complete',busy:'Some units already belong to another squad. Select that whole squad or unassigned units.',
     blocked:'Destination is blocked',poor:'Not enough resources',limit:'Maximum rank reached',resources:'Resources',rank:'Rank',
     cost:'Cost',rice:'Rice',wood:'Wood',retry:'Tap another location or cancel',none:'No units available for that command'},
   zh: {title:'策略',defense:'防御',research:'研究',tactics:'部队指令',
     trap:'陷阱',wall:'路障',tower:'箭塔',line:'横队',column:'纵队',wedge:'楔形',box:'方阵',guard:'守卫',patrol:'巡逻',
     drills:'战斗训练',armor:'装甲',vitality:'生命力',mobility:'机动性',archery:'弓术',
-    cancel:'取消',close:'关闭',selected:'请先选择蓝方单位',point:'点击地面发出命令',placed:'命令已执行',failed:'无法执行',bought:'研究完成',
+    cancel:'取消',close:'关闭',selected:'请先选择已完成训练的士兵',point:'点击地面发出命令',placed:'命令已执行',failed:'无法执行',bought:'研究完成',
     busy:'部分单位属于其他小队，请选择完整小队或未分配单位',blocked:'目标位置不可到达',poor:'资源不足',limit:'已达最高等级',resources:'资源',rank:'等级',
     cost:'费用',rice:'稻米',wood:'木材',retry:'请点击其他位置或取消',none:'没有可用单位'},
   ja: {title:'戦略',defense:'防御',research:'研究',tactics:'部隊指示',
     trap:'罠',wall:'柵',tower:'見張り塔',line:'横隊',column:'縦隊',wedge:'くさび',box:'方陣',guard:'防衛',patrol:'巡回',
     drills:'戦闘訓練',armor:'防具',vitality:'生命力',mobility:'機動力',archery:'弓術',
-    cancel:'取消',close:'閉じる',selected:'味方ユニットを選択',point:'地面をタップして指示',placed:'指示を実行しました',failed:'実行できません',bought:'研究完了',
+    cancel:'取消',close:'閉じる',selected:'訓練済みの兵士を選択',point:'地面をタップして指示',placed:'指示を実行しました',failed:'実行できません',bought:'研究完了',
     busy:'他の部隊に所属するユニットがいます。部隊全体または未所属ユニットを選んでください',blocked:'移動できない場所です',poor:'資源不足',limit:'最大レベルです',resources:'資源',rank:'レベル',
     cost:'費用',rice:'米',wood:'木材',retry:'別の場所をタップするか取消',none:'指示可能なユニットがいません'},
   ko: {title:'전략',defense:'방어',research:'연구',tactics:'분대 명령',
     trap:'함정',wall:'방벽',tower:'감시탑',line:'횡대',column:'종대',wedge:'쐐기',box:'사각',guard:'방어',patrol:'순찰',
     drills:'전투 훈련',armor:'방어구',vitality:'생명력',mobility:'기동력',archery:'궁술',
-    cancel:'취소',close:'닫기',selected:'아군 유닛을 선택하세요',point:'지면을 눌러 명령하세요',placed:'명령 완료',failed:'실행 불가',bought:'연구 완료',
+    cancel:'취소',close:'닫기',selected:'훈련을 마친 병사를 선택하세요',point:'지면을 눌러 명령하세요',placed:'명령 완료',failed:'실행 불가',bought:'연구 완료',
     busy:'일부 유닛이 다른 분대에 속해 있습니다. 분대 전체 또는 미배정 유닛을 선택하세요',blocked:'이동할 수 없는 위치',poor:'자원 부족',limit:'최대 단계 도달',resources:'자원',rank:'단계',
     cost:'비용',rice:'쌀',wood:'나무',retry:'다른 위치를 누르거나 취소하세요',none:'명령할 유닛이 없습니다'},
 };
@@ -59,10 +59,16 @@ export function createFeature(scope) {
   const tactics = () => scope.get('tactics');
   const navigation = () => scope.get('navigation');
   const selection = () => scope.get('selection');
+  const trainedSoldier = unit => unit?.team === 'blue' &&
+    unit.alive !== false && Number.isFinite(unit.hp) && unit.hp > 0 &&
+    unit.isCivilian === false && !unit.trainingInside &&
+    !unit.trainingState && unit.training !== true &&
+    (unit.type !== 'farmer' || unit.combatTraining === 'melee' ||
+      unit.combatTraining === 'ranged');
   const players = () => {
     const ids = new Set(selection()?.getSelectedIds?.() || []);
     return (scope.get('farmers', []) || []).filter(u => ids.has(u?.id) &&
-      u?.team === 'blue' && u.alive !== false && u.hp > 0);
+      trainedSoldier(u));
   };
   let toggle = null, panel = null, css = null, status = null, wallet = null;
   let mode = null, pendingIds = null, disposed = false, started = false;
@@ -194,6 +200,10 @@ export function createFeature(scope) {
     if (FORMATIONS.has(mode)) result = squads.move(squadId, event.world);
     else if (mode === 'guard') result = squads.guard(squadId, event.world);
     else if (mode === 'patrol') {
+      if (typeof patrol?.start !== 'function') {
+        if (temporary) squads.disband(squadId);
+        feedback(t.failed);return true;
+      }
       const from = {x:units[0].x, y:units[0].y};
       if (!scope.map.isWalkable(from.x,from.y,14)) {
         if (temporary) squads.disband(squadId);
