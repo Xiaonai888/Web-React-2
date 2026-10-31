@@ -71,7 +71,13 @@ export class GameContext {
     };
     const subscribe = (type, callback, opts) => {
       assert();
-      const unsubscribe = this.events.on(type, callback, opts);
+      let unsubscribe;
+      const wrapped = (...args) => {
+        // One-shot listeners no longer occupy a scope's cleanup set forever.
+        if (opts?.once) subscriptions.delete(unsubscribe);
+        return callback(...args);
+      };
+      unsubscribe = this.events.on(type, wrapped, opts);
       subscriptions.add(unsubscribe);
       return () => { subscriptions.delete(unsubscribe); return unsubscribe(); };
     };
