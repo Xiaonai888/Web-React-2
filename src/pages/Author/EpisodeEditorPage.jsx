@@ -1716,16 +1716,25 @@ async function uploadEpisodeInlineImage({ token, file, signal, onProgress }) {
     throw new Error(getDisplayText('episodeEditor.imageTooLarge'))
   }
 
-  const legacyUpload = async ({ signal } = {}) => {
+  if (signal?.aborted) throw new DOMException('Upload canceled', 'AbortError')
+
+  const wasHeic = isNovelHeicFile(file)
+  const uploadFile = wasHeic ? await convertNovelHeicForUpload(file) : file
+
+  if (signal?.aborted) throw new DOMException('Upload canceled', 'AbortError')
+
+  const legacyUpload = async ({ signal: requestSignal } = {}) => {
+    if (requestSignal?.aborted) throw new DOMException('Upload canceled', 'AbortError')
     let bytes
     try {
-      bytes = await file.arrayBuffer()
+      bytes = await uploadFile.arrayBuffer()
     } catch {
       throw new Error(getDisplayText('episodeEditor.selectedReadFailed'))
     }
     if (!bytes.byteLength) {
       throw new Error(getDisplayText('episodeEditor.selectedEmpty'))
     }
+    if (requestSignal?.aborted) throw new DOMException('Upload canceled', 'AbortError')
 
     let response
     try {
@@ -1733,13 +1742,13 @@ async function uploadEpisodeInlineImage({ token, file, signal, onProgress }) {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': file.type || 'application/octet-stream',
+          'Content-Type': uploadFile.type || 'application/octet-stream',
         },
         body: bytes,
-        signal,
+        signal: requestSignal,
       })
     } catch (error) {
-      if (signal?.aborted || error?.name === 'AbortError') throw error
+      if (requestSignal?.aborted || error?.name === 'AbortError') throw error
       throw new Error(getDisplayText('episodeEditor.networkImageFailed'))
     }
 
@@ -1753,14 +1762,17 @@ async function uploadEpisodeInlineImage({ token, file, signal, onProgress }) {
     return data
   }
 
-  let directFile = null
-  if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  let directFile = wasHeic ? uploadFile : null
+  if (!directFile && ['image/jpeg', 'image/png', 'image/webp'].includes(uploadFile.type)) {
     try {
-      directFile = await optimizeNovelEpisodeImage(file)
-    } catch {
+      directFile = await optimizeNovelEpisodeImage(uploadFile)
+    } catch (error) {
+      if (signal?.aborted || error?.name === 'AbortError') throw error
       directFile = null
     }
   }
+
+  if (signal?.aborted) throw new DOMException('Upload canceled', 'AbortError')
 
   const data = directFile
     ? await uploadMediaWithFallback({
@@ -5116,7 +5128,7 @@ const handleEditorCompositionEnd = (event) => {
     saveEditorSelection()
   }
 
-  const handleInlineImagePick = async (file) => {
+    const handleInlineImagePick = async (file) => {
     if (!file) return
 
     try {
@@ -5133,17 +5145,7 @@ const handleEditorCompositionEnd = (event) => {
       }
 
       setInlineImageUploading(true)
-      const selected = isNovelHeicFile(file)
-        ? await convertNovelHeicForUpload(file)
-        : file
-      let prepared = selected
-      try {
-        prepared = await optimizeNovelEpisodeImage(selected)
-      } catch {
-        prepared = selected
-      }
-
-      const queued = await novelImageQueue.enqueue(prepared)
+      const queued = await novelImageQueue.enqueue(file)
       insertHtmlAtSelection(
         `<p>⏳ ${escapeEpisodeHtml(getDisplayText('episodeEditor.uploading'))} ${novelImageUploadMarker(queued.id)}</p><p><br></p>`
       )
@@ -5159,7 +5161,7 @@ const handleEditorCompositionEnd = (event) => {
         setSaveStatus('Saved locally')
         showToast(getDisplayText('episodeEditor.uploading'))
       }
-      await novelImageQueue.reconcile()
+      void novelImageQueue.reconcile().catch(() => {})
     } catch (error) {
       showToast(error?.message || getDisplayText('episodeEditor.couldNotAddImage'))
     } finally {
@@ -5167,6 +5169,7 @@ const handleEditorCompositionEnd = (event) => {
       if (imageInputRef.current) imageInputRef.current.value = ''
     }
   }
+
 
   const handleConfirmCleanParagraphs = () => {
     const cleanedContent = cleanEpisodeHtmlSpacing(content)
