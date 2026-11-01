@@ -114,45 +114,21 @@ async function syncOne(runtime, job) {
   if (!token || userFromToken(token) !== runtime.ownerId) return
   if (!['pending', 'waiting_upload'].includes(job.state) || Number(job.retryAt || 0) > Date.now()) return
 
+  if (!job.expectedUpdatedAt) {
+    await saveJob({
+      ...job,
+      state: 'needs_review',
+      error: 'Original story version is missing. Review the story before syncing this local draft.',
+    })
+    return
+  }
+
   const media = await resolveMedia(job, runtime.uploadQueue)
   if (!media.ready) {
     if (job.state !== 'waiting_upload' || (job.error || '') !== (media.error || '')) {
       await saveJob({ ...job, state: 'waiting_upload', error: media.error || '' })
     }
     return
-  }
-
-  if (job.expectedUpdatedAt) {
-    let response
-    try {
-      response = await fetch(`${runtime.apiBaseUrl}/api/stories/${job.storyId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-      })
-      if (!response.ok) {
-        if (response.status >= 400 && response.status < 500 && ![408, 429].includes(response.status)) {
-          await saveJob({ ...job, state: 'needs_review', error: `Story version check returned HTTP ${response.status}` })
-          return
-        }
-        throw new Error(`Story version check failed (HTTP ${response.status})`)
-      }
-      const data = await response.json()
-      const latest = clean(data.story?.updated_at)
-      if (!latest || latest !== job.expectedUpdatedAt) {
-        await saveJob({ ...job, state: 'needs_review', error: 'Story changed on the server after this draft was saved. Review before overwriting.' })
-        return
-      }
-    } catch (error) {
-      const attempts = Number(job.attempts || 0) + 1
-      await saveJob({
-        ...job,
-        state: 'pending',
-        attempts,
-        retryAt: Date.now() + Math.min(60000, 3000 * 2 ** Math.min(5, attempts - 1)),
-        error: clean(error?.message) || 'Will retry server check',
-      })
-      return
-    }
   }
 
   const submitting = await saveJob({ ...job, state: 'submitting', error: '', retryAt: 0 })
@@ -164,7 +140,10 @@ async function syncOne(runtime, job) {
       response = await fetch(`${runtime.apiBaseUrl}/api/stories/${job.storyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(media.payload),
+        body: JSON.stringify({
+          ...media.payload,
+          expected_updated_at: job.expectedUpdatedAt,
+        }),
         signal: controller.signal,
       })
     } finally {
@@ -172,7 +151,11 @@ async function syncOne(runtime, job) {
     }
     const data = await response.json().catch(() => ({}))
     if (!response.ok || data.ok === false) {
-      await saveJob({ ...submitting, state: 'needs_review', error: data.message || `Story update returned HTTP ${response.status}` })
+      await saveJob({
+        ...submitting,
+        state: 'needs_review',
+        error: data.message || `Story update returned HTTP ${response.status}`,
+      })
       return
     }
     await saveJob({ ...submitting, state: 'completed', error: '', completedAt: Date.now() })
