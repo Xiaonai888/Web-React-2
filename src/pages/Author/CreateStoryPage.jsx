@@ -27,6 +27,7 @@ import {
   queueStoryCreation,
   startStoryCreationSync,
 } from '../../utils/storyCreationSyncQueue'
+import { queueStoryUpdate, startStoryUpdateSync } from '../../utils/storyUpdateSyncQueue'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('createStory', {
@@ -808,6 +809,7 @@ export default function CreateStoryPage() {
   const storyMediaKeyRef = useRef('')
   const storyQueueRef = useRef(null)
   const storyMediaWriteRef = useRef(Promise.resolve())
+  const storyBaseUpdatedAtRef = useRef('')
   const [mediaOpen, setMediaOpen] = useState(false)
   const [titleOpen, setTitleOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
@@ -916,6 +918,7 @@ export default function CreateStoryPage() {
         }
 
         const story = data.story || {}
+        storyBaseUpdatedAtRef.current = String(story.updated_at || '')
 
         setStoryType(['novel', 'manga', 'chat_story'].includes(story.story_type) ? story.story_type : 'novel')
         setTitle(story.title || '')
@@ -999,6 +1002,9 @@ export default function CreateStoryPage() {
     storyMediaKeyRef.current = draftKey
     setStoryMediaReady(false)
     queue.start()
+    if (isEditMode) {
+      startStoryUpdateSync({ userId, getToken: getAuthToken, apiBaseUrl: API_BASE_URL })
+    }
     const restore = async () => {
       try {
         recovered = await restoreStoryMediaSnapshot(draftKey)
@@ -1530,7 +1536,40 @@ if (cropMode === 'slide') {
     try {
       setLoading(true)
 
-      const { coverUrl, landscapeThumbnailUrl, uploadedSlides } = await uploadStoryImages(token)
+      const userId = storyTokenUserId(token)
+      const draftKey = storyMediaKeyRef.current
+      const queue = storyQueueRef.current
+      if (!storyMediaReady || !userId || !draftKey || !queue) {
+        throw new Error('Local story media is not ready yet')
+      }
+
+      if (!storyBaseUpdatedAtRef.current) {
+        throw new Error('Story version is missing. Reload this page before saving changes.')
+      }
+
+      await storyMediaWriteRef.current
+      await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+
+      const mediaRef = async (source, slot, imageId = '') => {
+        if (!source) return null
+        if (/^https:\/\//i.test(source)) return { url: source }
+        const task = await queueStoryAsset({ source, slot, imageId })
+        if (!task) throw new Error('Could not save the story image locally')
+        if (task.status === 'failed') await queue.retry(task.id)
+        return { taskId: task.id }
+      }
+
+      const media = {
+        cover: await mediaRef(coverPreview, 'cover'),
+        landscape: await mediaRef(landscapePreview, 'landscape'),
+        slides: [],
+      }
+      for (const slide of slides) {
+        media.slides.push({
+          image: await mediaRef(slide.cropped, 'slide', String(slide.id)),
+          active: slide.active,
+        })
+      }
 
       const storyPayload = {
         title: title.trim(),
@@ -1542,76 +1581,32 @@ if (cropMode === 'slide') {
         update_days: updateDays,
         description: description.trim() || null,
         is_adult: isAdult,
-        cover_url: coverUrl,
-        landscape_thumbnail_url: landscapeThumbnailUrl,
-        slides: uploadedSlides,
       }
-
-      if (!isEditMode || !legacyStorySettingsBlank || storySettings.length > 0) {
+      if (!legacyStorySettingsBlank || storySettings.length > 0) {
         storyPayload.story_settings = storySettings
       }
 
-      const response = await fetch(
-        isEditMode ? `${API_BASE_URL}/api/stories/${editStoryId}` : `${API_BASE_URL}/api/stories/create`,
-        {
-          method: isEditMode ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(storyPayload),
-        }
-      )
+      await queueStoryUpdate({
+        userId,
+        storyId: editStoryId,
+        draftKey,
+        payload: storyPayload,
+        media,
+        expectedUpdatedAt: storyBaseUpdatedAtRef.current,
+        getToken: getAuthToken,
+        apiBaseUrl: API_BASE_URL,
+      })
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || t(isEditMode ? 'createStory.updateFailed' : 'createStory.createFailed'))
+      if (isChatStory && returnToChatCharacters) {
+        navigate(`/author/story/${editStoryId}/chat/characters`, { replace: true })
+      } else {
+        navigate('/author/dashboard')
       }
-
-      const storyId = data.story?.id || editStoryId
-
-      if (!storyId) {
-        throw new Error(t(isEditMode ? 'createStory.updatedMissingId' : 'createStory.createdMissingId'))
-      }
-
-      if (storyMediaKeyRef.current) {
-        try {
-          await storyMediaWriteRef.current.catch(() => {})
-          await deleteStoryMediaSnapshot(storyMediaKeyRef.current)
-          const pending = await storyQueueRef.current?.listForDraft(storyMediaKeyRef.current) || []
-          for (const task of pending) await storyQueueRef.current?.remove(task.id)
-        } catch {}
-      }
-
-      if (!isEditMode) {
-  localStorage.removeItem('create_story_draft')
-
-  const nextPath = isChatStory
-    ? `/author/story/${storyId}/chat/characters`
-    : `/author/story/${storyId}/episode/create?type=${storyType}`
-
-  navigate(nextPath)
-  return
-}
-
-if (
-  isChatStory &&
-  returnToChatCharacters
-) {
-  navigate(
-    `/author/story/${storyId}/chat/characters`,
-    { replace: true }
-  )
-  return
-}
-
-navigate('/author/dashboard')
     } catch (error) {
       setMessage(
         error.message === 'Failed to fetch'
           ? t('createStory.cannotConnect')
-          : error.message || t(isEditMode ? 'createStory.updateFailed' : 'createStory.createFailed')
+          : error.message || t('createStory.updateFailed')
       )
     } finally {
       setLoading(false)
