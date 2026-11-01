@@ -19,7 +19,7 @@ import {
 import {
   initializeCommentQueue,
 } from './services/commentQueue'
-
+import { installStorySyncResume } from './utils/storySyncResume'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -33,7 +33,7 @@ installTemporaryCacheManagement()
 installAuthorNotificationDiagnostics()
 void initializeStoryReactionQueue()
 void initializeCommentQueue()
-
+installStorySyncResume()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
