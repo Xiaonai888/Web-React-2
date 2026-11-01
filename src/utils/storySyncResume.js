@@ -10,6 +10,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
 
 let installed = false
 let checking = false
+let checkingOwner = ''
+let rescanRequested = false
 let lastCheckedAt = 0
 let lastCheckedOwner = ''
 
@@ -48,10 +50,19 @@ async function hasPendingStoryUpdate(ownerId) {
 
 async function resumeStorySync() {
   const ownerId = tokenUserId(getToken())
-  if (!ownerId || checking) return
+  if (!ownerId) {
+    lastCheckedOwner = ''
+    lastCheckedAt = 0
+    return
+  }
+  if (checking) {
+    if (ownerId !== checkingOwner) rescanRequested = true
+    return
+  }
   const now = Date.now()
   if (ownerId === lastCheckedOwner && now - lastCheckedAt < CHECK_INTERVAL_MS) return
   checking = true
+  checkingOwner = ownerId
   lastCheckedOwner = ownerId
   lastCheckedAt = now
   try {
@@ -70,6 +81,11 @@ async function resumeStorySync() {
     lastCheckedAt = 0
   } finally {
     checking = false
+    checkingOwner = ''
+    if (rescanRequested) {
+      rescanRequested = false
+      void resumeStorySync()
+    }
   }
 }
 
@@ -80,6 +96,7 @@ export function installStorySyncResume() {
   window.addEventListener('online', resume)
   window.addEventListener('focus', resume)
   window.addEventListener('pageshow', resume)
+  window.addEventListener('shadow-reader-route-change', resume)
   window.addEventListener('storage', (event) => {
     if (event.key === 'shadow_reader_token') resume()
   })
