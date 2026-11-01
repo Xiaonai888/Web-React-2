@@ -1,100 +1,88 @@
-import { SurfaceCard } from '../../common/PagePrimitives'
+import { PageErrorState, PageLoadingState, SurfaceCard } from '../../common/PagePrimitives'
 
-const MISSION_NAMES = new Set([
-  'daily_story', 'free_read', 'read_new', 'read_update', 'read_completed',
-  'read_genre', 'read_authors', 'reading_streak', 'task_coins', 'episode_marathon',
-])
+const safePoints = (value) => Number.isFinite(Number(value)) ? Math.max(0, Number(value)).toLocaleString() : '0'
 
-const toCount = (value) => Math.max(0, Number(value) || 0)
-const percent = (value, maximum) => Math.min(100, Math.round(toCount(value) / Math.max(1, toCount(maximum)) * 100))
-
-export default function ReadEventMissionBoard({ data, t, onOpenStory, onClaim, claiming }) {
-  const event = data?.event || {}
-  const joined = data?.participation?.joined === true
-  const missions = Array.isArray(data?.missions) ? data.missions : []
-  const milestones = Array.isArray(data?.milestones) ? data.milestones : []
-  const points = toCount(data?.progress?.daily_points)
-  const tiersAvailable = milestones.some((tier) => tier.unlocked === true && tier.granted !== true)
+export default function ReadEventLeaderboards({ kind, dayNumber, lastDay, onKindChange, onDayChange, data, loading, error, onRetry, t }) {
+  const board = data?.available === true ? data.leaderboard : null
+  const topThree = Array.isArray(board?.top_three) ? board.top_three : []
+  const maximumDay = Math.min(7, Math.max(1, Number(lastDay) || 1))
 
   return (
     <div className="grid gap-4">
       <SurfaceCard className="p-4 sm:p-5">
-        <h2 className="app-title text-[15px] font-extrabold">{t('shadowReadEventPage.featured')}</h2>
-        <div className="mt-3 flex gap-3">
-          {event.featured_story?.cover_url ? (
-            <img className="h-28 w-20 shrink-0 rounded-xl object-cover" src={event.featured_story.cover_url}
-              alt={event.featured_story?.title || ''} loading="lazy" />
-          ) : <div className="app-soft h-28 w-20 shrink-0 rounded-xl" />}
-          <div className="min-w-0 flex-1">
-            <p className="app-title line-clamp-2 text-[14px] font-bold">{event.featured_story?.title || t('shadowReadEventPage.unknownStory')}</p>
-            <p className="app-muted mt-2 text-[12px]">{t('shadowReadEventPage.featuredDetails')}</p>
-            {event.featured_story?.story_url && (
-              <button type="button" className="mt-3 rounded-full bg-[var(--shadow-accent)] px-4 py-2 text-[12px] font-bold text-[var(--shadow-accent-text)]"
-                onClick={() => onOpenStory(event.featured_story.story_url)}>
-                {t('shadowReadEventPage.openStory')}
-              </button>
-            )}
-          </div>
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard className="p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="app-title text-[15px] font-extrabold">{t('shadowReadEventPage.dailyMissions')}</h2>
-          <strong className="text-[12px] text-[var(--shadow-accent)]">{points.toLocaleString()}/1,000</strong>
-        </div>
-        <p className="app-muted mt-1 text-[12px]">{t('shadowReadEventPage.dayNumber', { count: event.day_number || 1 })}</p>
-        <div className="mt-4 grid gap-3">
-          {missions.map((mission) => {
-            const label = MISSION_NAMES.has(mission.mission_type) ? mission.mission_type : 'other'
-            return (
-              <div key={mission.id} className="app-soft rounded-xl p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="app-title text-[13px] font-bold">{mission.slot}. {t(`shadowReadEventPage.missionTypes.${label}`)}</p>
-                    <p className="app-muted mt-1 text-[11px]">{t('shadowReadEventPage.target', { count: mission.target_amount })}</p>
-                  </div>
-                  <span className="shrink-0 text-[11px] font-bold text-[var(--shadow-text-secondary)]">
-                    {toCount(mission.earned_points)}/{toCount(mission.max_points)}
-                  </span>
-                </div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--shadow-border-strong)]">
-                  <div className="h-full rounded-full bg-[var(--shadow-accent)]" style={{ width: `${percent(mission.earned_points, mission.max_points)}%` }} />
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="app-muted text-[11px]">{mission.completed ? t('shadowReadEventPage.completed') : t('shadowReadEventPage.inProgress')}</span>
-                  {mission.mission_type === 'daily_story' && event.daily_story?.story_url && (
-                    <button type="button" onClick={() => onOpenStory(event.daily_story.story_url)}
-                      className="text-[11px] font-bold text-[var(--shadow-accent)]">{t('shadowReadEventPage.readStory')}</button>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard className="p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="app-title text-[15px] font-extrabold">{t('shadowReadEventPage.dailyRewards')}</h2>
-          <span className="app-muted text-[11px]">{t('shadowReadEventPage.maxCoins')}</span>
-        </div>
-        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:gap-3">
-          {milestones.map((tier) => (
-            <div key={tier.tier} className={`rounded-xl p-2 text-center ${tier.granted ? 'bg-emerald-500/10' : 'app-soft'}`}>
-              <div className="app-muted text-[10px]">{toCount(tier.required_points)}</div>
-              <div className="app-title mt-1 text-[12px] font-extrabold">+{toCount(tier.coin_reward)}</div>
-              <div className="app-muted mt-1 text-[10px]">
-                {tier.granted ? t('shadowReadEventPage.claimed') : tier.unlocked ? t('shadowReadEventPage.ready') : t('shadowReadEventPage.locked')}
-              </div>
-            </div>
+        <div className="flex flex-wrap gap-2">
+          {['daily', 'overall'].map((value) => (
+            <button key={value} type="button" aria-pressed={kind === value} onClick={() => onKindChange(value)}
+              className={`rounded-full border px-4 py-2 text-[12px] font-bold ${kind === value
+                ? 'border-[var(--shadow-text-primary)] bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]'
+                : 'border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)]'}`}>
+              {t(`shadowReadEventPage.${value}Ranking`)}
+            </button>
           ))}
         </div>
-        <button type="button" onClick={onClaim} disabled={!joined || !tiersAvailable || claiming}
-          className="mt-4 w-full rounded-full bg-[var(--shadow-accent)] px-5 py-3 text-[13px] font-extrabold text-[var(--shadow-accent-text)] disabled:opacity-40">
-          {claiming ? t('shadowReadEventPage.claiming') : t('shadowReadEventPage.claimRewards')}
-        </button>
+        {kind === 'daily' && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Array.from({ length: maximumDay }, (_, i) => i + 1).map((day) => (
+              <button key={day} type="button" aria-pressed={dayNumber === day} onClick={() => onDayChange(day)}
+                className={`min-h-9 rounded-full px-3 text-[11px] font-bold ${dayNumber === day
+                  ? 'bg-[var(--shadow-accent)] text-[var(--shadow-accent-text)]'
+                  : 'app-soft text-[var(--shadow-text-primary)]'}`}>
+                {t('shadowReadEventPage.dayNumber', { count: day })}
+              </button>
+            ))}
+          </div>
+        )}
       </SurfaceCard>
+
+      {loading && <PageLoadingState label={t('shadowReadEventPage.loadingRanking')} rows={3} />}
+      {!loading && error && (
+        <PageErrorState title={t('shadowReadEventPage.rankingError')} body={error}
+          actionLabel={t('shadowReadEventPage.retry')} onAction={onRetry} />
+      )}
+      {!loading && !error && !board && (
+        <SurfaceCard className="p-6 text-center text-[12px] text-[var(--shadow-text-secondary)]">
+          {t('shadowReadEventPage.noRanking')}
+        </SurfaceCard>
+      )}
+      {!loading && !error && board && (
+        <SurfaceCard className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="app-title text-[15px] font-extrabold">{t('shadowReadEventPage.topThree')}</h2>
+            <span className="app-muted text-[11px]">{t('shadowReadEventPage.readerCount', { count: Number(board.scored_readers || 0) })}</span>
+          </div>
+          {topThree.length === 0 ? (
+            <p className="app-muted py-5 text-center text-[12px]">{t('shadowReadEventPage.noScores')}</p>
+          ) : (
+            <div className="mt-3 grid gap-2">
+              {topThree.map((row, index) => (
+                <div key={row.user_id || index} className="app-soft flex items-center gap-3 rounded-xl p-3">
+                  <div className="w-8 shrink-0 text-center text-[17px] font-black text-[var(--shadow-accent)]">{row.rank || index + 1}</div>
+                  {row.avatar_url ? (
+                    <img src={row.avatar_url} alt="" loading="lazy" className="h-10 w-10 rounded-full object-cover" />
+                  ) : <div className="app-elevated flex h-10 w-10 items-center justify-center rounded-full text-[15px]">★</div>}
+                  <div className="min-w-0 flex-1">
+                    <p className="app-title truncate text-[13px] font-bold">{row.name || t('shadowReadEventPage.reader')}</p>
+                    <p className="app-muted mt-1 text-[10px]">{safePoints(row.points)} {t('shadowReadEventPage.points')}</p>
+                  </div>
+                  <div className="text-right text-[10px] font-semibold text-[var(--shadow-text-secondary)]">
+                    {kind === 'daily'
+                      ? <>{safePoints(row.prize_preview?.coins)} {t('shadowReadEventPage.coins')}<div>+{safePoints(row.prize_preview?.vouchers)} {t('shadowReadEventPage.vouchers')}</div></>
+                      : <>{safePoints(row.prize_preview?.story_cards)} {t('shadowReadEventPage.cards')}<div>{t('shadowReadEventPage.giftBox')}</div></>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="app-soft mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+            <div>
+              <p className="app-title text-[12px] font-bold">{t('shadowReadEventPage.myRank')}</p>
+              <p className="app-muted mt-1 text-[11px]">{board.my_rank == null ? t('shadowReadEventPage.unranked') : `#${board.my_rank}`}</p>
+            </div>
+            <strong className="text-[13px] text-[var(--shadow-text-primary)]">{safePoints(board.my_points)} {t('shadowReadEventPage.points')}</strong>
+          </div>
+          {kind === 'overall' && !board.is_final && <p className="app-muted mt-3 text-[11px]">{t('shadowReadEventPage.provisional')}</p>}
+        </SurfaceCard>
+      )}
     </div>
   )
 }
