@@ -10,6 +10,7 @@ const INDEX_PREFIX = 'shadow:story-create:index:'
 const JOB_PREFIX = 'shadow:story-create:job:'
 const POLL_MS = 3000
 const MAX_RETRY_MS = 300000
+const CREATE_TIMEOUT_MS = 90000
 const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 
 function isIdempotentJob(job) {
@@ -200,15 +201,24 @@ async function syncOne(runtime, job) {
     retryAt: 0,
   })
   try {
-    const response = await fetch(`${runtime.apiBaseUrl}/api/stories/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-    const data = await response.json().catch(() => ({}))
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), CREATE_TIMEOUT_MS)
+    let response
+    let data
+    try {
+      response = await fetch(`${runtime.apiBaseUrl}/api/stories/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+      data = await response.json().catch(() => ({}))
+    } finally {
+      clearTimeout(timeout)
+    }
     const storyId = String(data.story?.id || '').trim()
     if (response.ok && data.ok !== false && storyId) {
       await saveJob({ ...submitting, state: 'created', storyId, error: '', completedAt: Date.now() })
