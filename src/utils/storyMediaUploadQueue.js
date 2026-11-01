@@ -1,5 +1,6 @@
-import { optimizeImageForUpload } from './imageUploadOptimizer'
+import { optimizeImageForUpload, validateImageUploadFile } from './imageUploadOptimizer'
 import { createUploadQueueManager } from './uploadQueueManager'
+import { requestUploadStoragePersistence } from './uploadQueueDB'
 import { uploadMediaWithFallback } from './uploadMediaWithFallback'
 
 const CATEGORIES = Object.freeze({
@@ -76,8 +77,33 @@ function createRuntime(ownerId, owner, getToken) {
         error.permanent = true
         throw error
       }
+
+      const preset = task.category === CATEGORIES.cover
+        ? 'cover'
+        : task.category === CATEGORIES.landscape
+          ? 'thumbnail'
+          : 'banner'
+      let prepared
+      try {
+        const optimized = await optimizeImageForUpload(file, { preset, signal })
+        prepared = optimized?.file
+        if (!(prepared instanceof Blob) || !prepared.size) {
+          throw new Error('Image optimization did not produce a valid image')
+        }
+        if (DIRECT_TYPES.has(prepared.type) && prepared.size > MAX_DIRECT_BYTES) {
+          throw new Error('This image exceeds the 5 MB upload limit after compression')
+        }
+      } catch (error) {
+        if (signal.aborted || error?.name === 'AbortError') throw error
+        const invalid = new Error(error?.message || 'Image optimization failed')
+        invalid.status = 422
+        invalid.permanent = true
+        throw invalid
+      }
+      if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+
       const data = await uploadMediaWithFallback({
-        file,
+        file: prepared,
         token,
         category: task.category,
         signal,
@@ -160,16 +186,11 @@ export function createStoryMediaUploadQueue({ userId, getToken, onChange } = {})
         [file], `${slot}-${Date.now()}.${file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'}`,
         { type: file.type },
       )
-      const optimized = await optimizeImageForUpload(selected, {
-        preset: slot === 'cover' ? 'cover' : slot === 'landscape' ? 'thumbnail' : 'banner',
-      })
-      const prepared = optimized?.file
-      if (!(prepared instanceof Blob) || !prepared.size) throw new Error('Image optimization failed')
-      if (DIRECT_TYPES.has(prepared.type) && prepared.size > MAX_DIRECT_BYTES) {
-        throw new Error('This image exceeds the 5 MB upload limit after compression')
-      }
+      const validation = validateImageUploadFile(selected)
+      if (validation) throw new Error(validation)
+      void requestUploadStoragePersistence()
       return manager.enqueue({
-        file: prepared,
+        file: selected,
         category,
         kind: 'image',
         context: { draftKey: scope, slot, imageId: identity },
