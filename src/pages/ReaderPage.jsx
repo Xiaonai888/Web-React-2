@@ -37,6 +37,10 @@ import {
 } from '../services/rewardedAds'
 import { Share2 } from 'lucide-react'
 import SharedChatThemePage from './SharedChatThemePage'
+import { redeemShadowReadEventFeaturedCards } from '../services/shadowReadEventRewardsClient'
+
+const SHADOW_READ_EVENT_CARDS_UI_ENABLED = import.meta.env.VITE_SHADOW_READ_EVENT_CARDS_UI_ENABLED === 'true'
+const EVENT_CARD_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 registerTranslationNamespace('readerPage', {
   "en": {
@@ -2591,6 +2595,7 @@ function LockedEpisodeCard({
   onUnlock,
   onCoinUnlock,
   onVoucherUnlock,
+  onFeaturedCardUnlocked={finishUnlock}
   onRewardedUnlock,
   inline = false,
 }) {
@@ -2924,6 +2929,7 @@ function ContinuousLockedEpisodeCard({
   onPurchase,
   onUnlock,
   onRewardedUnlock,
+  onFeaturedCardUnlocked={finishUnlock}
 }) {
   const { t } = useDisplayTranslation()
   const diamondBalance = Number(wallet?.diamond_balance || 0)
