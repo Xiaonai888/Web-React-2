@@ -14,6 +14,23 @@ const LANG = Object.freeze({
   ko: { units: '부대', resources: '자원', map: '지도', tools: '도구', close: '닫기', rice: '쌀', wood: '나무', people: '유닛', none: '유닛 없음', page: '부대' },
 });
 
+const BUILD_LANG = Object.freeze({
+  km: { buildings: 'សាងសង់ផ្ទះ', farmerHouse: 'ផ្ទះកសិករ', swordHouse: 'ផ្ទះដាវ', archerHouse: 'ផ្ទះព្រួញ', back: 'ទ័ព' },
+  en: { buildings: 'BUILDINGS', farmerHouse: 'Farmer House', swordHouse: 'Sword House', archerHouse: 'Archer House', back: 'Troops' },
+  zh: { buildings: '建造房屋', farmerHouse: '农民小屋', swordHouse: '剑士兵营', archerHouse: '弓箭兵营', back: '部队' },
+  ja: { buildings: '建築', farmerHouse: '農民の家', swordHouse: '剣兵舎', archerHouse: '弓兵舎', back: '部隊' },
+  ko: { buildings: '건설', farmerHouse: '농부 집', swordHouse: '검병 훈련소', archerHouse: '궁수 훈련소', back: '부대' },
+});
+const BUILD_CARDS = Object.freeze([
+  { action: 'ghostHouse', name: 'farmerHouse', symbol: '🏠', price: '100🌾 100🪵' },
+  { action: 'ghostSword', name: 'swordHouse', symbol: '⚔️', price: '150🪵' },
+  { action: 'ghostArcher', name: 'archerHouse', symbol: '🏹', price: '250🪵' },
+]);
+const isBuildingWorker = unit => unit?.type === 'farmer' && unit.team === 'blue' &&
+  unit.alive !== false && unit.selectable !== false &&
+  unit.isCivilian !== false && !unit.combatTraining &&
+  !unit.trainingState && !unit.trainingInside;
+
 const STYLE = `
 .srnf-root{--srnf-h:194px;position:fixed;bottom:0;left:0;right:0;z-index:45;pointer-events:none;color:#e6d5ff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;isolation:isolate}
 .srnf-root *{box-sizing:border-box}.srnf-root button{font:inherit;cursor:pointer}.srnf-root button:focus-visible{outline:2px solid #6cf0ed;outline-offset:2px}
@@ -34,6 +51,7 @@ const STYLE = `
 .srnf-card{min-width:0;min-height:0;position:relative;padding:2px;background:linear-gradient(140deg,#45345c,#151625 50%,#362345);border:1px solid #805c9c;border-radius:5px;box-shadow:inset 0 1px #f3d2ff44,0 2px 4px #0008;color:#fff;overflow:hidden;transition:transform .15s,border-color .15s,box-shadow .15s}
 .srnf-card:not(:disabled):hover{transform:translateY(-4px);border-color:#56ebdf;box-shadow:0 0 12px #22e6e570,0 5px 12px #0008}.srnf-card[aria-pressed=true]{border:2px solid #54f8e4;box-shadow:0 0 9px #29e9ef9b,inset 0 0 11px #45dfea38}
 .srnf-card:disabled{cursor:default;opacity:.48}.srnf-card svg,.srnf-card img{width:100%;height:100%;display:block;object-fit:cover;border-radius:2px}.srnf-slot{height:100%;display:grid;place-items:center;opacity:.34;font-size:19px;color:#bda8d9;background:repeating-linear-gradient(45deg,#201b2f,#201b2f 6px,#151320 7px,#151320 12px)}
+.srnf-page[hidden]{display:none!important}.srnf-card.srnf-building-card{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;padding:2px 1px;text-align:center}.srnf-building-icon{font-size:clamp(15px,2.1vw,24px);line-height:1.1}.srnf-building-label{font-size:clamp(7px,.78vw,10px);line-height:1.05;font-weight:750;overflow-wrap:anywhere}.srnf-building-price{font-size:clamp(7px,.7vw,9px);line-height:1;white-space:nowrap;color:#efd7a0}.srnf-card.srnf-building-back{border-color:#597779}.srnf-building-back .srnf-building-icon{font-size:20px}
 .srnf-hp{position:absolute;bottom:2px;left:3px;right:3px;height:4px;background:#310d27;border:1px solid #120813;border-radius:5px;overflow:hidden}.srnf-hp-fill{height:100%;background:linear-gradient(90deg,#17bb9a,#b1f68b);transition:width .2s}
 .srnf-mini{padding:7px 8px 8px;display:flex;flex-direction:column}.srnf-mini-head{display:flex;align-items:center;justify-content:space-between;gap:5px}.srnf-mini-head .srnf-heading{margin:0 0 4px}.srnf-tools{background:#1a1931;border:1px solid #88669a;color:#e3d3f6;border-radius:8px;padding:3px 8px;font-size:11px;min-height:26px;box-shadow:0 0 7px #5c34a044}.srnf-tools:hover{border-color:#42eee2;color:#fff}
 .srnf-map{flex:1;min-height:0;width:100%;display:block;border:2px solid #594378;border-radius:8px;background:#151d24;cursor:crosshair;touch-action:manipulation;image-rendering:auto}
@@ -136,6 +154,7 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
   if (document.getElementById('sr-necromancer-footer')) return null;
   const lang = String(document.documentElement.lang || 'en').toLowerCase().split('-')[0];
   const t = LANG[lang] || LANG.en;
+  const bt = BUILD_LANG[lang] || BUILD_LANG.en;
   const body = document.body;
   const style = make('style');style.id='sr-necromancer-footer-style';style.textContent=STYLE;
   const root = make('aside','srnf-root');root.id='sr-necromancer-footer';
@@ -192,7 +211,48 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
   const miniWasEnabled = mini?.enabled;
   mini?.setEnabled?.(false);
   let toolsOpen=false, page=0, lastSignature='', destroyed=false;
+  let showRoster=false, lastSelection='', buildingsVisible=false;
+  let lastUnitClick=null;
   const perPage=()=>window.matchMedia('(max-width:690px)').matches?8:16;
+  function updateBuildings(){
+    const signature='buildings:'+bt.buildings;
+    if(lastSignature===signature)return;
+    lastSignature=signature;
+    for(let i=0;i<cards.length;i++){
+      const card=cards[i];
+      card.hidden=i>=perPage();
+      card.className='srnf-card';
+      card.disabled=true;
+      card.removeAttribute('aria-pressed');
+      delete card.dataset.buildAction;
+      delete card.dataset.showTroops;
+      if(i<BUILD_CARDS.length){
+        const item=BUILD_CARDS[i];
+        card.disabled=false;
+        card.classList.add('srnf-building-card');
+        card.dataset.buildAction=item.action;
+        card.title=`${bt[item.name]} · ${item.price}`;
+        card.setAttribute('aria-label',card.title);
+        card.innerHTML='';
+        card.append(make('span','srnf-building-icon',item.symbol),
+          make('span','srnf-building-label',bt[item.name]),
+          make('span','srnf-building-price',item.price));
+      }else if(i===BUILD_CARDS.length){
+        card.disabled=false;
+        card.classList.add('srnf-building-card','srnf-building-back');
+        card.dataset.showTroops='true';
+        card.title=bt.back;
+        card.setAttribute('aria-label',bt.back);
+        card.innerHTML='';
+        card.append(make('span','srnf-building-icon','↩'),
+          make('span','srnf-building-label',bt.back));
+      }else{
+        card.removeAttribute('aria-label');
+        card.title='';
+        card.innerHTML='<span class="srnf-slot">✧</span>';
+      }
+    }
+  }
   function updateCards(units){
     const size=perPage(),total=Math.max(1,Math.ceil(units.length/size));
     page=clamp(page,0,total-1);
@@ -200,11 +260,14 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
     prev.disabled=page===0;next.disabled=page===total-1;
     const selected=new Set(selection?.getSelectedIds?.()||[]);
     const roster=units.slice(page*size,(page+1)*size);
-    const sig=roster.map(u=>`${u.id}:${u.hp}:${u.combatTraining||''}:${selected.has(u.id)}`).join('|')+`/${size}/${page}`;
+    const sig='troops:'+roster.map(u=>`${u.id}:${u.hp}:${u.combatTraining||''}:${selected.has(u.id)}`).join('|')+`/${size}/${page}`;
     if (sig===lastSignature)return;
     lastSignature=sig;
     for(let i=0;i<cards.length;i++){
       const card=cards[i],unit=roster[i];
+      card.className='srnf-card';
+      delete card.dataset.buildAction;
+      delete card.dataset.showTroops;
       if (i>=size){card.hidden=true;continue;}card.hidden=false;
       if (!unit){card.disabled=true;card.removeAttribute('aria-pressed');card.title='';card.innerHTML='<span class="srnf-slot">✧</span>';continue;}
       card.disabled=false;
@@ -225,16 +288,52 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
     const state=footer.state||{};
     for(const key of Object.keys(values))values[key].textContent=number(state[key]).toLocaleString();
     const all=getUnits();const available=Array.isArray(all)?all.filter(u=>u&&u.alive!==false&&(u.team==null||u.team==='blue')):[];
-    updateCards(available);
+    const selectedIds=new Set(selection?.getSelectedIds?.()||[]);
+    const selectedUnits=available.filter(unit=>selectedIds.has(unit.id));
+    const selectionKey=selectedUnits.map(unit=>`${unit.id}:${unit.isCivilian}:${unit.combatTraining||''}:${unit.trainingState||''}`).join('|');
+    if(selectionKey!==lastSelection){
+      lastSelection=selectionKey;
+      showRoster=false;
+      page=0;
+      lastSignature='';
+    }
+    const buildings=!showRoster && selectedUnits.some(isBuildingWorker);
+    if(buildings!==buildingsVisible){buildingsVisible=buildings;lastSignature='';}
+    title.textContent=buildings?bt.buildings:t.units;
+    pageNav.hidden=buildings;
+    if(buildings)updateBuildings();else updateCards(available);
     const every=typeof getAllUnits==='function'?getAllUnits():available;
     drawMiniMap(mapCanvas,engine.map,engine.camera,every,exploration?.fog);
   }
   function onGridClick(event){
     const btn=event.target.closest?.('.srnf-card');
     if(!btn || btn.disabled)return;
+    const index=cards.indexOf(btn);
+    if(event.detail>=2 && lastUnitClick?.index===index &&
+        Date.now()-lastUnitClick.time<650){
+      const unit=getUnits().find(u=>u?.id===lastUnitClick.id);
+      if(unit && Number.isFinite(unit.x) && Number.isFinite(unit.y))
+        engine.camera.centerOn(unit.x,unit.y);
+      lastUnitClick=null;
+      return;
+    }
+    if(btn.dataset.buildAction){
+      footer.onAction?.(btn.dataset.buildAction,{});
+      update();
+      return;
+    }
+    if(btn.dataset.showTroops==='true'){
+      showRoster=true;
+      page=0;
+      lastSignature='';
+      update();
+      return;
+    }
     const idx=cards.indexOf(btn);if(idx<0)return;
     const all=getUnits().filter(u=>u&&u.alive!==false&&(u.team==null||u.team==='blue'));
     const u=all[page*perPage()+idx];if(!u)return;
+    lastUnitClick={index:idx,id:u.id,time:Date.now()};
+    if(isBuildingWorker(u))showRoster=false;
     const current=selection?.getSelectedIds?.()||[];
     const nextIds=event.shiftKey?(current.includes(u.id)?current.filter(x=>x!==u.id):[...current,u.id]):[u.id];
     selection?.setSelectedIds?.(nextIds);
