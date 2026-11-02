@@ -1022,27 +1022,6 @@ export default function PurchaseSection() {
       return undefined
     }
 
-    if (manualPayment?.payment_method === 'binance') {
-      // Binance has no ABA SSE stream: use the server expiry and one check at 00:00.
-      if (status !== 'waiting_payment') {
-        setSecondsLeft(0)
-        return undefined
-      }
-
-      let expiryChecked = false
-      const updateBinanceClock = () => {
-        const next = getSecondsLeft(manualPayment.expires_at)
-        setSecondsLeft(next)
-        if (next <= 0 && !expiryChecked) {
-          expiryChecked = true
-          void refreshBinanceStatus(orderId, true)
-        }
-      }
-      updateBinanceClock()
-      const timer = window.setInterval(updateBinanceClock, 1000)
-      return () => window.clearInterval(timer)
-    }
-
     const token = getReaderToken()
     if (!token) return undefined
 
@@ -1155,7 +1134,11 @@ export default function PurchaseSection() {
             const nextStatus = String(payment.status || '').toLowerCase()
 
             if (nextStatus === 'success') {
-              clearSavedPendingPayment()
+              if (mergedPayment.payment_method === 'binance') {
+                clearRememberedBinanceOrderId()
+              } else {
+                clearSavedPendingPayment()
+              }
               setToast(
                 t('purchaseSection.diamondsAddedToast', {
                   count: formatNumber(payment.diamonds),
@@ -1163,14 +1146,18 @@ export default function PurchaseSection() {
               )
               void refreshWalletData()
             } else if (nextStatus === 'pending_review') {
-              savePendingPayment(mergedPayment)
+              if (mergedPayment.payment_method !== 'binance') savePendingPayment(mergedPayment)
               setToast(t('purchaseSection.paymentWaitingReview'))
             } else if (nextStatus === 'waiting_payment') {
-              savePendingPayment(mergedPayment)
+              if (mergedPayment.payment_method !== 'binance') savePendingPayment(mergedPayment)
             } else if (
               ['expired', 'cancelled', 'rejected'].includes(nextStatus)
             ) {
-              clearSavedPendingPayment()
+              if (mergedPayment.payment_method === 'binance') {
+                clearRememberedBinanceOrderId()
+              } else {
+                clearSavedPendingPayment()
+              }
             }
           }
         }
