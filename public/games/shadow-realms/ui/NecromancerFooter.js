@@ -309,24 +309,26 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
     const btn=event.target.closest?.('.srnf-card');
     if(!btn || btn.disabled)return;
     const index=cards.indexOf(btn);
+    if(btn.dataset.buildAction){
+      lastUnitClick=null;
+      footer.onAction?.(btn.dataset.buildAction,{});
+      update();
+      return;
+    }
+    if(btn.dataset.showTroops==='true'){
+      lastUnitClick=null;
+      showRoster=true;
+      page=0;
+      lastSignature='';
+      update();
+      return;
+    }
     if(event.detail>=2 && lastUnitClick?.index===index &&
         Date.now()-lastUnitClick.time<650){
       const unit=getUnits().find(u=>u?.id===lastUnitClick.id);
       if(unit && Number.isFinite(unit.x) && Number.isFinite(unit.y))
         engine.camera.centerOn(unit.x,unit.y);
       lastUnitClick=null;
-      return;
-    }
-    if(btn.dataset.buildAction){
-      footer.onAction?.(btn.dataset.buildAction,{});
-      update();
-      return;
-    }
-    if(btn.dataset.showTroops==='true'){
-      showRoster=true;
-      page=0;
-      lastSignature='';
-      update();
       return;
     }
     const idx=cards.indexOf(btn);if(idx<0)return;
@@ -337,10 +339,7 @@ export function mountNecromancerFooter({ footer, engine, selection, getUnits, ge
     const current=selection?.getSelectedIds?.()||[];
     const nextIds=event.shiftKey?(current.includes(u.id)?current.filter(x=>x!==u.id):[...current,u.id]):[u.id];
     selection?.setSelectedIds?.(nextIds);
-if (event.detail === 2 && Number.isFinite(u.x) && Number.isFinite(u.y)) {
-  engine.camera.centerOn(u.x, u.y);
-}
-update();
+    update();
   }
   function onMapDown(event){
     const rect=mapCanvas.getBoundingClientRect();
