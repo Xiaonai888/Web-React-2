@@ -97,6 +97,14 @@ registerTranslationNamespace('readerPage', {
     "limitReached": "Limit reached",
     "watch": "Watch",
     "storyCardComing": "Story Card — Coming soon",
+    "eventCardCheck": "Check event cards",
+    "eventCardChecking": "Checking event cards...",
+    "eventCardAvailable": "Featured Story Cards — {{count}} available",
+    "eventCardUse": "Use 10 cards",
+    "eventCardNeedTen": "10 cards permanently unlock this episode.",
+    "eventCardFailed": "Unable to use event cards. Try again.",
+    "eventCardRetry": "Retry",
+    "eventCardNotEnough": "Not enough cards",
     "sameStoryPermanent": "Permanent unlock for same story only.",
     "coinsVouchers": "Coins & Vouchers",
     "dontMissOut": "Don’t Miss Out",
@@ -264,6 +272,14 @@ registerTranslationNamespace('readerPage', {
     "limitReached": "ដល់កំណត់ហើយ",
     "watch": "មើល",
     "storyCardComing": "Story Card — នឹងមកដល់ឆាប់ៗ",
+    "eventCardCheck": "ពិនិត្យកាត Event",
+    "eventCardChecking": "កំពុងពិនិត្យកាត Event...",
+    "eventCardAvailable": "កាត Event នៅសល់ {{count}}",
+    "eventCardUse": "ប្រើ ១០ កាត",
+    "eventCardNeedTen": "១០ កាតដោះសោភាគនេះជាអចិន្ត្រៃយ៍។",
+    "eventCardFailed": "មិនអាចប្រើកាត Event បាន។ សូមសាកល្បងម្ដងទៀត។",
+    "eventCardRetry": "សាកល្បងម្ដងទៀត",
+    "eventCardNotEnough": "កាតមិនគ្រប់",
     "sameStoryPermanent": "ដោះសោជាអចិន្ត្រៃយ៍សម្រាប់រឿងដដែលប៉ុណ្ណោះ។",
     "coinsVouchers": "Coins និង Vouchers",
     "dontMissOut": "កុំឱ្យខកខាន",
@@ -431,6 +447,14 @@ registerTranslationNamespace('readerPage', {
     "limitReached": "已达上限",
     "watch": "观看",
     "storyCardComing": "Story Card — 即将推出",
+    "eventCardCheck": "查看活动卡",
+    "eventCardChecking": "正在检查活动卡...",
+    "eventCardAvailable": "活动故事卡剩余 {{count}} 张",
+    "eventCardUse": "使用 10 张卡",
+    "eventCardNeedTen": "10 张卡可永久解锁本章。",
+    "eventCardFailed": "活动卡无法使用，请重试。",
+    "eventCardRetry": "重试",
+    "eventCardNotEnough": "卡片不足",
     "sameStoryPermanent": "仅永久解锁同一故事。",
     "coinsVouchers": "Coins 与 Vouchers",
     "dontMissOut": "不要错过",
@@ -598,6 +622,14 @@ registerTranslationNamespace('readerPage', {
     "limitReached": "上限に達しました",
     "watch": "見る",
     "storyCardComing": "Story Card — 近日公開",
+    "eventCardCheck": "イベントカードを確認",
+    "eventCardChecking": "カードを確認中...",
+    "eventCardAvailable": "イベントカード残高 {{count}} 枚",
+    "eventCardUse": "カード10枚を使用",
+    "eventCardNeedTen": "カード10枚でこの話を永久解放できます。",
+    "eventCardFailed": "イベントカードを使用できません。再試行してください。",
+    "eventCardRetry": "再試行",
+    "eventCardNotEnough": "カードが不足しています",
     "sameStoryPermanent": "同じストーリーのみ永久アンロック。",
     "coinsVouchers": "Coins & Vouchers",
     "dontMissOut": "お見逃しなく",
@@ -765,6 +797,14 @@ registerTranslationNamespace('readerPage', {
     "limitReached": "한도 도달",
     "watch": "보기",
     "storyCardComing": "Story Card — 곧 출시",
+    "eventCardCheck": "이벤트 카드 확인",
+    "eventCardChecking": "이벤트 카드 확인 중...",
+    "eventCardAvailable": "이벤트 스토리 카드 {{count}}장 남음",
+    "eventCardUse": "카드 10장 사용",
+    "eventCardNeedTen": "카드 10장으로 이 회차를 영구 해제합니다.",
+    "eventCardFailed": "이벤트 카드를 사용할 수 없습니다. 다시 시도하세요.",
+    "eventCardRetry": "다시 시도",
+    "eventCardNotEnough": "카드 부족",
     "sameStoryPermanent": "같은 스토리에서만 영구 잠금 해제됩니다.",
     "coinsVouchers": "Coins & Vouchers",
     "dontMissOut": "놓치지 마세요",
@@ -2559,12 +2599,12 @@ function FeaturedReadEventCardOption({ storyId, episodeId, unlocking, onUnlocked
 
   if (!SHADOW_READ_EVENT_CARDS_UI_ENABLED) {
     return (
-      <UnlockFreeAccessOption
-        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
-        title={t('readerPage.storyCardComing')}
-        subtitle={t('readerPage.sameStoryPermanent')}
-        buttonText={t('readerPage.access')}
-        disabled
+      <FeaturedReadEventCardOption
+        key={`${story?.id || episode?.story_id}:${episode?.id}`}
+        storyId={story?.id || episode?.story_id}
+        episodeId={episode?.id}
+        unlocking={unlocking}
+        onUnlocked={onFeaturedCardUnlocked}
       />
     )
   }
@@ -3310,6 +3350,18 @@ const [showAutoHint, setShowAutoHint] = useState(false)
                   {adRemainingToday <= 0 ? t('readerPage.limitReached') : t('readerPage.watch')}
                 </span>
               </button>
+            </div>
+                    ) : null}
+
+          {SHADOW_READ_EVENT_CARDS_UI_ENABLED ? (
+            <div className="mt-4 px-5">
+              <FeaturedReadEventCardOption
+                key={`${story?.id || episode?.story_id}:${episode?.id}`}
+                storyId={story?.id || episode?.story_id}
+                episodeId={episode?.id}
+                unlocking={unlocking}
+                onUnlocked={onFeaturedCardUnlocked}
+              />
             </div>
           ) : null}
 
@@ -8984,9 +9036,10 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
   onUnlock={handleLockedDiamondUnlock}
   onCoinUnlock={() => handleLockedCoinUnlock(episodeId)}
   onVoucherUnlock={() => handleLockedVoucherUnlock(episodeId)}
-    onRewardedUnlock={() =>
-  handleLockedRewardedUnlock(episodeId)
-}
+  onFeaturedCardUnlocked={finishUnlock}
+  onRewardedUnlock={() =>
+    handleLockedRewardedUnlock(episodeId)
+  }
 />
 ) : null}
 
@@ -9034,6 +9087,7 @@ className={lockedHeaderActive ? '!text-white' : theme.text}
                 continuousLockedEntry.id
               )
             }
+            onFeaturedCardUnlocked={finishUnlock}
           />
         ) : null}
 
