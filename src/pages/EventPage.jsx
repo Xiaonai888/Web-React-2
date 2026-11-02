@@ -82,6 +82,7 @@ registerTranslationNamespace('eventPage', {
     noEventRightNow: 'No event right now',
     authorCheckFailed: 'Failed to check author page',
     somethingWrong: 'Something went wrong',
+    shadowReadEvent: 'Shadow Read Event',
   },
   km: {
     write: 'សរសេរ',
@@ -147,6 +148,7 @@ registerTranslationNamespace('eventPage', {
     noEventRightNow: 'ឥឡូវនេះមិនមានព្រឹត្តិការណ៍ទេ',
     authorCheckFailed: 'មិនអាចពិនិត្យទំព័រអ្នកនិពន្ធបានទេ',
     somethingWrong: 'មានបញ្ហាអ្វីមួយ',
+    shadowReadEvent: 'ព្រឹត្តិការណ៍អានរឿង Shadow',
   },
   zh: {
     write: '写作',
@@ -212,6 +214,7 @@ registerTranslationNamespace('eventPage', {
     noEventRightNow: '当前暂无活动',
     authorCheckFailed: '无法检查作者页面',
     somethingWrong: '出现了一些问题',
+    shadowReadEvent: 'Shadow 阅读活动',
   },
   ja: {
     write: '執筆',
@@ -277,6 +280,7 @@ registerTranslationNamespace('eventPage', {
     noEventRightNow: '現在イベントはありません',
     authorCheckFailed: '作者ページを確認できませんでした',
     somethingWrong: '問題が発生しました',
+    shadowReadEvent: 'Shadow 読書イベント',
   },
   ko: {
     write: '글쓰기',
@@ -342,12 +346,14 @@ registerTranslationNamespace('eventPage', {
     noEventRightNow: '현재 진행 중인 이벤트가 없습니다',
     authorCheckFailed: '작가 페이지를 확인하지 못했습니다',
     somethingWrong: '문제가 발생했습니다',
+    shadowReadEvent: 'Shadow 독서 이벤트',
   },
 })
 
 const SHORTCUT_LABEL_KEYS = { Write: 'write', Group: 'group', Ranking: 'ranking', Reward: 'reward', Guide: 'guide' }
 const BENEFIT_LABEL_KEYS = { 'Earn More': ['earnMore', 'earnMoreText'], 'Grow Fans': ['growFans', 'growFansText'], 'Get Featured': ['getFeatured', 'getFeaturedText'] }
 const EVENT_BADGE_LABEL_KEYS = { NEW: 'badgeNew', HOT: 'badgeHot', TOP: 'badgeTop' }
+const SHADOW_READ_EVENT_ENTRY_ENABLED = import.meta.env.VITE_SHADOW_READ_EVENT_ENTRY_ENABLED === 'true'
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
@@ -2328,6 +2334,19 @@ const activeEvents = [
           <MonthlyVoteTab />
         ) : (
   <>
+  {SHADOW_READ_EVENT_ENTRY_ENABLED && (
+    <button
+      type="button"
+      onClick={() => navigate('/event/shadow-read')}
+      className="mb-4 flex w-full items-center justify-between rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)]"
+    >
+      <span className="flex items-center gap-3">
+        <i className="fas fa-book-open text-[var(--shadow-accent)]" aria-hidden="true" />
+        <span className="text-[14px] font-extrabold">{t('eventPage.shadowReadEvent')}</span>
+      </span>
+      <i className="fas fa-chevron-right text-[11px] text-[var(--shadow-text-secondary)]" aria-hidden="true" />
+    </button>
+  )}
   <div
     onTouchStart={handleEventTouchStart}
     onTouchEnd={handleEventTouchEnd}
