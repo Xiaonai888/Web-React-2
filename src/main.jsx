@@ -20,6 +20,7 @@ import {
   initializeCommentQueue,
 } from './services/commentQueue'
 import { installStorySyncResume } from './utils/storySyncResume'
+import { installImageLoadDiagnostics } from './utils/installImageLoadDiagnostics'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -34,6 +35,7 @@ installAuthorNotificationDiagnostics()
 void initializeStoryReactionQueue()
 void initializeCommentQueue()
 installStorySyncResume()
+installImageLoadDiagnostics()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
