@@ -1676,10 +1676,22 @@ const shouldShowOpeningAds =
   path="/author/story/:storyId/chat/shadow-gallery"
   element={<ShadowGalleryPage />}
 />
-        <Route
+        
+<Route
   path="/event/writer-wednesday"
   element={<LazyPage><WriterWednesdayEventPage /></LazyPage>}
 />
+
+<Route
+  path="/event/shadow-read"
+  element={<LazyPage><ShadowReadEventPage /></LazyPage>}
+/>
+
+<Route
+  path="/event/shadow-read/rewards"
+  element={<LazyPage><ShadowReadEventRewardsPage /></LazyPage>}
+/>
+
           <Route
   path="/event/daily-author-boost"
   element={<LazyPage><AuthorDaily50EventPage /></LazyPage>}
