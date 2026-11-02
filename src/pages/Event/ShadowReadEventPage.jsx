@@ -31,6 +31,7 @@ registerTranslationNamespace('shadowReadEventPage', {
     rankingError: 'Could not load rankings', noRanking: 'No ranking available yet.',
     topThree: 'Top 3 readers', readerCount: '{{count}} scored readers', noScores: 'No scores yet.',
     reader: 'Reader', coins: 'coins', vouchers: 'vouchers', cards: 'cards', giftBox: '+ gift box',
+    viewRewards: 'View my cards and rewards',
     myRank: 'My rank', unranked: 'Not ranked yet', provisional: 'Final results will be confirmed after day 7.',
     missionTypes: {daily_story:'Read the daily story', free_read:'Read free episodes', read_new:'Read new stories',
       read_update:'Read updated stories', read_completed:'Read completed stories', read_genre:'Explore genres',
@@ -55,6 +56,7 @@ registerTranslationNamespace('shadowReadEventPage', {
     rankingError: 'មិនអាចផ្ទុកចំណាត់ថ្នាក់បាន', noRanking: 'មិនទាន់មានចំណាត់ថ្នាក់។',
     topThree: 'អ្នកអានកំពូល ៣ នាក់', readerCount: 'អ្នកមានពិន្ទុ {{count}} នាក់', noScores: 'មិនទាន់មានពិន្ទុ។',
     reader: 'អ្នកអាន', coins: 'កាក់', vouchers: 'វ៉ូឆឺរ', cards: 'កាត', giftBox: '+ ហិបរង្វាន់',
+    viewRewards: 'មើលកាត និងរង្វាន់របស់ខ្ញុំ',
     myRank: 'ចំណាត់ថ្នាក់ខ្ញុំ', unranked: 'មិនទាន់មានចំណាត់ថ្នាក់', provisional: 'លទ្ធផលចុងក្រោយបញ្ជាក់ក្រោយថ្ងៃទី ៧។',
     missionTypes: {daily_story:'អានរឿងប្រចាំថ្ងៃ', free_read:'អានភាគឥតគិតថ្លៃ', read_new:'អានរឿងថ្មី',
       read_update:'អានរឿងទើបអាប់ដេត', read_completed:'អានរឿងចប់', read_genre:'អានរឿងតាមប្រភេទ',
@@ -74,6 +76,7 @@ registerTranslationNamespace('shadowReadEventPage', {
     dailyRanking:'每日前三', overallRanking:'总榜前三', loadingRanking:'正在加载排行榜...', rankingError:'无法加载排行榜',
     noRanking:'暂无排行榜。', topThree:'前三名读者', readerCount:'{{count}} 名读者得分', noScores:'暂无积分。',
     reader:'读者', coins:'金币', vouchers:'代金券', cards:'故事卡', giftBox:'+ 礼盒', myRank:'我的排名',
+    viewRewards:'查看我的卡片与奖励',
     unranked:'尚未排名', provisional:'最终结果将在第七天后确定。',
     missionTypes:{daily_story:'阅读每日故事',free_read:'阅读免费章节',read_new:'阅读新故事',read_update:'阅读更新故事',
       read_completed:'阅读完结故事',read_genre:'探索类型',read_authors:'阅读不同作者',reading_streak:'连续阅读',
@@ -93,6 +96,7 @@ registerTranslationNamespace('shadowReadEventPage', {
     dailyRanking:'デイリーTop 3', overallRanking:'総合Top 3', loadingRanking:'ランキングを読み込み中...', rankingError:'ランキングを読み込めません',
     noRanking:'ランキングはまだありません。', topThree:'上位3名', readerCount:'得点した読者：{{count}}人', noScores:'得点はまだありません。',
     reader:'読者', coins:'コイン', vouchers:'バウチャー', cards:'カード', giftBox:'+ ギフトボックス', myRank:'自分の順位',
+    viewRewards:'カードと報酬を見る',
     unranked:'未ランクイン', provisional:'最終結果は7日目終了後に確定します。',
     missionTypes:{daily_story:'今日の作品を読む',free_read:'無料の話を読む',read_new:'新作を読む',read_update:'更新作品を読む',
       read_completed:'完結作品を読む',read_genre:'ジャンルを探索',read_authors:'複数の作者を読む',reading_streak:'読書を継続',
@@ -112,6 +116,7 @@ registerTranslationNamespace('shadowReadEventPage', {
     overallRanking:'종합 Top 3', loadingRanking:'랭킹 불러오는 중...', rankingError:'랭킹을 불러올 수 없습니다',
     noRanking:'아직 랭킹이 없습니다.', topThree:'상위 3명', readerCount:'점수 획득 독자 {{count}}명', noScores:'점수가 없습니다.',
     reader:'독자', coins:'코인', vouchers:'바우처', cards:'카드', giftBox:'+ 선물 상자', myRank:'내 순위',
+    viewRewards:'내 카드와 보상 보기',
     unranked:'순위 없음', provisional:'최종 결과는 7일 차 종료 후 확정됩니다.',
     missionTypes:{daily_story:'오늘의 작품 읽기',free_read:'무료 회차 읽기',read_new:'신작 읽기',read_update:'업데이트 작품 읽기',
       read_completed:'완결 작품 읽기',read_genre:'장르 탐색',read_authors:'여러 작가의 작품 읽기',reading_streak:'연속 독서',
@@ -275,6 +280,14 @@ export default function ShadowReadEventPage() {
                   <strong className="app-title mt-1 block text-[20px]">{Number(data.progress?.overall_points || 0).toLocaleString()}</strong>
                 </div>
               </div>
+              {data.participation?.joined && eventId && (
+                <button type="button"
+                  onClick={() => navigate(`/event/shadow-read/rewards?event_id=${encodeURIComponent(eventId)}`)}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[12px] font-bold text-[var(--shadow-text-primary)] transition-colors hover:bg-[var(--shadow-bg-hover)]">
+                  <i className="fas fa-gift text-[13px]" aria-hidden="true" />
+                  {t('shadowReadEventPage.viewRewards')}
+                </button>
+              )}
             </SurfaceCard>
             <div className="flex gap-2">
               {['missions', 'rankings'].map((value) => (
