@@ -2660,7 +2660,7 @@ function FeaturedReadEventCardOption({ storyId, episodeId, unlocking, onUnlocked
         title={title}
         subtitle={t('readerPage.eventCardNeedTen')}
         buttonText={buttonText}
-        disabled={!eligible || checking || redeeming || unlocking}
+        disabled={!eligible || checking || redeeming || unlocking || (checked && !failed && !selected)}
         onClick={handleClick}
       />
       {failed ? (
