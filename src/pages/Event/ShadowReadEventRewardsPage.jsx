@@ -13,6 +13,7 @@ registerTranslationNamespace('readEventRewards', {
   en: {
     title: 'Read Event Rewards', subtitle: 'Your event cards and rewards', back: 'Back', refresh: 'Refresh',
     loading: 'Loading your rewards...', loadFailed: 'Unable to load rewards', retry: 'Try again',
+    returnToEvent: 'Open Read Event', rateLimited: 'Too many requests. Please try again shortly.', invalidResponse: 'Reward information could not be verified.',
     missingEvent: 'Choose a Read Event to view its rewards.', notJoined: 'You did not join this Read Event.',
     loginRequired: 'Please sign in to view rewards.', eventNotFound: 'This Read Event could not be found.',
     featuredCards: 'Featured Story Cards', storyOnly: 'These cards work only for the featured story of this event.',
@@ -29,6 +30,7 @@ registerTranslationNamespace('readEventRewards', {
   km: {
     title: 'រង្វាន់ Read Event', subtitle: 'កាត និងរង្វាន់ក្នុងព្រឹត្តិការណ៍', back: 'ត្រឡប់ក្រោយ', refresh: 'ផ្ទុកឡើងវិញ',
     loading: 'កំពុងផ្ទុករង្វាន់...', loadFailed: 'មិនអាចផ្ទុករង្វាន់បាន', retry: 'សាកល្បងម្ដងទៀត',
+    returnToEvent: 'ទៅព្រឹត្តិការណ៍អានរឿង', rateLimited: 'សំណើច្រើនពេក។ សូមសាកល្បងបន្តិចទៀត។', invalidResponse: 'មិនអាចផ្ទៀងផ្ទាត់ទិន្នន័យរង្វាន់បានទេ។',
     missingEvent: 'សូមជ្រើសព្រឹត្តិការណ៍ដើម្បីមើលរង្វាន់។', notJoined: 'អ្នកមិនបានចូលរួមព្រឹត្តិការណ៍នេះទេ។',
     loginRequired: 'សូមចូលគណនីដើម្បីមើលរង្វាន់។', eventNotFound: 'មិនមានព្រឹត្តិការណ៍នេះទេ។',
     featuredCards: 'កាតរឿង Featured', storyOnly: 'កាតនេះប្រើបានតែសម្រាប់រឿង Featured នៃព្រឹត្តិការណ៍នេះ។',
@@ -45,6 +47,7 @@ registerTranslationNamespace('readEventRewards', {
   zh: {
     title: '阅读活动奖励', subtitle: '活动卡片与奖励', back: '返回', refresh: '刷新',
     loading: '正在加载奖励...', loadFailed: '无法加载奖励', retry: '重试',
+    returnToEvent: '打开阅读活动', rateLimited: '请求次数过多，请稍后再试。', invalidResponse: '无法验证奖励数据。',
     missingEvent: '请选择活动以查看奖励。', notJoined: '您没有参加该阅读活动。',
     loginRequired: '请先登录后查看奖励。', eventNotFound: '找不到该阅读活动。',
     featuredCards: '精选故事卡', storyOnly: '这些卡片仅适用于本活动的精选故事。',
@@ -61,6 +64,7 @@ registerTranslationNamespace('readEventRewards', {
   ja: {
     title: '読書イベント報酬', subtitle: 'イベントカードと報酬', back: '戻る', refresh: '更新',
     loading: '報酬を読み込み中...', loadFailed: '報酬を読み込めません', retry: '再試行',
+    returnToEvent: '読書イベントへ', rateLimited: 'リクエストが多すぎます。しばらくしてから再試行してください。', invalidResponse: '報酬データを確認できませんでした。',
     missingEvent: '報酬を表示するイベントを選択してください。', notJoined: 'このイベントには参加していません。',
     loginRequired: '報酬を見るにはログインしてください。', eventNotFound: 'イベントが見つかりません。',
     featuredCards: '対象作品カード', storyOnly: 'カードはこのイベントの対象作品でのみ使えます。',
@@ -77,6 +81,7 @@ registerTranslationNamespace('readEventRewards', {
   ko: {
     title: '독서 이벤트 보상', subtitle: '이벤트 카드와 보상', back: '뒤로', refresh: '새로고침',
     loading: '보상을 불러오는 중...', loadFailed: '보상을 불러올 수 없습니다', retry: '다시 시도',
+    returnToEvent: '독서 이벤트로 이동', rateLimited: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.', invalidResponse: '보상 정보를 확인할 수 없습니다.',
     missingEvent: '보상을 볼 이벤트를 선택하세요.', notJoined: '이 이벤트에 참여하지 않았습니다.',
     loginRequired: '보상을 보려면 로그인하세요.', eventNotFound: '이벤트를 찾을 수 없습니다.',
     featuredCards: '추천 작품 카드', storyOnly: '이 카드는 해당 이벤트의 추천 작품에서만 사용할 수 있습니다.',
@@ -101,7 +106,8 @@ export default function ShadowReadEventRewardsPage() {
   const params = new URLSearchParams(location.search)
   const requestedId = params.get('event_id') || location.state?.eventId || ''
   const eventId = typeof requestedId === 'string' && UUID.test(requestedId) ? requestedId : ''
-  const [page, setPage] = useState(1)
+  const [pageSelection, setPageSelection] = useState({ eventId: '', page: 1 })
+  const page = pageSelection.eventId === eventId ? pageSelection.page : 1
   const [revision, setRevision] = useState(0)
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -109,12 +115,30 @@ export default function ShadowReadEventRewardsPage() {
   const [loading, setLoading] = useState(Boolean(eventId))
 
   useEffect(() => {
-    if (!eventId) { setData(null); setLoading(false); return undefined }
+    if (!eventId) {
+      setData(null)
+      setError('')
+      setErrorCode('')
+      setLoading(false)
+      return undefined
+    }
     const controller = new AbortController()
     setLoading(true)
     setError('')
     getShadowReadEventRewards(eventId, page, { signal: controller.signal })
-      .then((result) => { if (!controller.signal.aborted) setData(result) })
+      .then((result) => {
+        if (controller.signal.aborted) return
+        if (result?.event?.id !== eventId ||
+            result.wallet?.story_id !== result.event?.featured_story_id ||
+            !Array.isArray(result.rewards) || result.rewards.length > 20 ||
+            !Array.isArray(result.redemptions) || result.redemptions.length > 10 ||
+            Number(result.pagination?.page) !== page) {
+          const invalid = new Error('READ_EVENT_REWARDS_INVALID_RESPONSE')
+          invalid.code = 'READ_EVENT_REWARDS_INVALID_RESPONSE'
+          throw invalid
+        }
+        setData(result)
+      })
       .catch((err) => {
         if (!controller.signal.aborted) {
           setError(err.message || 'READ_EVENT_REWARDS_UNAVAILABLE')
@@ -134,8 +158,11 @@ export default function ShadowReadEventRewardsPage() {
     READER_LOGIN_REQUIRED: 'loginRequired',
     READ_EVENT_NOT_JOINED: 'notJoined',
     READ_EVENT_NOT_FOUND: 'eventNotFound',
+    READ_EVENT_REWARDS_READ_LIMIT: 'rateLimited',
+    READ_EVENT_REWARDS_INVALID_RESPONSE: 'invalidResponse',
   }
-  const errorBody = messages[errorCode] ? t(`readEventRewards.${messages[errorCode]}`) : error
+  const errorBody = t(`readEventRewards.${messages[errorCode] || 'loadFailed'}`)
+  const hasContent = data?.ok === true && data?.event?.id === eventId
 
   return (
     <PageShell className="pb-20">
@@ -146,11 +173,13 @@ export default function ShadowReadEventRewardsPage() {
           {t('readEventRewards.refresh')}
         </button>} />
       <main className="mx-auto grid max-w-[960px] gap-4 px-4 py-5">
-        {!eventId && <PageEmptyState title={t('readEventRewards.missingEvent')} />}
-        {eventId && loading && <PageLoadingState label={t('readEventRewards.loading')} rows={3} />}
+        {!eventId && <PageEmptyState title={t('readEventRewards.missingEvent')}
+          actionLabel={t('readEventRewards.returnToEvent')}
+          onAction={() => navigate('/event/shadow-read')} />}
+        {eventId && loading && !hasContent && <PageLoadingState label={t('readEventRewards.loading')} rows={3} />}
         {eventId && !loading && error && <PageErrorState title={t('readEventRewards.loadFailed')}
           body={errorBody} actionLabel={t('readEventRewards.retry')} onAction={refresh} />}
-        {eventId && !loading && !error && data?.ok && (
+        {eventId && hasContent && (loading || !error) && (
           <>
             <ReadEventFeaturedCardWallet wallet={data.wallet} storyId={data.event?.featured_story_id}
               onOpenStory={openStory} t={t} />
@@ -159,8 +188,17 @@ export default function ShadowReadEventRewardsPage() {
                 {t('readEventRewards.redemptionPending')}
               </SurfaceCard>
             )}
-            <ReadEventRewardHistory rewards={data.rewards} redemptions={data.redemptions}
-              pagination={data.pagination} loading={loading} onPageChange={setPage} t={t} />
+            {loading ? (
+              <PageLoadingState label={t('readEventRewards.loading')} rows={2} />
+            ) : (
+              <ReadEventRewardHistory rewards={data.rewards} redemptions={data.redemptions}
+                pagination={data.pagination} loading={loading}
+                onPageChange={(nextPage) => {
+                  if (Number.isInteger(nextPage) && nextPage >= 1 && nextPage <= 50) {
+                    setPageSelection({ eventId, page: nextPage })
+                  }
+                }} t={t} />
+            )}
           </>
         )}
       </main>
