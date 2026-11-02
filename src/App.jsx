@@ -305,6 +305,8 @@ const StoryTopFansPage = lazy(() => import('./pages/StoryTopFansPage'))
 const TopFansGuidePage = lazy(() => import('./pages/TopFansGuidePage'))
 const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
+const FastReelsPage = lazy(() => import('./pages/FastReelsPage'))
+const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
 
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
@@ -485,6 +487,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/wallet/orders',
     '/profile',
     '/library',
+    '/fast',
     '/chat',
     '/support-chat',
     '/event',
@@ -614,7 +617,14 @@ const shouldShowOpeningAds =
         <Route path="/" element={<ForYou key={homeSlideSectionKey} slideSectionKey={homeSlideSectionKey} onReady={finishShadowSplash} />} />
         <Route path="/manga" element={<MangaPage />} />
         <Route path="/chat-story" element={<ChatStoryHomePage />} />
-        <Route path="/fast" element={<ComingSoon titleKey="fastReels" />} />
+        <Route
+  path="/fast"
+  element={
+    <LazyPage>
+      <FastReelsPage />
+    </LazyPage>
+  }
+/>
         <Route path="/check-in" element={<ComingSoon titleKey="checkIn" />} />
         <Route path="/settings" element={<ComingSoon titleKey="settings" />} />
 
@@ -1558,11 +1568,20 @@ const shouldShowOpeningAds =
   element={<LazyPage><CreateAuthorStoryPage /></LazyPage>}
 />
 
-      <Route
+     <Route
   path="/fast/studio"
   element={
     <LazyPage>
       <FastStudioPage />
+    </LazyPage>
+  }
+/>
+
+<Route
+  path="/fast/studio/create"
+  element={
+    <LazyPage>
+      <FastCreateVideoPage />
     </LazyPage>
   }
 />
