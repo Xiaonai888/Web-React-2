@@ -2508,74 +2508,130 @@ function UnlockFreeAccessOption({ icon, title, subtitle, buttonText, disabled, o
   )
 }
 
-function UnlockPackageButton({ option, primary = false, unlocking, diamondBalance, onPackageClick, t }) {
-    if (!option) return null
+function FeaturedReadEventCardOption({ storyId, episodeId, unlocking, onUnlocked }) {
+  const { t } = useDisplayTranslation()
+  const [checked, setChecked] = useState(false)
+  const [revision, setRevision] = useState(0)
+  const [events, setEvents] = useState([])
+  const [checking, setChecking] = useState(false)
+  const [redeeming, setRedeeming] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const eligible = EVENT_CARD_UUID.test(String(storyId || '')) &&
+    EVENT_CARD_UUID.test(String(episodeId || '')) && Boolean(getReaderToken())
 
-    const price = Number(option.price || 0)
-    const originalPrice = Number(option.original_price || 0)
-    const discount = Number(
-  option.total_discount_percent ??
-    option.discount_percent ??
-    0
-)
-    const requestedCount = Number(option.requested_count || 0)
-    const isMultiPackage =
-      requestedCount >= 10 ||
-      ['next10', 'next30', 'next50', 'all_released'].includes(option.key)
-    const needsTopUp = isMultiPackage && diamondBalance < price
+  useEffect(() => {
+    if (!SHADOW_READ_EVENT_CARDS_UI_ENABLED || !checked || !eligible) return undefined
 
-    if (primary) {
-      return (
-        <button
-  type="button"
-  onClick={() => onPackageClick(option)}
-  disabled={unlocking || !option.enabled}
-          className="flex min-h-[78px] w-full items-center justify-center bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
-        >
-          <span className="flex items-center justify-center gap-2 text-[16px] font-medium text-[#4B5563]">
-            <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-            <span className="font-semibold text-[#111827]">
-  {formatNumber(price)}
-</span>
+    const controller = new AbortController()
+    setChecking(true)
+    setFailed(false)
+    setEvents([])
 
-{originalPrice > price ? (
-  <span className="text-[12px] text-[#A0A6B0] line-through">
-    {formatNumber(originalPrice)}
-  </span>
-) : null}
+    fetch(`${API_BASE_URL}/api/read-event/rewards/available?story_id=${encodeURIComponent(storyId)}`, {
+      headers: readerAuthHeaders(),
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null)
+        if (!response.ok || data?.ok !== true || data.story_id !== storyId || !Array.isArray(data.events)) {
+          throw new Error('READ_EVENT_CARDS_UNAVAILABLE')
+        }
+        return data.events.filter((item) =>
+          EVENT_CARD_UUID.test(String(item?.event_id || '')) &&
+          item.story_id === storyId &&
+          Number.isSafeInteger(Number(item.available_cards)) &&
+          Number(item.available_cards) >= 0
+        )
+      })
+      .then((items) => {
+        if (!controller.signal.aborted) setEvents(items)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFailed(true)
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setChecking(false)
+      })
 
-<span>{t('readerPage.unlockThisEpisode')}</span>
-          </span>
-        </button>
-      )
-    }
+    return () => controller.abort()
+  }, [checked, revision, storyId, episodeId, eligible])
 
+  if (!SHADOW_READ_EVENT_CARDS_UI_ENABLED) {
     return (
-      <button
-        type="button"
-        onClick={() => onPackageClick(option)}
-        disabled={unlocking || !option.enabled}
-        className="relative flex min-h-[86px] w-full items-center justify-center overflow-hidden border-t border-[#E5E7EB] bg-white px-4 py-4 text-center active:scale-[0.99] disabled:opacity-55"
-      >
-        {discount > 0 ? (
-          <span className="absolute right-[42px] top-[12px] rounded-tl-[14px] rounded-br-[14px] bg-[#FF4D6D] px-4 py-1.5 text-[11px] font-black leading-none text-white">
-            {t('readerPage.discountOff', { count: formatNumber(discount) })}
-          </span>
-        ) : null}
-
-        <span className="flex items-center justify-center gap-1.5 text-[16px] font-medium text-[#4B5563]">
-          <img src="/assets/Icons/Diamond.svg" alt="" className="h-5 w-5 object-contain" />
-          <span className="text-[#111827]">{formatNumber(price)}</span>
-          {originalPrice > price ? (
-            <span className="ml-1 text-[12px] text-[#A0A6B0] line-through">
-              {formatNumber(originalPrice)}
-            </span>
-          ) : null}
-          <span>{requestedCount > 0 ? t('readerPage.unlockEpisodes', { count: formatNumber(requestedCount) }) : t('readerPage.unlockAllEpisodes')}</span>
-        </span>
-      </button>
+      <UnlockFreeAccessOption
+        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
+        title={t('readerPage.storyCardComing')}
+        subtitle={t('readerPage.sameStoryPermanent')}
+        buttonText={t('readerPage.access')}
+        disabled
+      />
     )
   }
+
+  const selected = events.find((item) => Number(item.available_cards) >= 10)
+  const available = events.reduce((max, item) => Math.max(max, Number(item.available_cards) || 0), 0)
+
+  async function handleClick() {
+    if (!eligible || checking || redeeming || unlocking) return
+
+    if (!checked || failed || !selected) {
+      setChecked(true)
+      setRevision((value) => value + 1)
+      return
+    }
+
+    try {
+      setRedeeming(true)
+      setFailed(false)
+      const result = await redeemShadowReadEventFeaturedCards(selected.event_id, episodeId)
+      if (result?.ok !== true || result.unlocked !== true) {
+        throw new Error('READ_EVENT_CARD_REDEEM_FAILED')
+      }
+      onUnlocked?.(episodeId)
+    } catch {
+      setFailed(true)
+    } finally {
+      setRedeeming(false)
+    }
+  }
+
+  const title = checking
+    ? t('readerPage.eventCardChecking')
+    : checked && !failed
+      ? t('readerPage.eventCardAvailable', { count: available })
+      : t('readerPage.eventCardCheck')
+  const buttonText = redeeming
+    ? t('readerPage.unlocking')
+    : checking
+      ? t('readerPage.eventCardChecking')
+      : failed
+        ? t('readerPage.eventCardRetry')
+        : !checked
+          ? t('readerPage.eventCardCheck')
+          : selected
+            ? t('readerPage.eventCardUse')
+            : t('readerPage.eventCardNotEnough')
+
+  return (
+    <>
+      <UnlockFreeAccessOption
+        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
+        title={title}
+        subtitle={t('readerPage.eventCardNeedTen')}
+        buttonText={buttonText}
+        disabled={!eligible || checking || redeeming || unlocking}
+        onClick={handleClick}
+      />
+      {failed ? (
+        <p className="px-3 text-[11px] font-semibold text-red-600">
+          {t('readerPage.eventCardFailed')}
+        </p>
+      ) : null}
+    </>
+  )
+}
+
 
 
 
