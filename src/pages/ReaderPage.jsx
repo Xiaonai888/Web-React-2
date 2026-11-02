@@ -2599,12 +2599,12 @@ function FeaturedReadEventCardOption({ storyId, episodeId, unlocking, onUnlocked
 
   if (!SHADOW_READ_EVENT_CARDS_UI_ENABLED) {
     return (
-      <FeaturedReadEventCardOption
-        key={`${story?.id || episode?.story_id}:${episode?.id}`}
-        storyId={story?.id || episode?.story_id}
-        episodeId={episode?.id}
-        unlocking={unlocking}
-        onUnlocked={onFeaturedCardUnlocked}
+      <UnlockFreeAccessOption
+        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
+        title={t('readerPage.storyCardComing')}
+        subtitle={t('readerPage.sameStoryPermanent')}
+        buttonText={t('readerPage.access')}
+        disabled
       />
     )
   }
@@ -3042,12 +3042,12 @@ const adCanAccess = rewardedAdsEnabled && Boolean(adAccess?.available) && adRema
   />
 ) : null}
 
-      <UnlockFreeAccessOption
-        icon={<i className="fa-regular fa-address-card text-[17px] text-[#111827]" />}
-        title={t('readerPage.storyCardComing')}
-        subtitle={t('readerPage.sameStoryPermanent')}
-        buttonText={t('readerPage.access')}
-        disabled
+       <FeaturedReadEventCardOption
+        key={`${story?.id || episode?.story_id}:${episode?.id}`}
+        storyId={story?.id || episode?.story_id}
+        episodeId={episode?.id}
+        unlocking={unlocking}
+        onUnlocked={onFeaturedCardUnlocked}
       />
 
       <button
