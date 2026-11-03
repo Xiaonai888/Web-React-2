@@ -353,7 +353,7 @@ registerTranslationNamespace('eventPage', {
 const SHORTCUT_LABEL_KEYS = { Write: 'write', Group: 'group', Ranking: 'ranking', Reward: 'reward', Guide: 'guide' }
 const BENEFIT_LABEL_KEYS = { 'Earn More': ['earnMore', 'earnMoreText'], 'Grow Fans': ['growFans', 'growFansText'], 'Get Featured': ['getFeatured', 'getFeaturedText'] }
 const EVENT_BADGE_LABEL_KEYS = { NEW: 'badgeNew', HOT: 'badgeHot', TOP: 'badgeTop' }
-const SHADOW_READ_EVENT_ENTRY_ENABLED = import.meta.env.VITE_SHADOW_READ_EVENT_ENTRY_ENABLED === 'true'
+const SHADOW_READ_EVENT_ENTRY_ENABLED = true
 
 const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 const EVENT_SLIDE_SECTION_KEY = 'event_top_slider'
