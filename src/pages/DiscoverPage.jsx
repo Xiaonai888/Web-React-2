@@ -2189,8 +2189,8 @@ function AutoStoryAdCard({ ad, day, onMore }) {
           <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
             {updateLabel ? <span>{updateLabel} Last Update</span> : null}
             {updateLabel ? <span>·</span> : null}
-            <span>Sponsored</span>
             <i className="fa-solid fa-earth-americas text-[10px]" aria-hidden="true" />
+            <span>Sponsored</span>
           </div>
         </div>
         <button type="button" onClick={() => onMore?.(option)} aria-label={discoverText('sponsoredOptions')}
@@ -3174,7 +3174,7 @@ export default function DiscoverPage() {
       active = false
       unsubscribe()
     }
-  }, [token, discoverAdControl?.mode])
+  }, [token])
 
   useEffect(() => {
     const updateToken = () => {
@@ -3607,7 +3607,7 @@ useEffect(() => {
         shadowMallAdLoadMoreRef.current = null
       }
     }
-  }, [token])
+  }, [token, discoverAdControl?.mode])
 
     useEffect(() => {
     let alive = true
@@ -4361,7 +4361,33 @@ useEffect(() => {
   }, [token, realPosts, readerPosts, realPostsLoading, readerPostsLoading])
 
   const discoverTimeline = useMemo(() => {
-    useEffect(() => {
+
+    const timeline = rotateDiscoverTimeline(
+      buildDiscoverTimeline(realPosts, readerPosts),
+      feedRotationIndex
+    )
+    if (!ownPostHighlightKey) return timeline
+
+    const highlightedIndex = timeline.findIndex(
+      ({ kind, post }) => post.is_owner && `${kind}:${post.id}` === ownPostHighlightKey
+    )
+
+    if (highlightedIndex <= 0) return timeline
+
+    const reordered = [
+      timeline[highlightedIndex],
+      ...timeline.filter((_, index) => index !== highlightedIndex),
+    ]
+    let authorIndex = -1
+
+    return reordered.map((entry, index) => ({
+      ...entry,
+      timelineIndex: index,
+      authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
+    }))
+  }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
+
+  useEffect(() => {
   if (
     realPostsLoading ||
     readerPostsLoading ||
@@ -4405,32 +4431,9 @@ useEffect(() => {
     window.clearTimeout(timer)
   }
 }, [realPostsLoading, readerPostsLoading, discoverTimeline.length])
-    const timeline = rotateDiscoverTimeline(
-      buildDiscoverTimeline(realPosts, readerPosts),
-      feedRotationIndex
-    )
-    if (!ownPostHighlightKey) return timeline
-
-    const highlightedIndex = timeline.findIndex(
-      ({ kind, post }) => post.is_owner && `${kind}:${post.id}` === ownPostHighlightKey
-    )
-
-    if (highlightedIndex <= 0) return timeline
-
-    const reordered = [
-      timeline[highlightedIndex],
-      ...timeline.filter((_, index) => index !== highlightedIndex),
-    ]
-    let authorIndex = -1
-
-    return reordered.map((entry, index) => ({
-      ...entry,
-      timelineIndex: index,
-      authorIndex: entry.kind === 'author_post' ? ++authorIndex : null,
-    }))
-  }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
 useEffect(() => {
+  if (discoverAdControl?.mode !== 'manual') return
   const neededAds = Math.floor(discoverTimeline.length / 3)
 
   if (
@@ -4444,6 +4447,7 @@ useEffect(() => {
   uniqueShadowMallPromotions.length,
   shadowMallAdPagination.hasNext,
   shadowMallAdPagination.nextPage,
+  discoverAdControl?.mode,
 ])
 
 const visibleBoostPosts = useMemo(() => {
@@ -5105,9 +5109,8 @@ const visibleBoostPosts = useMemo(() => {
   <DiscoverYouMightLikeSection />
 </DeferredDiscoverSection>
 
-  {uniqueShadowMallPromotions.slice(0, 1).map(
-               {discoverAdControl?.mode === 'manual'
-  ? uniqueShadowMallPromotions.slice(0, 1).map(
+  {discoverAdControl?.mode === 'manual'
+    ? uniqueShadowMallPromotions.slice(0, 1).map(
     (promotion) => (
       <AdsCard
         key={`empty-feed-ad-${promotion.id}`}
@@ -5119,9 +5122,8 @@ const visibleBoostPosts = useMemo(() => {
           handleShadowMallStorySaleStatusChanged
         }
       />
-    )
-    )
-  : null}
+    ))
+    : null}
 
 {discoverAdControl?.mode === 'auto' && visibleAutoAds[0] ? (
   <AutoStoryAdCard
@@ -5269,6 +5271,18 @@ const visibleBoostPosts = useMemo(() => {
 </DeferredDiscoverSection>
 
     {!realPostsHasMore &&
+      discoverAdControl?.mode === 'manual' &&
+      firstShadowMallPromotion ? (
+      <AdsCard
+        item={firstShadowMallPromotion}
+        onMore={setAdOptionsItem}
+        onHide={hideShadowMallPromotion}
+        onImpression={handleShadowMallAdImpression}
+        onStorySaleStatusChanged={handleShadowMallStorySaleStatusChanged}
+      />
+    ) : null}
+
+    {!realPostsHasMore &&
  discoverAdControl?.mode === 'auto' &&
  visibleAutoAds[0] ? (
   <AutoStoryAdCard
@@ -5285,6 +5299,7 @@ const visibleBoostPosts = useMemo(() => {
 
             <ShadowMallAdsLoadTrigger
               enabled={
+  discoverAdControl?.mode === 'manual' &&
   shadowMallAdPagination.hasNext &&
   !realPostsLoading &&
   !readerPostsLoading &&
