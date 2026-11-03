@@ -4910,12 +4910,7 @@ const visibleBoostPosts = useMemo(() => {
   .map(renderBoostBook)}
 
 {(entry.timelineIndex + 1) % 3 === 0 &&
-  uniqueShadowMallPromotions.length > 0 &&
-  (
-    Math.floor(entry.timelineIndex / 3) <
-      uniqueShadowMallPromotions.length ||
-    !shadowMallAdPagination.hasNext
-  ) ? (
+  uniqueShadowMallPromotions.length > 0 ? (
     <AdsCard
       key={`manual-ad-${Math.floor(entry.timelineIndex / 3)}`}
       item={
