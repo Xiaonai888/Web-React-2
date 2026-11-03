@@ -680,18 +680,53 @@ function replyToMessage(
 const TEMP_CACHE_SETTINGS_NAME = 'shadow-temporary-cache-settings-v1'
 const TEMP_CACHE_SETTINGS_URL = new URL('/__shadow_temporary_cache_settings_v1__', self.location.origin).href
 
+const TEMP_SETTINGS_TTL_MS = 10000
+let temporarySettingsCache = null
+let temporarySettingsUntil = 0
+let temporarySettingsPending = null
+let temporarySettingsVersion = 0
+
 async function readTemporaryCacheSettings() {
-  try {
-    const cache = await caches.open(TEMP_CACHE_SETTINGS_NAME)
-    const saved = await cache.match(TEMP_CACHE_SETTINGS_URL)
-    const data = saved ? await saved.json() : {}
-    return {
-      mode: data.mode === 'manual' ? 'manual' : 'auto',
-      limitGb: Number.isInteger(data.limitGb) && data.limitGb >= 1 && data.limitGb <= 5 ? data.limitGb : 1,
-      ageDays: [0, 3, 7, 30, 90].includes(data.ageDays) ? data.ageDays : 30,
+  if (temporarySettingsCache && Date.now() < temporarySettingsUntil) {
+    return temporarySettingsCache
+  }
+
+  if (temporarySettingsPending) return temporarySettingsPending
+
+  const version = temporarySettingsVersion
+
+  const pending = (async () => {
+    try {
+      const cache = await caches.open(TEMP_CACHE_SETTINGS_NAME)
+      const saved = await cache.match(TEMP_CACHE_SETTINGS_URL)
+      const data = saved ? await saved.json() : {}
+
+      return {
+        mode: data.mode === 'manual' ? 'manual' : 'auto',
+        limitGb: Number.isInteger(data.limitGb) && data.limitGb >= 1 && data.limitGb <= 5 ? data.limitGb : 1,
+        ageDays: [0, 3, 7, 30, 90].includes(data.ageDays) ? data.ageDays : 30,
+      }
+    } catch {
+      return { mode: 'auto', limitGb: 1, ageDays: 30 }
     }
-  } catch {
-    return { mode: 'auto', limitGb: 1, ageDays: 30 }
+  })()
+
+  temporarySettingsPending = pending
+
+  try {
+    const settings = await pending
+
+    if (version === temporarySettingsVersion) {
+      temporarySettingsCache = settings
+      temporarySettingsUntil = Date.now() + TEMP_SETTINGS_TTL_MS
+      return settings
+    }
+
+    return temporarySettingsCache || settings
+  } finally {
+    if (temporarySettingsPending === pending) {
+      temporarySettingsPending = null
+    }
   }
 }
 
@@ -705,6 +740,10 @@ async function saveTemporaryCacheSettings(data) {
   await cache.put(TEMP_CACHE_SETTINGS_URL, new Response(JSON.stringify(settings), {
     headers: { 'Content-Type': 'application/json' },
   }))
+  temporarySettingsVersion += 1
+  temporarySettingsCache = settings
+  temporarySettingsUntil = Date.now() + TEMP_SETTINGS_TTL_MS
+
   readerBytesLastCheckedAt = 0
   await pruneMangaCache()
   return { ok: true, ...settings }
@@ -899,16 +938,38 @@ async function pruneMangaCache({
   }
 }
 
+const EPISODE_TOUCH_INTERVAL_MS = 30000
+const MAX_RECENT_EPISODE_TOUCHES = 500
+const recentEpisodeTouches = new Map()
+
 async function touchEpisodeRecord(key) {
-  const record =
-    await getEpisodeRecord(key)
+  if (!key) return
 
-  if (!record) return
+  const now = Date.now()
+  const lastTouch = recentEpisodeTouches.get(key) || 0
 
-  await putEpisodeRecord({
+  if (now - lastTouch < EPISODE_TOUCH_INTERVAL_MS) return
+
+  recentEpisodeTouches.delete(key)
+  recentEpisodeTouches.set(key, now)
+
+  if (recentEpisodeTouches.size > MAX_RECENT_EPISODE_TOUCHES) {
+    recentEpisodeTouches.delete(recentEpisodeTouches.keys().next().value)
+  }
+
+  const record = await getEpisodeRecord(key)
+
+  if (!record) {
+    recentEpisodeTouches.delete(key)
+    return
+  }
+
+  const saved = await putEpisodeRecord({
     ...record,
-    lastAccessedAt: Date.now(),
+    lastAccessedAt: now,
   })
+
+  if (!saved) recentEpisodeTouches.delete(key)
 }
 
 async function markImageCached(
