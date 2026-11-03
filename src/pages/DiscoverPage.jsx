@@ -4974,9 +4974,6 @@ const visibleBoostPosts = useMemo(() => {
   </DeferredDiscoverSection>
 ) : null}
 
-  </>
-) : null}
-
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 4 ? (
                   <DeferredDiscoverSection>
