@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2 } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -117,7 +117,7 @@ function ReelViewer({ videos, index, onIndexChange, onClose, hasMore, onLoadMore
   )
 }
 
-export default function AuthorReelGrid({ userId }) {
+function PublicReelGrid({ userId }) {
   const { t } = useDisplayTranslation()
   const [videos, setVideos] = useState([])
   const [page, setPage] = useState(0)
@@ -189,4 +189,209 @@ export default function AuthorReelGrid({ userId }) {
       ) : null}
     </section>
   )
+}
+
+registerTranslationNamespace('authorReelManager', {
+  en: {
+    myReels: 'My Reels', add: 'Add Reel', edit: 'Edit', remove: 'Delete', deleteConfirm: 'Delete this Reel permanently?', published: 'Published', draft: 'Draft', pause: 'Unpublish', publish: 'Publish', saveDraft: 'Save Draft', saveChanges: 'Save Changes', cancel: 'Cancel', title: 'Video title', link: 'YouTube video link', description: 'Caption (optional)', loading: 'Loading your Reels...', empty: 'No Reels yet. Add your first YouTube video.', error: 'Could not load your Reels.', retry: 'Try again', more: 'Load more', invalidLink: 'Enter a valid YouTube or YouTube Shorts link.', titleRequired: 'Enter a video title.', login: 'Sign in to manage Reels.', saved: 'Reel saved.', deleted: 'Reel deleted.', failed: 'Could not save changes.', deleteFailed: 'Could not delete Reel.', videoType: 'YouTube videos only', preview: 'Preview', premium: 'Paid Reel', access: 'Only published free YouTube Reels appear in Fast.',
+  },
+  km: {
+    myReels: 'Reel របស់ខ្ញុំ', add: 'បន្ថែម Reel', edit: 'កែ', remove: 'លុប', deleteConfirm: 'តើចង់លុប Reel នេះជាអចិន្ត្រៃយ៍មែនទេ?', published: 'បានផ្សាយ', draft: 'Draft', pause: 'បិទការផ្សាយ', publish: 'ផ្សាយ', saveDraft: 'រក្សាទុក Draft', saveChanges: 'រក្សាទុកការកែ', cancel: 'បោះបង់', title: 'ចំណងជើងវីដេអូ', link: 'YouTube Link', description: 'ពិពណ៌នា (មិនបង្ខំ)', loading: 'កំពុងផ្ទុក Reel...', empty: 'មិនទាន់មាន Reel ទេ។ បន្ថែមវីដេអូ YouTube ដំបូង។', error: 'មិនអាចទាញ Reel បានទេ។', retry: 'ព្យាយាមម្ដងទៀត', more: 'មើលបន្ថែម', invalidLink: 'សូមបញ្ចូល YouTube ឬ Shorts Link ត្រឹមត្រូវ។', titleRequired: 'សូមបញ្ចូលចំណងជើង។', login: 'សូមចូលគណនីដើម្បីគ្រប់គ្រង Reel។', saved: 'បានរក្សាទុក Reel។', deleted: 'បានលុប Reel។', failed: 'មិនអាចរក្សាទុកបានទេ។', deleteFailed: 'មិនអាចលុប Reel បានទេ។', videoType: 'ប្រើតែវីដេអូ YouTube', preview: 'មើលជាមុន', premium: 'Reel បង់ប្រាក់', access: 'មានតែ Reel YouTube ឥតគិតថ្លៃដែលបានផ្សាយ ទើបបង្ហាញក្នុង Fast។',
+  },
+  zh: {
+    myReels: '我的 Reel', add: '添加 Reel', edit: '编辑', remove: '删除', deleteConfirm: '永久删除这条 Reel？', published: '已发布', draft: '草稿', pause: '取消发布', publish: '发布', saveDraft: '保存草稿', saveChanges: '保存修改', cancel: '取消', title: '视频标题', link: 'YouTube 视频链接', description: '描述（可选）', loading: '加载 Reel 中...', empty: '暂无 Reel，添加第一个 YouTube 视频。', error: '无法加载 Reel。', retry: '重试', more: '加载更多', invalidLink: '请输入有效的 YouTube 或 Shorts 链接。', titleRequired: '请输入标题。', login: '请登录以管理 Reel。', saved: 'Reel 已保存。', deleted: 'Reel 已删除。', failed: '保存失败。', deleteFailed: '删除 Reel 失败。', videoType: '仅限 YouTube 视频', preview: '预览', premium: '付费 Reel', access: '只有已发布的免费 YouTube Reel 会显示在 Fast。',
+  },
+  ja: {
+    myReels: 'マイ Reel', add: 'Reelを追加', edit: '編集', remove: '削除', deleteConfirm: 'この Reel を完全に削除しますか？', published: '公開中', draft: '下書き', pause: '公開停止', publish: '公開', saveDraft: '下書き保存', saveChanges: '変更を保存', cancel: 'キャンセル', title: '動画タイトル', link: 'YouTube 動画リンク', description: '説明（任意）', loading: 'Reelを読み込み中...', empty: 'Reel はまだありません。YouTube 動画を追加してください。', error: 'Reel を読み込めません。', retry: '再試行', more: 'もっと見る', invalidLink: '有効な YouTube または Shorts リンクを入力してください。', titleRequired: 'タイトルを入力してください。', login: 'Reel の管理にはログインが必要です。', saved: 'Reel を保存しました。', deleted: 'Reel を削除しました。', failed: '保存できませんでした。', deleteFailed: 'Reel を削除できませんでした。', videoType: 'YouTube 動画のみ', preview: 'プレビュー', premium: '有料 Reel', access: '公開中の無料 YouTube Reel のみ Fast に表示されます。',
+  },
+  ko: {
+    myReels: '내 Reel', add: 'Reel 추가', edit: '수정', remove: '삭제', deleteConfirm: '이 Reel을 영구 삭제할까요?', published: '게시됨', draft: '임시저장', pause: '게시 취소', publish: '게시', saveDraft: '임시저장', saveChanges: '변경 저장', cancel: '취소', title: '동영상 제목', link: 'YouTube 동영상 링크', description: '설명 (선택)', loading: 'Reel 불러오는 중...', empty: 'Reel이 없습니다. 첫 YouTube 동영상을 추가하세요.', error: 'Reel을 불러올 수 없습니다.', retry: '다시 시도', more: '더 보기', invalidLink: '올바른 YouTube 또는 Shorts 링크를 입력하세요.', titleRequired: '제목을 입력하세요.', login: 'Reel을 관리하려면 로그인하세요.', saved: 'Reel 저장됨.', deleted: 'Reel 삭제됨.', failed: '저장할 수 없습니다.', deleteFailed: 'Reel을 삭제할 수 없습니다.', videoType: 'YouTube 동영상만', preview: '미리보기', premium: '유료 Reel', access: '게시된 무료 YouTube Reel만 Fast에 표시됩니다.',
+  },
+})
+
+function authToken() {
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+}
+
+function OwnerReelManager() {
+  const { t } = useDisplayTranslation()
+  const [videos, setVideos] = useState([])
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [editor, setEditor] = useState(null)
+  const [title, setTitle] = useState('')
+  const [link, setLink] = useState('')
+  const [description, setDescription] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(null)
+
+  const load = useCallback(async (nextOffset = 0, signal) => {
+    const token = authToken()
+    if (!token) { setError(t('authorReelManager.login')); setLoading(false); return }
+    setLoading(true)
+    setError('')
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/fast/videos/mine?limit=${PAGE_SIZE}&offset=${nextOffset}`, {
+        headers: { Authorization: `Bearer ${token}` }, signal, cache: 'no-store',
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || !result.ok || !Array.isArray(result.videos)) throw new Error(result.message || t('authorReelManager.error'))
+      if (signal?.aborted) return
+      setVideos(current => nextOffset === 0 ? result.videos : [...current, ...result.videos.filter(v => !current.some(old => old.id === v.id))])
+      setOffset(Number(result.pagination?.next_offset ?? nextOffset + result.videos.length))
+      setHasMore(Boolean(result.pagination?.has_more))
+    } catch (err) {
+      if (!signal?.aborted) setError(err.message || t('authorReelManager.error'))
+    } finally {
+      if (!signal?.aborted) setLoading(false)
+    }
+  }, [t])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    load(0, controller.signal)
+    return () => controller.abort()
+  }, [load])
+
+  const openEditor = (video = null) => {
+    setEditor(video || 'new')
+    setTitle(video?.title || '')
+    setLink(video?.video_url || '')
+    setDescription(video?.description || '')
+    setError('')
+    setNotice('')
+  }
+
+  const closeEditor = () => setEditor(null)
+  const request = async (method, path, payload) => {
+    const token = authToken()
+    if (!token) throw new Error(t('authorReelManager.login'))
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: { Authorization: `Bearer ${token}`, ...(payload ? { 'Content-Type': 'application/json' } : {}) },
+      body: payload ? JSON.stringify(payload) : undefined,
+      cache: 'no-store',
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false) throw new Error(data.message || t('authorReelManager.failed'))
+    return data
+  }
+
+  const save = async status => {
+    const videoId = getYouTubeId(link)
+    if (!videoId) { setError(t('authorReelManager.invalidLink')); return }
+    if (!title.trim()) { setError(t('authorReelManager.titleRequired')); return }
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const fields = { title: title.trim(), description: description.trim(), video_url: `https://www.youtube.com/watch?v=${videoId}`, status }
+      const data = editor === 'new'
+        ? await request('POST', '/api/fast/videos', {
+          ...fields, thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          access_type: 'free', unlock_price_diamonds: 0, tags: [],
+        })
+        : await request('PATCH', `/api/fast/videos/${encodeURIComponent(editor.id)}`, fields)
+      setVideos(list => [data.video, ...list.filter(v => v.id !== data.video.id)])
+      if (editor === 'new') setOffset(n => n + 1)
+      setNotice(t('authorReelManager.saved'))
+      closeEditor()
+    } catch (err) {
+      setError(err.message || t('authorReelManager.failed'))
+    } finally { setBusy(false) }
+  }
+
+  const changeStatus = async video => {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const data = await request('PATCH', `/api/fast/videos/${encodeURIComponent(video.id)}`, { status: video.status === 'published' ? 'draft' : 'published' })
+      setVideos(list => list.map(v => v.id === data.video.id ? data.video : v))
+      setNotice(t('authorReelManager.saved'))
+    } catch (err) { setError(err.message || t('authorReelManager.failed')) }
+    finally { setBusy(false) }
+  }
+
+  const remove = async video => {
+    if (busy || !window.confirm(t('authorReelManager.deleteConfirm'))) return
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      await request('DELETE', `/api/fast/videos/${encodeURIComponent(video.id)}`)
+      setVideos(list => list.filter(v => v.id !== video.id))
+      setOffset(n => Math.max(0, n - 1))
+      setSelectedIndex(null)
+      setNotice(t('authorReelManager.deleted'))
+    } catch (err) { setError(err.message || t('authorReelManager.deleteFailed')) }
+    finally { setBusy(false) }
+  }
+
+  const activeVideoId = getYouTubeId(link)
+  return (
+    <section className="mx-auto max-w-[980px] text-[var(--shadow-text-primary)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">{t('authorReelManager.myReels')}</h2>
+        <button type="button" onClick={() => openEditor()} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
+      </div>
+      <p className="mb-4 text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.access')}</p>
+      {editor ? (
+        <div className="mb-5 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
+          <div className="mb-4 flex items-center justify-between gap-2"><h3 className="font-semibold text-sm">{editor === 'new' ? t('authorReelManager.add') : t('authorReelManager.edit')}</h3><button type="button" disabled={busy} onClick={closeEditor} aria-label={t('authorReelManager.cancel')}><X size={20}/></button></div>
+          <div className="space-y-3">
+            <label className="block text-xs font-medium">{t('authorReelManager.link')}
+              <input type="url" value={link} onChange={e => setLink(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." maxLength={1000} className="mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-sm text-[var(--shadow-text-primary)] outline-none" />
+            </label>
+            <label className="block text-xs font-medium">{t('authorReelManager.title')}
+              <input value={title} onChange={e => setTitle(e.target.value)} maxLength={100} className="mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-sm outline-none" />
+            </label>
+            <label className="block text-xs font-medium">{t('authorReelManager.description')}
+              <textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={500} rows={3} className="mt-1.5 w-full resize-y rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-sm outline-none" />
+            </label>
+            {activeVideoId ? <img src={`https://img.youtube.com/vi/${activeVideoId}/hqdefault.jpg`} alt={t('authorReelManager.preview')} className="h-28 max-w-full rounded-lg object-contain bg-black" loading="lazy" /> : <p className="text-xs text-[var(--shadow-text-secondary)]"><Link2 size={13} className="mr-1 inline"/>{t('authorReelManager.videoType')}</p>}
+            <div className="flex flex-wrap gap-2">
+              {editor === 'new' ? <button type="button" disabled={busy} onClick={() => save('draft')} className="rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-4 py-2.5 text-xs font-semibold disabled:opacity-50">{t('authorReelManager.saveDraft')}</button> : null}
+              <button type="button" disabled={busy} onClick={() => save(editor === 'new' ? 'published' : editor.status)} className="rounded-lg bg-[var(--shadow-accent)] px-4 py-2.5 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50">{editor === 'new' ? t('authorReelManager.publish') : t('authorReelManager.saveChanges')}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {notice ? <p role="status" className="mb-3 text-xs text-[var(--shadow-success)]">{notice}</p> : null}
+      {error ? <div role="alert" className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--shadow-danger)]"><span>{error}</span><button type="button" onClick={() => load(0)} className="rounded-full border border-[var(--shadow-border)] px-3 py-1.5 text-[var(--shadow-text-primary)]">{t('authorReelManager.retry')}</button></div> : null}
+      {loading && !videos.length ? <div className="py-8 text-center text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.loading')}</div> : null}
+      {!loading && !videos.length && !error ? <div className="rounded-xl border border-dashed border-[var(--shadow-border)] px-5 py-12 text-center text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.empty')}</div> : null}
+      {videos.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {videos.map((video,index) => {
+          const ytId = getYouTubeId(video.video_url)
+          return <div key={video.id} className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
+            <button type="button" onClick={() => setSelectedIndex(index)} disabled={!ytId} className="relative block aspect-[9/16] w-full overflow-hidden bg-black text-white disabled:opacity-50">
+              {ytId ? <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="" loading="lazy" onError={event => { const fallback = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`; if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }} className="h-full w-full object-cover" /> : null}
+              <Play size={23} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow" fill="currentColor" />
+              <span className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-1 text-[10px] text-white">{t(video.status === 'published' ? 'authorReelManager.published' : 'authorReelManager.draft')}</span>
+            </button>
+            <div className="space-y-2 p-2">
+              <p className="line-clamp-2 min-h-[32px] text-xs font-semibold">{video.title}</p>
+              {video.access_type === 'paid' ? <p className="text-[10px] text-[var(--shadow-text-secondary)]">{t('authorReelManager.premium')}</p> : null}
+              <div className="flex flex-wrap gap-1.5">
+                <button type="button" disabled={busy} onClick={() => openEditor(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] disabled:opacity-50"><Pencil size={12}/>{t('authorReelManager.edit')}</button>
+                <button type="button" disabled={busy} onClick={() => changeStatus(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] disabled:opacity-50">{video.status === 'published' ? <EyeOff size={12}/> : <Eye size={12}/>}{t(video.status === 'published' ? 'authorReelManager.pause' : 'authorReelManager.publish')}</button>
+                <button type="button" disabled={busy} onClick={() => remove(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] text-[var(--shadow-danger)] disabled:opacity-50"><Trash2 size={12}/>{t('authorReelManager.remove')}</button>
+              </div>
+            </div>
+          </div>
+        })}
+      </div> : null}
+      {hasMore && videos.length > 0 ? <div className="py-5 text-center"><button type="button" disabled={loading || busy} onClick={() => load(offset)} className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-xs disabled:opacity-50">{t('authorReelManager.more')}</button></div> : null}
+      {selectedIndex !== null && videos[selectedIndex] ? <ReelViewer videos={videos} index={selectedIndex} onIndexChange={setSelectedIndex} onClose={() => setSelectedIndex(null)} hasMore={hasMore} onLoadMore={() => load(offset)} loading={loading} t={t} /> : null}
+    </section>
+  )
+}
+
+export default function AuthorReelGrid({ userId, isOwner = false }) {
+  return isOwner ? <OwnerReelManager /> : <PublicReelGrid userId={userId} />
 }
