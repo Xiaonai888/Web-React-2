@@ -1918,12 +1918,9 @@ function MangaEpisodePages({
                   }
                   width={width > 0 ? width : undefined}
                   height={height > 0 ? height : undefined}
-                  loading={
-                    pageIndex === 0 && partIndex === 0
-                      ? 'eager'
-                      : 'lazy'
-                  }
-                  decoding="async"
+                  loading={pageIndex === 0 && partIndex < 2 ? 'eager' : 'lazy'}
+fetchPriority={pageIndex === 0 && partIndex === 0 ? 'high' : 'auto'}
+decoding="async"
                   draggable={false}
                   style={
                     partIndex > 0
