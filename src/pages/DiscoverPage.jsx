@@ -1,3 +1,4 @@
+import { getStoryBadge } from '../utils/storyBadge'
 import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import {
   getHomeCacheKey,
@@ -2127,6 +2128,120 @@ function DiamondPrice({
   )
 }
 
+function FireSolidIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M12 22c4.4 0 8-3.1 8-8 0-2.1-.8-4.1-2-5.5 0 2.5-1.5 4-3 4.5.5-4-2-8-6-11 0 3.5-2 5.5-3.5 7C4 10.5 4 12.5 4 14c0 4.9 3.6 8 8 8Z" />
+      <path d="M9.5 17.5c0 1.5 1.1 2.5 2.5 2.5s2.5-1 2.5-2.5c0-1-.5-1.9-1.3-2.6 0 1-.6 1.6-1.2 1.8.1-1.5-.8-2.8-2.1-3.8.1 1.5-.4 2.4-.4 4.6Z" />
+    </svg>
+  )
+}
+
+function asAutoStoryAdOption(ad, day) {
+  return {
+    id: `auto-story:${ad.story_id}`,
+    is_auto_story_ad: true,
+    visibility_version: Number(String(day || '').replace(/-/g, '')) || 1,
+    title: ad.title || '',
+    description: ad.description || '',
+    sponsor: ad.author_name || 'Shadow',
+    profile_image_url: ad.author_avatar_url || '',
+    image_url: ad.preview_image_url || ad.cover_url || '',
+    link_url: `/story/${encodeURIComponent(ad.story_id)}`,
+  }
+}
+
+function AutoStoryAdCard({ ad, day, onMore }) {
+  const [expanded, setExpanded] = useState(false)
+  const target = `/story/${encodeURIComponent(ad.story_id)}`
+  const badge = getStoryBadge({
+    story_status: ad.story_status,
+    total_episodes: ad.episode_count,
+  })
+  const description = String(ad.description || '').trim()
+  const caption = !expanded && description.length > 240
+    ? `${description.slice(0, 240).trimEnd()}...` : description
+  const date = new Date(ad.last_update_at || 0)
+  const updateLabel = Number.isFinite(date.getTime()) && date.getTime() > 0
+    ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
+    : ''
+  const name = ad.author_name || discoverText('author')
+  const tags = Array.isArray(ad.tags) ? ad.tags.filter((x) => typeof x === 'string' && x.trim()).slice(0, 3) : []
+  const option = asAutoStoryAdOption(ad, day)
+  const rememberPosition = () => {
+    try {
+      sessionStorage.setItem('shadow_discover_auto_ad_return_y', String(window.scrollY))
+    } catch {}
+  }
+
+  return (
+    <article className="overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
+      <header className="flex items-start gap-3 px-4 pb-2 pt-4">
+        {ad.author_avatar_url ? (
+          <img src={ad.author_avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-semibold">{name}</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
+            {updateLabel ? <span>{updateLabel} Last Update</span> : null}
+            {updateLabel ? <span>·</span> : null}
+            <span>Sponsored</span>
+            <i className="fa-solid fa-earth-americas text-[10px]" aria-hidden="true" />
+          </div>
+        </div>
+        <button type="button" onClick={() => onMore?.(option)} aria-label={discoverText('sponsoredOptions')}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10">
+          <i className="fa-solid fa-ellipsis" aria-hidden="true" />
+        </button>
+      </header>
+      {description ? (
+        <div className="px-4 pb-3 text-[14px] leading-[1.55] whitespace-pre-wrap break-words">
+          {caption}
+          {description.length > 240 ? (
+            <button type="button" className="ml-1 font-semibold text-gray-500" onClick={() => setExpanded((value) => !value)}>
+              {expanded ? 'See less' : 'See more'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <Link to={target} onClick={rememberPosition} className="block">
+        <div className="relative aspect-video overflow-hidden bg-gray-100 dark:bg-white/5">
+          {ad.preview_image_url || ad.cover_url ? (
+            <img src={ad.preview_image_url || ad.cover_url} alt={ad.title || ''} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-gray-400"><i className="fa-solid fa-book-open text-3xl" /></div>
+          )}
+          {badge ? (
+            <span className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm ${badge === 'new' ? 'bg-[#16a34a]' : badge === 'end' ? 'bg-[#64748b]' : 'bg-[#2563eb]'}`}>
+              {badge === 'new' ? 'NEW' : badge === 'end' ? 'END' : 'UP'}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-3 bg-[#f7f7fa] px-4 py-3 dark:bg-[#1c1f2b]">
+          <div className="min-w-0 flex-1">
+            <div className="line-clamp-2 text-[15px] font-semibold leading-5">{ad.title}</div>
+            <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
+              <span className="inline-flex items-center gap-1"><i className="fa-solid fa-book-open" />{Number(ad.episode_count || 0)} Episodes</span>
+              <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
+            </div>
+            {tags.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((tag) => <span key={tag} className="rounded bg-[#e9eaee] px-2 py-1 text-[11px] text-[#667085] dark:bg-white/10 dark:text-gray-300">{tag}</span>)}
+              </div>
+            ) : null}
+          </div>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-gray-600 dark:bg-white/10 dark:text-white"><i className="fa-solid fa-chevron-right text-[11px]" /></span>
+        </div>
+      </Link>
+    </article>
+  )
+}
+
+
 function AdsCard({
   item,
   onMore,
@@ -3059,7 +3174,7 @@ export default function DiscoverPage() {
       active = false
       unsubscribe()
     }
-  }, [token])
+  }, [token, discoverAdControl?.mode])
 
   useEffect(() => {
     const updateToken = () => {
@@ -3102,6 +3217,76 @@ export default function DiscoverPage() {
     hasNext: false,
     nextPage: 1,
   })
+
+  const [discoverAdControl, setDiscoverAdControl] = useState(null)
+const [autoHiddenRevision, setAutoHiddenRevision] = useState(0)
+
+useEffect(() => {
+  let alive = true
+  let pending = false
+  let checkedAt = 0
+
+  async function syncAdControl() {
+    if (
+      !alive ||
+      pending ||
+      document.hidden ||
+      Date.now() - checkedAt < 60000
+    ) return
+
+    pending = true
+    checkedAt = Date.now()
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/shadow-mall/ad-control`,
+        { cache: 'no-store' }
+      )
+      const data = await response.json().catch(() => ({}))
+
+      if (
+        !response.ok ||
+        data.ok !== true ||
+        !['manual', 'auto'].includes(data.mode)
+      ) {
+        throw new Error('Invalid Ad control response')
+      }
+
+      if (alive) {
+        setDiscoverAdControl({
+          mode: data.mode,
+          day: data.day || '',
+          ads: Array.isArray(data.ads)
+            ? data.ads.slice(0, 10)
+            : [],
+        })
+      }
+    } catch {
+      // Unknown mode: hide both systems to avoid overlap.
+      if (alive) setDiscoverAdControl(null)
+    } finally {
+      pending = false
+    }
+  }
+
+  void syncAdControl()
+
+  const timer = window.setInterval(syncAdControl, 5 * 60 * 1000)
+  const refresh = () => {
+    if (!document.hidden) void syncAdControl()
+  }
+
+  window.addEventListener('focus', refresh)
+  document.addEventListener('visibilitychange', refresh)
+
+  return () => {
+    alive = false
+    window.clearInterval(timer)
+    window.removeEventListener('focus', refresh)
+    document.removeEventListener('visibilitychange', refresh)
+  }
+}, [])
+  
   if (shadowMallAdHistoryRef.current === null || shadowMallAdIdentityRef.current !== token) {
     shadowMallAdIdentityRef.current = token
     shadowMallAdHistoryRef.current = readShadowMallAdRotationHistory(token)
@@ -3156,6 +3341,17 @@ export default function DiscoverPage() {
     return unique
   }, [shadowMallPromotions])
 
+  const visibleAutoAds = useMemo(() => {
+    if (discoverAdControl?.mode !== 'auto') return []
+
+    return discoverAdControl.ads.filter((ad) =>
+      ad?.story_id &&
+      !isShadowMallAdHidden(
+        asAutoStoryAdOption(ad, discoverAdControl.day)
+      )
+    )
+  }, [discoverAdControl, autoHiddenRevision])
+
   const firstShadowMallPromotion =
     uniqueShadowMallPromotions[0] || null
 
@@ -3170,8 +3366,16 @@ export default function DiscoverPage() {
   })
 
   useEffect(() => {
-    let alive = true
-    let loading = false
+  if (discoverAdControl?.mode !== 'manual') {
+    shadowMallAdLoadMoreRef.current = null
+    shadowMallPromotionsRef.current = []
+    setShadowMallPromotions([])
+    setShadowMallAdPagination({ hasNext: false, nextPage: 1 })
+    return undefined
+  }
+
+  let alive = true
+  let loading = false
     let loadingMore = false
     let lastCheckAt = 0
     let activeRevision = null
@@ -4157,6 +4361,50 @@ export default function DiscoverPage() {
   }, [token, realPosts, readerPosts, realPostsLoading, readerPostsLoading])
 
   const discoverTimeline = useMemo(() => {
+    useEffect(() => {
+  if (
+    realPostsLoading ||
+    readerPostsLoading ||
+    !discoverTimeline.length
+  ) return
+
+  let targetY
+  try {
+    targetY = Number(
+      sessionStorage.getItem('shadow_discover_auto_ad_return_y')
+    )
+  } catch {
+    return
+  }
+
+  if (!Number.isFinite(targetY) || targetY <= 0) return
+
+  let timer
+  let attempts = 0
+  let cancelled = false
+
+  function restore() {
+    if (cancelled || window.location.pathname !== '/discover') return
+
+    window.scrollTo(0, targetY)
+
+    if (Math.abs(window.scrollY - targetY) <= 6 || ++attempts >= 30) {
+      try {
+        sessionStorage.removeItem('shadow_discover_auto_ad_return_y')
+      } catch {}
+      return
+    }
+
+    timer = window.setTimeout(restore, 100)
+  }
+
+  timer = window.setTimeout(restore, 50)
+
+  return () => {
+    cancelled = true
+    window.clearTimeout(timer)
+  }
+}, [realPostsLoading, readerPostsLoading, discoverTimeline.length])
     const timeline = rotateDiscoverTimeline(
       buildDiscoverTimeline(realPosts, readerPosts),
       feedRotationIndex
@@ -4541,6 +4789,12 @@ const visibleBoostPosts = useMemo(() => {
   }
 
   function hideShadowMallPromotion(item) {
+    if (item?.is_auto_story_ad) {
+  hideShadowMallAdLocally(item)
+  setAutoHiddenRevision((current) => current + 1)
+  setAdOptionsItem(null)
+  return
+}
     if (item) {
       hideShadowMallAdLocally(item)
     }
@@ -4852,6 +5106,8 @@ const visibleBoostPosts = useMemo(() => {
 </DeferredDiscoverSection>
 
   {uniqueShadowMallPromotions.slice(0, 1).map(
+               {discoverAdControl?.mode === 'manual'
+  ? uniqueShadowMallPromotions.slice(0, 1).map(
     (promotion) => (
       <AdsCard
         key={`empty-feed-ad-${promotion.id}`}
@@ -4864,7 +5120,16 @@ const visibleBoostPosts = useMemo(() => {
         }
       />
     )
-  )}
+    )
+  : null}
+
+{discoverAdControl?.mode === 'auto' && visibleAutoAds[0] ? (
+  <AutoStoryAdCard
+    ad={visibleAutoAds[0]}
+    day={discoverAdControl.day}
+    onMore={setAdOptionsItem}
+  />
+) : null}
 
 </>
             ) : null}
@@ -4909,14 +5174,15 @@ const visibleBoostPosts = useMemo(() => {
   )
   .map(renderBoostBook)}
 
-{(entry.timelineIndex + 1) % 3 === 0 &&
+{(entry.timelineIndex + 1) % 3 === 0 ? (
+  discoverAdControl?.mode === 'manual' &&
   uniqueShadowMallPromotions.length > 0 ? (
     <AdsCard
       key={`manual-ad-${Math.floor(entry.timelineIndex / 3)}`}
       item={
         uniqueShadowMallPromotions[
           Math.floor(entry.timelineIndex / 3) %
-            uniqueShadowMallPromotions.length
+          uniqueShadowMallPromotions.length
         ]
       }
       onMore={setAdOptionsItem}
@@ -4926,7 +5192,21 @@ const visibleBoostPosts = useMemo(() => {
         handleShadowMallStorySaleStatusChanged
       }
     />
-  ) : null}
+  ) : discoverAdControl?.mode === 'auto' &&
+      visibleAutoAds.length > 0 ? (
+    <AutoStoryAdCard
+      key={`auto-ad-${Math.floor(entry.timelineIndex / 3)}`}
+      ad={
+        visibleAutoAds[
+          Math.floor(entry.timelineIndex / 3) %
+          visibleAutoAds.length
+        ]
+      }
+      day={discoverAdControl.day}
+      onMore={setAdOptionsItem}
+    />
+  ) : null
+) : null}
 
                 {entry.timelineIndex === 0 ? (
   <DiscoverAuthorStorePromotionSection />
@@ -4988,17 +5268,15 @@ const visibleBoostPosts = useMemo(() => {
   <DiscoverYouMightLikeSection />
 </DeferredDiscoverSection>
 
-    {!realPostsHasMore && firstShadowMallPromotion ? (
-      <AdsCard
-        item={firstShadowMallPromotion}
-        onMore={setAdOptionsItem}
-        onHide={hideShadowMallPromotion}
-        onImpression={handleShadowMallAdImpression}
-        onStorySaleStatusChanged={
-          handleShadowMallStorySaleStatusChanged
-        }
-      />
-    ) : null}
+    {!realPostsHasMore &&
+ discoverAdControl?.mode === 'auto' &&
+ visibleAutoAds[0] ? (
+  <AutoStoryAdCard
+    ad={visibleAutoAds[0]}
+    day={discoverAdControl.day}
+    onMore={setAdOptionsItem}
+  />
+) : null}
 
   </>
 ) : null}
