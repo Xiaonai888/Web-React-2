@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -41,6 +41,22 @@ registerTranslationNamespace('authorTrash', {
     trashInfo: 'Trash information',
     hint: 'Deleted items are shown here for 30 days. After 30 days, they disappear from your Trash and cannot be restored.',
     stories: 'Stories',
+    cancel: 'Cancel',
+    episodes: 'Episodes',
+    loadEpisodesFailed: 'Failed to load deleted episodes',
+    episodeRestored: 'Episode restored to Draft.',
+    episodeRestoreFailed: 'Failed to restore episode',
+    episodeRestoreQuestion: 'Restore this episode?',
+    episodeRestoreHelp: 'This episode will return to Draft. It will NOT be published automatically.',
+    episodeEmpty: 'Episode trash is empty',
+    episodeEmptyBody: 'Deleted episodes that can still be restored will appear here.',
+    episodeGroupCount: '{{count}} deleted episodes',
+    goToStories: 'Go to Stories',
+    restoreStoryFirst: 'Restore the story first to recover its episodes.',
+    loadMoreEpisodes: 'Load more episodes',
+    retryEpisodes: 'Try again',
+    expandEpisodes: 'Show deleted episodes',
+    collapseEpisodes: 'Hide deleted episodes',
     posts: 'Posts',
     comments: 'Comments',
     tabCount: '{{label}} · {{count}}',
@@ -97,6 +113,22 @@ registerTranslationNamespace('authorTrash', {
     trashInfo: 'ព័ត៌មានធុងសំរាម',
     hint: 'ធាតុដែលបានលុបនឹងបង្ហាញនៅទីនេះរយៈពេល 30 ថ្ងៃ។ បន្ទាប់ពី 30 ថ្ងៃ វានឹងបាត់ពីធុងសំរាម ហើយមិនអាចស្តារវិញបានទេ។',
     stories: 'រឿង',
+    cancel: 'បោះបង់',
+    episodes: 'ភាគ',
+    loadEpisodesFailed: 'មិនអាចផ្ទុកភាគដែលបានលុបបានទេ',
+    episodeRestored: 'បានស្តារភាគទៅ Draft ដោយជោគជ័យ។',
+    episodeRestoreFailed: 'មិនអាចស្តារភាគបានទេ',
+    episodeRestoreQuestion: 'ស្តារភាគនេះវិញ?',
+    episodeRestoreHelp: 'ភាគនេះនឹងត្រឡប់ទៅ Draft ហើយមិនបោះផ្សាយដោយស្វ័យប្រវត្តិទេ។',
+    episodeEmpty: 'ធុងសំរាមភាគទទេ',
+    episodeEmptyBody: 'ភាគដែលបានលុប និងនៅអាចស្តារវិញបាន នឹងបង្ហាញនៅទីនេះ។',
+    episodeGroupCount: 'ភាគបានលុប {{count}}',
+    goToStories: 'ទៅកាន់ Stories',
+    restoreStoryFirst: 'ត្រូវស្តាររឿងជាមុន ទើបអាចស្តារភាគរបស់វាបាន។',
+    loadMoreEpisodes: 'ផ្ទុកភាគបន្ថែម',
+    retryEpisodes: 'ព្យាយាមម្តងទៀត',
+    expandEpisodes: 'បង្ហាញភាគដែលបានលុប',
+    collapseEpisodes: 'លាក់ភាគដែលបានលុប',
     posts: 'Posts',
     comments: 'មតិយោបល់',
     tabCount: '{{label}} · {{count}}',
@@ -153,6 +185,22 @@ registerTranslationNamespace('authorTrash', {
     trashInfo: '回收站信息',
     hint: '已删除的内容会在这里保留 30 天。30 天后将从回收站消失，且无法恢复。',
     stories: '故事',
+    cancel: '取消',
+    episodes: '章节',
+    loadEpisodesFailed: '无法加载已删除章节',
+    episodeRestored: '章节已恢复为草稿。',
+    episodeRestoreFailed: '章节恢复失败',
+    episodeRestoreQuestion: '恢复此章节？',
+    episodeRestoreHelp: '章节将恢复为草稿，不会自动发布。',
+    episodeEmpty: '章节回收站为空',
+    episodeEmptyBody: '仍可恢复的已删除章节会显示在这里。',
+    episodeGroupCount: '已删除 {{count}} 章',
+    goToStories: '前往故事',
+    restoreStoryFirst: '请先恢复故事，才能恢复章节。',
+    loadMoreEpisodes: '加载更多章节',
+    retryEpisodes: '重试',
+    expandEpisodes: '显示已删除章节',
+    collapseEpisodes: '收起已删除章节',
     posts: '帖子',
     comments: '评论',
     tabCount: '{{label}} · {{count}}',
@@ -209,6 +257,22 @@ registerTranslationNamespace('authorTrash', {
     trashInfo: 'ゴミ箱情報',
     hint: '削除した項目は30日間ここに表示されます。30日後はゴミ箱から消え、復元できなくなります。',
     stories: 'ストーリー',
+    cancel: 'キャンセル',
+    episodes: 'エピソード',
+    loadEpisodesFailed: '削除されたエピソードを読み込めません',
+    episodeRestored: 'エピソードを下書きに復元しました。',
+    episodeRestoreFailed: 'エピソードを復元できません',
+    episodeRestoreQuestion: 'このエピソードを復元しますか？',
+    episodeRestoreHelp: 'エピソードは下書きに戻り、自動公開されません。',
+    episodeEmpty: 'エピソードのゴミ箱は空です',
+    episodeEmptyBody: '復元可能な削除済みエピソードがここに表示されます。',
+    episodeGroupCount: '削除済み {{count}} 件',
+    goToStories: 'ストーリーへ',
+    restoreStoryFirst: '先にストーリーを復元してください。',
+    loadMoreEpisodes: 'さらに読み込む',
+    retryEpisodes: '再試行',
+    expandEpisodes: '削除済みエピソードを表示',
+    collapseEpisodes: '削除済みエピソードを隠す',
     posts: '投稿',
     comments: 'コメント',
     tabCount: '{{label}} · {{count}}',
@@ -265,6 +329,22 @@ registerTranslationNamespace('authorTrash', {
     trashInfo: '휴지통 정보',
     hint: '삭제한 항목은 30일 동안 여기에 표시됩니다. 30일 후에는 휴지통에서 사라지고 복원할 수 없습니다.',
     stories: '스토리',
+    cancel: '취소',
+    episodes: '에피소드',
+    loadEpisodesFailed: '삭제된 에피소드를 불러올 수 없습니다',
+    episodeRestored: '에피소드를 초안으로 복원했습니다.',
+    episodeRestoreFailed: '에피소드를 복원하지 못했습니다',
+    episodeRestoreQuestion: '이 에피소드를 복원할까요?',
+    episodeRestoreHelp: '에피소드는 초안으로 복원되며 자동 게시되지 않습니다.',
+    episodeEmpty: '에피소드 휴지통이 비어 있습니다',
+    episodeEmptyBody: '복원 가능한 삭제된 에피소드가 여기에 표시됩니다.',
+    episodeGroupCount: '삭제된 에피소드 {{count}}개',
+    goToStories: '스토리로 이동',
+    restoreStoryFirst: '먼저 스토리를 복원해야 에피소드를 복원할 수 있습니다.',
+    loadMoreEpisodes: '에피소드 더 보기',
+    retryEpisodes: '다시 시도',
+    expandEpisodes: '삭제된 에피소드 보기',
+    collapseEpisodes: '삭제된 에피소드 숨기기',
     posts: '게시물',
     comments: '댓글',
     tabCount: '{{label}} · {{count}}',
@@ -336,6 +416,17 @@ function getDaysLeft(item) {
         86400000
     )
   )
+}
+
+// GET_AUTHOR_DELETED_EPISODES_UI_V1
+// The backend supplies only still-restorable rows. Re-check exact expiry client-side
+// and never extend the original 30-day window.
+function getEpisodeDaysLeft(episode) {
+  const deleted = Date.parse(episode?.deleted_at || '')
+  const expires = Date.parse(episode?.delete_expires_at || '')
+  if (!Number.isFinite(deleted) || !Number.isFinite(expires)) return 0
+  const effectiveExpiry = Math.min(expires, deleted + 30 * 86400000)
+  return Math.max(0, Math.ceil((effectiveExpiry - Date.now()) / 86400000))
 }
 
 function EmptyCover({ title }) {
@@ -640,6 +731,16 @@ export default function AuthorTrashPage() {
     useState('stories')
   const [stories, setStories] =
     useState([])
+  const [episodes, setEpisodes] = useState([])
+  const [episodesLoaded, setEpisodesLoaded] = useState(false)
+  const episodeLoadingRef = useRef(false)
+  const [episodeLoadError, setEpisodeLoadError] = useState(false)
+  const [failedEpisodePage, setFailedEpisodePage] = useState(1)
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false)
+  const [episodePage, setEpisodePage] = useState(1)
+  const [episodeHasMore, setEpisodeHasMore] = useState(false)
+  const [expandedStoryId, setExpandedStoryId] = useState('')
+  const [restoreEpisode, setRestoreEpisode] = useState(null)
   const [posts, setPosts] =
     useState([])
   const [comments, setComments] =
@@ -691,6 +792,38 @@ export default function AuthorTrashPage() {
         : bTime - aTime
     })
   }, [stories, query, sortOrder])
+
+  const visibleEpisodes = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
+    return episodes
+      .filter((episode) => getEpisodeDaysLeft(episode) > 0)
+      .filter((episode) => !keyword ||
+        `${episode.story_title || ''} ${episode.title || ''} ${episode.episode_number ?? ''}`
+          .toLowerCase().includes(keyword))
+      .sort((a,b) => {
+        const left = Date.parse(a.deleted_at || '') || 0
+        const right = Date.parse(b.deleted_at || '') || 0
+        return sortOrder === 'oldest' ? left - right : right - left
+      })
+  }, [episodes, query, sortOrder])
+
+  const episodeGroups = useMemo(() => {
+    const grouped = new Map()
+    for (const episode of visibleEpisodes) {
+      const storyId = String(episode.story_id)
+      if (!grouped.has(storyId)) {
+        grouped.set(storyId, {
+          id: storyId,
+          title: episode.story_title || '',
+          cover: episode.story_cover_url || '',
+          storyDeleted: Boolean(episode.story_deleted),
+          episodes: [],
+        })
+      }
+      grouped.get(storyId).episodes.push(episode)
+    }
+    return Array.from(grouped.values())
+  }, [visibleEpisodes])
 
   const visiblePosts = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -813,6 +946,43 @@ export default function AuthorTrashPage() {
       )
     } finally {
       setLoadingStories(false)
+    }
+  }
+
+  async function loadEpisodes(page = 1) {
+    if (episodeLoadingRef.current) return
+    const token = requireToken()
+    if (!token) return
+    episodeLoadingRef.current = true
+    try {
+      setEpisodeLoadError(false)
+      setLoadingEpisodes(true)
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/trash/episodes?page=${page}&limit=100`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || t('authorTrash.loadEpisodesFailed'))
+      }
+      const batch = Array.isArray(data.episodes) ? data.episodes : []
+      setEpisodes((current) => {
+        if (page === 1) return batch
+        const ids = new Set(current.map((episode) => String(episode.id)))
+        return [...current, ...batch.filter((episode) => !ids.has(String(episode.id)))]
+      })
+      setEpisodePage(page)
+      setEpisodeHasMore(data.has_more === true)
+      setEpisodesLoaded(true)
+    } catch (error) {
+      setEpisodeLoadError(true)
+      setFailedEpisodePage(page)
+      setMessage(error.message === 'Failed to fetch'
+        ? t('authorTrash.cannotConnect')
+        : error.message || t('authorTrash.loadEpisodesFailed'))
+    } finally {
+      episodeLoadingRef.current = false
+      setLoadingEpisodes(false)
     }
   }
 
@@ -961,11 +1131,44 @@ export default function AuthorTrashPage() {
       setMessage(
         t('authorTrash.storyRestored')
       )
+      if (episodesLoaded) loadEpisodes(1)
     } catch (error) {
       setMessage(
         error.message ||
           t('authorTrash.restoreStoryFailed')
       )
+    } finally {
+      setBusyId('')
+    }
+  }
+
+  async function handleRestoreEpisode() {
+    if (!restoreEpisode || busyId) return
+    const episode = restoreEpisode
+    const token = requireToken()
+    if (!token) return
+    if (episode.story_deleted || !getEpisodeDaysLeft(episode)) {
+      setRestoreEpisode(null)
+      setMessage(t(episode.story_deleted ? 'authorTrash.restoreStoryFirst' : 'authorTrash.episodeRestoreFailed'))
+      return
+    }
+    try {
+      setBusyId(`episode:${episode.id}`)
+      setMessage('')
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${encodeURIComponent(episode.story_id)}/episodes/${encodeURIComponent(episode.id)}/restore`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || t('authorTrash.episodeRestoreFailed'))
+      }
+      setEpisodes((current) => current.filter((item) => String(item.id) !== String(episode.id)))
+      setRestoreEpisode(null)
+      setMessage(t('authorTrash.episodeRestored'))
+    } catch (error) {
+      setRestoreEpisode(null)
+      setMessage(error.message || t('authorTrash.episodeRestoreFailed'))
     } finally {
       setBusyId('')
     }
@@ -1104,22 +1307,63 @@ export default function AuthorTrashPage() {
     setQuery('')
   }, [activeTab])
 
+  useEffect(() => {
+    if (activeTab === 'episodes' && !episodesLoaded && !loadingEpisodes) {
+      loadEpisodes(1)
+    }
+  }, [activeTab, episodesLoaded])
+
   const loading =
     activeTab === 'stories'
       ? loadingStories
-      : activeTab === 'posts'
-        ? loadingPosts
-        : loadingComments
+      : activeTab === 'episodes'
+        ? loadingEpisodes || (!episodesLoaded && !episodeLoadError)
+        : activeTab === 'posts'
+          ? loadingPosts
+          : loadingComments
 
   const activeCount =
     activeTab === 'stories'
       ? visibleStories.length
-      : activeTab === 'posts'
-        ? visiblePosts.length
-        : visibleComments.length
+      : activeTab === 'episodes'
+        ? visibleEpisodes.length
+        : activeTab === 'posts'
+          ? visiblePosts.length
+          : visibleComments.length
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[110px] text-[var(--shadow-text-primary)]">
+      {restoreEpisode ? (
+        <div className="fixed inset-0 z-[180] flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center sm:pb-0">
+          <button type="button" disabled={Boolean(busyId)} aria-label={t('authorTrash.cancel')}
+            onClick={() => setRestoreEpisode(null)} className="absolute inset-0" />
+          <section role="dialog" aria-modal="true" aria-labelledby="restore-episode-title"
+            className="relative w-full max-w-[420px] rounded-[18px] bg-[var(--shadow-bg-surface)] p-5 text-center shadow-2xl">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]">
+              <i className="fa-solid fa-rotate-left text-[20px] text-[var(--shadow-text-primary)]" />
+            </div>
+            <h2 id="restore-episode-title" className="mt-4 text-[17px] font-semibold text-[var(--shadow-text-primary)]">
+              {t('authorTrash.episodeRestoreQuestion')}
+            </h2>
+            <p className="mt-2 text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+              EP {restoreEpisode.episode_number}: {restoreEpisode.title || t('authorTrash.episode')}
+            </p>
+            <p className="mt-2 text-[12px] text-[var(--shadow-text-secondary)]">
+              {t('authorTrash.episodeRestoreHelp')}
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button type="button" disabled={Boolean(busyId)} onClick={() => setRestoreEpisode(null)}
+                className="h-11 rounded-[12px] border border-[var(--shadow-border)] text-[12px] text-[var(--shadow-text-primary)] disabled:opacity-60">
+                {t('authorTrash.cancel')}
+              </button>
+              <button type="button" disabled={Boolean(busyId)} onClick={handleRestoreEpisode}
+                className="h-11 rounded-[12px] bg-[var(--shadow-text-primary)] text-[12px] text-[var(--shadow-bg-surface)] disabled:opacity-60">
+                {busyId ? t('authorTrash.restoring') : t('authorTrash.restore')}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       <header className="border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-4">
         <div className="relative mx-auto flex max-w-5xl items-center justify-between">
           <button
@@ -1161,9 +1405,10 @@ export default function AuthorTrashPage() {
 
       <main className="mx-auto max-w-5xl px-3 pt-4">
         <section className="overflow-hidden rounded-[10px] bg-[var(--shadow-bg-surface)]">
-          <div className="grid grid-cols-3 gap-2 px-3 py-3">
+          <div className="grid grid-cols-4 gap-1 px-2 py-3 sm:gap-2 sm:px-3">
             {[
               ['stories', t('authorTrash.stories'), visibleStories.length],
+              ['episodes', t('authorTrash.episodes'), visibleEpisodes.length],
               ['posts', t('authorTrash.posts'), visiblePosts.length],
               ['comments', t('authorTrash.comments'), visibleComments.length],
             ].map(([value, label, count]) => (
@@ -1173,7 +1418,7 @@ export default function AuthorTrashPage() {
                 onClick={() =>
                   setActiveTab(value)
                 }
-                className={`h-10 rounded-full px-3 text-[12px] font-medium transition ${
+                className={`h-10 min-w-0 rounded-full px-1.5 text-[11px] font-medium transition sm:px-3 sm:text-[12px] ${
                   activeTab === value
                     ? 'bg-[#fff0f2] text-[var(--shadow-text-primary)] dark:bg-[#e11d48]/15'
                     : 'bg-transparent text-[var(--shadow-text-primary)]'
@@ -1311,6 +1556,119 @@ export default function AuthorTrashPage() {
                   title={t('authorTrash.storyEmpty')}
                   text={t('authorTrash.storyEmptyBody')}
                 />
+              </>
+            )
+          ) : null}
+
+          {!loading && activeTab === 'episodes' ? (
+            episodeGroups.length ? (
+              <>
+                <div className="h-px bg-[var(--shadow-border)]" />
+                <section>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <h2 className="text-[14px] font-semibold text-[var(--shadow-text-primary)]">
+                      {t('authorTrash.episodes')}
+                    </h2>
+                    <span className="text-[11px] text-[var(--shadow-text-secondary)]">{activeCount}</span>
+                  </div>
+                  <div className="divide-y divide-[var(--shadow-border)]">
+                    {episodeGroups.map((group) => (
+                      <article key={group.id} className="bg-[var(--shadow-bg-surface)]">
+                        <button type="button"
+                          aria-expanded={expandedStoryId === group.id}
+                          aria-label={expandedStoryId === group.id ? t('authorTrash.collapseEpisodes') : t('authorTrash.expandEpisodes')}
+                          onClick={() => setExpandedStoryId((current) => current === group.id ? '' : group.id)}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left">
+                          <div className="h-[77px] w-[55px] shrink-0 overflow-hidden rounded-[9px] bg-[var(--shadow-bg-soft)]">
+                            {group.cover ? <img src={group.cover} alt="" className="h-full w-full object-cover" />
+                              : <EmptyCover title={group.title} />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="line-clamp-2 text-[13px] font-semibold text-[var(--shadow-text-primary)]">
+                              {group.title || t('authorTrash.untitledStory')}
+                            </div>
+                            <div className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">
+                              {t('authorTrash.episodeGroupCount', { count: group.episodes.length })}
+                            </div>
+                            {group.storyDeleted ? <div className="mt-1 text-[10px] text-[#e5484d]">{t('authorTrash.restoreStoryFirst')}</div> : null}
+                          </div>
+                          <i className={`fa-solid fa-chevron-down text-[12px] text-[var(--shadow-text-secondary)] transition-transform ${expandedStoryId === group.id ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedStoryId === group.id ? (
+                          <div className="divide-y divide-[var(--shadow-border)] border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-page)]">
+                            {group.episodes.map((episode) => (
+                              <div key={episode.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                                <div className="min-w-0 flex-1">
+                                  <p className="line-clamp-2 text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+                                    EP {episode.episode_number}: {episode.title || t('authorTrash.episode')}
+                                  </p>
+                                  <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">
+                                    {t('authorTrash.deletedDate', { date: formatDate(episode.deleted_at) })}
+                                  </p>
+                                  <p className="mt-1 text-[10px] text-[#e5484d]">
+                                    {t('authorTrash.daysLeft', { count: getEpisodeDaysLeft(episode) })}
+                                  </p>
+                                </div>
+                                {episode.story_deleted ? (
+                                  <button type="button" onClick={() => setActiveTab('stories')}
+                                    className="shrink-0 rounded-full border border-[var(--shadow-border)] px-3 py-2 text-[11px] text-[var(--shadow-text-primary)]">
+                                    {t('authorTrash.goToStories')}
+                                  </button>
+                                ) : (
+                                  <button type="button" disabled={Boolean(busyId)} onClick={() => setRestoreEpisode(episode)}
+                                    className="shrink-0 rounded-full bg-[var(--shadow-text-primary)] px-3 py-2 text-[11px] text-[var(--shadow-bg-surface)] disabled:opacity-50">
+                                    {t('authorTrash.restore')}
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                  {episodeLoadError ? (
+                    <div className="px-4 py-4 text-center">
+                      <button type="button" onClick={() => loadEpisodes(failedEpisodePage)}
+                        className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-[12px] text-[var(--shadow-text-primary)]">
+                        {t('authorTrash.retryEpisodes')}
+                      </button>
+                    </div>
+                  ) : null}
+                  {episodeHasMore && !episodeLoadError ? (
+                    <div className="px-4 py-4 text-center">
+                      <button type="button" disabled={loadingEpisodes} onClick={() => loadEpisodes(episodePage + 1)}
+                        className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-[12px] text-[var(--shadow-text-primary)] disabled:opacity-50">
+                        {t('authorTrash.loadMoreEpisodes')}
+                      </button>
+                    </div>
+                  ) : null}
+                </section>
+              </>
+            ) : (
+              <>
+                <div className="h-px bg-[var(--shadow-border)]" />
+                {episodeLoadError ? (
+                  <div className="bg-[var(--shadow-bg-surface)] px-4 py-8 text-center">
+                    <p className="mb-3 text-[12px] text-[var(--shadow-text-secondary)]">{t('authorTrash.loadEpisodesFailed')}</p>
+                    <button type="button" onClick={() => loadEpisodes(failedEpisodePage)}
+                      className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-[12px] text-[var(--shadow-text-primary)]">
+                      {t('authorTrash.retryEpisodes')}
+                    </button>
+                  </div>
+                ) : (
+                  <EmptyState icon="fa-regular fa-folder-open"
+                    title={t('authorTrash.episodeEmpty')}
+                    text={t('authorTrash.episodeEmptyBody')} />
+                )}
+                {episodeHasMore && !episodeLoadError ? (
+                  <div className="px-4 pb-4 text-center">
+                    <button type="button" disabled={loadingEpisodes} onClick={() => loadEpisodes(episodePage + 1)}
+                      className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-[12px]">
+                      {t('authorTrash.loadMoreEpisodes')}
+                    </button>
+                  </div>
+                ) : null}
               </>
             )
           ) : null}
