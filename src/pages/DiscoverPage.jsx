@@ -2151,9 +2151,18 @@ function asAutoStoryAdOption(ad, day) {
   }
 }
 
-function AutoStoryAdCard({ ad, day, onMore }) {
+function AutoStoryAdCard({ ad, day, onMore, isFollowing = false, isOwner = false, onFollowChanged }) {
+  const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const [followBusy, setFollowBusy] = useState(false)
+  const [followedHere, setFollowedHere] = useState(false)
+  const [followError, setFollowError] = useState('')
   const target = `/story/${encodeURIComponent(ad.story_id)}`
+  const authorUsername = String(ad.author_username || '').trim()
+  const authorUrl = authorUsername
+    ? `/author/page/${encodeURIComponent(authorUsername)}`
+    : ''
+  const followed = isFollowing || followedHere
   const badge = getStoryBadge({
     story_status: ad.story_status,
     total_episodes: ad.episode_count,
@@ -2166,26 +2175,91 @@ function AutoStoryAdCard({ ad, day, onMore }) {
     ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
     : ''
   const name = ad.author_name || discoverText('author')
-  const tags = Array.isArray(ad.tags) ? ad.tags.filter((x) => typeof x === 'string' && x.trim()).slice(0, 3) : []
+  const genre = String(ad.main_genre || '').trim()
+  const tags = Array.isArray(ad.tags)
+    ? ad.tags.filter((tag) => typeof tag === 'string' && tag.trim() && tag.toLowerCase() !== genre.toLowerCase()).slice(0, 3)
+    : []
   const option = asAutoStoryAdOption(ad, day)
+
   const rememberPosition = () => {
     try {
       sessionStorage.setItem('shadow_discover_auto_ad_return_y', String(window.scrollY))
     } catch {}
   }
 
+  async function followAuthor() {
+    if (!authorUsername || followBusy || followed || isOwner) return
+    const token = getAuthToken()
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    setFollowBusy(true)
+    setFollowError('')
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/authors/page/${encodeURIComponent(authorUsername)}/follow`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || discoverText('failedFollow'))
+      }
+      setFollowedHere(true)
+      onFollowChanged?.(ad.author_id)
+    } catch (error) {
+      setFollowError(error.message || discoverText('failedFollow'))
+    } finally {
+      setFollowBusy(false)
+    }
+  }
+
+  const avatar = ad.author_avatar_url ? (
+    <img src={ad.author_avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
+  ) : (
+    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
+      {name.charAt(0).toUpperCase()}
+    </span>
+  )
+
   return (
     <article className="overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
       <header className="flex items-start gap-3 px-4 pb-2 pt-4">
-        {ad.author_avatar_url ? (
-          <img src={ad.author_avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
+        {authorUrl ? (
+          <Link to={authorUrl} className="h-10 w-10 shrink-0" aria-label={discoverText('openAuthor', { name })}>{avatar}</Link>
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
-            {name.charAt(0).toUpperCase()}
-          </div>
+          <span className="h-10 w-10 shrink-0">{avatar}</span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-semibold">{name}</div>
+          <div className="flex min-w-0 flex-wrap items-center gap-1 text-[14px]">
+            {authorUrl ? (
+              <Link to={authorUrl} className="max-w-full truncate font-semibold">{name}</Link>
+            ) : (
+              <span className="truncate font-semibold">{name}</span>
+            )}
+            {authorUsername && !followed && !isOwner ? (
+              <>
+                <span className="px-1 text-gray-400">·</span>
+                <button
+                  type="button"
+                  onClick={followAuthor}
+                  disabled={followBusy}
+                  className="font-semibold text-[#1877f2] disabled:opacity-50"
+                >
+                  {followBusy ? discoverText('following') : discoverText('follow')}
+                </button>
+              </>
+            ) : null}
+          </div>
+          {followError ? <div className="mt-1 text-[11px] text-red-600">{followError}</div> : null}
           <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
             {updateLabel ? <span>{updateLabel} Last Update</span> : null}
             {updateLabel ? <span>·</span> : null}
@@ -2199,7 +2273,7 @@ function AutoStoryAdCard({ ad, day, onMore }) {
         </button>
       </header>
       {description ? (
-        <div className="px-4 pb-3 text-[14px] leading-[1.55] whitespace-pre-wrap break-words">
+        <div className="whitespace-pre-wrap break-words px-4 pb-3 text-[14px] leading-[1.55]">
           {caption}
           {description.length > 240 ? (
             <button type="button" className="ml-1 font-semibold text-gray-500" onClick={() => setExpanded((value) => !value)}>
@@ -2228,8 +2302,9 @@ function AutoStoryAdCard({ ad, day, onMore }) {
               <span className="inline-flex items-center gap-1"><i className="fa-solid fa-book-open" />{Number(ad.episode_count || 0)} Episodes</span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
             </div>
-            {tags.length ? (
+            {genre || tags.length ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
+                {genre ? <span className="rounded bg-[#e9eaee] px-2 py-1 text-[11px] text-[#667085] dark:bg-white/10 dark:text-gray-300">{genre}</span> : null}
                 {tags.map((tag) => <span key={tag} className="rounded bg-[#e9eaee] px-2 py-1 text-[11px] text-[#667085] dark:bg-white/10 dark:text-gray-300">{tag}</span>)}
               </div>
             ) : null}
@@ -2240,7 +2315,6 @@ function AutoStoryAdCard({ ad, day, onMore }) {
     </article>
   )
 }
-
 
 function AdsCard({
   item,
@@ -3219,7 +3293,12 @@ export default function DiscoverPage() {
   })
 
   const [discoverAdControl, setDiscoverAdControl] = useState(null)
-const [autoHiddenRevision, setAutoHiddenRevision] = useState(0)
+  const [autoHiddenRevision, setAutoHiddenRevision] = useState(0)
+  const [autoFollowedAuthorIds, setAutoFollowedAuthorIds] = useState(() => new Set())
+
+  useEffect(() => {
+    setAutoFollowedAuthorIds(new Set())
+  }, [token])
 
 useEffect(() => {
   let alive = true
@@ -3351,6 +3430,19 @@ useEffect(() => {
       )
     )
   }, [discoverAdControl, autoHiddenRevision])
+
+  // Reuse follow information already in the Discover feed; no per-ad status request.
+  const knownAutoAdAuthorStates = useMemo(() => {
+    const following = new Set(autoFollowedAuthorIds)
+    const owned = new Set()
+    for (const post of [...realPosts, ...boostPosts]) {
+      const authorId = String(post?.author_page?.id || post?.author_page_id || '')
+      if (!authorId) continue
+      if (post?.is_following === true || post?.author_page?.is_following === true) following.add(authorId)
+      if (post?.is_owner === true || post?.author_page?.is_owner === true) owned.add(authorId)
+    }
+    return { following, owned }
+  }, [realPosts, boostPosts, autoFollowedAuthorIds])
 
   const firstShadowMallPromotion =
     uniqueShadowMallPromotions[0] || null
@@ -4839,6 +4931,13 @@ const visibleBoostPosts = useMemo(() => {
     setOptionsPost(null)
   }
 
+  function handleAutoAdAuthorFollowed(authorId) {
+    const id = String(authorId || '')
+    if (!id) return
+    setAutoFollowedAuthorIds((current) => new Set([...current, id]))
+    updateAuthorFollowState(id, true)
+  }
+
   function updateAuthorFollowState(
     authorId,
     isFollowing
@@ -5127,9 +5226,13 @@ const visibleBoostPosts = useMemo(() => {
 
 {discoverAdControl?.mode === 'auto' && visibleAutoAds[0] ? (
   <AutoStoryAdCard
+    key={`auto-fallback-${discoverAdControl.day}-${visibleAutoAds[0].story_id}`}
     ad={visibleAutoAds[0]}
     day={discoverAdControl.day}
     onMore={setAdOptionsItem}
+    onFollowChanged={handleAutoAdAuthorFollowed}
+    isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[0].author_id || ''))}
+    isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[0].author_id || ''))}
   />
 ) : null}
 
@@ -5197,15 +5300,13 @@ const visibleBoostPosts = useMemo(() => {
   ) : discoverAdControl?.mode === 'auto' &&
       visibleAutoAds.length > 0 ? (
     <AutoStoryAdCard
-      key={`auto-ad-${Math.floor(entry.timelineIndex / 3)}`}
-      ad={
-        visibleAutoAds[
-          Math.floor(entry.timelineIndex / 3) %
-          visibleAutoAds.length
-        ]
-      }
+      key={`auto-ad-${discoverAdControl.day}-${visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].story_id}`}
+      ad={visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length]}
       day={discoverAdControl.day}
       onMore={setAdOptionsItem}
+      onFollowChanged={handleAutoAdAuthorFollowed}
+      isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].author_id || ''))}
+      isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].author_id || ''))}
     />
   ) : null
 ) : null}
@@ -5286,9 +5387,13 @@ const visibleBoostPosts = useMemo(() => {
  discoverAdControl?.mode === 'auto' &&
  visibleAutoAds[0] ? (
   <AutoStoryAdCard
+    key={`auto-fallback-${discoverAdControl.day}-${visibleAutoAds[0].story_id}`}
     ad={visibleAutoAds[0]}
     day={discoverAdControl.day}
     onMore={setAdOptionsItem}
+    onFollowChanged={handleAutoAdAuthorFollowed}
+    isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[0].author_id || ''))}
+    isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[0].author_id || ''))}
   />
 ) : null}
 
