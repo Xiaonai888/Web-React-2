@@ -10,11 +10,18 @@ const MAX_REPORTS_PER_TAB = 12
 const MAX_EVENTS_PER_GROUP = 400
 const SESSION_KEY = 'shadow_image_diag_v1'
 const IMAGE_EXTENSION = /\.(?:png|jpe?g|webp|gif|avif|svg|ico)(?:$|[?#])/i
+const MAX_ROWS_PER_SEND = 6
 
 function sessionState() {
   try {
     const value = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null')
-    if (value && typeof value === 'object') return value
+    if (value && typeof value === 'object' && typeof value.sampled === 'boolean') {
+      return {
+        sampled: value.sampled,
+        last_sent_ms: Math.max(0, Number(value.last_sent_ms) || 0),
+        reports: Math.max(0, Number(value.reports) || 0),
+      }
+    }
   } catch {}
   return { sampled: Math.random() < SAMPLE_RATE, last_sent_ms: 0, reports: 0 }
 }
@@ -26,8 +33,8 @@ function storeSession(state) {
 function pageGroup() {
   const path = window.location.pathname.toLowerCase()
   if (path === '/' || path === '/home') return 'HOME'
-  if (path.startsWith('/manga')) return 'MANGA'
   if (path.includes('/read') || path.includes('/episode')) return 'READ'
+  if (path.startsWith('/manga')) return 'MANGA'
   if (path.startsWith('/story')) return 'STORY'
   if (path.startsWith('/author')) return 'AUTHOR'
   if (path.startsWith('/chat')) return 'CHAT'
@@ -56,10 +63,21 @@ function isImageResource(entry) {
     (entry?.initiatorType === 'css' && IMAGE_EXTENSION.test(entry.name || ''))
 }
 
+function blankGroup(source, page) {
+  return {
+    source, page, timed: 0, unavailable: 0, slow_1500: 0,
+    slow_3000: 0, load_errors: 0, sum_ms: 0, max_ms: 0,
+    worker_seen: 0, cache_hint: 0, network_seen: 0,
+    timing_phase_unavailable: 0, ttfb_samples: 0, sum_ttfb_ms: 0,
+    ttfb_slow_800: 0, transfer_samples: 0, sum_transfer_ms: 0,
+    transfer_slow_1500: 0,
+  }
+}
+
 export function installImageLoadDiagnostics() {
   if (window.__shadowImageLoadDiagnosticsInstalled) return
   window.__shadowImageLoadDiagnosticsInstalled = true
-  if (!navigator.sendBeacon || !window.performance) return
+  if (typeof navigator.sendBeacon !== 'function' || !window.performance) return
 
   const state = sessionState()
   storeSession(state)
@@ -70,12 +88,7 @@ export function installImageLoadDiagnostics() {
 
   const getGroup = (source, page) => {
     const key = `${source}:${page}`
-    if (!groups.has(key)) {
-      groups.set(key, {
-        source, page, timed: 0, unavailable: 0, slow_1500: 0,
-        slow_3000: 0, load_errors: 0, sum_ms: 0, max_ms: 0,
-      })
-    }
+    if (!groups.has(key)) groups.set(key, blankGroup(source, page))
     return groups.get(key)
   }
 
@@ -85,16 +98,37 @@ export function installImageLoadDiagnostics() {
     if (!source) return
     const group = getGroup(source, pageGroup())
     if (group.timed + group.unavailable >= MAX_EVENTS_PER_GROUP) return
+
     const duration = Number(entry.duration)
     if (!Number.isFinite(duration) || duration <= 0) {
       group.unavailable += 1
     } else {
-      const ms = Math.round(Math.min(60000, duration))
+      const ms = Math.max(1, Math.round(Math.min(60000, duration)))
       group.timed += 1
       group.sum_ms += ms
       group.max_ms = Math.max(group.max_ms, ms)
       if (ms >= 1500) group.slow_1500 += 1
       if (ms >= 3000) group.slow_3000 += 1
+
+      if (Number(entry.workerStart) > 0) group.worker_seen += 1
+      if (entry.deliveryType === 'cache') group.cache_hint += 1
+      if (Number(entry.transferSize) > 0) group.network_seen += 1
+
+      const requestStart = Number(entry.requestStart)
+      const responseStart = Number(entry.responseStart)
+      const responseEnd = Number(entry.responseEnd)
+      if (requestStart > 0 && responseStart >= requestStart && responseStart <= responseEnd) {
+        const ttfb = Math.round(Math.min(60000, responseStart - requestStart))
+        const transfer = Math.round(Math.min(60000, responseEnd - responseStart))
+        group.ttfb_samples += 1
+        group.sum_ttfb_ms += ttfb
+        if (ttfb >= 800) group.ttfb_slow_800 += 1
+        group.transfer_samples += 1
+        group.sum_transfer_ms += transfer
+        if (transfer >= 1500) group.transfer_slow_1500 += 1
+      } else {
+        group.timing_phase_unavailable += 1
+      }
     }
     pendingEvents += 1
   }
@@ -115,16 +149,19 @@ export function installImageLoadDiagnostics() {
     if (!navigator.onLine || pendingEvents <= 0 ||
         state.reports >= MAX_REPORTS_PER_TAB ||
         now - state.last_sent_ms < SEND_GAP_MS) return
-    const rows = [...groups.values()].filter((g) => g.timed + g.unavailable + g.load_errors > 0)
+    const rows = [...groups.entries()].filter(([, group]) =>
+      group.timed + group.unavailable + group.load_errors > 0).slice(0, MAX_ROWS_PER_SEND)
     if (!rows.length) return
-    const hasErrors = rows.some((g) => g.load_errors > 0)
-    if (pendingEvents < (onPageHide ? 4 : 8) && !hasErrors) return
-    const payload = JSON.stringify({ version: 1, groups: rows.slice(0, 18) })
+    if (pendingEvents < (onPageHide ? 4 : 8) &&
+        !rows.some(([, group]) => group.load_errors > 0 || group.slow_3000 > 0)) return
+
+    const payload = JSON.stringify({ version: 2, groups: rows.map(([, group]) => group) })
     if (payload.length > 3800) return
     try {
       if (!navigator.sendBeacon(REPORT_URL, new Blob([payload], { type: 'text/plain' }))) return
-      groups.clear()
-      pendingEvents = 0
+      for (const [key] of rows) groups.delete(key)
+      pendingEvents = [...groups.values()].reduce((sum, item) =>
+        sum + item.timed + item.unavailable + item.load_errors, 0)
       state.last_sent_ms = now
       state.reports += 1
       storeSession(state)
