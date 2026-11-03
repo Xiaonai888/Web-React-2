@@ -4463,9 +4463,10 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
           {activeTab === 'Reel' ? (
   <AuthorReelGrid
-    key={displayAuthor.user_id || displayAuthor.page_username}
-    userId={displayAuthor.user_id}
-  />
+  key={displayAuthor.user_id || displayAuthor.page_username}
+  userId={displayAuthor.user_id}
+  isOwner={Boolean(displayAuthor.is_owner)}
+/>
 ) : null}
 
 
