@@ -3159,12 +3159,6 @@ export default function DiscoverPage() {
   const firstShadowMallPromotion =
     uniqueShadowMallPromotions[0] || null
 
-  const remainingShadowMallPromotions =
-    uniqueShadowMallPromotions.filter(
-      (promotion) =>
-        String(promotion.id) !==
-        String(firstShadowMallPromotion?.id)
-    )
 
   const [commentPost, setCommentPost] = useState(null)
   const [optionsPost, setOptionsPost] = useState(null)
@@ -4188,7 +4182,23 @@ export default function DiscoverPage() {
     }))
   }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
-  const visibleBoostPosts = useMemo(() => {
+useEffect(() => {
+  const neededAds = Math.floor(discoverTimeline.length / 3)
+
+  if (
+    neededAds > uniqueShadowMallPromotions.length &&
+    shadowMallAdPagination.hasNext
+  ) {
+    shadowMallAdLoadMoreRef.current?.()
+  }
+}, [
+  discoverTimeline.length,
+  uniqueShadowMallPromotions.length,
+  shadowMallAdPagination.hasNext,
+  shadowMallAdPagination.nextPage,
+])
+
+const visibleBoostPosts = useMemo(() => {
     const organicIds = new Set(realPosts.map((post) => String(post?.id || '')))
     return boostPosts.filter((post) => post?.id && post.sponsored && post.boost_receipt && !organicIds.has(String(post.id))).slice(0, 3)
   }, [boostPosts, realPosts])
@@ -4841,7 +4851,7 @@ export default function DiscoverPage() {
   <DiscoverYouMightLikeSection />
 </DeferredDiscoverSection>
 
-  {uniqueShadowMallPromotions.map(
+  {uniqueShadowMallPromotions.slice(0, 1).map(
     (promotion) => (
       <AdsCard
         key={`empty-feed-ad-${promotion.id}`}
@@ -4887,8 +4897,41 @@ export default function DiscoverPage() {
 />
                 )}
 
-                {visibleBoostPosts.filter((_, index) => [0, 3, 6][index] === entry.timelineIndex).map(renderBoostPost)}
-                {visibleBoostBooks.filter((_, index) => [1, 4, 7][index] === entry.timelineIndex).map(renderBoostBook)}
+                {visibleBoostPosts
+  .filter((_, index) =>
+    [0, 3, 6][index] === entry.timelineIndex
+  )
+  .map(renderBoostPost)}
+
+{visibleBoostBooks
+  .filter((_, index) =>
+    [1, 4, 7][index] === entry.timelineIndex
+  )
+  .map(renderBoostBook)}
+
+{(entry.timelineIndex + 1) % 3 === 0 &&
+  uniqueShadowMallPromotions.length > 0 &&
+  (
+    Math.floor(entry.timelineIndex / 3) <
+      uniqueShadowMallPromotions.length ||
+    !shadowMallAdPagination.hasNext
+  ) ? (
+    <AdsCard
+      key={`manual-ad-${Math.floor(entry.timelineIndex / 3)}`}
+      item={
+        uniqueShadowMallPromotions[
+          Math.floor(entry.timelineIndex / 3) %
+            uniqueShadowMallPromotions.length
+        ]
+      }
+      onMore={setAdOptionsItem}
+      onHide={hideShadowMallPromotion}
+      onImpression={handleShadowMallAdImpression}
+      onStorySaleStatusChanged={
+        handleShadowMallStorySaleStatusChanged
+      }
+    />
+  ) : null}
 
                 {entry.timelineIndex === 0 ? (
   <DiscoverAuthorStorePromotionSection />
@@ -4926,21 +4969,10 @@ export default function DiscoverPage() {
                 ) : null}
 
                 {entry.timelineIndex === 3 ? (
-  <>
-    <DeferredDiscoverSection>
-  <DiscoverYouMightLikeSection />
-</DeferredDiscoverSection>
-    {firstShadowMallPromotion ? (
-      <AdsCard
-        item={firstShadowMallPromotion}
-        onMore={setAdOptionsItem}
-        onHide={hideShadowMallPromotion}
-        onImpression={handleShadowMallAdImpression}
-        onStorySaleStatusChanged={
-          handleShadowMallStorySaleStatusChanged
-        }
-      />
-    ) : null}
+  <DeferredDiscoverSection>
+    <DiscoverYouMightLikeSection />
+  </DeferredDiscoverSection>
+) : null}
 
   </>
 ) : null}
@@ -4958,13 +4990,13 @@ export default function DiscoverPage() {
             {visibleBoostBooks.filter((_, index) => [1, 4, 7][index] >= discoverTimeline.length).map(renderBoostBook)}
 
             {discoverTimeline.length > 0 &&
-discoverTimeline.length < 4 ? (
+            discoverTimeline.length < 3 ? (
   <>
    <DeferredDiscoverSection>
   <DiscoverYouMightLikeSection />
 </DeferredDiscoverSection>
 
-    {firstShadowMallPromotion ? (
+    {!realPostsHasMore && firstShadowMallPromotion ? (
       <AdsCard
         item={firstShadowMallPromotion}
         onMore={setAdOptionsItem}
@@ -4979,27 +5011,16 @@ discoverTimeline.length < 4 ? (
   </>
 ) : null}
 
-            {discoverTimeline.length &&
-            !realPostsHasMore
-              ? remainingShadowMallPromotions.map(
-                  (promotion) => (
-                    <AdsCard
-                      key={`remaining-feed-ad-${promotion.id}`}
-                      item={promotion}
-                      onMore={setAdOptionsItem}
-                      onHide={hideShadowMallPromotion}
-                      onImpression={handleShadowMallAdImpression}
-                      onStorySaleStatusChanged={
-                        handleShadowMallStorySaleStatusChanged
-                      }
-                    />
-                  )
-                )
-              : null}
+            
 
             <ShadowMallAdsLoadTrigger
-              enabled={shadowMallAdPagination.hasNext && !realPostsLoading && !readerPostsLoading &&
-                (discoverTimeline.length ? !realPostsHasMore : !realPostsError && !readerPostsError)}
+              enabled={
+  shadowMallAdPagination.hasNext &&
+  !realPostsLoading &&
+  !readerPostsLoading &&
+  Math.floor(discoverTimeline.length / 3) >
+    uniqueShadowMallPromotions.length
+}
               count={shadowMallPromotions.length}
               onLoadMore={() => shadowMallAdLoadMoreRef.current?.()}
             />
