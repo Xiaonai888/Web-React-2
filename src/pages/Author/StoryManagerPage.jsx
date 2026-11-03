@@ -62,6 +62,15 @@ registerTranslationNamespace('storyManager', {
     "shown": "{{count}} shown",
     "publishedCount": "Published {{count}}",
     "draftsCount": "Drafts {{count}}",
+    "deletedCount": "Deleted {{count}}",
+    "restore": "Restore",
+    "restoreQuestion": "Restore this episode?",
+    "restoreHelp": "It will return as a draft, without publishing or overwriting a newer episode.",
+    "restoring": "Restoring...",
+    "restoreBefore": "Restore before {{date}}",
+    "daysLeft": "{{count}} days left",
+    "restoreFailed": "Could not restore episode",
+    "restoreRefreshNotice": "Episode restored. Refresh the page to load its updated details.",
     "perPage": "{{count}} per page",
     "pageRange": "{{start}}–{{end}} of {{total}}",
     "noPublished": "No published episodes yet.",
@@ -129,6 +138,15 @@ registerTranslationNamespace('storyManager', {
     "shown": "បង្ហាញ {{count}}",
     "publishedCount": "បានបោះផ្សាយ {{count}}",
     "draftsCount": "ព្រាង {{count}}",
+    "deletedCount": "បានលុប {{count}}",
+    "restore": "ស្ដារវិញ",
+    "restoreQuestion": "ស្ដារភាគនេះវិញមែនទេ?",
+    "restoreHelp": "ភាគនឹងត្រឡប់ទៅ Draft ដោយមិនបោះផ្សាយ ឬសរសេរជាន់ភាគថ្មី។",
+    "restoring": "កំពុងស្ដារ...",
+    "restoreBefore": "ស្ដារមុន {{date}}",
+    "daysLeft": "នៅសល់ {{count}} ថ្ងៃ",
+    "restoreFailed": "មិនអាចស្ដារភាគបានទេ",
+    "restoreRefreshNotice": "បានស្ដារភាគហើយ។ សូម Refresh ទំព័រ ដើម្បីផ្ទុកព័ត៌មានថ្មី។",
     "perPage": "{{count}} ក្នុងមួយទំព័រ",
     "pageRange": "{{start}}–{{end}} នៃ {{total}}",
     "noPublished": "មិនទាន់មានភាគដែលបានបោះផ្សាយទេ។",
@@ -196,6 +214,15 @@ registerTranslationNamespace('storyManager', {
     "shown": "显示 {{count}} 个",
     "publishedCount": "已发布 {{count}}",
     "draftsCount": "草稿 {{count}}",
+    "deletedCount": "已删除 {{count}}",
+    "restore": "恢复",
+    "restoreQuestion": "恢复此章节？",
+    "restoreHelp": "章节将恢复为草稿，不会自动发布或覆盖新章节。",
+    "restoring": "恢复中...",
+    "restoreBefore": "请在 {{date}} 前恢复",
+    "daysLeft": "剩余 {{count}} 天",
+    "restoreFailed": "无法恢复章节",
+    "restoreRefreshNotice": "章节已恢复。请刷新页面查看最新信息。",
     "perPage": "每页 {{count}} 个",
     "pageRange": "{{start}}–{{end}} / {{total}}",
     "noPublished": "暂无已发布章节。",
@@ -263,6 +290,15 @@ registerTranslationNamespace('storyManager', {
     "shown": "{{count}} 件表示",
     "publishedCount": "公開済み {{count}}",
     "draftsCount": "下書き {{count}}",
+    "deletedCount": "削除済み {{count}}",
+    "restore": "復元",
+    "restoreQuestion": "このエピソードを復元しますか？",
+    "restoreHelp": "新しいエピソードを上書きせず、下書きに戻します。公開はされません。",
+    "restoring": "復元中...",
+    "restoreBefore": "{{date}} までに復元",
+    "daysLeft": "残り {{count}} 日",
+    "restoreFailed": "エピソードを復元できませんでした",
+    "restoreRefreshNotice": "エピソードを復元しました。最新情報を表示するにはページを更新してください。",
     "perPage": "1ページ {{count}} 件",
     "pageRange": "{{start}}–{{end}} / {{total}}",
     "noPublished": "公開済みエピソードはまだありません。",
@@ -330,6 +366,15 @@ registerTranslationNamespace('storyManager', {
     "shown": "{{count}}개 표시",
     "publishedCount": "게시됨 {{count}}",
     "draftsCount": "초안 {{count}}",
+    "deletedCount": "삭제됨 {{count}}",
+    "restore": "복원",
+    "restoreQuestion": "이 에피소드를 복원할까요?",
+    "restoreHelp": "새 에피소드를 덮어쓰거나 자동 게시하지 않고 초안으로 복원합니다.",
+    "restoring": "복원 중...",
+    "restoreBefore": "{{date}}까지 복원",
+    "daysLeft": "{{count}}일 남음",
+    "restoreFailed": "에피소드를 복원하지 못했습니다",
+    "restoreRefreshNotice": "에피소드가 복원되었습니다. 최신 정보를 보려면 페이지를 새로고침하세요.",
     "perPage": "페이지당 {{count}}개",
     "pageRange": "{{start}}–{{end}} / {{total}}",
     "noPublished": "게시된 에피소드가 아직 없습니다.",
@@ -661,6 +706,8 @@ export default function StoryManagerPage() {
   const { storyId } = useParams()
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
+  const [deletedEpisodes, setDeletedEpisodes] = useState([])
+  const [restoreClock, setRestoreClock] = useState(() => Date.now())
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const initialView = getSavedManagerView(storyId)
@@ -677,6 +724,8 @@ const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.cu
 }
   const [selectedEpisode, setSelectedEpisode] = useState(null)
   const [deleteEpisode, setDeleteEpisode] = useState(null)
+  const [restoreEpisode, setRestoreEpisode] = useState(null)
+  const [restoreError, setRestoreError] = useState('')
   const [trashStoryOpen, setTrashStoryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [publishEpisode, setPublishEpisode] = useState(null)
@@ -691,6 +740,7 @@ const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.cu
   const modalOpen = Boolean(
     selectedEpisode ||
     deleteEpisode ||
+    restoreEpisode ||
     trashStoryOpen
   )
 
@@ -762,7 +812,28 @@ const [currentPage, setCurrentPage] = useState(Math.max(1, Number(initialView.cu
     return () => window.clearInterval(timer)
   }, [scheduledDraftCount])
 
-  const visibleEpisodes = activeTab === 'published' ? publishedEpisodes : draftEpisodes
+  // The deleted tab is absent unless there is a still-recoverable episode.
+  useEffect(() => {
+    if (!deletedEpisodes.length) return undefined
+    const timer = window.setInterval(() => setRestoreClock(Date.now()), 60000)
+    return () => window.clearInterval(timer)
+  }, [deletedEpisodes.length])
+
+  const recoverableEpisodes = useMemo(() => {
+    const now = restoreClock
+    return deletedEpisodes.filter((episode) => {
+      const expires = new Date(episode.delete_expires_at).getTime()
+      const deleted = new Date(episode.deleted_at).getTime()
+      return Number.isFinite(expires) && Number.isFinite(deleted)
+        && now < Math.min(expires, deleted + 30 * 86400000)
+    })
+  }, [deletedEpisodes, restoreClock])
+
+  const visibleEpisodes = activeTab === 'published'
+    ? publishedEpisodes
+    : activeTab === 'deleted'
+      ? recoverableEpisodes
+      : draftEpisodes
   const totalPages = Math.max(1, Math.ceil(visibleEpisodes.length / pageSize))
   const pageStart = (currentPage - 1) * pageSize
   const pageEnd = Math.min(pageStart + pageSize, visibleEpisodes.length)
@@ -853,6 +924,7 @@ useEffect(() => {
 
         setStory(storyData.story || null)
         setEpisodes(episodesData.episodes || [])
+        setDeletedEpisodes(episodesData.deleted_episodes || [])
       } catch (error) {
         if (ignore) return
         setMessage(
@@ -871,6 +943,12 @@ useEffect(() => {
       ignore = true
     }
   }, [navigate, storyId])
+
+  useEffect(() => {
+    if (!loading && activeTab === 'deleted' && recoverableEpisodes.length === 0) {
+      setActiveTab('published')
+    }
+  }, [loading, activeTab, recoverableEpisodes.length])
 
   const clearManagerView = () => {
     sessionStorage.removeItem(`story-manager-view:${storyId}`)
@@ -1168,11 +1246,60 @@ const handleSavePublishSettings = async () => {
       }
 
       setEpisodes((current) => current.filter((episode) => String(episode.id) !== String(deleteEpisode.id)))
+      if (data.episode?.deleted_at && data.episode?.delete_expires_at) {
+        setDeletedEpisodes((current) => [
+          data.episode,
+          ...current.filter((item) => String(item.id) !== String(data.episode.id)),
+        ])
+      }
       setDeleteEpisode(null)
     } catch (error) {
       setDeleteEpisode(null)
       setMessage(error.message || getDisplayText('storyManager.failedDeleteEpisode'))
       window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleConfirmRestoreEpisode = async () => {
+    if (!restoreEpisode || busy) return
+    setRestoreError('')
+    const token = getAuthToken()
+    if (!token) { navigate('/login'); return }
+    const episodeToRestore = restoreEpisode
+
+    try {
+      setBusy(true)
+      setMessage('')
+      const response = await fetch(
+        `${API_BASE_URL}/api/stories/${storyId}/episodes/${episodeToRestore.id}/restore`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || getDisplayText('storyManager.restoreFailed'))
+      }
+
+      // Refresh the EXISTING manager endpoint only after a successful restore.
+      // This keeps published/draft counts and episode metrics accurate.
+      const refresh = await fetch(`${API_BASE_URL}/api/stories/${storyId}/manager-episodes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null)
+      const updated = refresh?.ok ? await refresh.json().catch(() => null) : null
+      if (updated?.ok) {
+        setEpisodes(updated.episodes || [])
+        setDeletedEpisodes(updated.deleted_episodes || [])
+      } else {
+        // Restore succeeded, even if the follow-up list refresh failed.
+        setDeletedEpisodes((current) => current.filter((item) => String(item.id) !== String(episodeToRestore.id)))
+        setMessage(getDisplayText('storyManager.restoreRefreshNotice'))
+      }
+      setRestoreEpisode(null)
+      setActiveTab('drafts')
+      setCurrentPage(1)
+    } catch (error) {
+      setRestoreError(error.message || getDisplayText('storyManager.restoreFailed'))
     } finally {
       setBusy(false)
     }
@@ -1288,6 +1415,24 @@ const handleSavePublishSettings = async () => {
         onClose={() => setDeleteEpisode(null)}
         onConfirm={handleConfirmDeleteEpisode}
       />
+
+      {restoreEpisode ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-label={getDisplayText('storyManager.restoreQuestion')}>
+          <button type="button" className="absolute inset-0" disabled={busy} aria-label={getDisplayText('storyManager.cancel')} onClick={() => { setRestoreError(''); setRestoreEpisode(null) }} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-[var(--shadow-bg-surface)] p-5 shadow-xl">
+            <h2 className="text-[17px] font-semibold">{getDisplayText('storyManager.restoreQuestion')}</h2>
+            <p className="mt-2 text-[13px] text-[var(--shadow-text-secondary)]">EP {restoreEpisode.episode_number}: {restoreEpisode.title}</p>
+            <p className="mt-2 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{getDisplayText('storyManager.restoreHelp')}</p>
+            {restoreError ? (
+              <p role="alert" className="mt-3 rounded-lg bg-[#fff1f1] p-3 text-[12px] leading-5 text-[#b91c1c]">{restoreError}</p>
+            ) : null}
+            <div className="mt-5 flex gap-3">
+              <button type="button" disabled={busy} onClick={() => { setRestoreError(''); setRestoreEpisode(null) }} className="h-10 flex-1 rounded-full border border-[var(--shadow-border)] text-[12px]">{getDisplayText('storyManager.cancel')}</button>
+              <button type="button" disabled={busy} onClick={handleConfirmRestoreEpisode} className="h-10 flex-1 rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] text-[12px] disabled:opacity-50">{busy ? getDisplayText('storyManager.restoring') : getDisplayText('storyManager.restore')}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <ConfirmTrashStoryModal
         story={story}
@@ -1413,7 +1558,7 @@ const handleSavePublishSettings = async () => {
                 <span className="text-[11px] font-normal text-[var(--shadow-text-tertiary)]">{getDisplayText('storyManager.shown', { count: formatDisplayNumber(visibleEpisodes.length) })}</span>
               </div>
 
-              <div className="flex gap-1 border-b border-[var(--shadow-border)] px-3 pb-3 pt-3 sm:px-4">
+              <div className="flex gap-1 overflow-x-auto whitespace-nowrap border-b border-[var(--shadow-border)] px-3 pb-3 pt-3 sm:px-4">
                 <button
                   type="button"
                   onClick={() => setActiveTab('published')}
@@ -1437,12 +1582,49 @@ const handleSavePublishSettings = async () => {
                 >
                   {getDisplayText('storyManager.draftsCount', { count: formatDisplayNumber(draftEpisodes.length) })}
                 </button>
+
+                {recoverableEpisodes.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('deleted')}
+                    className={`rounded-full px-5 py-2.5 text-[12px] font-normal transition active:scale-[0.98] ${
+                      activeTab === 'deleted'
+                        ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]'
+                        : 'bg-transparent text-[var(--shadow-text-tertiary)]'
+                    }`}
+                  >
+                    {getDisplayText('storyManager.deletedCount', { count: formatDisplayNumber(recoverableEpisodes.length) })}
+                  </button>
+                ) : null}
               </div>
 
               {visibleEpisodes.length ? (
                 <>
                   <div>
-                    {paginatedEpisodes.map((episode, index) => (
+                    {activeTab === 'deleted' ? paginatedEpisodes.map((episode) => (
+                      <div key={episode.id} className="flex items-center justify-between gap-3 border-b border-[var(--shadow-border)] px-4 py-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-medium text-[var(--shadow-text-primary)]">
+                            EP {episode.episode_number}: {episode.title || getDisplayText('storyManager.untitledEpisode')}
+                          </div>
+                          <div className="mt-1 text-[11px] text-[var(--shadow-text-secondary)]">
+                            {getDisplayText('storyManager.restoreBefore', {
+                              date: formatDate(Math.min(new Date(episode.delete_expires_at).getTime(), new Date(episode.deleted_at).getTime() + 30 * 86400000)),
+                            })}
+                          </div>
+                          <div className="mt-1 text-[11px] text-[#e5484d]">
+                            {getDisplayText('storyManager.daysLeft', {
+                              count: Math.max(0, Math.ceil(
+                                (Math.min(new Date(episode.delete_expires_at).getTime(), new Date(episode.deleted_at).getTime() + 30 * 86400000) - restoreClock) / 86400000
+                              )),
+                            })}
+                          </div>
+                        </div>
+                        <button type="button" disabled={busy} onClick={() => { setRestoreError(''); setRestoreEpisode(episode) }} className="shrink-0 rounded-full bg-[var(--shadow-text-primary)] px-4 py-2 text-[12px] text-[var(--shadow-bg-surface)] disabled:opacity-50">
+                          {getDisplayText('storyManager.restore')}
+                        </button>
+                      </div>
+                    )) : paginatedEpisodes.map((episode, index) => (
                       <EpisodeRow
                         key={episode.id}
                         episode={episode}
