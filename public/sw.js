@@ -963,67 +963,70 @@ const EPISODE_TOUCH_INTERVAL_MS = 30000
 const MAX_RECENT_EPISODE_TOUCHES = 500
 const recentEpisodeTouches = new Map()
 
+async function updateEpisodeRecordAtomically(recordKey, transform) {
+  if (!recordKey) return false
+  let updated = false
+
+  try {
+    await runMetaTransaction('readwrite', (store) => {
+      const request = store.get(recordKey)
+      request.onsuccess = () => {
+        const current = request.result
+        if (!current) return
+        const next = transform(current)
+        if (!next) return
+        store.put(next)
+        updated = true
+      }
+    })
+    return updated
+  } catch {
+    return false
+  }
+}
+
 async function touchEpisodeRecord(key) {
   if (!key) return
 
   const now = Date.now()
   const lastTouch = recentEpisodeTouches.get(key) || 0
-
   if (now - lastTouch < EPISODE_TOUCH_INTERVAL_MS) return
 
   recentEpisodeTouches.delete(key)
   recentEpisodeTouches.set(key, now)
-
   if (recentEpisodeTouches.size > MAX_RECENT_EPISODE_TOUCHES) {
     recentEpisodeTouches.delete(recentEpisodeTouches.keys().next().value)
   }
 
-  const record = await getEpisodeRecord(key)
-
-  if (!record) {
-    recentEpisodeTouches.delete(key)
-    return
-  }
-
-  const saved = await putEpisodeRecord({
-    ...record,
-    lastAccessedAt: now,
-  })
-
-  if (!saved) recentEpisodeTouches.delete(key)
+  const updated = await updateEpisodeRecordAtomically(
+    key,
+    (record) => ({ ...record, lastAccessedAt: now })
+  )
+  if (!updated) recentEpisodeTouches.delete(key)
 }
 
-async function markImageCached(
-  recordKey,
-  imageUrl
-) {
-  const record =
-    await getEpisodeRecord(recordKey)
+async function markImageCached(recordKey, imageUrl) {
+  if (!recordKey || !imageUrl) return
 
-  if (!record) return
+  await updateEpisodeRecordAtomically(recordKey, (record) => {
+    if (!recordHasImage(record, imageUrl)) return null
 
-  const cachedUrls = new Set(
-    Array.isArray(record.cachedUrls)
-      ? record.cachedUrls
-      : []
-  )
-
-  cachedUrls.add(imageUrl)
-
-  let cachedBytes = 0
-
-  for (const url of cachedUrls) {
-    cachedBytes += imageDeclaredBytes(
-      record,
-      url
+    const cachedUrls = new Set(
+      Array.isArray(record.cachedUrls) ? record.cachedUrls : []
     )
-  }
+    cachedUrls.add(imageUrl)
 
-  await putEpisodeRecord({
-    ...record,
-    cachedUrls: [...cachedUrls],
-    cachedBytes,
-    lastAccessedAt: Date.now(),
+    let cachedBytes = 0
+    for (const url of cachedUrls) {
+      cachedBytes += imageDeclaredBytes(record, url)
+    }
+
+    return {
+      ...record,
+      cachedUrls: [...cachedUrls],
+      cachedBytes,
+      lastAccessedAt: Date.now(),
+    }
   })
 }
 
