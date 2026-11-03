@@ -228,7 +228,6 @@ export default function PublicPostDetailView({
   createdAt = '',
   visibility = 'public',
   isPinned = false,
-  isEdited = false,
   content = null,
   media = null,
   sourcePreview = null,
@@ -421,15 +420,6 @@ export default function PublicPostDetailView({
                             createdAt
                           )}
                         </span>
-
-                        {isEdited ? (
-                          <>
-                            <span>·</span>
-                            <span>
-                              {t('publicPostDetailView.edited')}
-                            </span>
-                          </>
-                        ) : null}
 
                         <span>·</span>
 
