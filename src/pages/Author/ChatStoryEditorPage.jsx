@@ -3133,7 +3133,7 @@ const handleRedo = () => {
   serverSignatureRef.current = ''
   serverDueRef.current = 0
   serverVersionRef.current = null
-  serverEpisodeIdRef.current = requestedEpisodeId || ''
+  serverEpisodeIdRef.current = startNewEpisode ? '' : requestedEpisodeId || ''
   saveConflictRef.current = false
   tabConflictRef.current = false
   publishedDraftRef.current = false
@@ -3146,7 +3146,11 @@ restoredDraftCharactersRef.current = false
   serverVersionRef.current = parsed.serverUpdatedAt || null
   serverSignatureRef.current = parsed.serverSignature || ''
   if (parsed.clientEpisodeId) createEpisodeIdRef.current = parsed.clientEpisodeId
-  if (parsed.episodeId) serverEpisodeIdRef.current = parsed.episodeId
+  // An explicit edit URL is authoritative; a cached draft must not switch episodes.
+  const restoredEpisodeId = startNewEpisode
+    ? String(parsed.episodeId || '')
+    : String(requestedEpisodeId || parsed.episodeId || '')
+  serverEpisodeIdRef.current = restoredEpisodeId
   setDraft(String(parsed.draft || ''))
   setSelectedCharacterId(parsed.selectedCharacterId || null)
   setComposerMode(parsed.composerMode || 'message')
@@ -3212,9 +3216,7 @@ restoredDraftCharactersRef.current = false
       : savedTitle
   )
 
-  setEpisodeId(
-    parsed.episodeId || ''
-  )
+  setEpisodeId(restoredEpisodeId)
 
   setEpisodeLeadCharacterId(
     parsed.leadCharacterId || ''
@@ -3589,7 +3591,7 @@ restoredDraftCharactersRef.current = false
       if (checkpoint) return null
       throw new Error('Chat images are still uploading. Wait for completion or retry failed images.')
     }
-    const targetId = serverEpisodeIdRef.current || requestedEpisodeId
+    const targetId = serverEpisodeIdRef.current || (startNewEpisode ? '' : requestedEpisodeId)
     if (!snapshot || (checkpoint && !targetId)) return null
     const signature = getServerSignature(snapshot)
     if (checkpoint && signature === serverSignatureRef.current) return null
@@ -3642,6 +3644,43 @@ restoredDraftCharactersRef.current = false
           }),
         })
         const data = await response.json().catch(() => ({}))
+        // A previously deleted episode must never be silently restored, updated,
+        // or treated as the new draft. Keep the actual text/messages on this device.
+        const staleEpisodeReference =
+          (response.status === 409 && [
+            'EPISODE_DELETED',
+            'EPISODE_CREATE_ID_DELETED',
+            'EPISODE_CREATE_ID_REUSED',
+          ].includes(data.code)) ||
+          (response.status === 404 && data.message === 'Episode not found')
+
+        if (staleEpisodeReference && (startNewEpisode || !requestedEpisodeId)) {
+          // Only an explicit New Episode flow may detach from a stale ID.
+          // This response does NOT create, publish, or recover any episode.
+          const freshClientEpisodeId = globalThis.crypto?.randomUUID?.() || ''
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(freshClientEpisodeId)) {
+            throw new Error('Could not generate a new episode identifier. Your draft was kept.')
+          }
+          serverEpisodeIdRef.current = ''
+          serverVersionRef.current = null
+          serverSignatureRef.current = ''
+          createEpisodeIdRef.current = freshClientEpisodeId
+          setEpisodeId('')
+          draftSnapshotRef.current = {
+            ...draftSnapshotRef.current,
+            episodeId: '',
+            clientEpisodeId: freshClientEpisodeId,
+            serverUpdatedAt: null,
+            serverSignature: '',
+            updatedAt: new Date().toISOString(),
+          }
+          localSignatureRef.current = ''
+          if (!flushLocalDraft()) {
+            throw new Error('The old episode was deleted. Copy your text before leaving; local backup could not be saved.')
+          }
+          if (checkpoint) return null
+          throw new Error('The old episode was deleted. Your current text is safe in this device. Press Save again to create a NEW episode.')
+        }
         if (response.status === 409) {
           saveConflictRef.current = true
           setDraftSaveStatus('conflict')
