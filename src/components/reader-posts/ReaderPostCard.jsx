@@ -3780,7 +3780,7 @@ const safeSelectedPhotoIndex =
     visibility={
       post.visibility || 'public'
     }
-    isEdited={Boolean(post.is_edited)}
+    isEdited={false}
     content={
       postText ? (
         <span>
@@ -4052,12 +4052,7 @@ likeCount={reactionCount}
             )}
           </span>
 
-          {post.is_edited ? (
-            <>
-              <span>·</span>
-              <span>{t('readerPostCard.edited')}</span>
-            </>
-          ) : null}
+          
 
           <span>·</span>
 
