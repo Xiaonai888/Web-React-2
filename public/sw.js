@@ -1050,10 +1050,8 @@ async function removeStaleEpisodeVariants({
     }
 
     const versionChanged =
-      normalizeText(record.updatedAt) &&
-      normalizeText(updatedAt) &&
       normalizeText(record.updatedAt) !==
-        normalizeText(updatedAt)
+      normalizeText(updatedAt)
 
     const publicBecamePrivate =
       scope !== 'public' &&
@@ -1075,6 +1073,8 @@ async function removeStaleEpisodeVariants({
   }
 }
 
+const mangaRegistrationPending = new Map()
+
 async function registerMangaEpisode({
   scope,
   storyId,
@@ -1083,89 +1083,95 @@ async function registerMangaEpisode({
   updatedAt,
   accessExpiresAt,
 }) {
-  const images =
-    extractMangaImages(episode)
-
+  const images = extractMangaImages(episode)
   if (!images.length) return
 
-  const key = buildEpisodeKey(
-    scope,
-    storyId,
-    episodeId
-  )
-
+  const key = buildEpisodeKey(scope, storyId, episodeId)
   if (!key) return
 
-  await removeStaleEpisodeVariants({
-    storyId,
-    episodeId,
-    scope,
-    updatedAt,
-  })
+  const version = normalizeText(updatedAt)
+  const expiry = normalizeTime(accessExpiresAt)
+  if (scope !== 'public' && expiry > 0 && expiry <= Date.now()) return
 
-  const existing =
-    await getEpisodeRecord(key)
+  const signature = JSON.stringify([scope, version, expiry, images])
+  const episodeKey = `${normalizeText(storyId)}:${normalizeText(episodeId)}`
+  const preceding = mangaRegistrationPending.get(episodeKey)
+  if (preceding?.signature === signature) return preceding.promise
 
-  const sameVersion =
-    existing &&
-    normalizeText(
-      existing.updatedAt
-    ) === normalizeText(updatedAt)
+  const job = (async () => {
+    if (preceding) await preceding.promise.catch(() => {})
 
-  const nextUrls = new Set(
-    images.map((image) => image.url)
-  )
-
-  const cachedUrls = sameVersion
-    ? (
-        Array.isArray(
-          existing.cachedUrls
-        )
-          ? existing.cachedUrls
-          : []
-      ).filter((url) =>
-        nextUrls.has(url)
+    const existing = await getEpisodeRecord(key)
+    const unchanged = Boolean(
+      existing &&
+      existing.scope === scope &&
+      normalizeText(existing.updatedAt) === version &&
+      normalizeTime(existing.accessExpiresAt) === expiry &&
+      Array.isArray(existing.images) &&
+      existing.images.length === images.length &&
+      images.every((image, index) =>
+        normalizeText(existing.images[index]?.url) === image.url &&
+        normalizeBytes(existing.images[index]?.bytes) === image.bytes
       )
-    : []
-
-  let cachedBytes = 0
-
-  for (const url of cachedUrls) {
-    const image = images.find(
-      (item) => item.url === url
     )
 
-    cachedBytes +=
-      normalizeBytes(image?.bytes) ||
-      FALLBACK_IMAGE_BYTES
+    const ageDays = (await readTemporaryCacheSettings()).ageDays
+    const expired = Boolean(existing && isRecordExpired(existing, Date.now(), ageDays))
+    if (unchanged && !expired) {
+      await touchEpisodeRecord(key)
+      return
+    }
+    if (expired) await deleteCachedEpisode(existing)
+
+    await removeStaleEpisodeVariants({ storyId, episodeId, scope, updatedAt })
+
+    const allowedUrls = new Set(images.map((image) => image.url))
+    const bytesByUrl = new Map(images.map((image) => [image.url, image.bytes]))
+    const now = Date.now()
+    const mergeMetadata = (current) => {
+      const sameVersion =
+        current?.scope === scope &&
+        normalizeText(current?.updatedAt) === version
+      const cachedUrls = sameVersion
+        ? [...new Set(
+            (Array.isArray(current.cachedUrls) ? current.cachedUrls : [])
+              .filter((url) => allowedUrls.has(url))
+          )]
+        : []
+      const cachedBytes = cachedUrls.reduce(
+        (sum, url) => sum + (normalizeBytes(bytesByUrl.get(url)) || FALLBACK_IMAGE_BYTES),
+        0
+      )
+      return {
+        ...(current || {}),
+        key,
+        scope,
+        storyId: normalizeText(storyId),
+        episodeId: normalizeText(episodeId),
+        updatedAt: version,
+        accessExpiresAt: expiry,
+        images,
+        cachedUrls,
+        cachedBytes,
+        savedAt: sameVersion && current?.savedAt ? current.savedAt : now,
+        lastAccessedAt: now,
+      }
+    }
+
+    if (!await updateEpisodeRecordAtomically(key, mergeMetadata)) {
+      await putEpisodeRecord(mergeMetadata(null))
+    }
+    await pruneMangaCache()
+  })()
+
+  mangaRegistrationPending.set(episodeKey, { signature, promise: job })
+  try {
+    return await job
+  } finally {
+    if (mangaRegistrationPending.get(episodeKey)?.promise === job) {
+      mangaRegistrationPending.delete(episodeKey)
+    }
   }
-
-  const now = Date.now()
-
-  await putEpisodeRecord({
-    key,
-    scope,
-    storyId: normalizeText(storyId),
-    episodeId:
-      normalizeText(episodeId),
-    updatedAt:
-      normalizeText(updatedAt),
-    accessExpiresAt:
-      normalizeTime(
-        accessExpiresAt
-      ),
-    images,
-    cachedUrls,
-    cachedBytes,
-    savedAt:
-      sameVersion &&
-      existing?.savedAt
-        ? existing.savedAt
-        : now,
-    lastAccessedAt: now,
-  })
-
-  await pruneMangaCache()
 }
 
 async function invalidateLockedEpisode(
@@ -1389,75 +1395,45 @@ async function findEpisodeForImage(
   return null
 }
 
-async function prepareMangaImageResponse(
-  event
-) {
-  const context =
-    await resolveClientContext(
-      event.clientId
-    )
+async function prepareMangaImageResponse(event) {
+  let record = null
+  let cache = null
 
-  if (!context) {
-    return {
-      response:
-        await fetch(event.request),
-      record: null,
-      cache: null,
-      cacheResponse: null,
-      cacheHit: false,
+  // Only use an image cache after the episode and its access scope are validated.
+  try {
+    const context = await resolveClientContext(event.clientId)
+    if (context) {
+      record = await findEpisodeForImage(context, event.request.url)
     }
+    if (record) {
+      cache = await caches.open(cacheNameForScope(record.scope))
+      const cached = await cache.match(event.request)
+      if (cached) {
+        return {
+          response: cached,
+          record,
+          cache,
+          cacheResponse: null,
+          cacheHit: true,
+        }
+      }
+    }
+  } catch {
+    // Cache errors must not prevent an ordinary network image request.
+    record = null
+    cache = null
   }
 
-  const record =
-    await findEpisodeForImage(
-      context,
-      event.request.url
-    )
-
-  if (!record) {
-    return {
-      response:
-        await fetch(event.request),
-      record: null,
-      cache: null,
-      cacheResponse: null,
-      cacheHit: false,
-    }
-  }
-
-  const cache = await caches.open(
-    cacheNameForScope(record.scope)
+  const response = await fetch(event.request)
+  const cacheable = Boolean(
+    record && cache && (response.ok || response.type === 'opaque')
   )
-
-  const cached =
-    await cache.match(
-      event.request
-    )
-
-  if (cached) {
-    return {
-      response: cached,
-      record,
-      cache,
-      cacheResponse: null,
-      cacheHit: true,
-    }
-  }
-
-  const response =
-    await fetch(event.request)
-
-  const cacheable =
-    response.ok ||
-    response.type === 'opaque'
 
   return {
     response,
     record,
     cache,
-    cacheResponse: cacheable
-      ? response.clone()
-      : null,
+    cacheResponse: cacheable ? response.clone() : null,
     cacheHit: false,
   }
 }
@@ -2160,20 +2136,7 @@ self.addEventListener(
         .then(
           (result) => result.response
         )
-        .catch(async () => {
-          try {
-            const cached =
-              await caches.match(request)
-
-            if (cached) {
-              return cached
-            }
-
-            return await fetch(request)
-          } catch {
-            return fallbackImageResponse()
-          }
-        })
+        .catch(() => Response.error())
     )
 
     event.waitUntil(
