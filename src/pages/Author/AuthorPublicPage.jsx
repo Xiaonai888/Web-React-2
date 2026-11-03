@@ -5,6 +5,7 @@ import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import AuthorWorksTab from '../../components/AuthorWorksTab'
+import AuthorReelGrid from '../../components/author/AuthorReelGrid'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
 import AuthorPageAboutPopup from '../../components/AuthorPageAboutPopup'
@@ -803,7 +804,7 @@ const API_BASE_URL =
 
 const AUTHOR_PAGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
-const tabs = ['Posts', 'Works', 'Store']
+const tabs = ['Posts', 'Works', 'Reel', 'Store']
 const AUTHOR_OWNER_CACHE = new Map()
 const AUTHOR_REVIEW_CACHE = new Map()
 const AUTHOR_REVIEW_PENDING = new Map()
@@ -4458,6 +4459,13 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       )}
     />
   </div>
+) : null}
+
+          {activeTab === 'Reel' ? (
+  <AuthorReelGrid
+    key={displayAuthor.user_id || displayAuthor.page_username}
+    userId={displayAuthor.user_id}
+  />
 ) : null}
 
 
