@@ -325,34 +325,55 @@ function runMetaTransaction(mode, action) {
   )
 }
 
+const pendingEpisodeRecordReads = new Map()
+
 async function getEpisodeRecord(key) {
   if (!key) return null
 
+  const existing = pendingEpisodeRecordReads.get(key)
+  if (existing) return existing
+
+  const pending = runMetaTransaction(
+    'readonly',
+    (store) => store.get(key)
+  )
+    .then((record) => record || null)
+    .catch(() => null)
+
+  pendingEpisodeRecordReads.set(key, pending)
+
   try {
-    return (
-      (await runMetaTransaction(
-        'readonly',
-        (store) => store.get(key)
-      )) || null
-    )
-  } catch {
-    return null
+    return await pending
+  } finally {
+    if (pendingEpisodeRecordReads.get(key) === pending) {
+      pendingEpisodeRecordReads.delete(key)
+    }
   }
 }
 
-async function getAllEpisodeRecords() {
+async function getStoryEpisodeRecords(storyId) {
+  const safeStoryId = normalizeText(storyId)
+  if (!safeStoryId) return []
+
   try {
-    return (
-      (await runMetaTransaction(
-        'readonly',
-        (store) => store.getAll()
-      )) || []
+    const records = await runMetaTransaction(
+      'readonly',
+      (store) => {
+        if (store.indexNames.contains('storyId')) {
+          return store.index('storyId').getAll(safeStoryId)
+        }
+        return store.getAll()
+      }
+    )
+
+    return (records || []).filter(
+      (record) =>
+        normalizeText(record.storyId) === safeStoryId
     )
   } catch {
     return []
   }
 }
-
 async function putEpisodeRecord(record) {
   if (!record?.key) return null
 
@@ -1013,7 +1034,7 @@ async function removeStaleEpisodeVariants({
   updatedAt,
 }) {
   const records =
-    await getAllEpisodeRecords()
+    await getStoryEpisodeRecords(storyId)
 
   for (const record of records) {
     if (
