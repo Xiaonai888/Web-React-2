@@ -26,6 +26,7 @@ registerTranslationNamespace('premiumBinance', {
     login: 'Please sign in again.', createError: 'Could not create Binance Premium checkout.',
     statusError: 'Could not check payment status.', cancelError: 'Could not cancel this order.',
     active: 'Another Binance checkout is active. Finish it first.',
+    cancelConfirm: 'Cancel this order ONLY if you have NOT sent USDT. If you already transferred, choose Cancel in this dialog and check payment status. Confirm no transfer was sent?',
   },
   km: {
     title: 'Binance Premium', loading: 'កំពុងរៀបចំការទូទាត់ដែលបានផ្ទៀងផ្ទាត់...', retry: 'ព្យាយាមម្ដងទៀត',
@@ -45,6 +46,7 @@ registerTranslationNamespace('premiumBinance', {
     login: 'សូម Login ម្ដងទៀត។', createError: 'មិនអាចបង្កើត Binance Premium Order បាន។',
     statusError: 'មិនអាចពិនិត្យស្ថានភាពការទូទាត់បាន។', cancelError: 'មិនអាចបោះបង់ Order បាន។',
     active: 'មាន Binance Order ផ្សេងកំពុងដំណើរការ។ សូមបញ្ចប់ Order ចាស់ជាមុន។',
+    cancelConfirm: 'សូមបោះបង់ Order តែក្នុងករណីអ្នកមិនទាន់បានផ្ទេរ USDT ទេ។ បើបានផ្ទេររួច សូមចុច Cancel ក្នុងប្រអប់នេះ ហើយពិនិត្យស្ថានភាពទូទាត់វិញ។ តើអ្នកបញ្ជាក់ថាមិនទាន់បានផ្ទេរប្រាក់មែនទេ?',
   },
   zh: {
     title: 'Binance Premium', loading: '正在准备已验证的付款...', retry: '重试', close: '关闭',
@@ -57,6 +59,7 @@ registerTranslationNamespace('premiumBinance', {
     warning: '仅向已验证的收款方转账。Premium、Diamonds 和 Vouchers 在官方收据核实后发放。',
     login: '请重新登录。', createError: '无法创建 Binance Premium 订单。', statusError: '无法检查付款状态。',
     cancelError: '无法取消此订单。', active: '另一个 Binance 订单正在进行，请先完成。',
+    cancelConfirm: '仅在尚未发送 USDT 时取消订单。如果已经转账，请点击此对话框的“取消”并检查付款状态。确认尚未转账吗？',
   },
   ja: {
     title: 'Binance Premium', loading: '確認済み支払いを準備中...', retry: '再試行', close: '閉じる',
@@ -70,6 +73,7 @@ registerTranslationNamespace('premiumBinance', {
     login: '再ログインしてください。', createError: 'Binance Premium 注文の作成に失敗しました。',
     statusError: '支払い状況を確認できません。', cancelError: '注文をキャンセルできません。',
     active: '別の Binance 注文が進行中です。先に完了してください。',
+    cancelConfirm: 'USDT をまだ送金していない場合に限り注文をキャンセルしてください。送金済みの場合はこの確認をキャンセルし、支払い状況を確認してください。未送金であることを確認しますか？',
   },
   ko: {
     title: 'Binance Premium', loading: '검증된 결제를 준비 중...', retry: '다시 시도', close: '닫기',
@@ -83,6 +87,7 @@ registerTranslationNamespace('premiumBinance', {
     login: '다시 로그인하세요.', createError: 'Binance Premium 주문을 만들 수 없습니다.',
     statusError: '결제 상태를 확인할 수 없습니다.', cancelError: '주문을 취소할 수 없습니다.',
     active: '다른 Binance 주문이 진행 중입니다. 먼저 완료하세요.',
+    cancelConfirm: 'USDT를 아직 송금하지 않은 경우에만 주문을 취소하세요. 이미 송금했다면 이 확인창에서 취소를 누르고 결제 상태를 확인하세요. 송금하지 않았음을 확인하십니까?',
   },
 })
 
