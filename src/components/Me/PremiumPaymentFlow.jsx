@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import PremiumBinanceCheckoutFlow from './PremiumBinanceCheckoutFlow'
+import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
 
 registerTranslationNamespace('premiumPaymentFlow', {
   en: {
@@ -46,6 +47,12 @@ registerTranslationNamespace('premiumPaymentFlow', {
     months: '{{count}} Months',
     twelveMonths: '12 Months',
     orderId: 'Order ID',
+    methodLoading: 'Loading available payment methods...',
+    methodUnavailable: 'This payment method is not available for your country. Please check your Reader Classification in Settings.',
+    abaLabel: 'ABA / PayWay',
+    binanceLabel: 'Binance Pay',
+    binanceFeeBonus: '+100 Vouchers after verification. Binance adds a 1 USDT fee.',
+    cancelUnpaidConfirm: 'Cancel this payment ONLY if you have NOT transferred any money. If you have paid, choose No and check status. Confirm no payment was sent?',
   },
   km: {
     confirmTitle: 'បញ្ជាក់ការបង់ Premium',
@@ -87,6 +94,12 @@ registerTranslationNamespace('premiumPaymentFlow', {
     months: '{{count}} ខែ',
     twelveMonths: '12 ខែ',
     orderId: 'Order ID',
+    methodLoading: 'កំពុងពិនិត្យវិធីទូទាត់ដែលអនុញ្ញាត...',
+    methodUnavailable: 'វិធីទូទាត់នេះមិនមានសម្រាប់ប្រទេសរបស់អ្នកទេ។ សូមពិនិត្យ Reader Classification ក្នុង Settings។',
+    abaLabel: 'ABA / PayWay',
+    binanceLabel: 'Binance Pay',
+    binanceFeeBonus: '+100 Vouchers ក្រោយផ្ទៀងផ្ទាត់។ Binance បន្ថែមថ្លៃ 1 USDT។',
+    cancelUnpaidConfirm: 'បោះបង់តែបើអ្នកមិនទាន់បានផ្ទេរប្រាក់។ បើបានបង់រួច សូមចុច No និងពិនិត្យស្ថានភាព។ តើបញ្ជាក់ថាមិនទាន់បង់ប្រាក់មែនទេ?',
   },
   zh: {
     confirmTitle: '确认 Premium 付款',
@@ -128,6 +141,12 @@ registerTranslationNamespace('premiumPaymentFlow', {
     months: '{{count}} 个月',
     twelveMonths: '12 个月',
     orderId: '订单 ID',
+    methodLoading: '正在检查可用付款方式...',
+    methodUnavailable: '此付款方式在您所在的国家/地区不可用。请检查账户中的 Reader Classification。',
+    abaLabel: 'ABA / PayWay',
+    binanceLabel: 'Binance Pay',
+    binanceFeeBonus: '验证成功后赠送100 Vouchers。Binance额外收取1 USDT。',
+    cancelUnpaidConfirm: '仅在尚未付款时取消。如已付款，请选择否并检查状态。确认尚未付款吗？',
   },
   ja: {
     confirmTitle: 'Premium 支払い確認',
@@ -169,6 +188,12 @@ registerTranslationNamespace('premiumPaymentFlow', {
     months: '{{count}}か月',
     twelveMonths: '12か月',
     orderId: '注文 ID',
+    methodLoading: '利用可能な支払い方法を確認中...',
+    methodUnavailable: 'お住まいの地域ではこの決済方法を利用できません。アカウントの Reader Classification を確認してください。',
+    abaLabel: 'ABA / PayWay',
+    binanceLabel: 'Binance Pay',
+    binanceFeeBonus: '確認後100 Vouchersを付与。Binance手数料は追加で1 USDTです。',
+    cancelUnpaidConfirm: 'まだ送金していない場合だけキャンセルしてください。送金済みなら「いいえ」を選び、状況を確認してください。未払いですか？',
   },
   ko: {
     confirmTitle: 'Premium 결제 확인',
@@ -210,6 +235,12 @@ registerTranslationNamespace('premiumPaymentFlow', {
     months: '{{count}}개월',
     twelveMonths: '12개월',
     orderId: '주문 ID',
+    methodLoading: '사용 가능한 결제 방법 확인 중...',
+    methodUnavailable: '현재 국가에서는 이 결제 수단을 사용할 수 없습니다. 계정의 Reader Classification을 확인하세요.',
+    abaLabel: 'ABA / PayWay',
+    binanceLabel: 'Binance Pay',
+    binanceFeeBonus: '결제 확인 후 100 Vouchers가 지급됩니다. Binance 수수료는 1 USDT입니다.',
+    cancelUnpaidConfirm: '아직 송금하지 않은 경우에만 취소하세요. 이미 송금했다면 아니요를 누르고 상태를 확인하세요. 미송금 상태입니까?',
   },
 })
 
@@ -336,8 +367,11 @@ export default function PremiumPaymentFlow({
   const navigate = useNavigate()
   const normalizedPlan = useMemo(() => normalizePlan(plan), [plan])
   const [confirmOpen, setConfirmOpen] = useState(false)
-const [selectedMethod, setSelectedMethod] = useState('aba')
-const [binanceOpen, setBinanceOpen] = useState(false)
+  const [selectedMethod, setSelectedMethod] = useState(null)
+  const [binanceOpen, setBinanceOpen] = useState(false)
+  const [methodLoading, setMethodLoading] = useState(false)
+  const [allowedMethods, setAllowedMethods] = useState({ aba: false, binance: false })
+  const lastSuccessOrderId = useRef(null)
   const [payment, setPayment] = useState(null)
   const [statusOpen, setStatusOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -408,7 +442,10 @@ const [binanceOpen, setBinanceOpen] = useState(false)
       if (nextStatus === 'success') {
         clearPendingPayment()
         updateStoredPremium(data.premium)
-        onSuccess?.(data)
+        if (lastSuccessOrderId.current !== data.payment?.order_id) {
+          lastSuccessOrderId.current = data.payment?.order_id
+          onSuccess?.(data)
+        }
       } else if (
         ['expired', 'cancelled', 'rejected'].includes(nextStatus)
       ) {
@@ -420,10 +457,7 @@ const [binanceOpen, setBinanceOpen] = useState(false)
       return data
     } catch (error) {
       if (!silent) {
-        setMessage(
-          error.message ||
-          t('premiumPaymentFlow.failedStatus')
-        )
+        setMessage(error.message || t('premiumPaymentFlow.failedStatus'))
       }
 
       return null
@@ -438,59 +472,52 @@ const [binanceOpen, setBinanceOpen] = useState(false)
       navigate('/login')
       return
     }
+    if (creating || methodLoading || ![1, 3, 12].includes(normalizedPlan.months) ||
+        !selectedMethod || allowedMethods[selectedMethod] !== true) return
 
-    if (
-      creating ||
-      ![1, 3, 12].includes(normalizedPlan.months)
-    ) {
-      return
-    }
+    try {
+      setCreating(true)
+      setMessage('')
+      // Refresh on submit: country rules can change while a modal is open.
+      const settings = await loadCountrySettings({ force: true })
+      const feature = selectedMethod === 'binance' ? 'premiumBinancePay' : 'premiumPayway'
+      if (getCountryFeature(settings, feature, false) !== true) {
+        throw new Error(t('premiumPaymentFlow.methodUnavailable'))
+      }
 
-    if (selectedMethod === 'binance') {
-  setMessage('')
-  setConfirmOpen(false)
-  setBinanceOpen(true)
-  return
-}
+      if (selectedMethod === 'binance') {
+        setStatusOpen(false)
+        setConfirmOpen(false)
+        setBinanceOpen(true)
+        return
+      }
 
-try {
-  setCreating(true)
-  setMessage('')
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/purchase/premium/create`,
-        {
-          method: 'POST',
-          headers: getHeaders(),
-          body: JSON.stringify({
-            plan_months: normalizedPlan.months,
-          }),
-        }
-      )
-
+      const ticket = isCountryPolicyEnabled(settings) ? settings?.paymentCountryTicket : null
+      if (isCountryPolicyEnabled(settings) && !ticket) {
+        throw new Error(t('premiumPaymentFlow.methodUnavailable'))
+      }
+      const response = await fetch(`${API_BASE_URL}/api/purchase/premium/create`, {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          ...(ticket ? { 'X-Shadow-Country-Ticket': ticket } : {}),
+        },
+        body: JSON.stringify({ plan_months: normalizedPlan.months }),
+        cache: 'no-store',
+      })
       const data = await response.json().catch(() => ({}))
-
       if (!response.ok || !data.ok) {
-        throw new Error(
-          data.message || t('premiumPaymentFlow.failedCreate')
-        )
+        throw new Error(data.message || t('premiumPaymentFlow.failedCreate'))
       }
-
-      if (!data.payment?.checkout_url) {
-        throw new Error(
-          t('premiumPaymentFlow.failedCreate')
-        )
-      }
-
+      // Never redirect the buyer unless the server returned a valid ABA checkout URL.
+      const checkout = String(data.payment?.checkout_url || '')
+      if (!/^https:\/\//i.test(checkout)) throw new Error(t('premiumPaymentFlow.failedCreate'))
       savePendingPayment(data.payment)
       setPayment(data.payment)
       setConfirmOpen(false)
-      window.location.href = data.payment.checkout_url
+      window.location.href = checkout
     } catch (error) {
-      setMessage(
-        error.message ||
-        t('premiumPaymentFlow.failedCreate')
-      )
+      setMessage(error.message || t('premiumPaymentFlow.failedCreate'))
     } finally {
       setCreating(false)
     }
@@ -498,6 +525,7 @@ try {
 
   async function cancelPayment() {
     if (!payment?.order_id || cancelling) return
+    if (!window.confirm(t('premiumPaymentFlow.cancelUnpaidConfirm'))) return
 
     try {
       setCancelling(true)
@@ -508,6 +536,7 @@ try {
         {
           method: 'POST',
           headers: getHeaders(),
+          body: JSON.stringify({ confirm_not_paid: true }),
         }
       )
 
@@ -534,14 +563,29 @@ try {
     }
   }
 
-  function openConfirmation() {
+  async function openConfirmation() {
     if (!getReaderToken()) {
       navigate('/login')
       return
     }
-
     setMessage('')
+    setStatusOpen(false)
+    setAllowedMethods({ aba: false, binance: false })
+    setSelectedMethod(null)
     setConfirmOpen(true)
+    setMethodLoading(true)
+    try {
+      const settings = await loadCountrySettings({ force: true })
+      const aba = getCountryFeature(settings, 'premiumPayway', false) === true
+      const binance = getCountryFeature(settings, 'premiumBinancePay', false) === true
+      setAllowedMethods({ aba, binance })
+      setSelectedMethod(aba ? 'aba' : binance ? 'binance' : null)
+      if (!aba && !binance) setMessage(t('premiumPaymentFlow.methodUnavailable'))
+    } catch {
+      setMessage(t('premiumPaymentFlow.methodUnavailable'))
+    } finally {
+      setMethodLoading(false)
+    }
   }
 
   function reopenPayment() {
@@ -612,42 +656,36 @@ try {
           </h2>
 
           <p className="mt-2 text-center text-[13px] leading-5 text-[var(--shadow-text-secondary)]">
-  {t('premiumPaymentFlow.confirmText')}
-</p>
+            {t('premiumPaymentFlow.confirmText')}
+          </p>
 
-<div
-  className="mt-5 grid grid-cols-2 gap-3"
-  role="group"
-  aria-label="Payment method"
->
-  <button
-    type="button"
-    disabled={creating}
-    onClick={() => setSelectedMethod('aba')}
-    aria-pressed={selectedMethod === 'aba'}
-    className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${
-      selectedMethod === 'aba'
-        ? 'border-[#ffb800] bg-amber-50 text-[#202124]'
-        : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'
-    }`}
-  >
-    ABA / PayWay
-  </button>
-
-  <button
-    type="button"
-    disabled={creating}
-    onClick={() => setSelectedMethod('binance')}
-    aria-pressed={selectedMethod === 'binance'}
-    className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${
-      selectedMethod === 'binance'
-        ? 'border-[#F3BA2F] bg-[#fff9e5] text-[#202124]'
-        : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'
-    }`}
-  >
-    Binance Pay
-  </button>
-</div>
+          {methodLoading ? (
+            <p className="mt-4 text-center text-[12px] text-[var(--shadow-text-secondary)]">
+              {t('premiumPaymentFlow.methodLoading')}
+            </p>
+          ) : null}
+          {!methodLoading && (allowedMethods.aba || allowedMethods.binance) ? (
+            <div className={`mt-5 grid ${allowedMethods.aba && allowedMethods.binance ? 'grid-cols-2' : 'grid-cols-1'} gap-3`} role="group" aria-label="Payment method">
+              {allowedMethods.aba ? (
+                <button type="button" disabled={creating} onClick={() => setSelectedMethod('aba')}
+                  aria-pressed={selectedMethod === 'aba'}
+                  className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${selectedMethod === 'aba'
+                    ? 'border-[#ffb800] bg-amber-50 text-[#202124]'
+                    : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'}`}>
+                  {t('premiumPaymentFlow.abaLabel')}
+                </button>
+              ) : null}
+              {allowedMethods.binance ? (
+                <button type="button" disabled={creating} onClick={() => setSelectedMethod('binance')}
+                  aria-pressed={selectedMethod === 'binance'}
+                  className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${selectedMethod === 'binance'
+                    ? 'border-[#F3BA2F] bg-[#fff9e5] text-[#202124]'
+                    : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'}`}>
+                  {t('premiumPaymentFlow.binanceLabel')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="mt-5 rounded-[18px] bg-[var(--shadow-bg-soft)] p-4">
             <div className="flex items-center justify-between gap-4 text-[13px]">
@@ -665,8 +703,8 @@ try {
               </span>
               <span className="text-[22px] font-black text-[#ff3f62]">
                 {selectedMethod === 'binance'
-  ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
-  : formatMoney(normalizedPlan.amount)}
+                  ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
+                  : formatMoney(normalizedPlan.amount)}
               </span>
             </div>
 
@@ -703,19 +741,17 @@ try {
 
           <div className="mt-4 rounded-[16px] bg-[#fff8e8] px-4 py-3 text-[12px] leading-5 text-[#8a5a00] dark:bg-amber-500/10 dark:text-amber-200">
             <div className="font-black">
-  {t('premiumPaymentFlow.payExactly', {
-    amount: selectedMethod === 'binance'
-      ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
-      : formatMoney(normalizedPlan.amount),
-  })}
-</div>
-
-{selectedMethod === 'binance' ? (
-  <div className="mt-1 font-bold text-emerald-700 dark:text-emerald-300">
-    +100 Vouchers after successful verification.
-    The extra 1 USDT is a Binance fee.
-  </div>
-) : null}
+              {t('premiumPaymentFlow.payExactly', {
+                amount: selectedMethod === 'binance'
+                  ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
+                  : formatMoney(normalizedPlan.amount),
+              })}
+            </div>
+            {selectedMethod === 'binance' ? (
+              <div className="mt-1 font-bold text-emerald-700 dark:text-emerald-300">
+                {t('premiumPaymentFlow.binanceFeeBonus')}
+              </div>
+            ) : null}
             <div className="mt-1">
               {t('premiumPaymentFlow.activateNote')}
             </div>
@@ -742,7 +778,7 @@ try {
 
             <button
               type="button"
-              disabled={creating}
+              disabled={creating || methodLoading || !selectedMethod || allowedMethods[selectedMethod] !== true}
               onClick={createPayment}
               className="h-12 rounded-full bg-[#ffb800] px-4 text-[14px] font-black text-[#202124] shadow-sm disabled:opacity-60"
             >
@@ -755,17 +791,21 @@ try {
       ) : null}
 
       {binanceOpen ? (
-  <PremiumBinanceCheckoutFlow
-    planMonths={normalizedPlan.months}
-    onClose={() => setBinanceOpen(false)}
-    onSuccess={(result) => {
-      updateStoredPremium(result?.premium)
-      onSuccess?.(result)
-    }}
-  />
-) : null}
+        <PremiumBinanceCheckoutFlow
+          planMonths={normalizedPlan.months}
+          onClose={() => setBinanceOpen(false)}
+          onSuccess={(result) => {
+            updateStoredPremium(result?.premium)
+            setBinanceOpen(false)
+            onSuccess?.(result)
+            // PremiumPage has no status subscription; refresh it after the
+            // backend confirms the entitlement, never merely after QR display.
+            navigate(0)
+          }}
+        />
+      ) : null}
 
-{statusOpen && payment ? (
+      {statusOpen && payment ? (
         <ModalShell onBackdrop={() => setStatusOpen(false)}>
           <div
             className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
