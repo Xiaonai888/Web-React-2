@@ -318,8 +318,11 @@ export default function PremiumBinanceCheckoutFlow({ planMonths, onClose, onSucc
   }
 
   async function cancelUnpaid() {
-    if (!order?.id || busy || order.status !== 'waiting_payment' || remaining <= 0) return
-    setBusy(true)
+  if (!order?.id || busy || order.status !== 'waiting_payment' || remaining <= 0) return
+
+  if (!window.confirm(t('premiumBinance.cancelConfirm'))) return
+
+  setBusy(true)
     setError('')
     try {
       const data = await request(`/checkout/${encodeURIComponent(order.id)}/cancel`, { method: 'POST' })
