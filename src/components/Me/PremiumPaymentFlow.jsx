@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import PremiumBinanceCheckoutFlow from './PremiumBinanceCheckoutFlow'
 
 registerTranslationNamespace('premiumPaymentFlow', {
   en: {
@@ -335,6 +336,8 @@ export default function PremiumPaymentFlow({
   const navigate = useNavigate()
   const normalizedPlan = useMemo(() => normalizePlan(plan), [plan])
   const [confirmOpen, setConfirmOpen] = useState(false)
+const [selectedMethod, setSelectedMethod] = useState('aba')
+const [binanceOpen, setBinanceOpen] = useState(false)
   const [payment, setPayment] = useState(null)
   const [statusOpen, setStatusOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -443,9 +446,16 @@ export default function PremiumPaymentFlow({
       return
     }
 
-    try {
-      setCreating(true)
-      setMessage('')
+    if (selectedMethod === 'binance') {
+  setMessage('')
+  setConfirmOpen(false)
+  setBinanceOpen(true)
+  return
+}
+
+try {
+  setCreating(true)
+  setMessage('')
 
       const response = await fetch(
         `${API_BASE_URL}/api/purchase/premium/create`,
@@ -602,8 +612,42 @@ export default function PremiumPaymentFlow({
           </h2>
 
           <p className="mt-2 text-center text-[13px] leading-5 text-[var(--shadow-text-secondary)]">
-            {t('premiumPaymentFlow.confirmText')}
-          </p>
+  {t('premiumPaymentFlow.confirmText')}
+</p>
+
+<div
+  className="mt-5 grid grid-cols-2 gap-3"
+  role="group"
+  aria-label="Payment method"
+>
+  <button
+    type="button"
+    disabled={creating}
+    onClick={() => setSelectedMethod('aba')}
+    aria-pressed={selectedMethod === 'aba'}
+    className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${
+      selectedMethod === 'aba'
+        ? 'border-[#ffb800] bg-amber-50 text-[#202124]'
+        : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'
+    }`}
+  >
+    ABA / PayWay
+  </button>
+
+  <button
+    type="button"
+    disabled={creating}
+    onClick={() => setSelectedMethod('binance')}
+    aria-pressed={selectedMethod === 'binance'}
+    className={`min-h-12 rounded-xl border-2 px-3 text-[13px] font-bold ${
+      selectedMethod === 'binance'
+        ? 'border-[#F3BA2F] bg-[#fff9e5] text-[#202124]'
+        : 'border-[var(--shadow-border)] text-[var(--shadow-text-primary)]'
+    }`}
+  >
+    Binance Pay
+  </button>
+</div>
 
           <div className="mt-5 rounded-[18px] bg-[var(--shadow-bg-soft)] p-4">
             <div className="flex items-center justify-between gap-4 text-[13px]">
@@ -620,7 +664,9 @@ export default function PremiumPaymentFlow({
                 {t('premiumPaymentFlow.amount')}
               </span>
               <span className="text-[22px] font-black text-[#ff3f62]">
-                {formatMoney(normalizedPlan.amount)}
+                {selectedMethod === 'binance'
+  ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
+  : formatMoney(normalizedPlan.amount)}
               </span>
             </div>
 
@@ -657,10 +703,19 @@ export default function PremiumPaymentFlow({
 
           <div className="mt-4 rounded-[16px] bg-[#fff8e8] px-4 py-3 text-[12px] leading-5 text-[#8a5a00] dark:bg-amber-500/10 dark:text-amber-200">
             <div className="font-black">
-              {t('premiumPaymentFlow.payExactly', {
-                amount: formatMoney(normalizedPlan.amount),
-              })}
-            </div>
+  {t('premiumPaymentFlow.payExactly', {
+    amount: selectedMethod === 'binance'
+      ? `${(normalizedPlan.amount + 1).toFixed(2)} USDT`
+      : formatMoney(normalizedPlan.amount),
+  })}
+</div>
+
+{selectedMethod === 'binance' ? (
+  <div className="mt-1 font-bold text-emerald-700 dark:text-emerald-300">
+    +100 Vouchers after successful verification.
+    The extra 1 USDT is a Binance fee.
+  </div>
+) : null}
             <div className="mt-1">
               {t('premiumPaymentFlow.activateNote')}
             </div>
@@ -699,7 +754,18 @@ export default function PremiumPaymentFlow({
         </ModalShell>
       ) : null}
 
-      {statusOpen && payment ? (
+      {binanceOpen ? (
+  <PremiumBinanceCheckoutFlow
+    planMonths={normalizedPlan.months}
+    onClose={() => setBinanceOpen(false)}
+    onSuccess={(result) => {
+      updateStoredPremium(result?.premium)
+      onSuccess?.(result)
+    }}
+  />
+) : null}
+
+{statusOpen && payment ? (
         <ModalShell onBackdrop={() => setStatusOpen(false)}>
           <div
             className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
