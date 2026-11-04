@@ -15,7 +15,8 @@ const ENDPOINT = '/api/country-settings'
 const CACHE_MS = 5 * 60 * 1000
 const RETRY_MS = 20 * 1000
 const LEGACY_FLAGS = new Set(['app', 'physicalBooks', 'binancePay', 'payway'])
-const NEW_FLAGS = new Set(['shadowMall', 'readerMall', 'game'])
+const SCOPED_PAYMENT_FLAGS = new Set(['premiumPayway', 'premiumBinancePay', 'pdfPayway', 'pdfBinancePay'])
+const NEW_FLAGS = new Set(['shadowMall', 'readerMall', 'game', ...SCOPED_PAYMENT_FLAGS])
 const FLAGS = new Set([...LEGACY_FLAGS, ...NEW_FLAGS])
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ja', 'ko'])
 const TARGETS = new Set(['shadow_mall', 'diamonds'])
@@ -53,6 +54,11 @@ function parseCountrySettings(data) {
     readerMall: typeof effective.readerMall === 'boolean' ? effective.readerMall : data.region === 'kh',
     // Keep existing Game available until a saved Country Rule explicitly controls it.
     game: typeof effective.game === 'boolean' ? effective.game : true,
+    // The 4 new keys may not exist until Admin first saves updated rules.
+    premiumPayway: typeof effective.premiumPayway === 'boolean' ? effective.premiumPayway : false,
+    premiumBinancePay: typeof effective.premiumBinancePay === 'boolean' ? effective.premiumBinancePay : false,
+    pdfPayway: typeof effective.pdfPayway === 'boolean' ? effective.pdfPayway : false,
+    pdfBinancePay: typeof effective.pdfBinancePay === 'boolean' ? effective.pdfBinancePay : false,
   } : null
   return {
     country: typeof data.country === 'string' ? data.country : 'unknown',
@@ -142,6 +148,13 @@ export function getCountryFeature(settings, feature, fallback = null) {
     if (settings?.countryVerified !== true) return fallback
     const gameAllowed = settings?.effective?.game
     return typeof gameAllowed === 'boolean' ? gameAllowed : fallback
+  }
+  // Legacy Diamonds Binance and new Premium/PDF methods are country-controlled
+  // during the temporary global country-policy pause. Diamonds ABA is not.
+  if (feature === 'binancePay' || SCOPED_PAYMENT_FLAGS.has(feature)) {
+    if (settings?.countryVerified !== true) return fallback
+    const value = settings?.effective?.[feature]
+    return typeof value === 'boolean' ? value : fallback
   }
   if (!isCountryPolicyEnabled(settings)) return true
   if (settings?.countryVerified !== true) return fallback
