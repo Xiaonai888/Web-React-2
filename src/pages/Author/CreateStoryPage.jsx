@@ -2010,73 +2010,82 @@ backgroundImage: isEditMode
                   </div>
                 </div>
 
-                <div className="min-w-0">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[13px] font-bold text-[var(--shadow-text-primary)]">{t(isManga ? 'createStory.mangaSlides' : 'createStory.storySlides')} ({slides.length}/5)</div>
-                      <div className="mt-0.5 text-[11px] text-[var(--shadow-text-tertiary)]">{t('createStory.optionalCropPreview')}</div>
-                    </div>
+                
+<div className="min-w-0">
+  <div className="mb-2">
+    <div className="text-[13px] font-bold text-[var(--shadow-text-primary)]">
+      {t(isManga ? 'createStory.mangaSlides' : 'createStory.storySlides')} ({slides.length}/5)
+    </div>
+    <div className="mt-0.5 text-[11px] text-[var(--shadow-text-tertiary)]">
+      {t('createStory.optionalCropPreview')}
+    </div>
+  </div>
 
-                    <label className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-normal ${
-                      slides.length >= 5
-  ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]'
-  : isManga
-    ? 'bg-gradient-to-r from-[#9362ef] to-[#6d42db] text-white'
-    : 'bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]'
-                    }`}>
-                      {t('createStory.add')}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={slides.length >= 5}
-                        onChange={(event) => {
-                          handleAddSlide(event.target.files?.[0] || null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-                  </div>
+  {/* Existing slides: keep the original UI */}
+  {slides.length > 0 && (
+    <div className="space-y-2">
+      {slides.map((slide, index) => (
+        <SlideRow
+          key={slide.id}
+          slide={slide}
+          index={index}
+          onEdit={handleEditSlideCrop}
+          onDelete={handleDeleteSlide}
+          onToggle={handleToggleSlide}
+        />
+      ))}
+    </div>
+  )}
 
-                  <ImageDropZone
-                    onFiles={(files) => handleAddSlide(files[0] || null)}
-                    disabled={slides.length >= 5}
-                    className="rounded-[20px]"
-                    label={t('createStory.dropSlideImage')}
-                  >
-                    {slides.length ? (
-                      <div className="space-y-2">
-                        {slides.map((slide, index) => (
-                          <SlideRow
-                            key={slide.id}
-                            slide={slide}
-                            index={index}
-                            onEdit={handleEditSlideCrop}
-                            onDelete={handleDeleteSlide}
-                            onToggle={handleToggleSlide}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <label className="flex min-h-[132px] cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] text-center">
-                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-                          <i className="fa-solid fa-images text-[15px]" />
-                        </div>
-                        <div className="mt-3 text-[13px] font-bold text-[var(--shadow-text-primary)]">{t(isManga ? 'createStory.dropOrAddMangaSlide' : 'createStory.dropOrAddStorySlide')}</div>
-                        <div className="mt-1 text-[11px] text-[var(--shadow-text-tertiary)]">{t('createStory.crop169')}</div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) => {
-                            handleAddSlide(event.target.files?.[0] || null)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                    )}
-                  </ImageDropZone>
-                </div>
+  {/* Add new slide: permanent drop zone */}
+  <ImageDropZone
+    onFiles={(files) => handleAddSlide(files[0] || null)}
+    disabled={slides.length >= 5}
+    className="mt-3 rounded-[20px]"
+    label={t('createStory.dropSlideImage')}
+  >
+    <label
+      className={`flex min-h-[104px] w-full flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] px-3 text-center transition ${
+        slides.length >= 5
+          ? 'cursor-not-allowed opacity-60'
+          : 'cursor-pointer hover:border-[var(--shadow-text-primary)]'
+      }`}
+    >
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <i className="fa-solid fa-images text-[15px]" />
+      </div>
+
+      <div className="mt-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">
+        {slides.length >= 5
+          ? t('createStory.maxSlides')
+          : t(
+              isManga
+                ? 'createStory.dropOrAddMangaSlide'
+                : 'createStory.dropOrAddStorySlide'
+            )}
+      </div>
+
+      {slides.length < 5 && (
+        <div className="mt-1 text-[11px] text-[var(--shadow-text-tertiary)]">
+          {t('createStory.crop169')}
+        </div>
+      )}
+
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={slides.length >= 5}
+        onChange={(event) => {
+          handleAddSlide(event.target.files?.[0] || null)
+          event.target.value = ''
+        }}
+      />
+    </label>
+  </ImageDropZone>
+</div>
+
+                
               </div>
 
               <div className="mt-3 rounded-[16px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[11.5px] font-semibold leading-5 text-[var(--shadow-text-tertiary)]">
