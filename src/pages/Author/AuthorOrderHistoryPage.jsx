@@ -247,6 +247,7 @@ function normalizeOrder(order) {
     transaction_id: String(order.aba_transaction_id || order.transaction_id || ''),
     status: normalizeStatus(order),
     payment_status: String(order.payment_status || '').toLowerCase(),
+    payment_method: String(order.payment_method || order.request_payload?.payment_method || '').toLowerCase(),
     created_at: order.created_at || order.paid_at || '',
     author_page_name: order.author_page_name || '',
     author_page_username: order.author_page_username || '',
@@ -618,6 +619,9 @@ if (bookOrders.length) {
   </div>
 ) : null}
 <div className="mt-1 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">{formatDate(order.created_at)}</div>
+{order.payment_method === 'binance_personal_pay' ? (
+  <div className="mt-1 text-[11px] font-bold text-[#9a7000]">Binance Pay · +1 USDT fee · +100 Vouchers after verification</div>
+) : null}
                   </div>
 
                   <span className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-3 py-1 text-[9px] font-black uppercase text-[var(--shadow-text-secondary)]">
@@ -645,7 +649,9 @@ if (bookOrders.length) {
 
                   <div className="shrink-0 text-right">
                     <div className="text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorOrderHistory.total')}</div>
-                    <div className="mt-1 text-[14px] font-black text-[#e5484d]">{money(order.total)}</div>
+                    <div className="mt-1 text-[14px] font-black text-[#e5484d]">
+  {order.payment_method === 'binance_personal_pay' ? `${(order.total + 1).toFixed(2)} USDT` : money(order.total)}
+</div>
                   </div>
                 </div>
 
