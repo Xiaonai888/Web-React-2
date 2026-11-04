@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import PaymentProfileModal from '../Wallet/PaymentProfileModal'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import { getPaymentCountryTicket, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
+import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from '../../utils/countrySettings'
 
 // NEW: Binance Premium QR checkout. Only the backend RPC may fulfill the purchase.
 // UI never credits Diamonds/Vouchers or enables Premium from a QR display.
@@ -27,6 +27,7 @@ registerTranslationNamespace('premiumBinance', {
     statusError: 'Could not check payment status.', cancelError: 'Could not cancel this order.',
     active: 'Another Binance checkout is active. Finish it first.',
     cancelConfirm: 'Cancel this order ONLY if you have NOT sent USDT. If you already transferred, choose Cancel in this dialog and check payment status. Confirm no transfer was sent?',
+    unavailableCountry: 'Binance Premium is not available for your saved country. Check Reader Classification or contact Admin.',
   },
   km: {
     title: 'Binance Premium', loading: 'កំពុងរៀបចំការទូទាត់ដែលបានផ្ទៀងផ្ទាត់...', retry: 'ព្យាយាមម្ដងទៀត',
@@ -47,6 +48,7 @@ registerTranslationNamespace('premiumBinance', {
     statusError: 'មិនអាចពិនិត្យស្ថានភាពការទូទាត់បាន។', cancelError: 'មិនអាចបោះបង់ Order បាន។',
     active: 'មាន Binance Order ផ្សេងកំពុងដំណើរការ។ សូមបញ្ចប់ Order ចាស់ជាមុន។',
     cancelConfirm: 'សូមបោះបង់ Order តែក្នុងករណីអ្នកមិនទាន់បានផ្ទេរ USDT ទេ។ បើបានផ្ទេររួច សូមចុច Cancel ក្នុងប្រអប់នេះ ហើយពិនិត្យស្ថានភាពទូទាត់វិញ។ តើអ្នកបញ្ជាក់ថាមិនទាន់បានផ្ទេរប្រាក់មែនទេ?',
+    unavailableCountry: 'Binance Premium មិនត្រូវបានអនុញ្ញាតសម្រាប់ប្រទេសដែលបានរក្សាទុកទេ។ សូមពិនិត្យ Reader Classification ឬទាក់ទង Admin។',
   },
   zh: {
     title: 'Binance Premium', loading: '正在准备已验证的付款...', retry: '重试', close: '关闭',
@@ -60,6 +62,7 @@ registerTranslationNamespace('premiumBinance', {
     login: '请重新登录。', createError: '无法创建 Binance Premium 订单。', statusError: '无法检查付款状态。',
     cancelError: '无法取消此订单。', active: '另一个 Binance 订单正在进行，请先完成。',
     cancelConfirm: '仅在尚未发送 USDT 时取消订单。如果已经转账，请点击此对话框的“取消”并检查付款状态。确认尚未转账吗？',
+    unavailableCountry: '您保存的国家/地区不允许 Binance Premium。请检查 Reader Classification 或联系管理员。',
   },
   ja: {
     title: 'Binance Premium', loading: '確認済み支払いを準備中...', retry: '再試行', close: '閉じる',
@@ -74,6 +77,7 @@ registerTranslationNamespace('premiumBinance', {
     statusError: '支払い状況を確認できません。', cancelError: '注文をキャンセルできません。',
     active: '別の Binance 注文が進行中です。先に完了してください。',
     cancelConfirm: 'USDT をまだ送金していない場合に限り注文をキャンセルしてください。送金済みの場合はこの確認をキャンセルし、支払い状況を確認してください。未送金であることを確認しますか？',
+    unavailableCountry: '保存されている国では Binance Premium は利用できません。Reader Classification を確認するか管理者に連絡してください。',
   },
   ko: {
     title: 'Binance Premium', loading: '검증된 결제를 준비 중...', retry: '다시 시도', close: '닫기',
@@ -88,6 +92,7 @@ registerTranslationNamespace('premiumBinance', {
     statusError: '결제 상태를 확인할 수 없습니다.', cancelError: '주문을 취소할 수 없습니다.',
     active: '다른 Binance 주문이 진행 중입니다. 먼저 완료하세요.',
     cancelConfirm: 'USDT를 아직 송금하지 않은 경우에만 주문을 취소하세요. 이미 송금했다면 이 확인창에서 취소를 누르고 결제 상태를 확인하세요. 송금하지 않았음을 확인하십니까?',
+    unavailableCountry: '저장된 국가에서는 Binance Premium을 이용할 수 없습니다. Reader Classification을 확인하거나 관리자에게 문의하세요.',
   },
 })
 
@@ -120,7 +125,9 @@ function clearOrderId() {
 function safeOrder(order, months) {
   return order && ID_RE.test(String(order.id || order.order_id)) && order.purchase_kind === 'premium'
     && Number(order.plan_months) === months && Number(order.binance_fee_usdt) === 1
-    && Number(order.bonus_vouchers) === 100 && Number(order.amount_usdt) > 1
+    && Number(order.bonus_vouchers) === 100 &&
+    Number(order.amount_usdt) === ({ 1: 6, 3: 19, 12: 71 }[months]) &&
+    Number(order.price_usd) === ({ 1: 5, 3: 18, 12: 70 }[months])
 }
 function secondsRemaining(order, now) {
   if (!order || order.status !== 'waiting_payment') return 0
@@ -169,17 +176,19 @@ export default function PremiumBinanceCheckoutFlow({ planMonths, onClose, onSucc
   const months = Number(planMonths)
   const remaining = useMemo(() => secondsRemaining(order, now), [order, now])
   const payable = Boolean(safeOrder(order, months) && verifiedQr(order, now))
-  const amount = Number(order?.amount_usdt || 0)
 
   const request = useCallback(async (path, { method = 'GET', body, signal } = {}) => {
     const token = readerToken()
     if (!token) throw new Error(t('premiumBinance.login'))
     let ticket = null
     if (path === '/checkout' && method === 'POST') {
-      const settings = await loadCountrySettings()
+      const settings = await loadCountrySettings({ force: true })
+      if (getCountryFeature(settings, 'premiumBinancePay', false) !== true) {
+        throw new Error(t('premiumBinance.unavailableCountry'))
+      }
       if (isCountryPolicyEnabled(settings)) {
-        ticket = await getPaymentCountryTicket()
-        if (!ticket) throw new Error('Country verification required. Please refresh your account.')
+        ticket = settings.paymentCountryTicket
+        if (!ticket) throw new Error(t('premiumBinance.unavailableCountry'))
       }
     }
     const response = await fetch(API + '/api/purchase/binance/premium' + path, {
@@ -305,6 +314,29 @@ export default function PremiumBinanceCheckoutFlow({ planMonths, onClose, onSucc
   }, [order?.id, order?.status])
 
   useEffect(() => {
+    if (!order?.id || !['waiting_payment', 'pending_review'].includes(order.status)) return undefined
+    let pendingCheck = false
+    let lastCheckAt = 0
+    const id = order.id
+    const refresh = async () => {
+      if (document.visibilityState === 'hidden' || pendingCheck || Date.now() - lastCheckAt < 15000) return
+      pendingCheck = true
+      lastCheckAt = Date.now()
+      try {
+        const data = await request(`/checkout/${encodeURIComponent(id)}`)
+        if (data.order) applyOrder(data.order)
+      } catch { /* manual status button remains available */ }
+      finally { pendingCheck = false }
+    }
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [order?.id, order?.status, request, applyOrder])
+
+  useEffect(() => {
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = previous }
@@ -323,14 +355,14 @@ export default function PremiumBinanceCheckoutFlow({ planMonths, onClose, onSucc
   }
 
   async function cancelUnpaid() {
-  if (!order?.id || busy || order.status !== 'waiting_payment' || remaining <= 0) return
-
-  if (!window.confirm(t('premiumBinance.cancelConfirm'))) return
-
-  setBusy(true)
+    if (!order?.id || busy || order.status !== 'waiting_payment' || remaining <= 0) return
+    if (!window.confirm(t('premiumBinance.cancelConfirm'))) return
+    setBusy(true)
     setError('')
     try {
-      const data = await request(`/checkout/${encodeURIComponent(order.id)}/cancel`, { method: 'POST' })
+      const data = await request(`/checkout/${encodeURIComponent(order.id)}/cancel`, {
+        method: 'POST', body: { confirm_not_paid: true },
+      })
       applyOrder(data.order)
     } catch (e) {
       setError(e.message || t('premiumBinance.cancelError'))
