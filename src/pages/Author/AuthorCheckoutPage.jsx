@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { getCountryFeature, getPaymentCountryTicket, loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import PaymentProfileModal from '../../components/Wallet/PaymentProfileModal'
 import DiscoverPromotionExpiryNotice, { discoverPromotionExpiryMessage, hasExpiredDiscoverPromotion, isExpiredDiscoverPromotion, useDiscoverPromotionExpiry } from '../../components/discover/DiscoverPromotionExpiryNotice'
 
 registerTranslationNamespace('authorCheckout', {
@@ -62,7 +63,16 @@ registerTranslationNamespace('authorCheckout', {
     "paymentClose": "Close payment window",
     "paymentExpires": "Payment time left",
     "paymentOrderId": "Order ID",
-    "pdfUnlockFailed": "PDF payment was received, but the file is not unlocked yet. Please contact support if this continues."
+    "pdfUnlockFailed": "PDF payment was received, but the file is not unlocked yet. Please contact support if this continues.",
+    "pdf_method": "Payment method",
+    "pdf_aba": "ABA / PayWay",
+    "pdf_binance": "Binance Pay",
+    "pdf_binancePrice": "Binance total (includes 1 USDT fee)",
+    "pdf_binanceBonus": "+100 Vouchers after verified payment",
+    "pdf_binanceReceiver": "Pay only to the verified Binance recipient",
+    "pdf_binanceUnavailable": "Binance PDF payment is not allowed for your country or is not ready.",
+    "pdf_binanceProfile": "Save your Binance account name and UID first.",
+    "pdf_binanceWait": "If you already transferred USDT, do not send again. Check the status after verification."
   },
   "km": {
     "buyerProfile": "ព័ត៌មានអ្នកទិញ",
@@ -120,7 +130,16 @@ registerTranslationNamespace('authorCheckout', {
     "paymentClose": "បិទផ្ទាំងទូទាត់",
     "paymentExpires": "ពេលនៅសល់",
     "paymentOrderId": "លេខបញ្ជាទិញ",
-    "pdfUnlockFailed": "បានទទួលការទូទាត់ PDF ប៉ុន្តែឯកសារមិនទាន់ដោះសោទេ។ ប្រសិនបើបញ្ហានៅបន្ត សូមទាក់ទងផ្នែកជំនួយ។"
+    "pdfUnlockFailed": "បានទទួលការទូទាត់ PDF ប៉ុន្តែឯកសារមិនទាន់ដោះសោទេ។ ប្រសិនបើបញ្ហានៅបន្ត សូមទាក់ទងផ្នែកជំនួយ។",
+    "pdf_method": "មធ្យោបាយទូទាត់",
+    "pdf_aba": "ABA / PayWay",
+    "pdf_binance": "Binance Pay",
+    "pdf_binancePrice": "សរុប Binance (បូកថ្លៃ 1 USDT)",
+    "pdf_binanceBonus": "+100 Vouchers ក្រោយបញ្ជាក់ការបង់ប្រាក់",
+    "pdf_binanceReceiver": "សូមផ្ទេរតែទៅគណនី Binance ដែលបានផ្ទៀងផ្ទាត់",
+    "pdf_binanceUnavailable": "Binance PDF មិនអនុញ្ញាតសម្រាប់គណនីនេះ ឬមិនទាន់រួចរាល់។",
+    "pdf_binanceProfile": "សូមរក្សាទុក Binance Name និង UID ជាមុន។",
+    "pdf_binanceWait": "បើបានផ្ទេរ USDT រួច កុំផ្ទេរស្ទួន។ សូមពិនិត្យស្ថានភាពក្រោយផ្ទៀងផ្ទាត់។"
   },
   "zh": {
     "buyerProfile": "买家资料",
@@ -178,7 +197,16 @@ registerTranslationNamespace('authorCheckout', {
     "paymentClose": "关闭付款窗口",
     "paymentExpires": "剩余付款时间",
     "paymentOrderId": "订单号",
-    "pdfUnlockFailed": "已收到 PDF 付款，但文件尚未解锁。如果问题持续，请联系客服。"
+    "pdfUnlockFailed": "已收到 PDF 付款，但文件尚未解锁。如果问题持续，请联系客服。",
+    "pdf_method": "付款方式",
+    "pdf_aba": "ABA / PayWay",
+    "pdf_binance": "Binance Pay",
+    "pdf_binancePrice": "Binance 应付总额（含1 USDT手续费）",
+    "pdf_binanceBonus": "验证成功后赠送100 Vouchers",
+    "pdf_binanceReceiver": "仅向已验证的Binance收款方转账",
+    "pdf_binanceUnavailable": "该账户无法使用Binance PDF付款。",
+    "pdf_binanceProfile": "请先保存Binance姓名和UID。",
+    "pdf_binanceWait": "已转账请勿再次付款，等待核实后检查状态。"
   },
   "ja": {
     "buyerProfile": "購入者情報",
@@ -236,7 +264,16 @@ registerTranslationNamespace('authorCheckout', {
     "paymentClose": "支払い画面を閉じる",
     "paymentExpires": "残り時間",
     "paymentOrderId": "注文番号",
-    "pdfUnlockFailed": "PDF のお支払いは確認されましたが、ファイルはまだ解放されていません。解決しない場合はサポートにお問い合わせください。"
+    "pdfUnlockFailed": "PDF のお支払いは確認されましたが、ファイルはまだ解放されていません。解決しない場合はサポートにお問い合わせください。",
+    "pdf_method": "支払い方法",
+    "pdf_aba": "ABA / PayWay",
+    "pdf_binance": "Binance Pay",
+    "pdf_binancePrice": "Binance 合計（手数料1 USDTを含む）",
+    "pdf_binanceBonus": "確認後に100 Vouchersを付与",
+    "pdf_binanceReceiver": "確認済みBinance受取先のみに送金",
+    "pdf_binanceUnavailable": "Binance PDF支払いを利用できません。",
+    "pdf_binanceProfile": "Binance名とUIDを先に保存してください。",
+    "pdf_binanceWait": "送金済みの場合は二重送金しないでください。確認をお待ちください。"
   },
   "ko": {
     "buyerProfile": "구매자 정보",
@@ -343,6 +380,15 @@ const DELIVERY_COMPANIES = [
     label: 'J&T Express',
     fee: 2,
     logo: '/assets/Icons/J%26T.svg',
+    "pdf_method": "결제 수단",
+    "pdf_aba": "ABA / PayWay",
+    "pdf_binance": "Binance Pay",
+    "pdf_binancePrice": "Binance 총액 (수수료 1 USDT 포함)",
+    "pdf_binanceBonus": "확인 후 100 Vouchers 지급",
+    "pdf_binanceReceiver": "검증된 Binance 수취인에게만 송금",
+    "pdf_binanceUnavailable": "Binance PDF 결제를 사용할 수 없습니다.",
+    "pdf_binanceProfile": "Binance 이름과 UID를 먼저 저장하세요.",
+    "pdf_binanceWait": "이미 송금했다면 중복 송금하지 말고 확인을 기다려 주세요."
   },
   {
     id: 'vet',
@@ -628,6 +674,23 @@ export default function AuthorCheckoutPage() {
   const [checkingPayment, setCheckingPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentClock, setPaymentClock] = useState(Date.now())
+  const [paymentMethod, setPaymentMethod] = useState('aba')
+  const [methodAvailability, setMethodAvailability] = useState({ aba: false, binance: false, ready: false })
+  const [binanceProfileOpen, setBinanceProfileOpen] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    void loadCountrySettings({ force: true }).then((settings) => {
+      if (!active) return
+      const aba = getCountryFeature(settings, 'pdfPayway', false) === true
+      const binance = getCountryFeature(settings, 'pdfBinancePay', false) === true
+      setMethodAvailability({ aba, binance, ready: true })
+      if (!aba && binance) setPaymentMethod('binance')
+    }).catch(() => {
+      if (active) setMethodAvailability({ aba: false, binance: false, ready: true })
+    })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     const syncCart = () => {
@@ -758,12 +821,12 @@ export default function AuthorCheckoutPage() {
           : Array.isArray(saved.order?.items) ? saved.order.items : []
         const hasBook = orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')
         const pdfOnly = orderItems.length > 0 && orderItems.every((item) => String(item.product_type || item.type || '').toLowerCase() === 'pdf')
-        const discoverPdfPurchase = saved.return_path === '/discover' && pdfOnly
-        if (!hasBook && !discoverPdfPurchase) return
+        const confirmedPdfPurchase = pdfOnly
+        if (!hasBook && !confirmedPdfPurchase) return
 
         let pdfItem = null
         let pdfProductId = ''
-        if (discoverPdfPurchase) {
+        if (confirmedPdfPurchase) {
           if (String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked') {
             if (manual) setPaymentMessage(t(String(order.pdf_unlock_status || '').toLowerCase() === 'failed' ? 'authorCheckout.pdfUnlockFailed' : 'authorCheckout.paymentPending'))
             return
@@ -785,7 +848,7 @@ export default function AuthorCheckoutPage() {
         verifiedOrderId = orderId
         setPaymentModal(null)
         setPaymentMessage('')
-        if (discoverPdfPurchase) {
+        if (confirmedPdfPurchase) {
           setPaidPdfOrder({
             orderId,
             productId: pdfProductId,
@@ -946,6 +1009,17 @@ export default function AuthorCheckoutPage() {
         }
       }
     }
+    if (!needsDelivery) {
+      const rules = await loadCountrySettings({ force: true })
+      if (!methodAvailability.ready || getCountryFeature(rules,
+        paymentMethod === 'binance' ? 'pdfBinancePay' : 'pdfPayway', false) !== true) {
+        throw new Error(t('authorCheckout.pdf_binanceUnavailable'))
+      }
+      if (rules?.countryPolicyEnabled === true) {
+        countryTicket = await getPaymentCountryTicket()
+        if (!countryTicket) throw new Error(t('authorCheckout.failedContinuePayment'))
+      }
+    }
     if (needsDelivery) {
       const savedProfile = await saveBuyerProfile(profile)
       setBuyerProfile(current => ({ ...current, ...savedProfile }))
@@ -958,7 +1032,8 @@ export default function AuthorCheckoutPage() {
     }
     if (hasExpiredDiscoverPromotion(verifiedItems)) throw new Error(discoverPromotionExpiryMessage())
 
-    const orderResponse = await fetch(`${API_URL}/api/author-store/orders/create-payment`, {
+    const useBinance = !needsDelivery && paymentMethod === 'binance'
+    const orderResponse = await fetch(`${API_URL}/api/author-store/orders/${useBinance ? 'binance-pdf/checkout' : 'create-payment'}`, {
       method: 'POST',
             headers: {
         Authorization: `Bearer ${token}`,
@@ -981,6 +1056,9 @@ export default function AuthorCheckoutPage() {
     const orderData = await orderResponse.json().catch(() => ({}))
 
     if (!orderResponse.ok || orderData.ok === false) {
+      if (useBinance && orderData.code === 'BINANCE_PROFILE_REQUIRED') {
+        setBinanceProfileOpen(true)
+      }
       throw new Error(orderData.message || t('authorCheckout.failedCreatePayment'))
     }
 
@@ -988,7 +1066,17 @@ export default function AuthorCheckoutPage() {
       throw new Error(t('authorCheckout.paymentNotCreated'))
     }
 
-    const nextOrder = orderData.order
+    const nextOrder = useBinance ? {
+      ...orderData.order,
+      payment_method: 'binance_personal_pay',
+      payment_status: 'pending',
+      qr_image: orderData.order.checkout_ready === true &&
+        orderData.order.qr_path === '/api/purchase/binance/receiver/qr'
+        ? `${API_URL}${orderData.order.qr_path}` : '',
+    } : orderData.order
+    if (useBinance && (!orderData.order.checkout_ready || !nextOrder.qr_image)) {
+      throw new Error(t('authorCheckout.pdf_binanceUnavailable'))
+    }
 
     localStorage.setItem(
       'shadow_author_current_order_payment',
@@ -1000,9 +1088,15 @@ export default function AuthorCheckoutPage() {
       })
     )
 
-    const paywayUrl = nextOrder.checkout_url || nextOrder.deeplink || FALLBACK_PAYWAY_LINK
-    window.location.assign(paywayUrl)
-    navigationStarted = true
+    if (useBinance) {
+      setPaymentClock(Date.now())
+      setPaymentModal(nextOrder)
+      setPaymentMessage('')
+    } else {
+      const paywayUrl = nextOrder.checkout_url || nextOrder.deeplink || FALLBACK_PAYWAY_LINK
+      window.location.assign(paywayUrl)
+      navigationStarted = true
+    }
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
@@ -1154,6 +1248,28 @@ export default function AuthorCheckoutPage() {
 
         <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <h2 className="text-[17px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.paymentSummary')}</h2>
+          {!needsDelivery && items.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              <div className="text-[12px] font-bold text-[var(--shadow-text-primary)]">{t('authorCheckout.pdf_method')}</div>
+              <div className="grid grid-cols-2 gap-3">
+                {methodAvailability.aba ? <button type="button" aria-pressed={paymentMethod === 'aba'}
+                  onClick={() => setPaymentMethod('aba')}
+                  className={`min-h-11 rounded-xl border px-3 text-[12px] font-bold ${paymentMethod === 'aba' ? 'border-yellow-500 bg-yellow-50 text-black' : 'border-[var(--shadow-border)]'}`}>
+                  {t('authorCheckout.pdf_aba')}
+                </button> : null}
+                {methodAvailability.binance ? <button type="button" aria-pressed={paymentMethod === 'binance'}
+                  onClick={() => setPaymentMethod('binance')}
+                  className={`min-h-11 rounded-xl border px-3 text-[12px] font-bold ${paymentMethod === 'binance' ? 'border-yellow-500 bg-yellow-50 text-black' : 'border-[var(--shadow-border)]'}`}>
+                  {t('authorCheckout.pdf_binance')}
+                </button> : null}
+              </div>
+              {methodAvailability.ready && !methodAvailability.aba && !methodAvailability.binance ?
+                <p className="text-[12px] text-red-600">{t('authorCheckout.pdf_binanceUnavailable')}</p> : null}
+              {paymentMethod === 'binance' && methodAvailability.binance ? <div className="text-[12px] font-bold text-emerald-700">
+                {t('authorCheckout.pdf_binanceBonus')}<div className="text-[#9a7000]">{t('authorCheckout.pdf_binancePrice')}: {(total + 1).toFixed(2)} USDT</div>
+              </div> : null}
+            </div>
+          ) : null}
           <div className="mt-4 space-y-3 text-[13px] font-semibold">
             {needsDelivery ? (
   <>
@@ -1187,7 +1303,8 @@ export default function AuthorCheckoutPage() {
         <button
   type="button"
   onClick={handleContinuePayment}
-  disabled={saving || promotionExpired || !items.length}
+  disabled={saving || promotionExpired || !items.length || (!needsDelivery &&
+    (!methodAvailability.ready || (paymentMethod === 'aba' ? !methodAvailability.aba : !methodAvailability.binance)))}
   className="h-12 rounded-full bg-[var(--shadow-text-primary)] px-8 text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-95 disabled:bg-[var(--shadow-text-disabled)]"
 >
   {saving ? t('authorCheckout.creatingPayment') : t('authorCheckout.continuePayment')}
@@ -1197,16 +1314,37 @@ export default function AuthorCheckoutPage() {
       </footer>
 
 
+      {binanceProfileOpen ? <PaymentProfileModal showBank={false} showBinance
+        onClose={() => setBinanceProfileOpen(false)}
+        onSaved={(user) => {
+          if (!/^\d{5,20}$/.test(String(user?.binance_uid || ''))) {
+            setMessage(t('authorCheckout.pdf_binanceProfile'))
+            return
+          }
+          setBinanceProfileOpen(false)
+          void handleContinuePayment()
+        }} /> : null}
       {paymentModal && !paidBookOrder && !paidPdfOrder ? (
         <div className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-labelledby="author-payment-qr-title">
           <div className="max-h-[92vh] w-full max-w-[410px] overflow-y-auto rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 pb-6 pt-5 text-center shadow-2xl">
             <div className="flex items-center justify-between gap-3">
-              <h2 id="author-payment-qr-title" className="text-[18px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.paymentTitle')}</h2>
+              <h2 id="author-payment-qr-title" className="text-[18px] font-black text-[var(--shadow-text-primary)]">
+                {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binance') : t('authorCheckout.paymentTitle')}
+              </h2>
               <button type="button" onClick={() => setPaymentModal(null)} aria-label={t('authorCheckout.paymentClose')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-xmark text-[14px]" aria-hidden="true" />
               </button>
             </div>
-            <p className="mt-3 text-left text-[12px] leading-relaxed text-[var(--shadow-text-secondary)]">{t('authorCheckout.paymentHelp')}</p>
+            <p className="mt-3 text-left text-[12px] leading-relaxed text-[var(--shadow-text-secondary)]">
+              {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binanceReceiver') : t('authorCheckout.paymentHelp')}
+            </p>
+            {paymentModal.payment_method === 'binance_personal_pay' ? (
+              <div className="mt-3 rounded-xl bg-[#fff9e5] p-3 text-[13px] font-bold text-[#9a7000]">
+                <div>{paymentModal.amount_usdt} USDT · {t('authorCheckout.pdf_binancePrice')}</div>
+                <div>{t('authorCheckout.pdf_binanceBonus')}</div>
+                {paymentModal.receiver?.uid ? <div>Binance UID: {paymentModal.receiver.uid} ({paymentModal.receiver.name})</div> : null}
+              </div>
+            ) : null}
             {getPaymentQrImage(paymentModal) ? (
               <div className="mx-auto mt-4 flex w-fit max-w-full justify-center rounded-2xl bg-white p-3">
                 <img src={getPaymentQrImage(paymentModal)} alt={t('authorCheckout.paymentTitle')} className="max-h-[260px] max-w-[260px] object-contain" />
@@ -1221,11 +1359,14 @@ export default function AuthorCheckoutPage() {
               </p>
             ) : null}
             {Date.parse(paymentModal.expires_at || '') <= paymentClock ? (
-              <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900">{t('authorCheckout.paymentExpired')}</p>
+              <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900">
+                {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binanceWait') : t('authorCheckout.paymentExpired')}
+              </p>
             ) : null}
             {paymentMessage ? <p role="status" className="mt-3 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-left text-[12px] text-[var(--shadow-text-primary)]">{paymentMessage}</p> : null}
             <div className="mt-5 flex flex-col gap-2.5">
-              {paymentModal.deeplink || /^https:\/\//i.test(String(paymentModal.checkout_url || '')) ? (
+              {paymentModal.payment_method !== 'binance_personal_pay' &&
+                (paymentModal.deeplink || /^https:\/\//i.test(String(paymentModal.checkout_url || ''))) ? (
                 <button
                   type="button"
                   disabled={Date.parse(paymentModal.expires_at || '') <= paymentClock}
