@@ -14,6 +14,8 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { Search, ChevronRight } from 'lucide-react'
 
 const EventPage = lazy(() => import('./EventPage'))
+const ReaderStorePage = lazy(() => import('./ReaderStorePage'))
+const FastReelsPage = lazy(() => import('./FastReelsPage'))
 
 registerTranslationNamespace('chatStoryHomePage', {
   en: {
@@ -564,11 +566,19 @@ export default function ChatStoryHomePage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [activeHomeTab, setActiveHomeTab] = useState('chat')
-  const [eventMounted, setEventMounted] = useState(false)
-  const [eventReady, setEventReady] = useState(false)
-  const eventHostRef = useRef(null)
-  const didSwitchRef = useRef(false)
-  const savedScrollRef = useRef({ chat: 0, event: 0 })
+const [eventMounted, setEventMounted] = useState(false)
+const [mallMounted, setMallMounted] = useState(false)
+const [eventReady, setEventReady] = useState(false)
+
+const eventHostRef = useRef(null)
+const didSwitchRef = useRef(false)
+
+const savedScrollRef = useRef({
+  chat: 0,
+  event: 0,
+  mall: 0,
+  reel: 0,
+})
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
   const [storiesError, setStoriesError] = useState('')
@@ -754,14 +764,31 @@ export default function ChatStoryHomePage() {
     null
 
   const switchHomeTab = (nextTab) => {
-    if (nextTab === activeHomeTab) return
-    savedScrollRef.current[activeHomeTab] = Math.max(window.scrollY, 0)
-    didSwitchRef.current = true
-    if (nextTab === 'event') setEventMounted(true)
-    setBarsHidden(false)
-    document.body.classList.remove('chat-story-home-bars-hidden')
-    setActiveHomeTab(nextTab)
+  if (nextTab === activeHomeTab) return
+
+  savedScrollRef.current[activeHomeTab] = Math.max(
+    window.scrollY,
+    0
+  )
+
+  didSwitchRef.current = true
+
+  if (nextTab === 'event') {
+    setEventMounted(true)
   }
+
+  if (nextTab === 'mall') {
+    setMallMounted(true)
+  }
+
+  setBarsHidden(false)
+
+  document.body.classList.remove(
+    'chat-story-home-bars-hidden'
+  )
+
+  setActiveHomeTab(nextTab)
+}
 
   useEffect(() => {
     if (!didSwitchRef.current) return undefined
@@ -813,26 +840,56 @@ export default function ChatStoryHomePage() {
         }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <nav className="flex h-10 items-center gap-6" aria-label="Chat Story tabs">
-            <button
-              type="button"
-              onClick={() => switchHomeTab('chat')}
-              className={`relative h-full text-[17px] font-bold tracking-[-0.01em] ${activeHomeTab === 'chat' ? 'text-black' : 'text-neutral-400'}`}
-              aria-current={activeHomeTab === 'chat' ? 'page' : undefined}
-            >
-              {t('chatStoryHomePage.chat')}
-              {activeHomeTab === 'chat' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" /> : null}
-            </button>
-            <button
-              type="button"
-              onClick={() => switchHomeTab('event')}
-              className={`relative h-full text-[17px] font-bold tracking-[-0.01em] ${activeHomeTab === 'event' ? 'text-black' : 'text-neutral-400'}`}
-              aria-current={activeHomeTab === 'event' ? 'page' : undefined}
-            >
-              Event
-              {activeHomeTab === 'event' ? <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-[#F6B800]" /> : null}
-            </button>
-          </nav>
+          <nav
+  className="flex h-10 items-center gap-4 sm:gap-6"
+  aria-label="Chat Story tabs"
+>
+  {[
+    {
+      key: 'chat',
+      label: t('chatStoryHomePage.chat'),
+    },
+    {
+      key: 'event',
+      label: 'Event',
+    },
+    {
+      key: 'mall',
+      label: 'Mall',
+    },
+    {
+      key: 'reel',
+      label: 'Reel',
+    },
+  ].map((tab) => {
+    const active = activeHomeTab === tab.key
+
+    return (
+      <button
+        key={tab.key}
+        type="button"
+        onClick={() => switchHomeTab(tab.key)}
+        aria-current={active ? 'page' : undefined}
+        className={`relative h-full shrink-0 whitespace-nowrap
+          text-[15px] sm:text-[17px] font-bold
+          tracking-[-0.01em] ${
+            active
+              ? 'text-black'
+              : 'text-neutral-400'
+          }`}
+      >
+        {tab.label}
+
+        {active && (
+          <span
+            className="absolute bottom-0 left-0 h-[2px]
+              w-full rounded-full bg-[#F6B800]"
+          />
+        )}
+      </button>
+    )
+  })}
+</nav>
 
           <div
             className="flex items-center gap-1"
@@ -1157,9 +1214,46 @@ export default function ChatStoryHomePage() {
             <Suspense fallback={null}>
               <EventPage />
             </Suspense>
-          </div>
+                    </div>
         </div>
       ) : null}
+
+      {/* Mall Tab - Reuse Reader Store */}
+      {mallMounted && (
+        <div
+          className={
+            activeHomeTab === 'mall'
+              ? 'chat-story-mall-content'
+              : 'hidden'
+          }
+        >
+          <Suspense
+            fallback={
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Loading Mall...
+              </div>
+            }
+          >
+            <ReaderStorePage embedded />
+          </Suspense>
+        </div>
+      )}
+
+      {/* Reel Tab - Reuse Fast Video Feed */}
+      {activeHomeTab === 'reel' && (
+        <div className="chat-story-reel-content">
+          <Suspense
+            fallback={
+              <div className="py-10 text-center text-sm text-neutral-500">
+                Loading Reel...
+              </div>
+            }
+          >
+            <FastReelsPage embedded />
+          </Suspense>
+        </div>
+      )}
+
     </div>
   )
 }
