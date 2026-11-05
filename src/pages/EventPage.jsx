@@ -11,6 +11,7 @@ import { requestAuthorDaily80Event } from '../services/authorDaily80EventClientC
 import { requestAuthorDaily50Event } from '../services/authorDaily50EventClientCache'
 import { requestWriterWednesdayEvent } from '../services/writerWednesdayEventClientCache'
 import ManagedEventHeroCard from '../components/events/ManagedEventHeroCard'
+import { getShadowReadEvent } from '../services/shadowReadEventClient'
 import MonthlyVoteTab from './Event/MonthlyVoteTab'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -83,6 +84,8 @@ registerTranslationNamespace('eventPage', {
     authorCheckFailed: 'Failed to check author page',
     somethingWrong: 'Something went wrong',
     shadowReadEvent: 'Shadow Read Event',
+    readEventBadge: 'Reading Event',
+    readEventSubtitle: '7 days of reading and rewards',
   },
   km: {
     write: 'សរសេរ',
@@ -149,6 +152,8 @@ registerTranslationNamespace('eventPage', {
     authorCheckFailed: 'មិនអាចពិនិត្យទំព័រអ្នកនិពន្ធបានទេ',
     somethingWrong: 'មានបញ្ហាអ្វីមួយ',
     shadowReadEvent: 'ព្រឹត្តិការណ៍អានរឿង Shadow',
+    readEventBadge: 'ព្រឹត្តិការណ៍អានរឿង',
+    readEventSubtitle: 'អានរឿង ៧ ថ្ងៃ និងទទួលរង្វាន់',
   },
   zh: {
     write: '写作',
@@ -215,6 +220,8 @@ registerTranslationNamespace('eventPage', {
     authorCheckFailed: '无法检查作者页面',
     somethingWrong: '出现了一些问题',
     shadowReadEvent: 'Shadow 阅读活动',
+    readEventBadge: '阅读活动',
+    readEventSubtitle: '连续阅读七天，赢取奖励',
   },
   ja: {
     write: '執筆',
@@ -281,6 +288,8 @@ registerTranslationNamespace('eventPage', {
     authorCheckFailed: '作者ページを確認できませんでした',
     somethingWrong: '問題が発生しました',
     shadowReadEvent: 'Shadow 読書イベント',
+    readEventBadge: '読書イベント',
+    readEventSubtitle: '7日間読んで報酬を獲得',
   },
   ko: {
     write: '글쓰기',
@@ -347,6 +356,8 @@ registerTranslationNamespace('eventPage', {
     authorCheckFailed: '작가 페이지를 확인하지 못했습니다',
     somethingWrong: '문제가 발생했습니다',
     shadowReadEvent: 'Shadow 독서 이벤트',
+    readEventBadge: '독서 이벤트',
+    readEventSubtitle: '7일 동안 읽고 보상 받기',
   },
 })
 
@@ -1184,6 +1195,83 @@ function getNextWeeklyStart(value, weekday) {
   return start
 }
 
+const READ_EVENT_FIRST_START_MS = Date.UTC(2026, 10, 1, 17) // Nov 2, 00:00 in Cambodia
+const READ_EVENT_DAY_MS = 86400000
+const READ_EVENT_CYCLE_MS = 14 * READ_EVENT_DAY_MS
+const READ_EVENT_OPEN_MS = 7 * READ_EVENT_DAY_MS
+
+function getReadEventWindow(now = new Date()) {
+  const nowMs = now.getTime()
+  if (nowMs < READ_EVENT_FIRST_START_MS) {
+    return {
+      active: false,
+      startsOn: '2026-11-02',
+      endsAt: new Date(READ_EVENT_FIRST_START_MS + READ_EVENT_OPEN_MS),
+      nextStart: new Date(READ_EVENT_FIRST_START_MS),
+    }
+  }
+
+  const cycleIndex = Math.floor((nowMs - READ_EVENT_FIRST_START_MS) / READ_EVENT_CYCLE_MS)
+  const cycleStartsAt = READ_EVENT_FIRST_START_MS + cycleIndex * READ_EVENT_CYCLE_MS
+  const endsAt = new Date(cycleStartsAt + READ_EVENT_OPEN_MS)
+  return {
+    active: nowMs < endsAt.getTime(),
+    startsOn: new Date(cycleStartsAt + 7 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    endsAt,
+    nextStart: new Date(cycleStartsAt + READ_EVENT_CYCLE_MS),
+  }
+}
+
+function ShadowReadEventCoverCard({ endsAt, onOpen }) {
+  const { t } = useDisplayTranslation()
+  const [nowMs, setNowMs] = useState(() => Date.now())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const remaining = Math.max(0, Math.floor((endsAt.getTime() - nowMs) / 1000))
+  const twoDigits = (value) => String(value).padStart(2, '0')
+  const countdown = [
+    twoDigits(Math.floor(remaining / 86400)),
+    twoDigits(Math.floor((remaining % 86400) / 3600)),
+    twoDigits(Math.floor((remaining % 3600) / 60)),
+    twoDigits(remaining % 60),
+  ].join(' : ')
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative mt-4 block aspect-square w-full overflow-hidden rounded-[24px] border border-violet-400/40 bg-[#180C32] text-left text-white shadow-[0_16px_38px_rgba(124,58,237,0.17)] transition active:scale-[0.99]"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(145deg,#33165D_0%,#1D1234_55%,#080710_100%)]" />
+      <div className="absolute -right-16 -top-10 h-[65%] w-[65%] rounded-full bg-violet-500/25 blur-[45px]" />
+      <div className="absolute right-[9%] top-[19%] flex h-[47%] w-[47%] items-center justify-center rounded-full border-[12px] border-violet-400/20 text-[clamp(76px,18vw,128px)] text-violet-200/20">
+        <i className="fa-solid fa-book-open" aria-hidden="true" />
+      </div>
+      <div className="absolute -left-[20%] bottom-[3%] h-[56%] w-[56%] rounded-full border-[30px] border-white/[0.035]" />
+      <div className="absolute inset-x-0 top-0 p-5 sm:p-7">
+        <span className="inline-flex rounded-full border border-violet-300/40 bg-violet-500/25 px-3 py-1.5 text-[10px] font-black text-violet-100">
+          {t('eventPage.readEventBadge')}
+        </span>
+        <h2 className="mt-7 max-w-[88%] text-[clamp(32px,9vw,54px)] font-black leading-[1.05] tracking-[-0.05em] text-white">
+          {t('eventPage.shadowReadEvent')}
+        </h2>
+        <p className="mt-4 max-w-[78%] text-[12px] font-semibold leading-5 text-violet-100/85 sm:text-[14px]">
+          {t('eventPage.readEventSubtitle')}
+        </p>
+      </div>
+      <div className="absolute inset-x-4 bottom-5 z-10 flex min-h-12 items-center justify-center gap-2 rounded-[16px] border-2 border-black bg-[#C4A3FF] px-3 py-3 text-center text-[12px] font-black tabular-nums text-[#180C32] shadow-[0_5px_0_#111] sm:text-[14px]">
+        <i className="fa-solid fa-clock" aria-hidden="true" />
+        <span>{countdown}</span>
+        <i className="fa-solid fa-chevron-right text-[10px]" aria-hidden="true" />
+      </div>
+    </button>
+  )
+}
+
 function getUpcomingCountdown(target, now) {
   const totalMinutes = Math.max(
     0,
@@ -1330,6 +1418,9 @@ export default function EventPage() {
     useState(false)
   const [eventNow, setEventNow] =
     useState(() => new Date())
+  const readEventWindow = getReadEventWindow(eventNow)
+  const [readEventData, setReadEventData] = useState(null)
+  const [readEventEligible, setReadEventEligible] = useState(false)
   const [selectedActiveEvent, setSelectedActiveEvent] =
     useState('')
   const [managedEvents, setManagedEvents] = useState([])
@@ -1340,6 +1431,65 @@ export default function EventPage() {
   const topAuthorsDragMovedRef = useRef(false)
   const topAuthorsStartXRef = useRef(0)
   const topAuthorsScrollLeftRef = useRef(0)
+
+  useEffect(() => {
+    if (activeTab !== 'event' || !SHADOW_READ_EVENT_ENTRY_ENABLED) return undefined
+
+    let stopped = false
+    let requestInFlight = false
+    let controller = null
+
+    async function loadReadEventStatus() {
+      if (stopped || requestInFlight || document.visibilityState === 'hidden') return
+      if (!getReaderToken()) {
+        setReadEventData(null)
+        setReadEventEligible(false)
+        return
+      }
+
+      requestInFlight = true
+      const requestController = new AbortController()
+      controller = requestController
+      try {
+        const result = await getShadowReadEvent({ signal: requestController.signal })
+        if (!stopped && !requestController.signal.aborted) {
+          setReadEventData(result)
+          setReadEventEligible(true)
+        }
+      } catch (error) {
+        if (!stopped && !requestController.signal.aborted && error?.name !== 'AbortError') {
+          // The backend enforces Cambodian Reader eligibility. Do not advertise
+          // the event if eligibility cannot be confirmed.
+          setReadEventData(null)
+          setReadEventEligible(false)
+        }
+      } finally {
+        if (controller === requestController) controller = null
+        requestInFlight = false
+      }
+    }
+
+    const onResume = () => {
+      if (document.visibilityState === 'visible') void loadReadEventStatus()
+    }
+
+    void loadReadEventStatus()
+    window.addEventListener('focus', onResume)
+    document.addEventListener('visibilitychange', onResume)
+    // Check occasionally during an active event so an Admin enable/disable
+    // is reflected without reloading; no polling during the off week.
+    const timer = readEventWindow.active
+      ? window.setInterval(onResume, 10 * 60 * 1000)
+      : null
+
+    return () => {
+      stopped = true
+      controller?.abort()
+      if (timer !== null) window.clearInterval(timer)
+      window.removeEventListener('focus', onResume)
+      document.removeEventListener('visibilitychange', onResume)
+    }
+  }, [activeTab, readEventWindow.startsOn, readEventWindow.active])
 
   useEffect(() => {
     let ignore = false
@@ -1678,7 +1828,25 @@ const response = await fetch(`${API_BASE_URL}/api/authors/top?limit=6`, {
   const blackSundayLive =
   isBlackSundayLive(eventNow)
 
+const readEventLive = Boolean(
+    SHADOW_READ_EVENT_ENTRY_ENABLED && readEventEligible &&
+    readEventWindow.active && readEventData?.active === true &&
+    readEventData?.event?.starts_on === readEventWindow.startsOn
+  )
+
 const upcomingEvents = [
+  SHADOW_READ_EVENT_ENTRY_ENABLED && readEventEligible && !readEventLive
+    ? {
+        id: 'shadow-read',
+        title: t('eventPage.shadowReadEvent'),
+        startsAt: readEventWindow.nextStart,
+        icon: 'fa-book-open',
+        iconBg: 'bg-[#F3EDFF] dark:bg-violet-500/15',
+        iconColor: 'text-[#7C3AED]',
+        badgeClass: 'bg-[#F1EAFE] text-[#7C3AED] dark:bg-violet-500/15 dark:text-violet-300',
+        accentClass: 'text-[#7C3AED]',
+      }
+    : null,
   !writerWednesdayLive
     ? {
         id: 'writer-wednesday',
@@ -1726,6 +1894,17 @@ const upcomingEvents = [
 
 const activeEvents = [
     ...managedActiveEvents,
+    readEventLive
+      ? {
+          id: 'shadow-read',
+          title: t('eventPage.shadowReadEvent'),
+          label: t('eventPage.readEventBadge'),
+          icon: 'fa-book-open',
+          iconBg: 'bg-[#F3EDFF] dark:bg-violet-500/15',
+          iconColor: 'text-[#7C3AED]',
+          labelColor: 'text-[#7C3AED]',
+        }
+      : null,
     writerWednesdayLive
       ? {
           id: 'writer-wednesday',
@@ -2334,25 +2513,19 @@ const activeEvents = [
           <MonthlyVoteTab />
         ) : (
   <>
-  {SHADOW_READ_EVENT_ENTRY_ENABLED && (
-    <button
-      type="button"
-      onClick={() => navigate('/event/shadow-read')}
-      className="mb-4 flex w-full items-center justify-between rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left text-[var(--shadow-text-primary)] transition hover:bg-[var(--shadow-bg-hover)]"
-    >
-      <span className="flex items-center gap-3">
-        <i className="fas fa-book-open text-[var(--shadow-accent)]" aria-hidden="true" />
-        <span className="text-[14px] font-extrabold">{t('eventPage.shadowReadEvent')}</span>
-      </span>
-      <i className="fas fa-chevron-right text-[11px] text-[var(--shadow-text-secondary)]" aria-hidden="true" />
-    </button>
-  )}
   <div
     onTouchStart={handleEventTouchStart}
     onTouchEnd={handleEventTouchEnd}
     onTouchCancel={() => { eventSwipeStartRef.current = null }}
     onClickCapture={handleEventSwipeClickCapture}
   >
+  {selectedActiveEvent === 'shadow-read' && readEventLive ? (
+    <ShadowReadEventCoverCard
+      endsAt={readEventWindow.endsAt}
+      onOpen={() => navigate('/event/shadow-read')}
+    />
+  ) : null}
+
   {selectedManagedEvent ? (
   <ManagedEventHeroCard event={selectedManagedEvent} />
 ) : null}
