@@ -2137,11 +2137,48 @@ function FireSolidIcon() {
   )
 }
 
+// Impression order is stored only for this reader and 6-hour Cambodia slot.
+// When the feed mounts again, unseen ads appear first, followed by seen ads
+// in oldest-viewed-first order. Existing rendered cards never jump mid-scroll.
+function getAutoAdQueueKey(token, slotKey) {
+  return `shadow_auto_ad_seen_v1:${getShadowMallAdRotationStorageKey(token)}:${slotKey || 'unknown'}`
+}
+
+function readAutoAdQueue(token, slotKey) {
+  if (!slotKey) return []
+  try {
+    const ids = JSON.parse(localStorage.getItem(getAutoAdQueueKey(token, slotKey)) || '[]')
+    return Array.isArray(ids) ? ids.filter((id) => typeof id === 'string').slice(-10) : []
+  } catch {
+    return []
+  }
+}
+
+function rememberAutoAdImpression(token, slotKey, storyId) {
+  if (!slotKey || !storyId) return
+  try {
+    const id = String(storyId)
+    const history = readAutoAdQueue(token, slotKey).filter((value) => value !== id)
+    localStorage.setItem(getAutoAdQueueKey(token, slotKey), JSON.stringify([...history, id].slice(-10)))
+  } catch {}
+}
+
+function sortAutoAdsByImpressions(ads, history) {
+  const seenOrder = new Map(history.map((id, index) => [id, index]))
+  return ads.map((ad, index) => ({ ad, index })).sort((a, b) => {
+    const av = seenOrder.get(String(a.ad.story_id))
+    const bv = seenOrder.get(String(b.ad.story_id))
+    if (av === undefined && bv !== undefined) return -1
+    if (bv === undefined && av !== undefined) return 1
+    return av !== undefined && bv !== undefined ? av - bv : a.index - b.index
+  }).map(({ ad }) => ad)
+}
+
 function asAutoStoryAdOption(ad, day) {
   return {
     id: `auto-story:${ad.story_id}`,
     is_auto_story_ad: true,
-    visibility_version: Number(String(day || '').replace(/-/g, '')) || 1,
+    visibility_version: Number(String(day || '').replace(/\D/g, '')) || 1,
     title: ad.title || '',
     description: ad.description || '',
     sponsor: ad.author_name || 'Shadow',
@@ -2151,8 +2188,11 @@ function asAutoStoryAdOption(ad, day) {
   }
 }
 
-function AutoStoryAdCard({ ad, day, onMore, isFollowing = false, isOwner = false, onFollowChanged }) {
+function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, isOwner = false, onFollowChanged }) {
   const navigate = useNavigate()
+  const cardRef = useRef(null)
+  const impressionRef = useRef(onImpression)
+  impressionRef.current = onImpression
   const [expanded, setExpanded] = useState(false)
   const [followBusy, setFollowBusy] = useState(false)
   const [followedHere, setFollowedHere] = useState(false)
@@ -2180,6 +2220,38 @@ function AutoStoryAdCard({ ad, day, onMore, isFollowing = false, isOwner = false
     ? ad.tags.filter((tag) => typeof tag === 'string' && tag.trim() && tag.toLowerCase() !== genre.toLowerCase()).slice(0, 3)
     : []
   const option = asAutoStoryAdOption(ad, day)
+
+  useEffect(() => {
+    const element = cardRef.current
+    if (!element || !ad.story_id || typeof IntersectionObserver === 'undefined') return undefined
+    let timer = null
+    let observed = false
+    let visible = false
+    const clear = () => { if (timer !== null) window.clearTimeout(timer); timer = null }
+    const schedule = () => {
+      if (observed || !visible || document.hidden || timer !== null) return
+      timer = window.setTimeout(() => {
+        timer = null
+        if (!visible || document.hidden || observed) return
+        observed = true
+        impressionRef.current?.(ad)
+        observer.disconnect()
+      }, 900)
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.35)
+      if (visible) schedule()
+      else clear()
+    }, { threshold: [0, 0.35, 0.75] })
+    observer.observe(element)
+    const visibilityHandler = () => { if (document.hidden) clear(); else schedule() }
+    document.addEventListener('visibilitychange', visibilityHandler)
+    return () => {
+      clear()
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', visibilityHandler)
+    }
+  }, [ad.story_id, day])
 
   const rememberPosition = () => {
     try {
@@ -2231,7 +2303,7 @@ function AutoStoryAdCard({ ad, day, onMore, isFollowing = false, isOwner = false
   )
 
   return (
-    <article className="overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
+    <article ref={cardRef} className="overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
       <header className="flex items-start gap-3 px-4 pb-2 pt-4">
         {authorUrl ? (
           <Link to={authorUrl} className="h-10 w-10 shrink-0" aria-label={discoverText('openAuthor', { name })}>{avatar}</Link>
@@ -3304,44 +3376,46 @@ useEffect(() => {
   let alive = true
   let pending = false
   let checkedAt = 0
+  let boundaryTimer = null
 
-  async function syncAdControl() {
-    if (
-      !alive ||
-      pending ||
-      document.hidden ||
-      Date.now() - checkedAt < 60000
-    ) return
-
+  async function syncAdControl(force = false) {
+    if (!alive || pending || document.hidden || (!force && Date.now() - checkedAt < 60000)) return
     pending = true
     checkedAt = Date.now()
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/shadow-mall/ad-control`,
-        { cache: 'no-store' }
-      )
+      const response = await fetch(`${API_BASE_URL}/api/shadow-mall/ad-control`, { cache: 'no-store' })
       const data = await response.json().catch(() => ({}))
-
-      if (
-        !response.ok ||
-        data.ok !== true ||
-        !['manual', 'auto'].includes(data.mode)
-      ) {
+      if (!response.ok || data.ok !== true || !['manual', 'auto'].includes(data.mode)) {
         throw new Error('Invalid Ad control response')
       }
+      if (!alive) return
+      const next = {
+        mode: data.mode,
+        day: data.day || '',
+        slot_key: data.slot_key || data.day || '',
+        next_refresh_at: data.next_refresh_at || null,
+        ads: Array.isArray(data.ads) ? data.ads.slice(0, 10) : [],
+      }
+      setDiscoverAdControl((previous) => {
+        if (previous?.mode === next.mode && previous?.slot_key === next.slot_key &&
+            JSON.stringify(previous?.ads || []) === JSON.stringify(next.ads)) return previous
+        return next
+      })
 
-      if (alive) {
-        setDiscoverAdControl({
-          mode: data.mode,
-          day: data.day || '',
-          ads: Array.isArray(data.ads)
-            ? data.ads.slice(0, 10)
-            : [],
-        })
+      if (boundaryTimer !== null) window.clearTimeout(boundaryTimer)
+      boundaryTimer = null
+      const nextTime = Date.parse(next.next_refresh_at || '')
+      if (next.mode === 'auto' && Number.isFinite(nextTime)) {
+        // Spread refreshes across clients, but never retry in a one-second
+        // loop if the browser clock is ahead of the backend clock.
+        const remaining = nextTime - Date.now()
+        const jitter = Math.floor(Math.random() * 20000)
+        const delay = remaining > 0
+          ? remaining + 1000 + jitter
+          : 60000 + jitter
+        boundaryTimer = window.setTimeout(() => { void syncAdControl(true) }, delay)
       }
     } catch {
-      // Unknown mode: hide both systems to avoid overlap.
       if (alive) setDiscoverAdControl(null)
     } finally {
       pending = false
@@ -3349,18 +3423,14 @@ useEffect(() => {
   }
 
   void syncAdControl()
-
-  const timer = window.setInterval(syncAdControl, 5 * 60 * 1000)
-  const refresh = () => {
-    if (!document.hidden) void syncAdControl()
-  }
-
+  const timer = window.setInterval(() => { void syncAdControl() }, 5 * 60 * 1000)
+  const refresh = () => { if (!document.hidden) void syncAdControl() }
   window.addEventListener('focus', refresh)
   document.addEventListener('visibilitychange', refresh)
-
   return () => {
     alive = false
     window.clearInterval(timer)
+    if (boundaryTimer !== null) window.clearTimeout(boundaryTimer)
     window.removeEventListener('focus', refresh)
     document.removeEventListener('visibilitychange', refresh)
   }
@@ -3420,16 +3490,20 @@ useEffect(() => {
     return unique
   }, [shadowMallPromotions])
 
+  const autoAdSlotKey = discoverAdControl?.slot_key || discoverAdControl?.day || ''
   const visibleAutoAds = useMemo(() => {
     if (discoverAdControl?.mode !== 'auto') return []
-
-    return discoverAdControl.ads.filter((ad) =>
-      ad?.story_id &&
-      !isShadowMallAdHidden(
-        asAutoStoryAdOption(ad, discoverAdControl.day)
-      )
+    const eligible = discoverAdControl.ads.filter((ad) =>
+      ad?.story_id && !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey))
     )
-  }, [discoverAdControl, autoHiddenRevision])
+    return sortAutoAdsByImpressions(eligible, readAutoAdQueue(token, autoAdSlotKey))
+  }, [discoverAdControl, autoHiddenRevision, token, autoAdSlotKey])
+
+  // Do not reorder already mounted cards while scrolling; the saved queue
+  // takes effect on the next visit or the next six-hour batch.
+  function handleAutoAdImpression(ad) {
+    rememberAutoAdImpression(token, autoAdSlotKey, ad?.story_id)
+  }
 
   // Reuse follow information already in the Discover feed; no per-ad status request.
   const knownAutoAdAuthorStates = useMemo(() => {
@@ -5226,10 +5300,11 @@ const visibleBoostPosts = useMemo(() => {
 
 {discoverAdControl?.mode === 'auto' && visibleAutoAds[0] ? (
   <AutoStoryAdCard
-    key={`auto-fallback-${discoverAdControl.day}-${visibleAutoAds[0].story_id}`}
+    key={`auto-fallback-${autoAdSlotKey}-${visibleAutoAds[0].story_id}`}
     ad={visibleAutoAds[0]}
-    day={discoverAdControl.day}
+    day={autoAdSlotKey}
     onMore={setAdOptionsItem}
+    onImpression={handleAutoAdImpression}
     onFollowChanged={handleAutoAdAuthorFollowed}
     isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[0].author_id || ''))}
     isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[0].author_id || ''))}
@@ -5300,10 +5375,11 @@ const visibleBoostPosts = useMemo(() => {
   ) : discoverAdControl?.mode === 'auto' &&
       visibleAutoAds.length > 0 ? (
     <AutoStoryAdCard
-      key={`auto-ad-${discoverAdControl.day}-${visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].story_id}`}
+      key={`auto-ad-${autoAdSlotKey}-${visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].story_id}`}
       ad={visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length]}
-      day={discoverAdControl.day}
+      day={autoAdSlotKey}
       onMore={setAdOptionsItem}
+      onImpression={handleAutoAdImpression}
       onFollowChanged={handleAutoAdAuthorFollowed}
       isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].author_id || ''))}
       isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[Math.floor(entry.timelineIndex / 3) % visibleAutoAds.length].author_id || ''))}
@@ -5387,10 +5463,11 @@ const visibleBoostPosts = useMemo(() => {
  discoverAdControl?.mode === 'auto' &&
  visibleAutoAds[0] ? (
   <AutoStoryAdCard
-    key={`auto-fallback-${discoverAdControl.day}-${visibleAutoAds[0].story_id}`}
+    key={`auto-fallback-${autoAdSlotKey}-${visibleAutoAds[0].story_id}`}
     ad={visibleAutoAds[0]}
-    day={discoverAdControl.day}
+    day={autoAdSlotKey}
     onMore={setAdOptionsItem}
+    onImpression={handleAutoAdImpression}
     onFollowChanged={handleAutoAdAuthorFollowed}
     isFollowing={knownAutoAdAuthorStates.following.has(String(visibleAutoAds[0].author_id || ''))}
     isOwner={knownAutoAdAuthorStates.owned.has(String(visibleAutoAds[0].author_id || ''))}
