@@ -786,7 +786,7 @@ function StorePaginationFooter({ pager, t }) {
   )
 }
 
-export default function ReaderStorePage() {
+export default function ReaderStorePage({ embedded = false }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
@@ -916,20 +916,36 @@ export default function ReaderStorePage() {
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur-xl">
+      <header
+  className={
+    embedded
+      ? 'relative z-10 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)]'
+      : 'sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur-xl'
+  }
+>
         <div className="mx-auto flex h-14 w-full max-w-[560px] items-center gap-2 px-3">
-          <button
-            type="button"
-            onClick={() => browseKey ? navigate('/store') : navigate(-1)}
-            aria-label={t('readerStore.goBack')}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
-          >
-            <i className="fa-solid fa-chevron-left text-[17px]" />
-          </button>
+         {!embedded && (
+  <>
+    <button
+      type="button"
+      onClick={() =>
+        browseKey
+          ? navigate('/store')
+          : navigate(-1)
+      }
+      aria-label={t('readerStore.goBack')}
+      className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
+    >
+      <i className="fa-solid fa-chevron-left text-[17px]" />
+    </button>
 
-          <h1 className="text-[19px] font-extrabold tracking-tight">
-            {browseKey ? browseTitles[browseKey] : t('readerStore.store')}
-          </h1>
+    <h1 className="text-[19px] font-extrabold tracking-tight">
+      {browseKey
+        ? browseTitles[browseKey]
+        : t('readerStore.store')}
+    </h1>
+  </>
+)}
 
           <div className="ml-auto flex items-center gap-1">
             <button
@@ -1147,7 +1163,7 @@ export default function ReaderStorePage() {
         ) : null}
       </main>
 
-      <ReaderProfileFooter />
+      {!embedded && <ReaderProfileFooter />}
     </div>
   )
 }
