@@ -517,6 +517,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/notifications',
     '/update-today',
     '/daily-picks',
+    '/new-arrivals',
     '/you-might-like',
     '/short-completed',
     '/tasks',
