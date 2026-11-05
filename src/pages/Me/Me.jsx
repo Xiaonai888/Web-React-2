@@ -1128,12 +1128,6 @@ const handleOpenProfileSwitcher = (event) => {
   title={tx('mePage.shadowMall')}
   divider
 />
-<MenuRow
-  to="/fast"
-  icon="fa-solid fa-circle-play"
-  title="Fast"
-  divider
-/>
             <MenuRow
   to="/comments"
   icon="far fa-comment-dots"
