@@ -2383,7 +2383,8 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
   const [followBusy, setFollowBusy] = useState(false)
   const [followedHere, setFollowedHere] = useState(false)
   const [followError, setFollowError] = useState('')
-  const target = `/story/${encodeURIComponent(ad.story_id)}`
+  const [firstEpisodeOpening, setFirstEpisodeOpening] = useState(false)
+  const [firstEpisodeError, setFirstEpisodeError] = useState('')
   const authorUsername = String(ad.author_username || '').trim()
   const authorUrl = authorUsername
     ? `/author/page/${encodeURIComponent(authorUsername)}`
@@ -2439,9 +2440,56 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
 
   const rememberPosition = () => {
     try {
+      // Keep the original Discover scroll position while opening an episode.
+      // Returning with browser Back restores the same React Router location
+      // key, so the Smart Ad queue does not reshuffle on this return visit.
       sessionStorage.setItem('shadow_discover_auto_ad_return_y', String(window.scrollY))
     } catch {}
     onStoryOpen?.(ad)
+  }
+
+  async function openFirstEpisode() {
+    if (firstEpisodeOpening || !ad.story_id) return
+    setFirstEpisodeOpening(true)
+    setFirstEpisodeError('')
+
+    try {
+      // Episode ids are UUIDs, not the number 1. Resolve the real first
+      // published episode only when the reader clicks an Auto Story Ad.
+      // This adds no Supabase/API request for passive Ad impressions.
+      const token = getAuthToken()
+      const response = await fetch(
+        `${API_BASE_URL}/api/public/stories/${encodeURIComponent(ad.story_id)}/episodes`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          cache: 'no-store',
+        }
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || 'Failed to load episodes')
+      }
+
+      const episodes = Array.isArray(data.episodes) ? data.episodes : []
+      const first = episodes
+        .filter((episode) => episode?.id)
+        .sort((left, right) => Number(left.episode_number || 0) - Number(right.episode_number || 0))[0]
+      if (!first) throw new Error('No readable episodes found')
+
+      rememberPosition()
+      // Do not supply returnTo:'/discover' here: ReaderPage would replace
+      // the history entry and give Discover a new location key. ReaderPage's
+      // existing Back uses navigate(-1), keeping the previous feed snapshot.
+      navigate(
+        `/story/${encodeURIComponent(ad.story_id)}/episode/${encodeURIComponent(first.id)}`,
+        { state: { returnSource: 'discover_auto_ad' } }
+      )
+    } catch (error) {
+      console.warn('DISCOVER_AUTO_AD_OPEN_EPISODE_ERROR', error?.message || 'Unavailable')
+      setFirstEpisodeError(discoverText('couldNotLoad'))
+    } finally {
+      setFirstEpisodeOpening(false)
+    }
   }
 
   async function followAuthor() {
@@ -2536,7 +2584,7 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
           </p>
         </div>
       ) : null}
-      <Link to={target} onClick={rememberPosition} className="block">
+      <button type="button" onClick={openFirstEpisode} disabled={firstEpisodeOpening} aria-busy={firstEpisodeOpening} aria-label={`${discoverText('readStory')}: ${ad.title || ''}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
         <div className="relative aspect-video overflow-hidden bg-gray-100 dark:bg-white/5">
           {ad.preview_image_url || ad.cover_url ? (
             <img src={ad.preview_image_url || ad.cover_url} alt={ad.title || ''} loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -2574,7 +2622,18 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
             ) : null}
           </div>
         </div>
-      </Link>
+      </button>
+      {firstEpisodeOpening ? (
+        <div className="px-4 pb-3 text-[12px] text-gray-500" role="status">
+          <i className="fa-solid fa-circle-notch mr-2 animate-spin" aria-hidden="true" />
+          {discoverText('loading')}
+        </div>
+      ) : null}
+      {firstEpisodeError ? (
+        <p className="px-4 pb-3 text-[12px] text-red-600" role="alert">
+          {firstEpisodeError}
+        </p>
+      ) : null}
     </article>
   )
 }
