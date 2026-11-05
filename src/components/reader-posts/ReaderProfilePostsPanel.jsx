@@ -132,14 +132,6 @@ registerTranslationNamespace('readerProfilePosts', {
   },
 })
 
-registerTranslationNamespace('readerProfilePhotos', {
-  en: { empty: 'No photo posts yet', emptyBody: 'Posts containing images will appear here.' },
-  km: { empty: 'មិនទាន់មាន Post រូបភាព', emptyBody: 'Post ដែលមានរូបភាពនឹងបង្ហាញនៅទីនេះ។' },
-  zh: { empty: '暂无照片帖子', emptyBody: '带有照片的帖子将显示在这里。' },
-  ja: { empty: '写真付き投稿はまだありません', emptyBody: '写真付きの投稿がここに表示されます。' },
-  ko: { empty: '사진 게시물이 없습니다', emptyBody: '사진이 포함된 게시물이 여기에 표시됩니다.' },
-})
-
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
@@ -302,7 +294,6 @@ function ReaderProfileSetupSection({
 function ReaderProfileOwnPostsPanel({
   username = '',
   isOwnProfile = true,
-  photoOnly = false,
   profileUser = null,
   onEditAvatar,
   onCountChange,
@@ -445,14 +436,6 @@ function ReaderProfileOwnPostsPanel({
     })
   }
 
-  const visiblePosts = photoOnly
-    ? posts.filter((post) =>
-        (Array.isArray(post?.image_urls) &&
-          post.image_urls.some((url) => typeof url === 'string' && url.trim())) ||
-        Boolean(String(post?.image_url || '').trim())
-      )
-    : posts
-
   if (loading) {
     return (
       <section className="mt-2 space-y-1 bg-[var(--shadow-bg-soft)] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
@@ -472,7 +455,7 @@ function ReaderProfileOwnPostsPanel({
     )
   }
 
-  if (!visiblePosts.length) {
+  if (!posts.length) {
     return (
       <>
         <section className="mt-2 bg-[var(--shadow-bg-surface)] px-5 py-10 text-center md:mt-3 md:rounded-[24px]">
@@ -481,16 +464,16 @@ function ReaderProfileOwnPostsPanel({
           </div>
 
           <h2 className="mt-3 text-[15px] font-semibold text-[var(--shadow-text-primary)]">
-            {photoOnly ? t('readerProfilePhotos.empty') : t('readerProfilePosts.noPosts')}
+            {t('readerProfilePosts.noPosts')}
           </h2>
 
           <p className="mx-auto mt-1 max-w-[280px] text-[12px] font-normal leading-5 text-[var(--shadow-text-secondary)]">
-            {photoOnly ? t('readerProfilePhotos.emptyBody') : isOwnProfile
+            {isOwnProfile
               ? t('readerProfilePosts.ownEmpty')
               : t('readerProfilePosts.otherEmpty')}
           </p>
 
-          {isOwnProfile && !photoOnly ? (
+          {isOwnProfile ? (
             <button
               type="button"
               onClick={() =>
@@ -505,7 +488,7 @@ function ReaderProfileOwnPostsPanel({
           ) : null}
         </section>
 
-        {isOwnProfile && !photoOnly ? (
+        {isOwnProfile ? (
           <ReaderProfileSetupSection
             user={profileUser}
             onEditAvatar={
@@ -520,7 +503,7 @@ function ReaderProfileOwnPostsPanel({
   return (
     <>
       <section className="mt-2 space-y-1 bg-[var(--shadow-bg-soft)] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
-        {visiblePosts.map((post) => (
+        {posts.map((post) => (
           <ReaderPostCard
             key={post.id}
             post={post}
@@ -531,7 +514,7 @@ function ReaderProfileOwnPostsPanel({
         ))}
       </section>
 
-      {isOwnProfile && !photoOnly ? (
+      {isOwnProfile ? (
         <ReaderProfileSetupSection
           user={profileUser}
           onEditAvatar={
@@ -653,7 +636,7 @@ function ReaderProfileTaggedPostsPanel() {
 export default function ReaderProfilePostsPanel(props) {
   const { t } = useDisplayTranslation()
   const [tab, setTab] = useState('posts')
-  if (props.isOwnProfile === false || props.photoOnly) return <ReaderProfileOwnPostsPanel {...props} />
+  if (props.isOwnProfile === false) return <ReaderProfileOwnPostsPanel {...props} />
 
   return (
     <>
