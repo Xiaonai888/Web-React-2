@@ -217,7 +217,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, onAuthorOpen, 
   )
 }
 
-export default function FastReelsPage() {
+export default function FastReelsPage({ embedded = false }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
@@ -350,10 +350,29 @@ export default function FastReelsPage() {
   }, [navigate])
 
   return (
-    <PageShell className="bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)]">
-      <PageHeader title={t('fastReels.title')} backLabel={t('fastReels.back')} onBack={() => navigate(-1)} />
+    <PageShell
+  className={`bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ${
+    embedded ? '!min-h-0' : ''
+  }`}
+>
+  {!embedded && (
+    <PageHeader
+      title={t('fastReels.title')}
+      backLabel={t('fastReels.back')}
+      onBack={() => navigate(-1)}
+    />
+  )}
       {videos.length ? (
-        <div ref={viewportRef} className="mx-auto h-[calc(100dvh-56px)] w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black" style={{ scrollbarWidth: 'none' }}>
+        <div
+  ref={viewportRef}
+  className="mx-auto w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
+  style={{
+    height: embedded
+      ? 'calc(100dvh - 114px - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
+      : 'calc(100dvh - 56px)',
+    scrollbarWidth: 'none',
+  }}
+>
           {videos.map((video, index) => (
             <div key={video.id} className="h-full snap-start">
               <VideoSlide
