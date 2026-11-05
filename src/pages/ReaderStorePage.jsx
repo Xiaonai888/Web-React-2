@@ -790,8 +790,15 @@ export default function ReaderStorePage({ embedded = false }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
-  const requestedBrowseKey = new URLSearchParams(location.search).get('browse') || ''
-  const browseKey = BROWSE_KEYS.has(requestedBrowseKey) ? requestedBrowseKey : ''
+  const [embeddedBrowseKey, setEmbeddedBrowseKey] = useState('')
+
+const requestedBrowseKey = embedded
+  ? embeddedBrowseKey
+  : new URLSearchParams(location.search).get('browse') || ''
+
+const browseKey = BROWSE_KEYS.has(requestedBrowseKey)
+  ? requestedBrowseKey
+  : ''
     const [featuredAuthors, setFeaturedAuthors] = useState([])
     const [activeFilter, setActiveFilter] = useState('all')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -892,7 +899,17 @@ export default function ReaderStorePage({ embedded = false }) {
   const visibleSection = (key) => (sections[key] || [])
   .map((book, index) => key === 'best_sellers' ? { ...book, bestSellerRank: book.bestSellerRank || index + 1 } : book)
   .filter((book) => matchesFilter(book) && (key !== 'discount_books' || book.discountPercent > 0))
-  const openBrowse = (key) => navigate(`/store?browse=${key}`)
+  const openBrowse = (key) => {
+  if (!BROWSE_KEYS.has(key)) return
+
+  if (embedded) {
+    setEmbeddedBrowseKey(key)
+    window.scrollTo(0, 0)
+    return
+  }
+
+  navigate(`/store?browse=${encodeURIComponent(key)}`)
+}
   const browseTitles = {
     from_author_stores: t('readerStore.fromAuthors'),
     best_sellers: t('readerStoreShelves.bestSellers'),
@@ -943,6 +960,26 @@ export default function ReaderStorePage({ embedded = false }) {
       {browseKey
         ? browseTitles[browseKey]
         : t('readerStore.store')}
+    </h1>
+  </>
+)}
+
+          {embedded && browseKey && (
+  <>
+    <button
+      type="button"
+      onClick={() => {
+        setEmbeddedBrowseKey('')
+        window.scrollTo(0, 0)
+      }}
+      aria-label={t('readerStore.goBack')}
+      className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)]"
+    >
+      <i className="fa-solid fa-chevron-left text-[17px]" />
+    </button>
+
+    <h1 className="truncate text-[16px] font-extrabold">
+      {browseTitles[browseKey]}
     </h1>
   </>
 )}
