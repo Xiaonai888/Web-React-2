@@ -2193,7 +2193,6 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
   const cardRef = useRef(null)
   const impressionRef = useRef(onImpression)
   impressionRef.current = onImpression
-  const [expanded, setExpanded] = useState(false)
   const [followBusy, setFollowBusy] = useState(false)
   const [followedHere, setFollowedHere] = useState(false)
   const [followError, setFollowError] = useState('')
@@ -2208,8 +2207,6 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
     total_episodes: ad.episode_count,
   })
   const description = String(ad.description || '').trim()
-  const caption = !expanded && description.length > 240
-    ? `${description.slice(0, 240).trimEnd()}...` : description
   const date = new Date(ad.last_update_at || 0)
   const updateLabel = Number.isFinite(date.getTime()) && date.getTime() > 0
     ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
@@ -2303,7 +2300,7 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
   )
 
   return (
-    <article ref={cardRef} className="overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:rounded-[12px]">
+    <article ref={cardRef} className="my-1 overflow-hidden bg-white text-[#111827] shadow-sm ring-1 ring-gray-100 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-[var(--shadow-border)] sm:my-1.5 sm:rounded-[12px]">
       <header className="flex items-start gap-3 px-4 pb-2 pt-4">
         {authorUrl ? (
           <Link to={authorUrl} className="h-10 w-10 shrink-0" aria-label={discoverText('openAuthor', { name })}>{avatar}</Link>
@@ -2336,7 +2333,7 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
             {updateLabel ? <span>{updateLabel} Last Update</span> : null}
             {updateLabel ? <span>·</span> : null}
             <i className="fa-solid fa-earth-americas text-[10px]" aria-hidden="true" />
-            <span>Sponsored</span>
+            <span>Ad</span>
           </div>
         </div>
         <button type="button" onClick={() => onMore?.(option)} aria-label={discoverText('sponsoredOptions')}
@@ -2345,13 +2342,10 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
         </button>
       </header>
       {description ? (
-        <div className="whitespace-pre-wrap break-words px-4 pb-3 text-[14px] leading-[1.55]">
-          {caption}
-          {description.length > 240 ? (
-            <button type="button" className="ml-1 font-semibold text-gray-500" onClick={() => setExpanded((value) => !value)}>
-              {expanded ? 'See less' : 'See more'}
-            </button>
-          ) : null}
+        <div className="px-4 pb-3">
+          <p className="line-clamp-2 whitespace-pre-wrap break-words text-[14px] leading-[1.55]">
+            {description}
+          </p>
         </div>
       ) : null}
       <Link to={target} onClick={rememberPosition} className="block">
@@ -2367,11 +2361,21 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
             </span>
           ) : null}
         </div>
-        <div className="flex items-center gap-3 bg-[#f7f7fa] px-4 py-3 dark:bg-[#1c1f2b]">
+        <div className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-[var(--shadow-bg-surface)]">
           <div className="min-w-0 flex-1">
             <div className="line-clamp-2 text-[15px] font-semibold leading-5">{ad.title}</div>
             <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
-              <span className="inline-flex items-center gap-1"><i className="fa-solid fa-book-open" />{Number(ad.episode_count || 0)} Episodes</span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" className="shrink-0">
+                  <circle cx="9" cy="10" r="8" />
+                  <circle cx="9" cy="32" r="8" />
+                  <circle cx="9" cy="54" r="8" />
+                  <rect x="21" y="2" width="43" height="16" rx="8" />
+                  <rect x="21" y="24" width="43" height="16" rx="8" />
+                  <rect x="21" y="46" width="43" height="16" rx="8" />
+                </svg>
+                {Number(ad.episode_count || 0)} Episodes
+              </span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
             </div>
             {genre || tags.length ? (
@@ -2381,7 +2385,6 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, isFollowing = false, i
               </div>
             ) : null}
           </div>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-gray-600 dark:bg-white/10 dark:text-white"><i className="fa-solid fa-chevron-right text-[11px]" /></span>
         </div>
       </Link>
     </article>
