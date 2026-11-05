@@ -649,7 +649,7 @@ function cancelDrag() {
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10 dark:bg-white/10" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 
               <MenuButton
                 icon="snooze"
