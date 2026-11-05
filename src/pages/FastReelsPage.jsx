@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Bookmark, Check, Heart, MessageCircle, Play, Plus,
-  RefreshCw, Search, Share2, Volume2, VolumeX, X,
+  RefreshCw, Search, Share2, Volume2, VolumeX,
 } from 'lucide-react'
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
+import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -45,7 +46,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
 const PAGE_SIZE = 8
 const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
-const PLAYBACK_RATES = [0.5, 1, 1.5, 2]
 const SAVED_KEY = 'shadow_fast_saved_reels_v1'
 const LIKED_KEY = 'shadow_fast_liked_reels_v1'
 let cachedFeed = null
@@ -73,50 +73,6 @@ function youtubeId(value) {
     }
     return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : ''
   } catch { return '' }
-}
-
-function SpeedAndSoundSheet({ open, onClose, t, soundEnabled, setSoundEnabled, speed, setSpeed }) {
-  useEffect(() => {
-    if (!open) return undefined
-    const onKey = event => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-[150] flex items-end justify-center" role="presentation">
-      <button type="button" className="absolute inset-0 bg-black/45" aria-label={t('fastReels.close')} onClick={onClose} />
-      <section role="dialog" aria-modal="true" aria-label={t('fastReels.settings')}
-        className="relative w-full max-w-[580px] rounded-t-[22px] bg-white px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-2 text-[#202124] shadow-2xl">
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-gray-300" />
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[16px] font-bold">{t('fastReels.settings')}</h2>
-          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100" aria-label={t('fastReels.close')}><X size={18}/></button>
-        </div>
-        <button type="button" role="switch" aria-checked={soundEnabled} onClick={() => setSoundEnabled(v => !v)}
-          className="flex min-h-14 w-full items-center justify-between rounded-xl px-2 text-left active:bg-gray-100">
-          <span className="flex items-center gap-3 text-sm font-medium">
-            {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
-            {t('fastReels.autoplaySound')}
-          </span>
-          <span className={`relative h-7 w-12 rounded-full transition-colors ${soundEnabled ? 'bg-[#7c3aed]' : 'bg-gray-300'}`}>
-            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-          </span>
-        </button>
-        <div className="mt-2 border-t border-gray-100 pt-4">
-          <p className="mb-3 text-sm font-semibold">{t('fastReels.speed')}</p>
-          <div className="grid grid-cols-4 gap-2">
-            {PLAYBACK_RATES.map(value => (
-              <button key={value} type="button" aria-pressed={speed === value} onClick={() => setSpeed(value)}
-                className={`rounded-xl py-3 text-[13px] font-semibold transition-colors ${speed === value ? 'bg-[#7c3aed] text-white' : 'bg-[#f2f3f5] text-[#444]'}`}>
-                {value.toFixed(1)}×
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
 }
 
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
@@ -586,7 +542,7 @@ export default function FastReelsPage({ embedded = false }) {
         {notice ? <div role="status" className="pointer-events-none absolute bottom-20 left-1/2 z-50 max-w-[90%] -translate-x-1/2 rounded-xl bg-black/85 px-4 py-2 text-center text-xs text-white">{notice}</div> : null}
       </main>
       {!embedded ? <div className="h-[calc(64px+env(safe-area-inset-bottom))] shrink-0"><ReaderProfileFooter /></div> : null}
-      <SpeedAndSoundSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} t={t}
+      <FastReelSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} t={t}
         soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
         speed={playbackSpeed} setSpeed={setPlaybackSpeed} />
     </div>
