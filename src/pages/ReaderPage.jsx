@@ -939,7 +939,10 @@ function getReaderToken() {
 
 
 function getReaderSmartAdScope() {
-  const token = getReaderToken()
+  const token =
+  localStorage.getItem('shadow_reader_token') ||
+  sessionStorage.getItem('shadow_reader_token') ||
+  ''
   let identity = token
 
   if (token) {
