@@ -1225,3 +1225,15 @@ html.shadow-skip-animations .dailyGiftCoinTwo,
 html.shadow-skip-animations .dailyGiftGlow {
   display: none !important;
 }
+
+/* Reader navigation: pure black in Dark Mode only */
+
+html.dark.reader-black-nav {
+  --shadow-nav-bg: #000000;
+}
+
+/* Top navigation headers */
+html.dark.reader-black-nav #root header.sticky.top-0,
+html.dark.reader-black-nav #root header.fixed.top-0 {
+  background-color: #000000 !important;
+}
