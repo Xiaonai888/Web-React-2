@@ -169,9 +169,11 @@ function MenuButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-4 px-4 py-3.5 text-left active:bg-black/[0.04] disabled:opacity-55 ${
-        danger ? 'text-red-600' : 'text-[#111827]'
-      }`}
+      className={`flex w-full items-center gap-4 px-4 py-3.5 text-left active:bg-black/[0.04] dark:active:bg-[var(--shadow-bg-hover)] disabled:opacity-55 ${
+  danger
+    ? 'text-red-600 dark:text-red-400'
+    : 'text-[#111827] dark:text-[var(--shadow-text-primary)]'
+}`}
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center">
         <MenuIcon type={icon} />
@@ -183,7 +185,7 @@ function MenuButton({
         </span>
 
         {subtitle ? (
-          <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400">
+          <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
             {subtitle}
           </span>
         ) : null}
@@ -480,7 +482,7 @@ function cancelDrag() {
       />
 
       <section
-  className="relative w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl transition-transform duration-150"
+  className="relative w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl transition-transform duration-150"
   style={{
     height: 'min(510px, 88dvh)',
     transform: `translateY(${dragY}px)`,
@@ -495,12 +497,12 @@ function cancelDrag() {
   className="mx-auto mb-3 flex h-5 w-20 touch-none items-center justify-center"
   aria-label="Drag down to close"
 >
-  <span className="h-1 w-12 rounded-full bg-gray-400" />
+  <span className="h-1 w-12 rounded-full bg-gray-400 dark:bg-white/25" />
 </button>
 
         {screen === 'quick' ? (
           <>
-            <div className="mb-3 rounded-[16px] bg-[#f3f4f7]">
+            <div className="mb-3 rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)]">
               <MenuButton
                 icon="interested"
                 title="Interested"
@@ -513,7 +515,7 @@ function cancelDrag() {
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 
               <MenuButton
                 icon="notInterested"
@@ -523,7 +525,7 @@ function cancelDrag() {
               />
             </div>
 
-            <div className="mb-3 rounded-[16px] bg-[#f3f4f7]">
+            <div className="mb-3 rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)]">
               <MenuButton
                 icon={saved ? 'saved' : 'save'}
                 title={saved ? 'Remove from saved' : 'Save post'}
@@ -531,7 +533,7 @@ function cancelDrag() {
                 onClick={toggleSaved}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 
               <MenuButton
                 icon="report"
@@ -540,7 +542,7 @@ function cancelDrag() {
                 onClick={openReport}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 <AuthorPostBlockAction
   post={post}
   onBlocked={(pageId) => {
@@ -551,7 +553,7 @@ function cancelDrag() {
               
             </div>
 
-            <div className="rounded-[16px] bg-[#f3f4f7]">
+            <div className="rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)]">
               <MenuButton
                 icon="controls"
                 title="Manage your feed"
@@ -597,7 +599,7 @@ function cancelDrag() {
                 <div className="truncate text-[17px] font-normal text-[#111827]">
                   Content preferences
                 </div>
-                <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400">
+                <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
                   Manage posts from {authorName}
                 </div>
               </div>
@@ -607,7 +609,7 @@ function cancelDrag() {
               What you see
             </div>
 
-            <div className="mb-5 rounded-[16px] bg-[#f3f4f7]">
+            <div className="mb-5 rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)]">
               <MenuButton
                 icon="interested"
                 title="Show more like this"
@@ -620,7 +622,7 @@ function cancelDrag() {
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 
               <MenuButton
                 icon="notInterested"
@@ -634,7 +636,7 @@ function cancelDrag() {
               Who you see
             </div>
 
-            <div className="rounded-[16px] bg-[#f3f4f7]">
+            <div className="rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)]">
               <MenuButton
                 icon={favorite ? 'favoriteActive' : 'favorite'}
                 title={favorite ? 'Remove from Favorites' : 'Add to Favorites'}
@@ -647,7 +649,7 @@ function cancelDrag() {
                 }
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10 dark:bg-white/10" />
 
               <MenuButton
                 icon="snooze"
@@ -656,7 +658,7 @@ function cancelDrag() {
                 onClick={snoozeAuthor}
               />
 
-              <div className="mx-4 h-px bg-black/[0.06]" />
+              <div className="mx-4 h-px bg-black/[0.06] dark:bg-white/10" />
 
               <MenuButton
                 icon={unfollowed ? 'reconnect' : 'unfollow'}
