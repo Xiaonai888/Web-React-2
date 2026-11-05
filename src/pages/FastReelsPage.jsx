@@ -1,68 +1,148 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowDown, ArrowUp, ExternalLink, Pause, Play, RefreshCw, Volume2, VolumeX } from 'lucide-react'
-import { PageShell, PageHeader, PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
+import {
+  Bookmark, Check, Heart, MessageCircle, Play, Plus,
+  RefreshCw, Search, Share2, Volume2, VolumeX, X,
+} from 'lucide-react'
+import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
+import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
+// REPLACE: src/pages/FastReelsPage.jsx
+// No database changes. Existing /api/fast/videos and /api/authors/following APIs are reused.
 registerTranslationNamespace('fastReels', {
-  en: { title: 'Fast', loading: 'Loading videos...', empty: 'No videos yet', emptyBody: 'Published YouTube videos will appear here.', error: 'Unable to load videos.', retry: 'Try again', soundOn: 'Turn sound on', soundOff: 'Mute sound', youtube: 'Watch on YouTube', next: 'Swipe up for next video', back: 'Go back', loadMore: 'Load more', source: 'YouTube', creatorProfile: 'Open author profile', play: 'Play video', pause: 'Pause video', previous: 'Previous video', following: 'Next video' },
-  km: { title: 'Fast', loading: 'កំពុងផ្ទុកវីដេអូ...', empty: 'មិនទាន់មានវីដេអូ', emptyBody: 'វីដេអូ YouTube ដែលបានផ្សាយនឹងបង្ហាញនៅទីនេះ។', error: 'មិនអាចទាញវីដេអូបានទេ។', retry: 'ព្យាយាមម្ដងទៀត', soundOn: 'បើកសំឡេង', soundOff: 'បិទសំឡេង', youtube: 'មើលលើ YouTube', next: 'អូសឡើងដើម្បីមើលវីដេអូបន្ទាប់', back: 'ត្រឡប់ក្រោយ', loadMore: 'មើលបន្ថែម', source: 'YouTube', creatorProfile: 'បើក Profile អ្នកនិពន្ធ', play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', previous: 'វីដេអូមុន', following: 'វីដេអូបន្ទាប់' },
-  zh: { title: 'Fast', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '发布的 YouTube 视频将在这里显示。', error: '无法加载视频。', retry: '重试', soundOn: '打开声音', soundOff: '静音', youtube: '在 YouTube 观看', next: '向上滑动看下一个视频', back: '返回', loadMore: '加载更多', source: 'YouTube', creatorProfile: '查看作者主页', play: '播放', pause: '暂停', previous: '上一个视频', following: '下一个视频' },
-  ja: { title: 'Fast', loading: '動画を読み込み中...', empty: '動画はまだありません', emptyBody: '公開された YouTube 動画がここに表示されます。', error: '動画を読み込めません。', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', youtube: 'YouTubeで見る', next: '上にスワイプして次の動画へ', back: '戻る', loadMore: 'もっと見る', source: 'YouTube', creatorProfile: '作者のプロフィールを開く', play: '再生', pause: '一時停止', previous: '前の動画', following: '次の動画' },
-  ko: { title: 'Fast', loading: '동영상을 불러오는 중...', empty: '아직 동영상이 없습니다', emptyBody: '공개된 YouTube 동영상이 여기에 표시됩니다.', error: '동영상을 불러올 수 없습니다.', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', youtube: 'YouTube에서 보기', next: '위로 밀어 다음 동영상 보기', back: '돌아가기', loadMore: '더 보기', source: 'YouTube', creatorProfile: '작가 프로필 열기', play: '재생', pause: '일시정지', previous: '이전 영상', following: '다음 영상' },
+  en: {
+    following: 'Following', forYou: 'For You', search: 'Search', loading: 'Loading videos...', empty: 'No videos yet',
+    emptyBody: 'Published YouTube Reels will appear here.', error: 'Unable to load videos', retry: 'Try again',
+    soundOn: 'Enable sound', soundOff: 'Mute', autoplaySound: 'Auto sound', mutedAutoplay: 'Muted autoplay',
+    speed: 'Playback speed', settings: 'Video settings', close: 'Close settings',
+    creatorProfile: 'Author profile', follow: 'Follow author', liked: 'Like', save: 'Save', saved: 'Saved',
+    share: 'Share', comments: 'Comments on YouTube', copied: 'Link copied', shareFailed: 'Unable to share link',
+    login: 'Sign in to use Following.', followEmpty: 'No Reels from followed authors yet.',
+    followHelp: 'Follow authors to see their Reels here.', followingError: 'Could not load followed authors.',
+    play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more',
+  },
+  km: {
+    following: 'Following', forYou: 'For You', search: 'ស្វែងរក', loading: 'កំពុងផ្ទុកវីដេអូ...', empty: 'មិនទាន់មានវីដេអូ',
+    emptyBody: 'Reel YouTube ដែលបានផ្សាយនឹងបង្ហាញនៅទីនេះ។', error: 'មិនអាចទាញវីដេអូបាន', retry: 'សាកម្ដងទៀត',
+    soundOn: 'បើកសំឡេង', soundOff: 'បិទសំឡេង', autoplaySound: 'បើកសំឡេងស្វ័យប្រវត្តិ', mutedAutoplay: 'ចាប់ផ្ដើមដោយគ្មានសំឡេង',
+    speed: 'ល្បឿនចាក់', settings: 'ការកំណត់វីដេអូ', close: 'បិទការកំណត់',
+    creatorProfile: 'ទំព័រអ្នកនិពន្ធ', follow: 'Follow អ្នកនិពន្ធ', liked: 'ចូលចិត្ត', save: 'រក្សាទុក', saved: 'បានរក្សាទុក',
+    share: 'ចែករំលែក', comments: 'មតិនៅ YouTube', copied: 'បានចម្លង Link', shareFailed: 'មិនអាចចែករំលែកបាន',
+    login: 'សូម Login ដើម្បីមើល Following។', followEmpty: 'មិនទាន់មាន Reel ពីអ្នកនិពន្ធដែលបាន Follow។',
+    followHelp: 'Follow អ្នកនិពន្ធ ដើម្បីឃើញ Reel របស់ពួកគេ។', followingError: 'មិនអាចទាញបញ្ជី Following បាន។',
+    play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម',
+  },
+  zh: { following: '关注', forYou: '为你推荐', search: '搜索', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '已发布的 Reel 显示在这里。', error: '无法加载视频', retry: '重试', soundOn: '打开声音', soundOff: '静音', autoplaySound: '自动播放声音', mutedAutoplay: '静音自动播放', speed: '播放速度', settings: '视频设置', close: '关闭设置', creatorProfile: '作者主页', follow: '关注作者', liked: '喜欢', save: '收藏', saved: '已收藏', share: '分享', comments: 'YouTube 评论', copied: '已复制链接', shareFailed: '无法分享链接', login: '请登录以查看关注内容。', followEmpty: '暂无关注作者的 Reel。', followHelp: '关注作者以观看他们的 Reel。', followingError: '无法加载关注列表。', play: '播放', pause: '暂停', source: 'YouTube', loadMore: '加载更多' },
+  ja: { following: 'フォロー中', forYou: 'おすすめ', search: '検索', loading: '動画を読み込み中...', empty: '動画がありません', emptyBody: '公開された Reel がここに表示されます。', error: '動画を読み込めません', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', autoplaySound: '自動再生音声', mutedAutoplay: 'ミュートで自動再生', speed: '再生速度', settings: '動画の設定', close: '閉じる', creatorProfile: '作者のページ', follow: '作者をフォロー', liked: 'いいね', save: '保存', saved: '保存済み', share: '共有', comments: 'YouTube コメント', copied: 'リンクをコピーしました', shareFailed: '共有できません', login: 'フォローを見るにはログインしてください。', followEmpty: 'フォロー中の作者の Reel はまだありません。', followHelp: '作者をフォローすると Reel が表示されます。', followingError: 'フォロー一覧を読み込めません。', play: '再生', pause: '一時停止', source: 'YouTube', loadMore: 'もっと見る' },
+  ko: { following: '팔로잉', forYou: '추천', search: '검색', loading: '동영상 불러오는 중...', empty: '동영상 없음', emptyBody: '게시된 Reel이 여기에 표시됩니다.', error: '동영상 로드 실패', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', autoplaySound: '자동 재생 소리', mutedAutoplay: '음소거 자동 재생', speed: '재생 속도', settings: '동영상 설정', close: '닫기', creatorProfile: '작가 프로필', follow: '작가 팔로우', liked: '좋아요', save: '저장', saved: '저장됨', share: '공유', comments: 'YouTube 댓글', copied: '링크 복사됨', shareFailed: '공유 실패', login: '팔로잉을 보려면 로그인하세요.', followEmpty: '팔로우한 작가의 Reel이 없습니다.', followHelp: '작가를 팔로우하면 Reel을 볼 수 있습니다.', followingError: '팔로잉 목록을 불러올 수 없습니다.', play: '재생', pause: '일시정지', source: 'YouTube', loadMore: '더 보기' },
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
   (['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-
 const PAGE_SIZE = 8
 const FEED_CACHE_MS = 60 * 1000
+const LONG_PRESS_MS = 520
+const PLAYBACK_RATES = [0.5, 1, 1.5, 2]
+const SAVED_KEY = 'shadow_fast_saved_reels_v1'
+const LIKED_KEY = 'shadow_fast_liked_reels_v1'
 let cachedFeed = null
 
+function getToken() {
+  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+}
+function getStoredIds(key) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key) || '[]')
+    return Array.isArray(data) ? data.filter(x => typeof x === 'string').slice(0, 3000) : []
+  } catch { return [] }
+}
 function youtubeId(value) {
   try {
     const url = new URL(String(value || '').trim())
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return ''
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return ''
     const host = url.hostname.toLowerCase()
     const parts = url.pathname.split('/').filter(Boolean)
     let id = ''
-    if (host === 'youtu.be' || host === 'www.youtu.be') id = parts[0] || ''
+    if (['youtu.be', 'www.youtu.be'].includes(host) && parts.length === 1) id = parts[0]
     else if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(host)) {
-      if (parts[0] === 'watch') id = url.searchParams.get('v') || ''
-      else if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || ''
+      if (parts.length === 1 && parts[0] === 'watch') id = url.searchParams.get('v') || ''
+      else if (parts.length === 2 && ['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1]
     }
     return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : ''
-  } catch {
-    return ''
-  }
+  } catch { return '' }
 }
 
-function VideoSlide({ video, active, soundEnabled, onSoundToggle, onAuthorOpen, onNavigate, canPrevious, canNext, t }) {
+function SpeedAndSoundSheet({ open, onClose, t, soundEnabled, setSoundEnabled, speed, setSpeed }) {
+  useEffect(() => {
+    if (!open) return undefined
+    const onKey = event => { if (event.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[150] flex items-end justify-center" role="presentation">
+      <button type="button" className="absolute inset-0 bg-black/45" aria-label={t('fastReels.close')} onClick={onClose} />
+      <section role="dialog" aria-modal="true" aria-label={t('fastReels.settings')}
+        className="relative w-full max-w-[580px] rounded-t-[22px] bg-white px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-2 text-[#202124] shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-gray-300" />
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-[16px] font-bold">{t('fastReels.settings')}</h2>
+          <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100" aria-label={t('fastReels.close')}><X size={18}/></button>
+        </div>
+        <button type="button" role="switch" aria-checked={soundEnabled} onClick={() => setSoundEnabled(v => !v)}
+          className="flex min-h-14 w-full items-center justify-between rounded-xl px-2 text-left active:bg-gray-100">
+          <span className="flex items-center gap-3 text-sm font-medium">
+            {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
+            {t('fastReels.autoplaySound')}
+          </span>
+          <span className={`relative h-7 w-12 rounded-full transition-colors ${soundEnabled ? 'bg-[#7c3aed]' : 'bg-gray-300'}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </span>
+        </button>
+        <div className="mt-2 border-t border-gray-100 pt-4">
+          <p className="mb-3 text-sm font-semibold">{t('fastReels.speed')}</p>
+          <div className="grid grid-cols-4 gap-2">
+            {PLAYBACK_RATES.map(value => (
+              <button key={value} type="button" aria-pressed={speed === value} onClick={() => setSpeed(value)}
+                className={`rounded-xl py-3 text-[13px] font-semibold transition-colors ${speed === value ? 'bg-[#7c3aed] text-white' : 'bg-[#f2f3f5] text-[#444]'}`}>
+                {value.toFixed(1)}×
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
+  onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved, onLike,
+  isLiked, onShare, onComment, t }) {
   const id = useMemo(() => youtubeId(video.video_url), [video.video_url])
   const frameRef = useRef(null)
   const gestureRef = useRef(null)
+  const longPressTimerRef = useRef(null)
+  const longPressedRef = useRef(false)
   const lastSwipeAtRef = useRef(0)
   const [playing, setPlaying] = useState(false)
   const iframeUrl = id
     ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
     : ''
 
-  const sendCommand = useCallback(name => {
+  const sendCommand = useCallback((name, args = []) => {
     frameRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func: name, args: [] }),
+      JSON.stringify({ event: 'command', func: name, args }),
       'https://www.youtube-nocookie.com'
     )
   }, [])
 
   useEffect(() => {
-    if (!active || !id) {
-      gestureRef.current = null
-      setPlaying(false)
-      return undefined
-    }
-    const handlePlayerMessage = event => {
+    if (!active || !id) { setPlaying(false); return undefined }
+    const onMessage = event => {
       if (event.source !== frameRef.current?.contentWindow) return
       if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
       let data = event.data
@@ -71,46 +151,66 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, onAuthorOpen, 
       if (data.event === 'onReady') {
         sendCommand(soundEnabled ? 'unMute' : 'mute')
         sendCommand('playVideo')
+        if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
       }
       const state = data.event === 'onStateChange' ? data.info : data.event === 'infoDelivery' ? data.info?.playerState : null
       if (state === 1) setPlaying(true)
-      if (state === 0 || state === 2 || state === 5) setPlaying(false)
+      if ([0, 2, 5].includes(state)) setPlaying(false)
     }
-    window.addEventListener('message', handlePlayerMessage)
-    return () => window.removeEventListener('message', handlePlayerMessage)
-  }, [active, id, sendCommand, soundEnabled])
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [active, id, soundEnabled, playbackSpeed, sendCommand])
+
+  useEffect(() => {
+    if (!active) return undefined
+    sendCommand(soundEnabled ? 'unMute' : 'mute')
+    return undefined
+  }, [active, soundEnabled, sendCommand])
+
+  useEffect(() => {
+    if (!active) return undefined
+    sendCommand('setPlaybackRate', [playbackSpeed])
+    return undefined
+  }, [active, playbackSpeed, sendCommand])
+
+  useEffect(() => () => window.clearTimeout(longPressTimerRef.current), [])
 
   const handlePlayerLoad = () => {
     frameRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'listening', id }), 'https://www.youtube-nocookie.com'
     )
-    // The onReady event will retry these commands if the player is not ready yet.
     sendCommand(soundEnabled ? 'unMute' : 'mute')
     sendCommand('playVideo')
+    if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
   }
-
   const togglePlayback = () => {
     if (!active || !id) return
     sendCommand(playing ? 'pauseVideo' : 'playVideo')
     setPlaying(current => !current)
   }
 
-  const handleSound = () => {
-    const next = !soundEnabled
-    onSoundToggle(next)
-    sendCommand(next ? 'unMute' : 'mute')
-  }
-
-  const handlePointerDown = event => {
+  const clearLongPress = () => window.clearTimeout(longPressTimerRef.current)
+  const handleDown = event => {
     if (event.button !== undefined && event.button !== 0) return
+    clearLongPress()
+    longPressedRef.current = false
     gestureRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
-    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* Already captured */ }
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressedRef.current = true
+      gestureRef.current = null
+      onOpenSettings()
+    }, LONG_PRESS_MS)
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* safe fallback */ }
   }
-
-  const handlePointerUp = event => {
+  const handleMove = event => {
+    const start = gestureRef.current
+    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) clearLongPress()
+  }
+  const handleUp = event => {
+    clearLongPress()
     const start = gestureRef.current
     gestureRef.current = null
-    if (!start || start.pointerId !== event.pointerId) return
+    if (longPressedRef.current || !start || start.pointerId !== event.pointerId) return
     const dx = event.clientX - start.x
     const dy = event.clientY - start.y
     if (Math.abs(dy) >= 48 && Math.abs(dy) > Math.abs(dx) * 1.2) {
@@ -118,99 +218,100 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, onAuthorOpen, 
       onNavigate(dy < 0 ? 1 : -1)
     }
   }
+  const handleSoundDown = event => {
+    if (event.button !== undefined && event.button !== 0) return
+    event.stopPropagation()
+    clearLongPress()
+    longPressedRef.current = false
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressedRef.current = true
+      onOpenSettings()
+    }, LONG_PRESS_MS)
+  }
+  const handleSoundClick = () => {
+    clearLongPress()
+    if (longPressedRef.current) { longPressedRef.current = false; return }
+    onSoundToggle(!soundEnabled)
+  }
 
   const creator = video.creator
   return (
     <article data-fast-slide className="relative h-full w-full shrink-0 snap-start overflow-hidden bg-black text-white" aria-label={video.title}>
       {active && id ? (
-        <iframe
-          ref={frameRef}
-          title={video.title || 'YouTube'}
-          src={iframeUrl}
-          onLoad={handlePlayerLoad}
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        />
+        <iframe ref={frameRef} title={video.title || 'YouTube'} src={iframeUrl} onLoad={handlePlayerLoad}
+          className="pointer-events-none absolute inset-0 h-full w-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-black">
           {(video.thumbnail_url || id) ? (
-            <img
-              src={video.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`}
-              alt=""
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-contain opacity-80"
-            />
+            <img src={video.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`}
+              alt="" loading="lazy" className="absolute inset-0 h-full w-full object-contain opacity-80" />
           ) : null}
-          <Play aria-hidden="true" size={38} className="relative text-white/90" />
         </div>
       )}
 
       {active && id ? (
         <>
-          <button
-            type="button"
-            aria-label={t(playing ? 'fastReels.pause' : 'fastReels.play')}
-            className="absolute inset-0 z-10 h-full w-full cursor-pointer touch-none"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={() => { gestureRef.current = null }}
-            onClick={() => {
-              if (Date.now() - lastSwipeAtRef.current < 400) return
-              togglePlayback()
-            }}
+          <button type="button" aria-label={t(playing ? 'fastReels.pause' : 'fastReels.play')}
+            className="absolute inset-0 z-10 h-full w-full touch-none"
+            onPointerDown={handleDown} onPointerMove={handleMove} onPointerUp={handleUp}
+            onPointerCancel={() => { clearLongPress(); gestureRef.current = null }}
+            onContextMenu={event => { event.preventDefault(); clearLongPress(); onOpenSettings() }}
+            onClick={() => { if (longPressedRef.current || Date.now() - lastSwipeAtRef.current < 400) return; togglePlayback() }}
           />
           {!playing ? (
             <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center">
-              <span className="rounded-full bg-black/50 p-4 text-white"><Play size={28} fill="currentColor" /></span>
+              <span className="rounded-full bg-black/45 p-3"><Play size={24} fill="currentColor" /></span>
             </div>
           ) : null}
-          <div className="absolute right-3 top-[28%] z-30 flex flex-col gap-3">
-            {canPrevious ? (
-              <button type="button" onClick={() => onNavigate(-1)} aria-label={t('fastReels.previous')} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
-                <ArrowUp size={20} />
-              </button>
-            ) : null}
-            {canNext ? (
-              <button type="button" onClick={() => onNavigate(1)} aria-label={t('fastReels.following')} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
-                <ArrowDown size={20} />
-              </button>
-            ) : null}
-          </div>
         </>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-48 bg-gradient-to-t from-black/90 to-transparent" />
-      <div className="pointer-events-none absolute bottom-6 left-4 right-16 z-20">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-56 bg-gradient-to-t from-black/85 to-transparent" />
+      <div className="pointer-events-none absolute bottom-6 left-3 right-16 z-20">
         {creator?.page_username ? (
-          <button
-            type="button"
-            onClick={() => onAuthorOpen(creator.page_username)}
-            aria-label={`${t('fastReels.creatorProfile')}: ${creator.page_name || creator.page_username}`}
-            className="pointer-events-auto mb-3 flex max-w-full items-center gap-2 rounded-full bg-black/45 py-1.5 pl-1.5 pr-3 text-left backdrop-blur-sm active:opacity-80"
-          >
+          <button type="button" onClick={() => onAuthorOpen(creator.page_username)}
+            className="pointer-events-auto mb-2 flex max-w-full items-center gap-2 text-left">
             {creator.avatar_url ? (
-              <img src={creator.avatar_url} alt="" loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
-            ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">{String(creator.page_name || 'A').trim().charAt(0).toUpperCase() || 'A'}</span>
-            )}
-            <span className="max-w-[180px] truncate text-xs font-semibold text-white">{creator.page_name || creator.page_username}</span>
+              <img src={creator.avatar_url} alt="" loading="lazy" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/80" />
+            ) : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm">{String(creator.page_name || 'A')[0]}</span>}
+            <span className="max-w-[230px] truncate text-[13px] font-bold drop-shadow-md">{creator.page_name || creator.page_username}</span>
           </button>
         ) : null}
-        <h2 className="line-clamp-2 text-base font-bold drop-shadow">{video.title}</h2>
-        {video.description ? <p className="mt-1 line-clamp-2 text-xs text-white/85">{video.description}</p> : null}
-        <span className="mt-2 inline-block rounded-full bg-white/20 px-2 py-1 text-[10px]">{t('fastReels.source')}</span>
+        <h2 className="line-clamp-2 text-[13px] font-semibold leading-5 drop-shadow-md">{video.title}</h2>
+        {video.description ? <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/90">{video.description}</p> : null}
       </div>
 
       {active ? (
-        <div className="absolute bottom-7 right-3 z-30 flex flex-col gap-3">
-          <button type="button" onClick={handleSound} aria-label={t(soundEnabled ? 'fastReels.soundOff' : 'fastReels.soundOn')} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
-            {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        <div className="absolute bottom-7 right-2 z-30 flex w-12 flex-col items-center gap-3 text-white">
+          {creator?.page_username ? (
+            <div className="relative mb-1">
+              <button type="button" onClick={() => onAuthorOpen(creator.page_username)} aria-label={t('fastReels.creatorProfile')}
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-700">
+                {creator.avatar_url ? <img src={creator.avatar_url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-bold">{String(creator.page_name || 'A')[0]}</span>}
+              </button>
+              {!isFollowing ? <button type="button" aria-label={t('fastReels.follow')} onClick={() => onFollow(video)}
+                className="absolute -bottom-1.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-pink-600 text-white">
+                <Plus size={15}/>
+              </button> : <span className="absolute -bottom-1 left-1/2 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full bg-green-600"><Check size={11}/></span>}
+            </div>
+          ) : null}
+          <button type="button" aria-label={t('fastReels.liked')} aria-pressed={isLiked} onClick={() => onLike(video.id)}
+            className="flex h-9 w-9 items-center justify-center drop-shadow-lg">
+            <Heart size={25} strokeWidth={2} fill={isLiked ? '#ff4c78' : 'none'} color={isLiked ? '#ff4c78' : 'white'} />
           </button>
-          <a href={video.video_url} target="_blank" rel="noopener noreferrer" aria-label={t('fastReels.youtube')} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white">
-            <ExternalLink size={19} />
-          </a>
+          <button type="button" aria-label={t('fastReels.comments')} onClick={() => onComment(video)}
+            className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><MessageCircle size={25}/></button>
+          <button type="button" aria-label={t(isSaved ? 'fastReels.saved' : 'fastReels.save')} aria-pressed={isSaved} onClick={() => onSave(video.id)}
+            className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Bookmark size={25} fill={isSaved ? 'white' : 'none'} /></button>
+          <button type="button" aria-label={t('fastReels.share')} onClick={() => onShare(video)}
+            className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Share2 size={24}/></button>
+          <button type="button" aria-label={t(soundEnabled ? 'fastReels.soundOff' : 'fastReels.soundOn')}
+            onPointerDown={handleSoundDown} onPointerUp={clearLongPress} onPointerCancel={clearLongPress}
+            onPointerLeave={clearLongPress} onContextMenu={event => { event.preventDefault(); clearLongPress(); longPressedRef.current = true; onOpenSettings() }}
+            onClick={handleSoundClick} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 drop-shadow-lg">
+            {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
+          </button>
         </div>
       ) : null}
     </article>
@@ -229,11 +330,29 @@ export default function FastReelsPage({ embedded = false }) {
   const activeIndexRef = useRef(initialCache?.index || 0)
   const navigationLockUntilRef = useRef(0)
   const [videos, setVideos] = useState(initialCache?.videos || [])
+  const [feedTab, setFeedTab] = useState('forYou')
   const [activeIndex, setActiveIndex] = useState(initialCache?.index || 0)
   const [soundEnabled, setSoundEnabled] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [loading, setLoading] = useState(!initialCache?.videos?.length)
   const [error, setError] = useState('')
   const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? true)
+  const [followedIds, setFollowedIds] = useState(new Set())
+  const [followingReady, setFollowingReady] = useState(false)
+  const [followingError, setFollowingError] = useState('')
+  const [savedIds, setSavedIds] = useState(() => new Set(getStoredIds(SAVED_KEY)))
+  const [likedIds, setLikedIds] = useState(() => new Set(getStoredIds(LIKED_KEY)))
+  const [notice, setNotice] = useState('')
+  const toastTimerRef = useRef(null)
+  const followedLoaderRef = useRef(false)
+
+  const showNotice = useCallback(message => {
+    setNotice(message)
+    window.clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = window.setTimeout(() => setNotice(''), 2600)
+  }, [])
+  useEffect(() => () => window.clearTimeout(toastTimerRef.current), [])
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMoreRef.current) return
@@ -243,9 +362,7 @@ export default function FastReelsPage({ embedded = false }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/fast/videos?limit=${PAGE_SIZE}&offset=${nextOffset.current}`)
       const payload = await response.json().catch(() => ({}))
-      if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) {
-        throw new Error(payload.message || 'Unable to load videos')
-      }
+      if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) throw new Error(payload.message || 'Unable to load videos')
       const rows = payload.videos.filter(row => youtubeId(row.video_url))
       const newOffset = Number(payload.pagination?.next_offset)
       nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
@@ -256,39 +373,70 @@ export default function FastReelsPage({ embedded = false }) {
         const seen = new Set(current.map(row => row.id))
         return [...current, ...rows.filter(row => !seen.has(row.id))]
       })
-    } catch (err) {
-      setError(err.message || 'Unable to load videos')
-    } finally {
-      loadingRef.current = false
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message || 'Unable to load videos') }
+    finally { loadingRef.current = false; setLoading(false) }
   }, [])
 
-  useEffect(() => {
-    if (!initialCacheRef.current?.videos?.length) loadMore()
-  }, [loadMore])
+  const loadFollowing = useCallback(async () => {
+    const token = getToken()
+    if (!token) { setFollowingError(t('fastReels.login')); setFollowingReady(true); return }
+    if (followedLoaderRef.current) return
+    followedLoaderRef.current = true
+    setFollowingError('')
+    try {
+      const all = new Set()
+      let page = 1
+      let hasNext = true
+      // Paginate only the existing follow list, not a request per creator.
+      while (hasNext && page <= 10) {
+        const response = await fetch(`${API_BASE_URL}/api/authors/following?limit=50&page=${page}`, {
+          headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false || !Array.isArray(data.author_pages)) throw new Error(data.message || t('fastReels.followingError'))
+        data.author_pages.forEach(author => { if (author.user_id) all.add(String(author.user_id)) })
+        hasNext = Boolean(data.has_next)
+        page += 1
+      }
+      setFollowedIds(all)
+    } catch (err) { setFollowingError(err.message || t('fastReels.followingError')) }
+    finally { setFollowingReady(true); followedLoaderRef.current = false }
+  }, [t])
 
+  useEffect(() => { if (!initialCacheRef.current?.videos?.length) loadMore() }, [loadMore])
+  useEffect(() => { if (feedTab === 'following' && !followingReady) loadFollowing() }, [feedTab, followingReady, loadFollowing])
   useEffect(() => {
-    if (!videos.length) return undefined
-    cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
-    return undefined
-  }, [videos, hasMore, activeIndex])
+    if (videos.length && feedTab === 'forYou') cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
+  }, [videos, hasMore, activeIndex, feedTab])
+
+  const visibleVideos = useMemo(() => feedTab === 'following'
+    ? videos.filter(video => followedIds.has(String(video.user_id))) : videos,
+  [feedTab, followedIds, videos])
 
   const navigateSlide = useCallback(direction => {
     const root = viewportRef.current
-    if (!root || !videos.length || Date.now() < navigationLockUntilRef.current) return
-    const next = Math.max(0, Math.min(videos.length - 1, activeIndexRef.current + direction))
+    if (!root || !visibleVideos.length || Date.now() < navigationLockUntilRef.current) return
+    const next = Math.max(0, Math.min(visibleVideos.length - 1, activeIndexRef.current + direction))
     if (next === activeIndexRef.current) return
     navigationLockUntilRef.current = Date.now() + 420
     activeIndexRef.current = next
     setActiveIndex(next)
     root.scrollTo({ top: next * root.clientHeight, behavior: 'smooth' })
-  }, [videos.length])
+  }, [visibleVideos.length])
+
+  const changeTab = tab => {
+    if (feedTab === tab) return
+    setFeedTab(tab)
+    activeIndexRef.current = 0
+    setActiveIndex(0)
+    navigationLockUntilRef.current = Date.now() + 200
+    viewportRef.current?.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   useEffect(() => {
     const root = viewportRef.current
-    if (!root || !videos.length) return undefined
-    if (initialCacheRef.current?.videos?.length) {
+    if (!root || !visibleVideos.length) return undefined
+    if (initialCacheRef.current?.videos?.length && feedTab === 'forYou') {
       root.scrollTo({ top: activeIndexRef.current * root.clientHeight, behavior: 'instant' })
       initialCacheRef.current = null
     }
@@ -298,20 +446,17 @@ export default function FastReelsPage({ embedded = false }) {
       for (const entry of entries) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
           const index = slides.indexOf(entry.target)
-          if (index >= 0) {
-            activeIndexRef.current = index
-            setActiveIndex(index)
-          }
+          if (index >= 0) { activeIndexRef.current = index; setActiveIndex(index) }
         }
       }
     }, { root, threshold: [0.6, 0.8] })
     slides.forEach(slide => observer.observe(slide))
     return () => observer.disconnect()
-  }, [videos.length])
+  }, [visibleVideos.length, feedTab])
 
   useEffect(() => {
     const root = viewportRef.current
-    if (!root || !videos.length) return undefined
+    if (!root || !visibleVideos.length || settingsOpen) return undefined
     let lastWheelAt = 0
     const onWheel = event => {
       if (Math.abs(event.deltaY) < 18) return
@@ -323,87 +468,127 @@ export default function FastReelsPage({ embedded = false }) {
     }
     root.addEventListener('wheel', onWheel, { passive: false })
     return () => root.removeEventListener('wheel', onWheel)
-  }, [videos.length, navigateSlide])
+  }, [visibleVideos.length, settingsOpen, navigateSlide])
 
   useEffect(() => {
+    if (settingsOpen) return undefined
     const onKey = event => {
-      const target = event.target
-      if (target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) return
-      if (event.key === 'ArrowDown' || event.key === 'PageDown') {
-        event.preventDefault()
-        navigateSlide(1)
-      } else if (event.key === 'ArrowUp' || event.key === 'PageUp') {
-        event.preventDefault()
-        navigateSlide(-1)
-      }
+      if (event.target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') { event.preventDefault(); navigateSlide(1) }
+      else if (event.key === 'ArrowUp' || event.key === 'PageUp') { event.preventDefault(); navigateSlide(-1) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigateSlide])
+  }, [settingsOpen, navigateSlide])
 
   useEffect(() => {
-    if (!loading && hasMore && videos.length > 0 && activeIndex >= videos.length - 3) loadMore()
-  }, [activeIndex, hasMore, videos.length, loading, loadMore])
+    if (feedTab === 'forYou' && !loading && hasMore && visibleVideos.length > 0 && activeIndex >= Math.max(0, visibleVideos.length - 3)) loadMore()
+  }, [activeIndex, feedTab, hasMore, visibleVideos.length, loading, loadMore])
 
   const openAuthorProfile = useCallback(username => {
     if (username) navigate(`/author/page/${encodeURIComponent(username)}`)
   }, [navigate])
+  const followAuthor = async video => {
+    const username = video.creator?.page_username
+    if (!username) return
+    const token = getToken()
+    if (!token) { navigate('/login'); return }
+    if (followedIds.has(String(video.user_id))) return
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/authors/page/${encodeURIComponent(username)}/follow`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}',
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok === false) throw new Error(data.message || t('fastReels.followingError'))
+      setFollowedIds(current => new Set([...current, String(video.user_id)]))
+    } catch (err) { showNotice(err.message || t('fastReels.followingError')) }
+  }
 
+  const toggleLocal = (id, setState, key) => {
+    setState(previous => {
+      const next = new Set(previous)
+      if (next.has(String(id))) next.delete(String(id))
+      else next.add(String(id))
+      try { localStorage.setItem(key, JSON.stringify([...next])) } catch { /* local storage not available */ }
+      return next
+    })
+  }
+  const shareReel = async video => {
+    const url = video.video_url || `${window.location.origin}/fast`
+    try {
+      if (navigator.share) await navigator.share({ title: video.title, url })
+      else { await navigator.clipboard.writeText(url); showNotice(t('fastReels.copied')) }
+    } catch (err) { if (err?.name !== 'AbortError') showNotice(t('fastReels.shareFailed')) }
+  }
+  const openComments = video => {
+    // The current backend has no Fast comments endpoints; open the REAL YouTube comments, not a fake form.
+    window.open(video.video_url, '_blank', 'noopener,noreferrer')
+  }
+
+  const activeVideoIndex = Math.min(activeIndex, Math.max(0, visibleVideos.length - 1))
   return (
-    <PageShell
-  className={`bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ${
-    embedded ? '!min-h-0' : ''
-  }`}
->
-  {!embedded && (
-    <PageHeader
-      title={t('fastReels.title')}
-      backLabel={t('fastReels.back')}
-      onBack={() => navigate(-1)}
-    />
-  )}
-      {videos.length ? (
-        <div
-  ref={viewportRef}
-  className="mx-auto w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
-  style={{
-    height: embedded
-      ? 'calc(100dvh - 114px - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
-      : 'calc(100dvh - 56px)',
-    scrollbarWidth: 'none',
-  }}
->
-          {videos.map((video, index) => (
-            <div key={video.id} className="h-full snap-start">
-              <VideoSlide
-                video={video}
-                active={index === activeIndex}
-                soundEnabled={soundEnabled}
-                onSoundToggle={setSoundEnabled}
-                onAuthorOpen={openAuthorProfile}
-                onNavigate={navigateSlide}
-                canPrevious={index > 0}
-                canNext={index < videos.length - 1}
-                t={t}
-              />
-            </div>
+    <div className={`${embedded ? 'relative w-full' : 'fixed inset-0'} flex flex-col overflow-hidden bg-black text-white`}
+      style={embedded ? { height: 'calc(100dvh - 114px - env(safe-area-inset-bottom))' } : undefined}>
+      {/* The header is a sibling of the YouTube iframe, never an overlay hiding YouTube attribution. */}
+      <header className="relative z-40 flex h-14 shrink-0 items-center justify-center bg-black px-3 text-white">
+        <nav className="flex items-center gap-6" aria-label="Fast feeds">
+          {[['following', t('fastReels.following')], ['forYou', t('fastReels.forYou')]].map(([key, label]) => (
+            <button type="button" key={key} onClick={() => changeTab(key)} aria-current={feedTab === key ? 'page' : undefined}
+              className={`relative py-3 text-sm ${feedTab === key ? 'font-bold text-white' : 'font-medium text-white/65'}`}>
+              {label}
+              {feedTab === key ? <span className="absolute bottom-1 left-1/4 right-1/4 h-0.5 rounded-full bg-white" /> : null}
+            </button>
           ))}
-        </div>
-      ) : loading ? (
-        <PageLoadingState label={t('fastReels.loading')} />
-      ) : error ? (
-        <PageErrorState title={t('fastReels.error')} actionLabel={t('fastReels.retry')} onAction={loadMore} />
-      ) : (
-        <PageEmptyState title={t('fastReels.empty')} body={t('fastReels.emptyBody')} />
-      )}
-      {error && videos.length ? (
-        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] p-3 shadow-lg">
-          <button type="button" onClick={loadMore} className="flex items-center gap-2 text-xs text-[var(--shadow-text-primary)]"><RefreshCw size={14}/>{t('fastReels.retry')}</button>
-        </div>
-      ) : null}
-      {loading && videos.length ? (
-        <div role="status" aria-label={t('fastReels.loading')} className="pointer-events-none fixed bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-3 py-1 text-xs text-white">{t('fastReels.loading')}</div>
-      ) : null}
-    </PageShell>
+        </nav>
+        <button type="button" onClick={() => navigate('/discover/search')} aria-label={t('fastReels.search')}
+          className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full active:bg-white/10">
+          <Search size={22}/>
+        </button>
+      </header>
+      <main className="relative min-h-0 flex-1 bg-black">
+        {visibleVideos.length ? (
+          <div ref={viewportRef} key={feedTab} className="mx-auto h-full w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
+            style={{ scrollbarWidth: 'none' }}>
+            {visibleVideos.map((video, index) => (
+              <div key={video.id} className="h-full snap-start">
+                <VideoSlide video={video} active={index === activeVideoIndex} soundEnabled={soundEnabled}
+                  onSoundToggle={setSoundEnabled} playbackSpeed={playbackSpeed}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                  onAuthorOpen={openAuthorProfile} onFollow={followAuthor}
+                  isFollowing={followedIds.has(String(video.user_id))} onNavigate={navigateSlide}
+                  onSave={id => toggleLocal(id, setSavedIds, SAVED_KEY)} isSaved={savedIds.has(String(video.id))}
+                  onLike={id => toggleLocal(id, setLikedIds, LIKED_KEY)} isLiked={likedIds.has(String(video.id))}
+                  onShare={shareReel} onComment={openComments} t={t} />
+              </div>
+            ))}
+            {feedTab === 'following' && hasMore ? (
+              <button type="button" onClick={loadMore} disabled={loading}
+                className="pointer-events-auto sticky bottom-3 left-3 z-40 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-black disabled:opacity-60">
+                {t('fastReels.loadMore')}
+              </button>
+            ) : null}
+          </div>
+        ) : loading || (feedTab === 'following' && !followingReady) ? (
+          <div className="mx-auto max-w-md px-5 pt-20 text-white"><PageLoadingState label={t('fastReels.loading')}/></div>
+        ) : feedTab === 'following' ? (
+          <div className="mx-auto max-w-md px-5 pt-20 text-center text-sm">
+            <p className="font-semibold">{followingError || t('fastReels.followEmpty')}</p>
+            <p className="mt-2 text-white/60">{t('fastReels.followHelp')}</p>
+            {hasMore ? <button type="button" className="mt-6 rounded-full border border-white/50 px-5 py-2" onClick={loadMore}>{t('fastReels.loadMore')}</button> : null}
+          </div>
+        ) : error ? (
+          <div className="mx-auto max-w-md px-5 pt-20"><PageErrorState title={t('fastReels.error')} actionLabel={t('fastReels.retry')} onAction={loadMore} /></div>
+        ) : (
+          <div className="mx-auto max-w-md px-5 pt-20"><PageEmptyState title={t('fastReels.empty')} body={t('fastReels.emptyBody')}/></div>
+        )}
+        {error && visibleVideos.length ? <button type="button" onClick={loadMore}
+          className="absolute bottom-3 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-black"><RefreshCw size={13}/>{t('fastReels.retry')}</button> : null}
+        {notice ? <div role="status" className="pointer-events-none absolute bottom-20 left-1/2 z-50 max-w-[90%] -translate-x-1/2 rounded-xl bg-black/85 px-4 py-2 text-center text-xs text-white">{notice}</div> : null}
+      </main>
+      {!embedded ? <div className="h-[calc(64px+env(safe-area-inset-bottom))] shrink-0"><ReaderProfileFooter /></div> : null}
+      <SpeedAndSoundSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} t={t}
+        soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
+        speed={playbackSpeed} setSpeed={setPlaybackSpeed} />
+    </div>
   )
 }
