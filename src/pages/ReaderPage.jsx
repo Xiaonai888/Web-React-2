@@ -937,6 +937,103 @@ function getReaderToken() {
   return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
+
+function getReaderSmartAdScope() {
+  const token = getReaderToken()
+  let identity = token
+
+  if (token) {
+    try {
+      const payload = token.split('.')[1]
+      const decoded = JSON.parse(
+        atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+      )
+      identity = String(
+        decoded.sub || decoded.user_id || decoded.id || token
+      )
+    } catch {
+      identity = token
+    }
+  }
+
+  let hash = 2166136261
+  for (let index = 0; index < identity.length; index += 1) {
+    hash ^= identity.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  const scope = identity
+    ? `reader-${(hash >>> 0).toString(36)}`
+    : 'anon'
+
+  return `shadow_discover_ad_rotation_v1:${scope}`
+}
+
+function rememberSmartAdReadGenre(story) {
+  const storyId = String(story?.id || '')
+  const genre = String(story?.main_genre || '')
+    .trim()
+    .toLowerCase()
+
+  if (!storyId || !genre) return
+
+  const scope = `shadow_smart_auto_ads_v2:${getReaderSmartAdScope()}`
+  const historyKey = `${scope}:reader_genre_history`
+  const genreKey = `${scope}:genres`
+  const now = Date.now()
+
+  try {
+    const storedHistory = JSON.parse(
+      localStorage.getItem(historyKey) || '{}'
+    )
+    const history = storedHistory &&
+      typeof storedHistory === 'object' &&
+      !Array.isArray(storedHistory)
+        ? storedHistory
+        : {}
+
+    if (
+      now - Number(history[storyId] || 0) <
+      24 * 60 * 60 * 1000
+    ) return
+
+    const storedGenres = JSON.parse(
+      localStorage.getItem(genreKey) || '{}'
+    )
+    const genres = storedGenres &&
+      typeof storedGenres === 'object' &&
+      !Array.isArray(storedGenres)
+        ? storedGenres
+        : {}
+
+    genres[genre] = Math.min(
+      40,
+      Math.max(0, Number(genres[genre]) || 0) + 2
+    )
+
+    localStorage.setItem(genreKey, JSON.stringify(genres))
+
+    const recent = Object.entries({
+      ...history,
+      [storyId]: now,
+    })
+      .filter(([, time]) =>
+        Number.isFinite(Number(time)) &&
+        now - Number(time) < 30 * 24 * 60 * 60 * 1000
+      )
+      .sort((a, b) => Number(b[1]) - Number(a[1]))
+      .slice(0, 300)
+
+    localStorage.setItem(
+      historyKey,
+      JSON.stringify(Object.fromEntries(recent))
+    )
+  } catch {
+    // Never interrupt reading when browser storage is unavailable.
+  }
+}
+
+
 function readerAuthHeaders() {
   const token = getReaderToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -7970,6 +8067,47 @@ useEffect(() => {
       autoScrollFrameRef.current = null
     }
 
+    
+  useEffect(() => {
+    if (
+      !story?.id ||
+      !episode?.id ||
+      !episodeId ||
+      loading ||
+      lockedEpisode ||
+      !adultAccepted ||
+      offlineMode ||
+      document.hidden
+    ) return
+
+    if (String(episode.id) !== String(episodeId)) return
+
+    const characters = Number(
+      episode.character_count ||
+      episode.content?.length ||
+      0
+    )
+
+    const minimumProgress =
+      characters > 0 && characters < 3000 ? 60 : 20
+
+    if (Number(readingProgress) < minimumProgress) return
+
+    rememberSmartAdReadGenre(story)
+  }, [
+    story?.id,
+    story?.main_genre,
+    episode?.id,
+    episodeId,
+    episode?.character_count,
+    readingProgress,
+    loading,
+    lockedEpisode,
+    adultAccepted,
+    offlineMode,
+  ])
+
+
     if (
   isChatStory ||
   effectiveReadingMode !== 'scroll' ||
@@ -8869,7 +9007,12 @@ autoScrollEnabled ? (
   return
 }
 
-navigate(`/story/${storyId}`, { replace: true })
+navigate(
+  returnSource === 'discover_auto_ad'
+    ? '/discover'
+    : `/story/${storyId}`,
+  { replace: true }
+)
 }}
 className={lockedHeaderActive ? '!text-white' : theme.text}
     />
