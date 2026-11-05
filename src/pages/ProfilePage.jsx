@@ -6,6 +6,7 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
+import AuthorReelGrid from '../components/author/AuthorReelGrid'
 import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -1078,6 +1079,7 @@ export default function ProfilePage() {
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
   const [profileTabMessage, setProfileTabMessage] = useState('')
+  const [profileMediaTab, setProfileMediaTab] = useState('all')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
   const [user, setUser] = useState(() =>
     isOwnProfile ? storedUser : navigationPreview
@@ -1134,11 +1136,6 @@ export default function ProfilePage() {
     ? String(user?.username || storedUser?.username || '').replace(/^@+/, '')
     : requestedUsername
 
-  function showProfileTabComingSoon(label) {
-    setProfileTabMessage(t('profilePage.comingSoon', { item: label }))
-    window.setTimeout(() => setProfileTabMessage(''), 2200)
-  }
-
   function handleSuggestionFollowed() {
     setUser((current) => {
       if (!current) return current
@@ -1165,6 +1162,7 @@ export default function ProfilePage() {
     setMessageRequestOpen(false)
     setDiscoverPeopleOpen(false)
     setProfileTabMessage('')
+    setProfileMediaTab('all')
     setAvatarModalOpen(false)
     setEditProfileOpen(false)
     setRawAvatarImage('')
@@ -1886,25 +1884,23 @@ async function handleOtherProfileOption(action) {
 
           <section className="sticky top-[58px] z-20 border-y border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
   <div className="flex items-center gap-1.5 px-4 py-2.5 text-[12px]">
-    <button className="rounded-full bg-[var(--shadow-bg-hover)] px-4 py-2 font-semibold text-[var(--shadow-text-primary)]">
-      {t('profilePage.all')}
-    </button>
-
-    <button
-      type="button"
-      onClick={() => showProfileTabComingSoon(t('profilePage.reels'))}
-      className="rounded-full px-4 py-2 font-normal text-[var(--shadow-text-secondary)]"
-    >
-      {t('profilePage.reels')}
-    </button>
-
-    <button
-      type="button"
-      onClick={() => showProfileTabComingSoon(t('profilePage.photo'))}
-      className="rounded-full px-4 py-2 font-normal text-[var(--shadow-text-secondary)]"
-    >
-      {t('profilePage.photo')}
-    </button>
+    {[
+      { key: 'all', label: t('profilePage.all') },
+      { key: 'reels', label: t('profilePage.reels') },
+      { key: 'photo', label: t('profilePage.photo') },
+    ].map((tab) => (
+      <button
+        key={tab.key}
+        type="button"
+        aria-pressed={profileMediaTab === tab.key}
+        onClick={() => setProfileMediaTab(tab.key)}
+        className={`rounded-full px-4 py-2 ${profileMediaTab === tab.key
+          ? 'bg-[var(--shadow-bg-hover)] font-semibold text-[var(--shadow-text-primary)]'
+          : 'font-normal text-[var(--shadow-text-secondary)]'}`}
+      >
+        {tab.label}
+      </button>
+    ))}
   </div>
 
   {profileTabMessage ? (
@@ -1915,20 +1911,38 @@ async function handleOtherProfileOption(action) {
 </section>
         </div>
 
-        {isOwnProfile ? (
-          <div className="mt-2 md:mt-3">
-            <ReaderPostComposer />
+        {profileMediaTab === 'reels' ? (
+          <div className="mt-2 bg-[var(--shadow-bg-surface)] px-4 py-4 md:rounded-[24px]">
+            {viewedUser?.user_id || viewedUser?.id ? (
+              <AuthorReelGrid
+                key={String(viewedUser.user_id || viewedUser.id)}
+                userId={viewedUser.user_id || viewedUser.id}
+              />
+            ) : (
+              <p role="status" className="py-10 text-center text-[13px] text-[var(--shadow-text-secondary)]">
+                {t('profilePage.profileStillLoading')}
+              </p>
+            )}
           </div>
-        ) : null}
+        ) : (
+          <>
+            {isOwnProfile && profileMediaTab === 'all' ? (
+              <div className="mt-2 md:mt-3">
+                <ReaderPostComposer />
+              </div>
+            ) : null}
 
-        <ReaderProfilePostsPanel
-  key={profilePostsUsername || 'reader-profile'}
-  username={profilePostsUsername}
-  isOwnProfile={isOwnProfile}
-  profileUser={user}
-  onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
-  onCountChange={setReaderPostCount}
-/>
+            <ReaderProfilePostsPanel
+              key={`${profilePostsUsername || 'reader-profile'}-${profileMediaTab}`}
+              username={profilePostsUsername}
+              isOwnProfile={isOwnProfile}
+              profileUser={user}
+              onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
+              onCountChange={setReaderPostCount}
+              photoOnly={profileMediaTab === 'photo'}
+            />
+          </>
+        )}
 
         <ReaderProfileBlockAction
   open={!isOwnProfile && blockDialogOpen}
