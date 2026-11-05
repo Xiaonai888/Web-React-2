@@ -428,6 +428,33 @@ function CountryLocalAppGuard({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  const readerNavPaths = [
+  '/profile',
+  '/store',
+  '/reader-mall',
+  '/chat',
+  '/library',
+  '/me',
+]
+
+const isReaderNav =
+  location.pathname === '/fast' ||
+  readerNavPaths.some(
+    path =>
+      location.pathname === path ||
+      location.pathname.startsWith(`${path}/`)
+  )
+
+useEffect(() => {
+  document.documentElement.classList.toggle(
+    'reader-black-nav',
+    isReaderNav
+  )
+
+  return () => {
+    document.documentElement.classList.remove('reader-black-nav')
+  }
+}, [isReaderNav])
   const skipOnboardingAdsRef = useRef(
   location.pathname === '/me' &&
   new URLSearchParams(location.search).get('language') === 'story'
