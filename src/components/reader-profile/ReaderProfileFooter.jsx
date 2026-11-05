@@ -521,13 +521,9 @@ export default function ReaderProfileFooter({
 }
 
     if (key === 'reel') {
-      showMessage(
-        t('readerProfileFooter.comingSoon', {
-          label: t('readerProfileFooter.reel'),
-        })
-      )
-      return
-    }
+  navigate('/fast')
+  return
+}
 
     if (key === 'chat') {
       navigate('/chat')
