@@ -2640,25 +2640,46 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400"><i className="fa-solid fa-book-open text-3xl" /></div>
           )}
-          {badge ? (
-            <span className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm ${badge === 'new' ? 'bg-[#16a34a]' : badge === 'end' ? 'bg-[#64748b]' : 'bg-[#2563eb]'}`}>
-              {badge === 'new' ? 'NEW' : badge === 'end' ? 'END' : 'UP'}
-            </span>
-          ) : null}
+          
+{badge ? (
+  <span
+    className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-extrabold shadow-sm ${
+      badge === 'new'
+        ? 'bg-[#FF4D6D] text-white'
+        : badge === 'end'
+          ? 'bg-[#16A34A] text-white'
+          : 'bg-[#F6B800] text-[#111827]'
+    }`}
+  >
+    {badge === 'new' ? 'NEW' : badge === 'end' ? 'END' : 'UP'}
+  </span>
+) : null}
+
         </div>
         <div className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-[var(--shadow-bg-surface)]">
           <div className="min-w-0 flex-1">
             <div className="line-clamp-2 text-[15px] font-semibold leading-5">{ad.title}</div>
             <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
               <span className="inline-flex items-center gap-1.5">
-                <svg width="16" height="16" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" className="shrink-0">
-                  <circle cx="9" cy="10" r="8" />
-                  <circle cx="9" cy="32" r="8" />
-                  <circle cx="9" cy="54" r="8" />
-                  <rect x="21" y="2" width="43" height="16" rx="8" />
-                  <rect x="21" y="24" width="43" height="16" rx="8" />
-                  <rect x="21" y="46" width="43" height="16" rx="8" />
-                </svg>
+                
+<svg
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="1.6"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  aria-hidden="true"
+  className="shrink-0"
+>
+  <rect x="3" y="4" width="4" height="4" rx="0.8" />
+  <rect x="3" y="10" width="4" height="4" rx="0.8" />
+  <rect x="3" y="16" width="4" height="4" rx="0.8" />
+  <path d="M10 6h11M10 12h11M10 18h11" />
+</svg>
+
                 {Number(ad.episode_count || 0)} Episodes
               </span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
