@@ -270,9 +270,11 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-[7px] text-left active:bg-black/[0.04] ${
-        danger ? 'text-red-600' : 'text-[#111827]'
-      }`}
+      className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-[7px] text-left active:bg-black/[0.04] dark:active:bg-[var(--shadow-bg-hover)] ${
+  danger
+    ? 'text-red-600 dark:text-red-400'
+    : 'text-[#111827] dark:text-[var(--shadow-text-primary)]'
+}`}
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center">
         <ActionIcon type={icon} />
@@ -544,7 +546,7 @@ export default function ShadowMallAdOptionsSheet({
       />
 
       <section
-        className="relative max-h-[90dvh] w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl transition-transform duration-150"
+        className="relative max-h-[90dvh] w-full max-w-[620px] overflow-y-auto rounded-t-[24px] bg-white dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl transition-transform duration-150"
         style={{
           transform: `translateY(${dragY}px)`,
         }}
