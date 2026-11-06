@@ -273,7 +273,7 @@ function ActionButton({
       className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-[7px] text-left active:bg-black/[0.04] dark:active:bg-[var(--shadow-bg-hover)] ${
   danger
     ? 'text-red-600 dark:text-red-400'
-    : 'text-[#111827] dark:text-[var(--shadow-text-primary)]'
+    : 'text-[#111827] dark:text-[var(--shadow-text-primary)] dark:text-[var(--shadow-text-primary)]'
 }`}
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center">
@@ -525,7 +525,7 @@ export default function ShadowMallAdOptionsSheet({
         </button>
 
         <div className="min-w-0">
-          <div className="truncate text-[17px] font-normal text-[#111827]">
+          <div className="truncate text-[17px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {title}
           </div>
           <div className="mt-0.5 text-[11px] font-normal text-gray-400">
@@ -565,7 +565,7 @@ export default function ShadowMallAdOptionsSheet({
 
         {screen === 'quick' ? (
           <>
-            <div className="mb-2 space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
+            <div className="mb-2 space-y-px rounded-[15px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)] p-0.5">
               <ActionButton
                 icon="interested"
                 title="Interested"
@@ -587,7 +587,7 @@ export default function ShadowMallAdOptionsSheet({
               />
             </div>
 
-            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
+            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)] p-0.5">
               <ActionButton
                 icon={saved ? 'saved' : 'save'}
                 title={saved ? 'Remove from saved' : 'Save ad'}
@@ -661,8 +661,8 @@ export default function ShadowMallAdOptionsSheet({
               'How sponsored promotions appear on Shadow'
             )}
 
-            <div className="rounded-[16px] bg-[#f3f4f7] p-4">
-              <div className="text-[14px] font-semibold leading-5 text-[#111827]">
+            <div className="rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)] p-4">
+              <div className="text-[14px] font-semibold leading-5 text-[#111827] dark:text-[var(--shadow-text-primary)]">
                 This is a sponsored promotion from {sponsor}.
               </div>
 
@@ -684,7 +684,7 @@ export default function ShadowMallAdOptionsSheet({
               'Sponsored by an advertiser on Shadow'
             )}
 
-            <div className="rounded-[16px] bg-[#f3f4f7] p-4">
+            <div className="rounded-[16px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)] p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[14px] font-semibold text-white">
                   {item.profile_image_url ? (
@@ -699,7 +699,7 @@ export default function ShadowMallAdOptionsSheet({
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate text-[15px] font-semibold text-[#111827]">
+                  <div className="truncate text-[15px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                     {sponsor}
                   </div>
                   <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400">
@@ -709,7 +709,7 @@ export default function ShadowMallAdOptionsSheet({
               </div>
 
               {item.title ? (
-                <div className="mt-4 text-[13px] font-semibold leading-5 text-[#111827]">
+                <div className="mt-4 text-[13px] font-semibold leading-5 text-[#111827] dark:text-[var(--shadow-text-primary)]">
                   {item.title}
                 </div>
               ) : null}
@@ -730,7 +730,7 @@ export default function ShadowMallAdOptionsSheet({
               'Choose the reason that best describes the problem'
             )}
 
-            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] p-0.5">
+            <div className="space-y-px rounded-[15px] bg-[#f3f4f7] dark:bg-[var(--shadow-bg-soft)] p-0.5">
               <ActionButton
                 icon="scam"
                 title="Scam or misleading promotion"
@@ -766,7 +766,7 @@ export default function ShadowMallAdOptionsSheet({
         ) : null}
 
         {message ? (
-          <div className="mt-3 rounded-[12px] bg-[#eef2ff] px-3 py-2.5 text-center text-[11px] font-semibold leading-4 text-[#3730a3]">
+          <div className="mt-3 rounded-[12px] bg-[#eef2ff] dark:bg-[var(--shadow-bg-hover)] px-3 py-2.5 text-center text-[11px] font-semibold leading-4 text-[#3730a3] dark:text-[var(--shadow-text-primary)]">
             {message}
           </div>
         ) : null}
