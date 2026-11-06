@@ -318,14 +318,11 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 }
 
 export default function FastReelsPage({ embedded = false }) {
-  
-const navigate = useNavigate()
-const location = useLocation()
-const { t } = useDisplayTranslation()
-
-const requestedReelId =
+  const navigate = useNavigate()
+  const { t } = useDisplayTranslation()
+  const location = useLocation()
+  const requestedReelId =
   new URLSearchParams(location.search).get('reel') || ''
-
   const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
   const initialCache = initialCacheRef.current
   const viewportRef = useRef(null)
@@ -409,11 +406,8 @@ useEffect(() => {
       if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) throw new Error(payload.message || 'Unable to load videos')
       const rows = payload.videos.filter(row => youtubeId(row.video_url))
       const newOffset = Number(payload.pagination?.next_offset)
-      
-nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
-  ? newOffset
-  : nextOffset.current + payload.videos.length
-
+      nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
+        ? newOffset : nextOffset.current + payload.videos.length
       hasMoreRef.current = Boolean(payload.pagination?.has_more) && payload.videos.length > 0
       setHasMore(hasMoreRef.current)
       setVideos(current => {
@@ -423,58 +417,6 @@ nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.
     } catch (err) { setError(err.message || 'Unable to load videos') }
     finally { loadingRef.current = false; setLoading(false) }
   }, [])
-
-  
-useEffect(() => {
-  const uuid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-  if (!uuid.test(requestedReelId)) return undefined
-
-  let cancelled = false
-
-  async function openSharedReel() {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(requestedReelId)}`
-      )
-      const data = await response.json()
-
-      if (!response.ok || !data.ok || !data.video) {
-        throw new Error('Reel not found')
-      }
-
-      if (cancelled) return
-
-      setFeedTab('forYou')
-      setVideos(current => [
-        data.video,
-        ...current.filter(item => item.id !== data.video.id),
-      ])
-
-      activeIndexRef.current = 0
-      setActiveIndex(0)
-
-      window.requestAnimationFrame(() => {
-        viewportRef.current?.scrollTo({
-          top: 0,
-          behavior: 'instant',
-        })
-      })
-    } catch (error) {
-      if (!cancelled) {
-        showNotice(error.message || 'Unable to open Reel')
-      }
-    }
-  }
-
-  openSharedReel()
-
-  return () => {
-    cancelled = true
-  }
-}, [requestedReelId, showNotice])
-
 
   const loadFollowing = useCallback(async () => {
     const token = getToken()
