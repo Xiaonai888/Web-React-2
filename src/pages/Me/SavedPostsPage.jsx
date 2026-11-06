@@ -41,6 +41,7 @@ registerTranslationNamespace('savedPostsPage', {
     reader: 'Reader',
     author: 'Author',
     promoted: 'Promoted',
+    fastReel: 'Fast Reels',
     newestSaved: 'Newest Saved',
     oldestSaved: 'Oldest Saved',
     close: 'Close',
@@ -118,6 +119,7 @@ registerTranslationNamespace('savedPostsPage', {
     reader: 'អ្នកអាន',
     author: 'អ្នកនិពន្ធ',
     promoted: 'បានផ្សព្វផ្សាយ',
+    fastReel: 'Fast Reels',
     newestSaved: 'រក្សាទុកថ្មីបំផុត',
     oldestSaved: 'រក្សាទុកចាស់បំផុត',
     close: 'បិទ',
@@ -195,6 +197,7 @@ registerTranslationNamespace('savedPostsPage', {
     reader: '读者',
     author: '作者',
     promoted: '推广',
+    fastReel: '短视频',
     newestSaved: '最新保存',
     oldestSaved: '最早保存',
     close: '关闭',
@@ -272,6 +275,7 @@ registerTranslationNamespace('savedPostsPage', {
     reader: '読者',
     author: '作者',
     promoted: 'プロモーション',
+    fastReel: 'リール',
     newestSaved: '新しい保存順',
     oldestSaved: '古い保存順',
     close: '閉じる',
@@ -349,6 +353,7 @@ registerTranslationNamespace('savedPostsPage', {
     reader: '독자',
     author: '작가',
     promoted: '프로모션',
+    fastReel: '릴스',
     newestSaved: '최근 저장순',
     oldestSaved: '오래된 저장순',
     close: '닫기',
@@ -428,6 +433,7 @@ const TYPE_TABS = [
   { key: 'reader', labelKey: 'reader' },
   { key: 'author', labelKey: 'author' },
   { key: 'promoted', labelKey: 'promoted' },
+  { key: 'fast_video', labelKey: 'fastReel' },
 ]
 
 const SORT_OPTIONS = [
