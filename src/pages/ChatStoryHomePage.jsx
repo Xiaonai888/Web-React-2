@@ -15,7 +15,6 @@ import { Search, ChevronRight } from 'lucide-react'
 
 const EventPage = lazy(() => import('./EventPage'))
 const ReaderStorePage = lazy(() => import('./ReaderStorePage'))
-const FastReelsPage = lazy(() => import('./FastReelsPage'))
 
 registerTranslationNamespace('chatStoryHomePage', {
   en: {
@@ -577,7 +576,6 @@ const savedScrollRef = useRef({
   chat: 0,
   event: 0,
   mall: 0,
-  reel: 0,
 })
   const [chatStories, setChatStories] = useState([])
   const [loadingStories, setLoadingStories] = useState(true)
@@ -856,10 +854,6 @@ const savedScrollRef = useRef({
     {
       key: 'mall',
       label: 'Mall',
-    },
-    {
-      key: 'reel',
-      label: 'Reel',
     },
   ].map((tab) => {
     const active = activeHomeTab === tab.key
@@ -1235,21 +1229,6 @@ const savedScrollRef = useRef({
             }
           >
             <ReaderStorePage embedded />
-          </Suspense>
-        </div>
-      )}
-
-      {/* Reel Tab - Reuse Fast Video Feed */}
-      {activeHomeTab === 'reel' && (
-        <div className="chat-story-reel-content">
-          <Suspense
-            fallback={
-              <div className="py-10 text-center text-sm text-neutral-500">
-                Loading Reel...
-              </div>
-            }
-          >
-            <FastReelsPage embedded />
           </Suspense>
         </div>
       )}
