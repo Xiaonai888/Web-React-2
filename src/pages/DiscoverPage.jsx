@@ -154,6 +154,47 @@ function getDiscoverFeedScope(token) {
 }
 
 
+// Preserve the EXACT same feed while returning from an Auto Story Ad.
+// This cache lives only in the current tab's JS memory (no Supabase writes).
+// The Router location key prevents restoring an older unrelated Discover visit.
+const discoverVisitSnapshots = new Map()
+const DISCOVER_VISIT_SNAPSHOT_TTL_MS = 60 * 60 * 1000
+const DISCOVER_VISIT_SNAPSHOT_LIMIT = 3
+
+function discoverVisitSnapshotKey(token, locationKey) {
+  return `${getShadowMallAdRotationStorageKey(token)}:${String(locationKey || '')}`
+}
+
+function readReturningDiscoverSnapshot(token, locationKey) {
+  if (!locationKey) return null
+  try {
+    if (sessionStorage.getItem('shadow_discover_auto_ad_return_y') === null) return null
+  } catch { return null }
+  const key = discoverVisitSnapshotKey(token, locationKey)
+  const snapshot = discoverVisitSnapshots.get(key)
+  if (!snapshot) return null
+  if (Date.now() - snapshot.savedAt > DISCOVER_VISIT_SNAPSHOT_TTL_MS) {
+    discoverVisitSnapshots.delete(key)
+    return null
+  }
+  return snapshot
+}
+
+function rememberDiscoverVisitSnapshot(token, locationKey, snapshot) {
+  if (!locationKey) return
+  const key = discoverVisitSnapshotKey(token, locationKey)
+  discoverVisitSnapshots.delete(key)
+  discoverVisitSnapshots.set(key, { ...snapshot, savedAt: Date.now() })
+  for (const [storedKey, entry] of discoverVisitSnapshots) {
+    if (Date.now() - entry.savedAt > DISCOVER_VISIT_SNAPSHOT_TTL_MS) {
+      discoverVisitSnapshots.delete(storedKey)
+    }
+  }
+  while (discoverVisitSnapshots.size > DISCOVER_VISIT_SNAPSHOT_LIMIT) {
+    discoverVisitSnapshots.delete(discoverVisitSnapshots.keys().next().value)
+  }
+}
+
 function getDiscoverBoostSession(token) {
   if (!token) return null
   const key = getDiscoverFeedScope(token)
@@ -3553,6 +3594,10 @@ export default function DiscoverPage() {
   const discoverScrollYRef = useRef(0)
   const discoverRestoringScrollRef = useRef(false)
     const [token, setToken] = useState(getAuthToken)
+  const returningFeedSnapshot = useMemo(
+    () => readReturningDiscoverSnapshot(token, discoverLocationKey),
+    [token, discoverLocationKey]
+  )
   const [hiddenWords, setHiddenWords] = useState([])
 
   useEffect(() => {
@@ -3599,16 +3644,16 @@ export default function DiscoverPage() {
     }
   }, [])
 
-  const [realPosts, setRealPosts] = useState([])
-  const [boostPosts, setBoostPosts] = useState([])
-  const [boostBooks, setBoostBooks] = useState([])
-  const [realPostsCursor, setRealPostsCursor] = useState(null)
-  const [realPostsHasMore, setRealPostsHasMore] = useState(false)
-  const [realPostsLoading, setRealPostsLoading] = useState(true)
+  const [realPosts, setRealPosts] = useState(() => returningFeedSnapshot?.realPosts || [])
+  const [boostPosts, setBoostPosts] = useState(() => returningFeedSnapshot?.boostPosts || [])
+  const [boostBooks, setBoostBooks] = useState(() => returningFeedSnapshot?.boostBooks || [])
+  const [realPostsCursor, setRealPostsCursor] = useState(() => returningFeedSnapshot?.realPostsCursor || null)
+  const [realPostsHasMore, setRealPostsHasMore] = useState(() => Boolean(returningFeedSnapshot?.realPostsHasMore))
+  const [realPostsLoading, setRealPostsLoading] = useState(() => !returningFeedSnapshot)
   const [realPostsLoadingMore, setRealPostsLoadingMore] = useState(false)
   const [realPostsError, setRealPostsError] = useState('')
-  const [readerPosts, setReaderPosts] = useState([])
-  const [readerPostsLoading, setReaderPostsLoading] = useState(true)
+  const [readerPosts, setReaderPosts] = useState(() => returningFeedSnapshot?.readerPosts || [])
+  const [readerPostsLoading, setReaderPostsLoading] = useState(() => !returningFeedSnapshot)
   const [readerPostsError, setReaderPostsError] = useState('')
   const [shadowMallPromotions, setShadowMallPromotions] = useState([])
   const shadowMallPromotionsRef =
@@ -3622,7 +3667,7 @@ export default function DiscoverPage() {
     nextPage: 1,
   })
 
-  const [discoverAdControl, setDiscoverAdControl] = useState(null)
+  const [discoverAdControl, setDiscoverAdControl] = useState(() => returningFeedSnapshot?.discoverAdControl || null)
   const [autoHiddenRevision, setAutoHiddenRevision] = useState(0)
   const [autoFollowedAuthorIds, setAutoFollowedAuthorIds] = useState(() => new Set())
 
@@ -4175,6 +4220,7 @@ useEffect(() => {
   }, [token, discoverAdControl?.mode])
 
     useEffect(() => {
+    if (returningFeedSnapshot) return undefined
     let alive = true
 
     async function loadReaderPosts() {
@@ -4324,9 +4370,10 @@ useEffect(() => {
     return () => {
       alive = false
     }
-  }, [token, discoverLocationKey])
+  }, [token, discoverLocationKey, returningFeedSnapshot])
 
     useEffect(() => {
+    if (returningFeedSnapshot) return undefined
     let alive = true
 
     async function loadInitialPosts() {
@@ -4533,7 +4580,7 @@ useEffect(() => {
     return () => {
       alive = false
     }
-  }, [token, discoverLocationKey])
+  }, [token, discoverLocationKey, returningFeedSnapshot])
 
   useEffect(() => {
     if (
@@ -4856,10 +4903,17 @@ useEffect(() => {
 
 
 
-  const [ownPostHighlightKey, setOwnPostHighlightKey] = useState('')
-  const [feedRotationIndex, setFeedRotationIndex] = useState(0)
+  const [ownPostHighlightKey, setOwnPostHighlightKey] = useState(() => returningFeedSnapshot?.ownPostHighlightKey || '')
+  const [feedRotationIndex, setFeedRotationIndex] = useState(() => returningFeedSnapshot?.feedRotationIndex ?? 0)
 
   useEffect(() => {
+    if (returningFeedSnapshot) {
+      // React Router Back has the same location key as the original feed.
+      // Do NOT advance rotation or clear the highlighted post on return.
+      setFeedRotationIndex(returningFeedSnapshot.feedRotationIndex ?? 0)
+      setOwnPostHighlightKey(returningFeedSnapshot.ownPostHighlightKey || '')
+      return
+    }
     if (!token) return
 
     const storageKey = `shadow_discover_rotation_v1:${getDiscoverFeedScope(token)}`
@@ -4878,7 +4932,7 @@ useEffect(() => {
 
     setFeedRotationIndex(nextIndex)
     setOwnPostHighlightKey('')
-  }, [discoverLocationKey, token])
+  }, [discoverLocationKey, token, returningFeedSnapshot])
 
   useEffect(() => {
     if (!token || realPostsLoading || readerPostsLoading) return
@@ -4953,6 +5007,35 @@ useEffect(() => {
   }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
   useEffect(() => {
+    if (realPostsLoading || readerPostsLoading) return
+    rememberDiscoverVisitSnapshot(token, discoverLocationKey, {
+      realPosts,
+      readerPosts,
+      boostPosts,
+      boostBooks,
+      realPostsCursor,
+      realPostsHasMore,
+      feedRotationIndex,
+      ownPostHighlightKey,
+      discoverAdControl,
+    })
+  }, [
+    token,
+    discoverLocationKey,
+    realPosts,
+    readerPosts,
+    boostPosts,
+    boostBooks,
+    realPostsCursor,
+    realPostsHasMore,
+    realPostsLoading,
+    readerPostsLoading,
+    feedRotationIndex,
+    ownPostHighlightKey,
+    discoverAdControl,
+  ])
+
+  useEffect(() => {
   if (
     realPostsLoading ||
     readerPostsLoading ||
@@ -4961,14 +5044,15 @@ useEffect(() => {
 
   let targetY
   try {
-    targetY = Number(
-      sessionStorage.getItem('shadow_discover_auto_ad_return_y')
-    )
+    const savedPosition = sessionStorage.getItem('shadow_discover_auto_ad_return_y')
+    if (savedPosition === null) return
+    targetY = Number(savedPosition)
   } catch {
     return
   }
 
-  if (!Number.isFinite(targetY) || targetY <= 0) return
+  // A click near the top of the page has a valid scroll offset of zero.
+  if (!Number.isFinite(targetY) || targetY < 0) return
 
   let timer
   let attempts = 0
