@@ -79,20 +79,18 @@ function youtubeId(value) {
 
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved, onLike,
-  isLiked, onShare, onComment, t }) {
-  isLiked, onShare, onComment,
-  clearDisplay, onRestoreDisplay, onEnded, t }) {
+  isLiked, onShare, onComment, clearDisplay, onRestoreDisplay, onEnded, t }) {
   const id = useMemo(() => youtubeId(video.video_url), [video.video_url])
   const frameRef = useRef(null)
   const gestureRef = useRef(null)
   const longPressTimerRef = useRef(null)
   const longPressedRef = useRef(false)
   const endedRef = useRef(false)
-
-useEffect(() => {
-  endedRef.current = false
-}, [id, active])
   const lastSwipeAtRef = useRef(0)
+
+  useEffect(() => {
+    endedRef.current = false
+  }, [id, active])
   const [playing, setPlaying] = useState(false)
   const iframeUrl = id
     ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
@@ -120,18 +118,14 @@ useEffect(() => {
       }
       const state = data.event === 'onStateChange' ? data.info : data.event === 'infoDelivery' ? data.info?.playerState : null
       if (state === 1) {
-  setPlaying(true)
-  endedRef.current = false
-}
-
-if ([0, 2, 5].includes(state)) {
-  setPlaying(false)
-}
-
-if (state === 0 && !endedRef.current) {
-  endedRef.current = true
-  onEnded?.()
-}
+        setPlaying(true)
+        endedRef.current = false
+      }
+      if ([0, 2, 5].includes(state)) setPlaying(false)
+      if (state === 0 && !endedRef.current) {
+        endedRef.current = true
+        onEnded?.()
+      }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
@@ -172,12 +166,12 @@ if (state === 0 && !endedRef.current) {
     longPressedRef.current = false
     gestureRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
     if (!clearDisplay) {
-  longPressTimerRef.current = window.setTimeout(() => {
-    longPressedRef.current = true
-    gestureRef.current = null
-    onOpenSettings()
-  }, LONG_PRESS_MS)
-}
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressedRef.current = true
+        gestureRef.current = null
+        onOpenSettings()
+      }, LONG_PRESS_MS)
+    }
     try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* safe fallback */ }
   }
   const handleMove = event => {
@@ -236,18 +230,10 @@ if (state === 0 && !endedRef.current) {
             onPointerCancel={() => { clearLongPress(); gestureRef.current = null }}
             onContextMenu={event => { event.preventDefault(); clearLongPress(); onOpenSettings() }}
             onClick={() => {
-  if (
-    longPressedRef.current ||
-    Date.now() - lastSwipeAtRef.current < 400
-  ) return
-
-  if (clearDisplay) {
-    onRestoreDisplay?.()
-    return
-  }
-
-  togglePlayback()
-}}
+              if (longPressedRef.current || Date.now() - lastSwipeAtRef.current < 400) return
+              if (clearDisplay) { onRestoreDisplay?.(); return }
+              togglePlayback()
+            }}
           />
           {!playing ? (
             <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center">
@@ -258,7 +244,6 @@ if (state === 0 && !endedRef.current) {
       ) : null}
 
       <div className={clearDisplay ? 'hidden' : ''}>
-
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-56 bg-gradient-to-t from-black/85 to-transparent" />
       <div className="pointer-events-none absolute bottom-6 left-3 right-16 z-20">
         {creator?.page_username ? (
@@ -298,12 +283,21 @@ if (state === 0 && !endedRef.current) {
             className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Bookmark size={25} fill={isSaved ? 'white' : 'none'} /></button>
           <button type="button" aria-label={t('fastReels.share')} onClick={() => onShare(video)}
             className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Share2 size={24}/></button>
-          <button type="button" aria-label={t(soundEnabled ? 'fastReels.soundOff' : 'fastReels.soundOn')}
-            onPointerDown={handleSoundDown} onPointerUp={clearLongPress} onPointerCancel={clearLongPress}
-            onPointerLeave={clearLongPress} onContextMenu={event => { event.preventDefault(); clearLongPress(); longPressedRef.current = true; onOpenSettings() }}
-            onClick={handleSoundClick} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 drop-shadow-lg">
-            {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
-          </button>
+          {(!soundEnabled || !playing) ? (
+            <button type="button" aria-label={t(soundEnabled ? 'fastReels.soundOff' : 'fastReels.soundOn')}
+              onPointerDown={handleSoundDown} onPointerUp={clearLongPress} onPointerCancel={clearLongPress}
+              onPointerLeave={clearLongPress}
+              onContextMenu={event => {
+                event.preventDefault()
+                clearLongPress()
+                longPressedRef.current = true
+                onOpenSettings()
+              }}
+              onClick={handleSoundClick}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 drop-shadow-lg">
+              {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
+            </button>
+          ) : null}
         </div>
            ) : null}
       </div>
@@ -463,6 +457,30 @@ useEffect(() => {
     root.scrollTo({ top: next * root.clientHeight, behavior: 'smooth' })
   }, [visibleVideos.length])
 
+  const handleVideoEnded = useCallback(() => {
+    if (!autoScroll || settingsOpen) return
+    if (activeIndexRef.current < visibleVideos.length - 1) navigateSlide(1)
+  }, [autoScroll, settingsOpen, visibleVideos.length, navigateSlide])
+
+  const hideCurrentReel = useCallback(() => {
+    const index = Math.min(activeIndexRef.current, Math.max(0, visibleVideos.length - 1))
+    const reel = visibleVideos[index]
+    if (!reel?.id) return
+    setHiddenIds(previous => {
+      const next = new Set(previous)
+      next.add(String(reel.id))
+      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next])) } catch { /* storage blocked */ }
+      return next
+    })
+    const nextIndex = Math.min(index, Math.max(0, visibleVideos.length - 2))
+    activeIndexRef.current = nextIndex
+    setActiveIndex(nextIndex)
+    window.requestAnimationFrame(() => {
+      viewportRef.current?.scrollTo({ top: nextIndex * (viewportRef.current?.clientHeight || 0), behavior: 'instant' })
+    })
+    setSettingsOpen(false)
+  }, [visibleVideos])
+
   const changeTab = tab => {
     if (feedTab === tab) return
     setFeedTab(tab)
@@ -566,10 +584,10 @@ useEffect(() => {
 
   const activeVideoIndex = Math.min(activeIndex, Math.max(0, visibleVideos.length - 1))
   return (
-    <div className={`${embedded ? 'relative w-full' : 'fixed inset-0'} flex flex-col overflow-hidden bg-black text-white`}
-      style={embedded ? { height: 'calc(100dvh - 114px - env(safe-area-inset-bottom))' } : undefined}>
+    <div className={`${clearDisplay ? 'fixed inset-0 z-[9990]' : embedded ? 'relative w-full' : 'fixed inset-0'} flex flex-col overflow-hidden bg-black text-white`}
+      style={embedded && !clearDisplay ? { height: 'calc(100dvh - 114px - env(safe-area-inset-bottom))' } : undefined}>
       {/* The header is a sibling of the YouTube iframe, never an overlay hiding YouTube attribution. */}
-      <header className="relative z-40 flex h-14 shrink-0 items-center justify-center bg-black px-3 text-white">
+      {!clearDisplay ? <header className="relative z-40 flex h-14 shrink-0 items-center justify-center bg-black px-3 text-white">
         <nav className="flex items-center gap-6" aria-label="Fast feeds">
           {[['following', t('fastReels.following')], ['forYou', t('fastReels.forYou')]].map(([key, label]) => (
             <button type="button" key={key} onClick={() => changeTab(key)} aria-current={feedTab === key ? 'page' : undefined}
@@ -583,7 +601,7 @@ useEffect(() => {
           className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full active:bg-white/10">
           <Search size={22}/>
         </button>
-      </header>
+      </header> : null}
       <main className="relative min-h-0 flex-1 bg-black">
         {visibleVideos.length ? (
           <div ref={viewportRef} key={feedTab} className="mx-auto h-full w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
@@ -597,7 +615,11 @@ useEffect(() => {
                   isFollowing={followedIds.has(String(video.user_id))} onNavigate={navigateSlide}
                   onSave={id => toggleLocal(id, setSavedIds, SAVED_KEY)} isSaved={savedIds.has(String(video.id))}
                   onLike={id => toggleLocal(id, setLikedIds, LIKED_KEY)} isLiked={likedIds.has(String(video.id))}
-                  onShare={shareReel} onComment={openComments} t={t} />
+                  onShare={shareReel} onComment={openComments}
+                  clearDisplay={clearDisplay}
+                  onRestoreDisplay={() => setClearDisplay(false)}
+                  onEnded={handleVideoEnded}
+                  t={t} />
               </div>
             ))}
             {feedTab === 'following' && hasMore ? (
@@ -624,10 +646,18 @@ useEffect(() => {
           className="absolute bottom-3 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-black"><RefreshCw size={13}/>{t('fastReels.retry')}</button> : null}
         {notice ? <div role="status" className="pointer-events-none absolute bottom-20 left-1/2 z-50 max-w-[90%] -translate-x-1/2 rounded-xl bg-black/85 px-4 py-2 text-center text-xs text-white">{notice}</div> : null}
       </main>
-      {!embedded ? <div className="h-[calc(64px+env(safe-area-inset-bottom))] shrink-0"><ReaderProfileFooter /></div> : null}
+      {!embedded && !clearDisplay ? <div className="h-[calc(64px+env(safe-area-inset-bottom))] shrink-0"><ReaderProfileFooter /></div> : null}
       <FastReelSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} t={t}
         soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
-        speed={playbackSpeed} setSpeed={setPlaybackSpeed} />
+        speed={playbackSpeed} setSpeed={setPlaybackSpeed}
+        onNotInterested={hideCurrentReel}
+        clearDisplay={clearDisplay}
+        onClearDisplay={() => {
+          setClearDisplay(true)
+          showNotice('Tap once to restore controls')
+        }}
+        autoScroll={autoScroll}
+        onAutoScrollChange={setAutoScroll} />
     </div>
   )
 }
