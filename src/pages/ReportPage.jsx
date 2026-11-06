@@ -19,6 +19,9 @@ registerTranslationNamespace('reportPage', {
     reportReaderPost: 'Report this Reader Post',
     readerPost: 'Reader Post',
     postSubtitle: 'Choose the reason that best describes the problem with this post.',
+    reportFastVideo: 'Report this Fast Reel',
+    fastVideo: 'Fast Reel',
+    fastVideoSubtitle: 'Choose the reason that best describes the problem with this video.',
     reportPhoto: 'Report this photo',
     photo: 'Photo',
     photoSubtitle: 'Choose the reason that best describes the problem with this photo.',
@@ -81,6 +84,9 @@ registerTranslationNamespace('reportPage', {
     reportReaderPost: 'រាយការណ៍ Reader Post នេះ',
     readerPost: 'Reader Post',
     postSubtitle: 'ជ្រើសរើសមូលហេតុដែលពិពណ៌នាបញ្ហារបស់ Post នេះបានត្រឹមត្រូវបំផុត។',
+    reportFastVideo: 'រាយការណ៍ Fast Reel នេះ',
+    fastVideo: 'Fast Reel',
+    fastVideoSubtitle: 'ជ្រើសរើសមូលហេតុដែលពិពណ៌នាបញ្ហារបស់វីដេអូនេះបានត្រឹមត្រូវបំផុត។',
     reportPhoto: 'រាយការណ៍រូបភាពនេះ',
     photo: 'រូបភាព',
     photoSubtitle: 'ជ្រើសរើសមូលហេតុដែលពិពណ៌នាបញ្ហារបស់រូបភាពនេះបានត្រឹមត្រូវបំផុត។',
@@ -143,6 +149,9 @@ registerTranslationNamespace('reportPage', {
     reportReaderPost: '举报此 Reader Post',
     readerPost: 'Reader Post',
     postSubtitle: '请选择最能描述此帖问题的原因。',
+    reportFastVideo: '举报此 Fast Reel',
+    fastVideo: 'Fast Reel',
+    fastVideoSubtitle: '请选择最能描述此视频问题的原因。',
     reportPhoto: '举报此照片',
     photo: '照片',
     photoSubtitle: '请选择最能描述此照片问题的原因。',
@@ -205,6 +214,9 @@ registerTranslationNamespace('reportPage', {
     reportReaderPost: 'この Reader Post を報告',
     readerPost: 'Reader Post',
     postSubtitle: 'この投稿の問題を最もよく表す理由を選んでください。',
+    reportFastVideo: 'この Fast Reel を報告',
+    fastVideo: 'Fast Reel',
+    fastVideoSubtitle: 'この動画の問題を最もよく表す理由を選んでください。',
     reportPhoto: 'この写真を報告',
     photo: '写真',
     photoSubtitle: 'この写真の問題を最もよく表す理由を選んでください。',
@@ -267,6 +279,9 @@ registerTranslationNamespace('reportPage', {
     reportReaderPost: '이 Reader Post 신고',
     readerPost: 'Reader Post',
     postSubtitle: '이 게시물의 문제를 가장 잘 설명하는 이유를 선택하세요.',
+    reportFastVideo: '이 Fast Reel 신고',
+    fastVideo: 'Fast Reel',
+    fastVideoSubtitle: '이 동영상의 문제를 가장 잘 설명하는 이유를 선택하세요.',
     reportPhoto: '이 사진 신고',
     photo: '사진',
     photoSubtitle: '이 사진의 문제를 가장 잘 설명하는 이유를 선택하세요.',
@@ -542,6 +557,14 @@ REPORT_CONFIG.reader_post = {
   typeLabel: 'Reader Post',
 }
 
+// Fast Reel reports reuse the validated reasons without treating the video as a Post.
+REPORT_CONFIG.fast_video = {
+  ...REPORT_CONFIG.author_post,
+  title: 'Report this Fast Reel',
+  typeLabel: 'Fast Reel',
+  subtitle: 'Choose the reason that best describes the problem with this video.',
+}
+
 const PHOTO_REPORT_CONFIG = {
   title: 'Report this photo',
   typeLabel: 'Photo',
@@ -617,6 +640,11 @@ const CONFIG_TRANSLATION_KEYS = {
     title: 'reportReaderPost',
     type: 'readerPost',
     subtitle: 'postSubtitle',
+  },
+  fast_video: {
+    title: 'reportFastVideo',
+    type: 'fastVideo',
+    subtitle: 'fastVideoSubtitle',
   },
   photo: {
     title: 'reportPhoto',
