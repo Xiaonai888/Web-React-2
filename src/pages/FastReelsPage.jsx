@@ -449,6 +449,59 @@ useEffect(() => {
     finally { setFollowingReady(true); followedLoaderRef.current = false }
   }, [t])
 
+
+// A saved Reel opens via /fast?reel=<video UUID>. Fetch this specific video
+// rather than opening the generic For You feed. The existing Share sheet,
+// Save button, and feed pagination are unchanged.
+useEffect(() => {
+  if (!requestedReelId) return undefined
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedReelId)) {
+    showNotice('Invalid Reel link')
+    return undefined
+  }
+
+  const controller = new AbortController()
+  let disposed = false
+
+  async function loadRequestedReel() {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(requestedReelId)}`,
+        { signal: controller.signal }
+      )
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload.ok !== true || !payload.video?.id || !youtubeId(payload.video.video_url)) {
+        throw new Error(payload.message || 'Reel is unavailable')
+      }
+      if (disposed) return
+
+      // Pin only the requested Reel to the top, with no duplicate slide.
+      setVideos(current => [
+        payload.video,
+        ...current.filter(row => String(row.id) !== String(payload.video.id)),
+      ])
+      setFeedTab('forYou')
+      activeIndexRef.current = 0
+      setActiveIndex(0)
+      navigationLockUntilRef.current = Date.now() + 250
+
+      window.requestAnimationFrame(() => {
+        if (!disposed) viewportRef.current?.scrollTo({ top: 0, behavior: 'instant' })
+      })
+    } catch (error) {
+      if (!disposed && error?.name !== 'AbortError') {
+        showNotice(error?.message || 'Unable to open Reel')
+      }
+    }
+  }
+
+  void loadRequestedReel()
+  return () => {
+    disposed = true
+    controller.abort()
+  }
+}, [requestedReelId, showNotice])
+
   useEffect(() => { if (!initialCacheRef.current?.videos?.length) loadMore() }, [loadMore])
   useEffect(() => { if (feedTab === 'following' && !followingReady) loadFollowing() }, [feedTab, followingReady, loadFollowing])
   useEffect(() => {
@@ -457,7 +510,7 @@ useEffect(() => {
 
   const visibleVideos = useMemo(() => {
   const available = videos.filter(
-    video => !hiddenIds.has(String(video.id))
+    video => String(video.id) === requestedReelId || !hiddenIds.has(String(video.id))
   )
 
   return feedTab === 'following'
@@ -465,7 +518,7 @@ useEffect(() => {
         video => followedIds.has(String(video.user_id))
       )
     : available
-}, [feedTab, followedIds, videos, hiddenIds])
+}, [feedTab, followedIds, videos, hiddenIds, requestedReelId])
 
   const navigateSlide = useCallback(direction => {
     const root = viewportRef.current
@@ -530,7 +583,7 @@ useEffect(() => {
     }, { root, threshold: [0.6, 0.8] })
     slides.forEach(slide => observer.observe(slide))
     return () => observer.disconnect()
-  }, [visibleVideos.length, feedTab])
+  }, [visibleVideos, feedTab])
 
   useEffect(() => {
     const root = viewportRef.current
