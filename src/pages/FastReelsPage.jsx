@@ -593,6 +593,22 @@ useEffect(() => {
     window.open(video.video_url, '_blank', 'noopener,noreferrer')
   }
 
+  // Route the active Reel to Shadow's report form using the real fast_videos ID.
+  const reportCurrentReel = useCallback(() => {
+    const index = Math.max(0, Math.min(activeIndexRef.current, visibleVideos.length - 1))
+    const video = visibleVideos[index]
+    if (!video?.id) return
+
+    setSettingsOpen(false)
+    navigate(`/report/fast_video/${encodeURIComponent(String(video.id))}`, {
+      state: {
+        targetTitle: video.title || 'Fast Reel',
+        sourceUrl: video.video_url || `${window.location.origin}/fast`,
+        returnTo: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      },
+    })
+  }, [visibleVideos, navigate])
+
   const activeVideoIndex = Math.min(activeIndex, Math.max(0, visibleVideos.length - 1))
   return (
     <div className={`${clearDisplay ? 'fixed inset-0 z-[9990]' : embedded ? 'relative w-full' : 'fixed inset-0'} flex flex-col overflow-hidden bg-black text-white`}
@@ -664,6 +680,7 @@ useEffect(() => {
         soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
         speed={playbackSpeed} setSpeed={setPlaybackSpeed}
         onNotInterested={hideCurrentReel}
+        onReport={reportCurrentReel}
         clearDisplay={clearDisplay}
         onClearDisplay={() => {
           setClearDisplay(true)
