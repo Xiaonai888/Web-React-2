@@ -73,23 +73,39 @@ export default function AuthorPostBlockAction({ post, onBlocked }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openConfirmation}
-        disabled={!pageUsername}
-        className="flex w-full items-center gap-4 px-4 py-3.5 text-left text-[#111827] active:bg-black/[0.04] disabled:opacity-55"
-      >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M5.6 5.6 18.4 18.4" />
-          </svg>
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-normal leading-5">{t('authorPostBlockAction.label')}</span>
-          <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400">{t('authorPostBlockAction.description')}</span>
-        </span>
-      </button>
+      
+<button
+  type="button"
+  onClick={openConfirmation}
+  disabled={!pageUsername}
+  className="flex w-full items-center gap-4 px-4 py-3.5 text-left text-[#111827] dark:text-[var(--shadow-text-primary)] active:bg-black/[0.04] dark:active:bg-[var(--shadow-bg-hover)] disabled:opacity-55"
+>
+  <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M5.6 5.6 18.4 18.4" />
+    </svg>
+  </span>
+
+  <span className="min-w-0 flex-1">
+    <span className="block text-[15px] font-normal leading-5">
+      {t('authorPostBlockAction.label')}
+    </span>
+    <span className="mt-0.5 block text-[11px] font-normal leading-4 text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
+      {t('authorPostBlockAction.description')}
+    </span>
+  </span>
+</button>
+
       {confirmOpen && createPortal(
         <div className="fixed inset-0 z-[220000]">
           <ReaderBlockConfirmModal
