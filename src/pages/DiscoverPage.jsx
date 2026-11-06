@@ -1200,9 +1200,17 @@ function Header({ hidden }) {
       <div className="mx-auto flex h-[58px] w-full max-w-[620px] items-center justify-between px-4">
         <Link to="/" className="flex h-9 w-[92px] items-center overflow-visible">
           <img
-  src="/assets/Icons/Logo Shadow 2.svg"
+  src="/assets/Icons/Logo Shadow 2.webp"
   alt="Shadow"
-  className="h-full w-full object-contain object-left"
+  className="block h-full w-full object-contain object-left dark:hidden"
+  loading="eager"
+  decoding="async"
+/>
+
+<img
+  src="/assets/Icons/Logo Shadow 4.webp"
+  alt="Shadow"
+  className="hidden h-full w-full object-contain object-left dark:block"
   loading="eager"
   decoding="async"
 />
