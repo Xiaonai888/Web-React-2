@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
   Bookmark, Check, MessageCircle, Play, Plus,
@@ -318,8 +318,14 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 }
 
 export default function FastReelsPage({ embedded = false }) {
-  const navigate = useNavigate()
-  const { t } = useDisplayTranslation()
+  
+const navigate = useNavigate()
+const location = useLocation()
+const { t } = useDisplayTranslation()
+
+const requestedReelId =
+  new URLSearchParams(location.search).get('reel') || ''
+
   const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
   const initialCache = initialCacheRef.current
   const viewportRef = useRef(null)
@@ -403,8 +409,11 @@ useEffect(() => {
       if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) throw new Error(payload.message || 'Unable to load videos')
       const rows = payload.videos.filter(row => youtubeId(row.video_url))
       const newOffset = Number(payload.pagination?.next_offset)
-      nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
-        ? newOffset : nextOffset.currconst loadFollowing = useCallback(async () => {ent + payload.videos.length
+      
+nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
+  ? newOffset
+  : nextOffset.current + payload.videos.length
+
       hasMoreRef.current = Boolean(payload.pagination?.has_more) && payload.videos.length > 0
       setHasMore(hasMoreRef.current)
       setVideos(current => {
