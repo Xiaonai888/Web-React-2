@@ -34,12 +34,20 @@ export default function StoriesHeader({
     <header className="app-nav flex items-center justify-between px-4 py-3">
       <div className="flex h-9 w-[92px] items-center">
         <img
-          src="/assets/Icons/Logo Shadow 2.svg"
-          alt="Shadow"
-          className="h-full w-full object-contain object-left"
-          loading="eager"
-          decoding="async"
-        />
+  src="/assets/Icons/Logo Shadow 2.webp"
+  alt="Shadow"
+  className="block h-full w-full object-contain object-left dark:hidden"
+  loading="eager"
+  decoding="async"
+/>
+
+<img
+  src="/assets/Icons/Logo Shadow 4.webp"
+  alt="Shadow"
+  className="hidden h-full w-full object-contain object-left dark:block"
+  loading="eager"
+  decoding="async"
+/>
       </div>
 
       <div className="flex items-center gap-5" style={{ color: 'var(--shadow-icon)' }}>
