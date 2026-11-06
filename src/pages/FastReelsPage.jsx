@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 import {
-  Bookmark, Check, Heart, MessageCircle, Play, Plus,
+  Bookmark, Check, MessageCircle, Play, Plus,
   RefreshCw, Search, Share2, Volume2, VolumeX,
 } from 'lucide-react'
+
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
+import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -47,7 +50,7 @@ const PAGE_SIZE = 8
 const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
 const SAVED_KEY = 'shadow_fast_saved_reels_v1'
-const LIKED_KEY = 'shadow_fast_liked_reels_v1'
+
 const HIDDEN_KEY = 'shadow_fast_hidden_reels_v1'
 const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
 let cachedFeed = null
@@ -77,9 +80,12 @@ function youtubeId(value) {
   } catch { return '' }
 }
 
+
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
-  onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved, onLike,
-  isLiked, onShare, onComment, clearDisplay, onRestoreDisplay, onEnded, t }) {
+  onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved,
+  onLikeAuthRequired, onLikeError, onShare, onComment,
+  clearDisplay, onRestoreDisplay, onEnded, t }) {
+
   const id = useMemo(() => youtubeId(video.video_url), [video.video_url])
   const frameRef = useRef(null)
   const gestureRef = useRef(null)
@@ -273,10 +279,15 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
               </button> : <span className="absolute -bottom-1 left-1/2 flex h-4 w-4 -translate-x-1/2 items-center justify-center rounded-full bg-green-600"><Check size={11}/></span>}
             </div>
           ) : null}
-          <button type="button" aria-label={t('fastReels.liked')} aria-pressed={isLiked} onClick={() => onLike(video.id)}
-            className="flex h-9 w-9 items-center justify-center drop-shadow-lg">
-            <Heart size={25} strokeWidth={2} fill={isLiked ? '#ff4c78' : 'none'} color={isLiked ? '#ff4c78' : 'white'} />
-          </button>
+          
+<FastReelLikeButton
+  videoId={video.id}
+  active={active}
+  initialCount={video.like_count ?? null}
+  onAuthRequired={onLikeAuthRequired}
+  onError={onLikeError}
+/>
+
           <button type="button" aria-label={t('fastReels.comments')} onClick={() => onComment(video)}
             className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><MessageCircle size={25}/></button>
           <button type="button" aria-label={t(isSaved ? 'fastReels.saved' : 'fastReels.save')} aria-pressed={isSaved} onClick={() => onSave(video.id)}
@@ -367,7 +378,7 @@ useEffect(() => {
   const [followingReady, setFollowingReady] = useState(false)
   const [followingError, setFollowingError] = useState('')
   const [savedIds, setSavedIds] = useState(() => new Set(getStoredIds(SAVED_KEY)))
-  const [likedIds, setLikedIds] = useState(() => new Set(getStoredIds(LIKED_KEY)))
+  
   const [notice, setNotice] = useState('')
   const toastTimerRef = useRef(null)
   const followedLoaderRef = useRef(false)
@@ -614,7 +625,9 @@ useEffect(() => {
                   onAuthorOpen={openAuthorProfile} onFollow={followAuthor}
                   isFollowing={followedIds.has(String(video.user_id))} onNavigate={navigateSlide}
                   onSave={id => toggleLocal(id, setSavedIds, SAVED_KEY)} isSaved={savedIds.has(String(video.id))}
-                  onLike={id => toggleLocal(id, setLikedIds, LIKED_KEY)} isLiked={likedIds.has(String(video.id))}
+                  onLikeAuthRequired={() => navigate('/login')}
+                  onLikeError={error => showNotice(error?.message || 'Unable to update Reel Like')}
+
                   onShare={shareReel} onComment={openComments}
                   clearDisplay={clearDisplay}
                   onRestoreDisplay={() => setClearDisplay(false)}
