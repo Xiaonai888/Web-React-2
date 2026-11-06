@@ -3822,7 +3822,9 @@ useEffect(() => {
       for (let step = 0; step < 5; step += 1) {
         if (smartAdActiveVisitRef.current !== smartAdVisitKey || smartAdGenerationRef.current !== generation) return
         const current = smartAdQueueRef.current
-        if (!current || current.batches.length >= 50) return
+        // Generate batches only when requested. Do not stop after 50 batches:
+        // larger shared pools can contain thousands of eligible stories.
+        if (!current) return
         const result = await createNextSmartAdBatch(current, token, autoAdSlotKey)
         if (smartAdActiveVisitRef.current !== smartAdVisitKey || smartAdGenerationRef.current !== generation) return
         if (result.batch.length) {
