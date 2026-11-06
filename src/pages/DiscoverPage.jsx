@@ -2202,6 +2202,23 @@ function smartAdReaderKey(token, part) {
   return `shadow_smart_auto_ads_v2:${getShadowMallAdRotationStorageKey(token)}:${part}`
 }
 
+// A tab-local, per-visit reveal cursor. It is NOT a database impression or a
+// new catalog request. Returning from an episode retains the exposed cards.
+function smartAdTailStorageKey(visitKey) {
+  return `shadow_smart_auto_ad_tail_v1:${visitKey}`
+}
+
+function readSmartAdTailShown(visitKey) {
+  try {
+    const value = Number(sessionStorage.getItem(smartAdTailStorageKey(visitKey)) || 0)
+    return Number.isSafeInteger(value) && value >= 0 ? value : 0
+  } catch { return 0 }
+}
+
+function saveSmartAdTailShown(visitKey, shown) {
+  try { sessionStorage.setItem(smartAdTailStorageKey(visitKey), String(shown)) } catch {}
+}
+
 function readSmartAdJson(key, fallback, storage = localStorage) {
   try {
     const value = JSON.parse(storage.getItem(key) || 'null')
@@ -2640,46 +2657,25 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400"><i className="fa-solid fa-book-open text-3xl" /></div>
           )}
-          
-{badge ? (
-  <span
-    className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-extrabold shadow-sm ${
-      badge === 'new'
-        ? 'bg-[#FF4D6D] text-white'
-        : badge === 'end'
-          ? 'bg-[#16A34A] text-white'
-          : 'bg-[#F6B800] text-[#111827]'
-    }`}
-  >
-    {badge === 'new' ? 'NEW' : badge === 'end' ? 'END' : 'UP'}
-  </span>
-) : null}
-
+          {badge ? (
+            <span className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm ${badge === 'new' ? 'bg-[#16a34a]' : badge === 'end' ? 'bg-[#64748b]' : 'bg-[#2563eb]'}`}>
+              {badge === 'new' ? 'NEW' : badge === 'end' ? 'END' : 'UP'}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-3 bg-white px-4 py-3 dark:bg-[var(--shadow-bg-surface)]">
           <div className="min-w-0 flex-1">
             <div className="line-clamp-2 text-[15px] font-semibold leading-5">{ad.title}</div>
             <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
               <span className="inline-flex items-center gap-1.5">
-                
-<svg
-  width="15"
-  height="15"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="1.6"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  aria-hidden="true"
-  className="shrink-0"
->
-  <rect x="3" y="4" width="4" height="4" rx="0.8" />
-  <rect x="3" y="10" width="4" height="4" rx="0.8" />
-  <rect x="3" y="16" width="4" height="4" rx="0.8" />
-  <path d="M10 6h11M10 12h11M10 18h11" />
-</svg>
-
+                <svg width="16" height="16" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" className="shrink-0">
+                  <circle cx="9" cy="10" r="8" />
+                  <circle cx="9" cy="32" r="8" />
+                  <circle cx="9" cy="54" r="8" />
+                  <rect x="21" y="2" width="43" height="16" rx="8" />
+                  <rect x="21" y="24" width="43" height="16" rx="8" />
+                  <rect x="21" y="46" width="43" height="16" rx="8" />
+                </svg>
                 {Number(ad.episode_count || 0)} Episodes
               </span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
@@ -3817,6 +3813,13 @@ useEffect(() => {
   const autoAdSlotKey = discoverAdControl?.slot_key || discoverAdControl?.day || ''
   const smartAdScope = getShadowMallAdRotationStorageKey(token)
   const smartAdVisitKey = `${smartAdScope}:${location.key}`
+  const [smartAdTailState, setSmartAdTailState] = useState(() => ({
+    visitKey: smartAdVisitKey,
+    shown: readSmartAdTailShown(smartAdVisitKey),
+  }))
+  const smartAdTailShown = smartAdTailState.visitKey === smartAdVisitKey
+    ? smartAdTailState.shown
+    : readSmartAdTailShown(smartAdVisitKey)
   const [smartAdQueueState, setSmartAdQueueState] = useState(null)
   const smartAdQueueRef = useRef(null)
   const smartAdRequestRef = useRef(null)
@@ -3934,6 +3937,16 @@ useEffect(() => {
     return visibleAutoAds.length ? visibleAutoAds[index % visibleAutoAds.length] : null
   }
 
+  function revealMoreSmartAutoAds(readySlots, naturalSlots) {
+    if (discoverAdControl?.mode !== 'auto' ||
+        smartAdActiveVisitRef.current !== smartAdVisitKey) return
+    const remaining = Math.max(0, readySlots - naturalSlots)
+    const nextShown = Math.min(remaining, smartAdTailShown + 2)
+    if (nextShown <= smartAdTailShown) return
+    saveSmartAdTailShown(smartAdVisitKey, nextShown)
+    setSmartAdTailState({ visitKey: smartAdVisitKey, shown: nextShown })
+  }
+
   function handleAutoAdImpression(ad) {
     if (!ad?.story_id) return
     // The old six-hour history remains valid for the existing fallback mode.
@@ -3949,6 +3962,8 @@ useEffect(() => {
   }
 
   function handleAutoAdStoryOpened(ad) {
+    // Opening a story is also a genuine impression, even before the 1s timer.
+    handleAutoAdImpression(ad)
     recordSmartAdInterest(token, ad)
   }
 
@@ -5029,6 +5044,22 @@ useEffect(() => {
     }))
   }, [realPosts, readerPosts, ownPostHighlightKey, feedRotationIndex])
 
+  // Auto Ads ordinarily appear after every three posts. With a short (or
+  // empty) feed, there are too few slots to expose a full 10-story batch.
+  // Continue the SAME queue at the bottom as the reader scrolls; do not
+  // duplicate the single fallback card or silently strand unseen cards.
+  const naturalAutoAdSlots = discoverTimeline.length >= 3
+    ? Math.floor(discoverTimeline.length / 3)
+    : discoverTimeline.length === 0
+      ? (!realPostsLoading && !readerPostsLoading && !realPostsError && !readerPostsError ? 1 : 0)
+      : (!realPostsHasMore ? 1 : 0)
+  const lastSmartAdBatch = smartAutoAdBatches?.[smartAutoAdBatches.length - 1]
+  const smartAdReadySlots = smartAutoAdBatches?.length
+    ? (smartAutoAdBatches.length - 1) * SMART_AD_BATCH_SIZE + lastSmartAdBatch.length
+    : 0
+  const smartAdTailMax = Math.max(0, smartAdReadySlots - naturalAutoAdSlots)
+  const smartAdTailRenderCount = Math.min(smartAdTailShown, smartAdTailMax)
+
   useEffect(() => {
     if (realPostsLoading || readerPostsLoading) return
     rememberDiscoverVisitSnapshot(token, discoverLocationKey, {
@@ -5951,6 +5982,28 @@ const visibleBoostPosts = useMemo(() => {
 ) : null}
 
             
+
+            {/* For short feeds, lazily reveal the remaining Auto Ads.
+                The normal post slots keep their position; the tail never
+                repeats slot 0 and can continue through many batches. */}
+            {discoverAdControl?.mode === 'auto' && smartAutoAdBatches?.length
+              ? Array.from({ length: smartAdTailRenderCount }, (_, offset) => (
+                  <Fragment key={`auto-tail-${smartAdVisitKey}-${naturalAutoAdSlots + offset}`}>
+                    {renderAutoStoryAdAt(naturalAutoAdSlots + offset, 'auto-tail')}
+                  </Fragment>
+                ))
+              : null}
+            <ShadowMallAdsLoadTrigger
+              enabled={
+                discoverAdControl?.mode === 'auto' &&
+                !realPostsLoading && !readerPostsLoading &&
+                !realPostsHasMore && // Let the regular post feed supply Ad slots first.
+                smartAutoAdBatches?.length > 0 &&
+                smartAdTailShown < smartAdTailMax
+              }
+              count={`${smartAdVisitKey}:${smartAdTailShown}:${smartAdReadySlots}:${naturalAutoAdSlots}`}
+              onLoadMore={() => revealMoreSmartAutoAds(smartAdReadySlots, naturalAutoAdSlots)}
+            />
 
             <ShadowMallAdsLoadTrigger
               enabled={
