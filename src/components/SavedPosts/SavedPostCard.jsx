@@ -1,4 +1,4 @@
-import { Bookmark, Image as ImageIcon, MoreHorizontal } from 'lucide-react'
+import { Bookmark, Image as ImageIcon, MoreHorizontal, Play } from 'lucide-react'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -7,6 +7,7 @@ registerTranslationNamespace('savedPostCard', {
     "reader": "Reader",
     "author": "Author",
     "promoted": "Promoted",
+    "reel": "Fast Reel",
     "savedPost": "Saved Post",
     "savedAt": "Saved {{date}}",
     "savedPostLower": "Saved post",
@@ -17,6 +18,7 @@ registerTranslationNamespace('savedPostCard', {
     "reader": "អ្នកអាន",
     "author": "អ្នកនិពន្ធ",
     "promoted": "បានផ្សព្វផ្សាយ",
+    "reel": "Fast Reel",
     "savedPost": "ប្រកាសដែលបានរក្សាទុក",
     "savedAt": "បានរក្សាទុក {{date}}",
     "savedPostLower": "ប្រកាសដែលបានរក្សាទុក",
@@ -27,6 +29,7 @@ registerTranslationNamespace('savedPostCard', {
     "reader": "读者",
     "author": "作者",
     "promoted": "推广",
+    "reel": "短视频",
     "savedPost": "已保存帖子",
     "savedAt": "保存于 {{date}}",
     "savedPostLower": "已保存帖子",
@@ -37,6 +40,7 @@ registerTranslationNamespace('savedPostCard', {
     "reader": "読者",
     "author": "作者",
     "promoted": "プロモーション",
+    "reel": "リール",
     "savedPost": "保存済み投稿",
     "savedAt": "{{date}}に保存",
     "savedPostLower": "保存済み投稿",
@@ -47,6 +51,7 @@ registerTranslationNamespace('savedPostCard', {
     "reader": "독자",
     "author": "작가",
     "promoted": "프로모션",
+    "reel": "릴스",
     "savedPost": "저장한 게시물",
     "savedAt": "{{date}}에 저장",
     "savedPostLower": "저장한 게시물",
@@ -68,6 +73,10 @@ const SOURCE_META = {
   promotion: {
     labelKey: 'promoted',
     className: 'bg-[#fff7d8] text-[#b77900] dark:bg-[#f6b800]/15 dark:text-[#ffd65a]',
+  },
+  fast_video: {
+    labelKey: 'reel',
+    className: 'bg-[#eaf3ff] text-[#1d4ed8] dark:bg-[#1d4ed8]/15 dark:text-[#93c5fd]',
   },
 }
 
@@ -263,7 +272,14 @@ export default function SavedPostCard({ item, onOpen, onMenu }) {
             </div>
           ) : null}
 
-          <PreviewGrid images={images} title={title} />
+          {item?.source_type === 'fast_video' && images.length ? (
+            <div className="relative">
+              <PreviewGrid images={images} title={title} />
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="rounded-full bg-black/60 p-3 text-white"><Play size={19} fill="currentColor" /></span>
+              </span>
+            </div>
+          ) : <PreviewGrid images={images} title={title} />}
         </button>
 
         {unavailable ? (
