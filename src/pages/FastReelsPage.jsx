@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
-  Bookmark, Check, MessageCircle, Play, Plus,
+  Check, MessageCircle, Play, Plus,
   RefreshCw, Search, Share2, Volume2, VolumeX,
 } from 'lucide-react'
 
@@ -11,6 +11,7 @@ import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFoote
 import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
 import AuthorPageShareSheet from '../components/AuthorPageShareSheet'
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
+import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -50,7 +51,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
 const PAGE_SIZE = 8
 const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
-const SAVED_KEY = 'shadow_fast_saved_reels_v1'
 
 const HIDDEN_KEY = 'shadow_fast_hidden_reels_v1'
 const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
@@ -83,7 +83,8 @@ function youtubeId(value) {
 
 
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
-  onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved,
+  onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate,
+  onSaveAuthRequired, onSaveError, onSaveSuccess,
   onLikeAuthRequired, onLikeError, onShare, onComment,
   clearDisplay, onRestoreDisplay, onEnded, t }) {
 
@@ -291,8 +292,13 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 
           <button type="button" aria-label={t('fastReels.comments')} onClick={() => onComment(video)}
             className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><MessageCircle size={25}/></button>
-          <button type="button" aria-label={t(isSaved ? 'fastReels.saved' : 'fastReels.save')} aria-pressed={isSaved} onClick={() => onSave(video.id)}
-            className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Bookmark size={25} fill={isSaved ? 'white' : 'none'} /></button>
+          <FastReelSaveButton
+            video={video}
+            active={active}
+            onAuthRequired={onSaveAuthRequired}
+            onError={onSaveError}
+            onSuccess={onSaveSuccess}
+          />
           <button type="button" aria-label={t('fastReels.share')} onClick={() => onShare(video)}
             className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Share2 size={24}/></button>
           {(!soundEnabled || !playing) ? (
@@ -382,7 +388,6 @@ useEffect(() => {
   const [followedIds, setFollowedIds] = useState(new Set())
   const [followingReady, setFollowingReady] = useState(false)
   const [followingError, setFollowingError] = useState('')
-  const [savedIds, setSavedIds] = useState(() => new Set(getStoredIds(SAVED_KEY)))
   
   const [notice, setNotice] = useState('')
   const toastTimerRef = useRef(null)
@@ -577,16 +582,7 @@ useEffect(() => {
     } catch (err) { showNotice(err.message || t('fastReels.followingError')) }
   }
 
-  const toggleLocal = (id, setState, key) => {
-    setState(previous => {
-      const next = new Set(previous)
-      if (next.has(String(id))) next.delete(String(id))
-      else next.add(String(id))
-      try { localStorage.setItem(key, JSON.stringify([...next])) } catch { /* local storage not available */ }
-      return next
-    })
-  }
-  
+
 const shareReel = video => {
   if (!video?.id) return
   setShareVideo(video)
@@ -644,7 +640,9 @@ const shareReel = video => {
                   onOpenSettings={() => setSettingsOpen(true)}
                   onAuthorOpen={openAuthorProfile} onFollow={followAuthor}
                   isFollowing={followedIds.has(String(video.user_id))} onNavigate={navigateSlide}
-                  onSave={id => toggleLocal(id, setSavedIds, SAVED_KEY)} isSaved={savedIds.has(String(video.id))}
+                  onSaveAuthRequired={() => navigate('/login')}
+                  onSaveError={error => showNotice(error?.message || 'Unable to save Reel')}
+                  onSaveSuccess={showNotice}
                   onLikeAuthRequired={() => navigate('/login')}
                   onLikeError={error => showNotice(error?.message || 'Unable to update Reel Like')}
 
