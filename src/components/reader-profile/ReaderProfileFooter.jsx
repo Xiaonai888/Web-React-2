@@ -123,13 +123,14 @@ function LibraryIcon() {
   )
 }
 
+
 function ProfileIcon({
   avatarUrl,
   profileName,
   active,
 }) {
-  const [imageFailed, setImageFailed] =
-    useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
+
   const letter =
     String(profileName || 'Me')
       .trim()
@@ -142,37 +143,28 @@ function ProfileIcon({
 
   return (
     <span
-      className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full text-[9px] font-bold ring-1"
-      style={{
-        background: active
-          ? '#7c3aed'
-          : 'var(--shadow-bg-elevated)',
-        color: active
-          ? '#ffffff'
-          : 'var(--shadow-text-primary)',
-        borderColor: active
-          ? '#7c3aed'
-          : 'var(--shadow-border)',
-        '--tw-ring-color': active
-          ? '#7c3aed'
-          : 'var(--shadow-border)',
-      }}
+      className={`flex h-[27px] w-[27px] items-center justify-center rounded-full ${
+        active ? 'ring-2 ring-[#7c3aed]' : ''
+      }`}
     >
-      {avatarUrl && !imageFailed ? (
-        <img
-          src={avatarUrl}
-          alt=""
-          className="h-full w-full object-cover"
-          onError={() =>
-            setImageFailed(true)
-          }
-        />
-      ) : (
-        letter
-      )}
+      <span
+        className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#111827] text-[9px] font-bold text-white"
+      >
+        {avatarUrl && !imageFailed ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="h-full w-full object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          letter
+        )}
+      </span>
     </span>
   )
 }
+
 
 const NAV_ITEMS = [
   { key: 'mall', labelKey: 'mall' },
@@ -271,17 +263,21 @@ export default function ReaderProfileFooter({
     storedUser?.username ||
     'Me'
 
-  const activeKey =
-    location.pathname.startsWith('/store')
+  
+const activeKey =
+  location.pathname.startsWith('/fast')
+    ? 'reel'
+    : location.pathname.startsWith('/store')
       ? 'mall'
       : location.pathname.startsWith('/chat')
-      ? 'chat'
-      : location.pathname.startsWith('/library')
-        ? 'library'
-        : location.pathname.startsWith('/profile') ||
-            location.pathname.startsWith('/me')
-          ? 'me'
-          : ''
+        ? 'chat'
+        : location.pathname.startsWith('/library')
+          ? 'library'
+          : location.pathname.startsWith('/profile') ||
+              location.pathname.startsWith('/me')
+            ? 'me'
+            : ''
+
 
   const refreshStoredUser = useCallback(() => {
     setStoredUser(getStoredUser())
