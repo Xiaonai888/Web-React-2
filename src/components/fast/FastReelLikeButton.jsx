@@ -3,8 +3,7 @@ import { Heart } from 'lucide-react'
 import useFastReelLike from '../../hooks/useFastReelLike'
 import { hasFastReaderSession } from '../../services/fastLikesApi'
 
-// NEW: one simple Heart, not the Post reaction selector.
-// In the next step replace the old localStorage Heart in FastReelsPage with this.
+// Fast-only Like button: no reactions menu and no user list.
 export default function FastReelLikeButton({
   videoId,
   active = false,
@@ -39,7 +38,8 @@ export default function FastReelLikeButton({
 
   const handleClick = async () => {
     if (pending) return
-    if (hasFastReaderSession()) animateHeart()
+    // Only Likes bounce; Unlike remains a simple state change.
+    if (hasFastReaderSession() && !liked) animateHeart()
     await toggleLike()
   }
 
