@@ -48,6 +48,8 @@ const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
 const SAVED_KEY = 'shadow_fast_saved_reels_v1'
 const LIKED_KEY = 'shadow_fast_liked_reels_v1'
+const HIDDEN_KEY = 'shadow_fast_hidden_reels_v1'
+const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
 let cachedFeed = null
 
 function getToken() {
@@ -78,11 +80,18 @@ function youtubeId(value) {
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate, onSave, isSaved, onLike,
   isLiked, onShare, onComment, t }) {
+  isLiked, onShare, onComment,
+  clearDisplay, onRestoreDisplay, onEnded, t }) {
   const id = useMemo(() => youtubeId(video.video_url), [video.video_url])
   const frameRef = useRef(null)
   const gestureRef = useRef(null)
   const longPressTimerRef = useRef(null)
   const longPressedRef = useRef(false)
+  const endedRef = useRef(false)
+
+useEffect(() => {
+  endedRef.current = false
+}, [id, active])
   const lastSwipeAtRef = useRef(0)
   const [playing, setPlaying] = useState(false)
   const iframeUrl = id
@@ -110,12 +119,23 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
       }
       const state = data.event === 'onStateChange' ? data.info : data.event === 'infoDelivery' ? data.info?.playerState : null
-      if (state === 1) setPlaying(true)
-      if ([0, 2, 5].includes(state)) setPlaying(false)
+      if (state === 1) {
+  setPlaying(true)
+  endedRef.current = false
+}
+
+if ([0, 2, 5].includes(state)) {
+  setPlaying(false)
+}
+
+if (state === 0 && !endedRef.current) {
+  endedRef.current = true
+  onEnded?.()
+}
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [active, id, soundEnabled, playbackSpeed, sendCommand])
+  }, [active, id, soundEnabled, playbackSpeed, sendCommand, onEnded])
 
   useEffect(() => {
     if (!active) return undefined
@@ -151,11 +171,13 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     clearLongPress()
     longPressedRef.current = false
     gestureRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressedRef.current = true
-      gestureRef.current = null
-      onOpenSettings()
-    }, LONG_PRESS_MS)
+    if (!clearDisplay) {
+  longPressTimerRef.current = window.setTimeout(() => {
+    longPressedRef.current = true
+    gestureRef.current = null
+    onOpenSettings()
+  }, LONG_PRESS_MS)
+}
     try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* safe fallback */ }
   }
   const handleMove = event => {
@@ -213,7 +235,19 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
             onPointerDown={handleDown} onPointerMove={handleMove} onPointerUp={handleUp}
             onPointerCancel={() => { clearLongPress(); gestureRef.current = null }}
             onContextMenu={event => { event.preventDefault(); clearLongPress(); onOpenSettings() }}
-            onClick={() => { if (longPressedRef.current || Date.now() - lastSwipeAtRef.current < 400) return; togglePlayback() }}
+            onClick={() => {
+  if (
+    longPressedRef.current ||
+    Date.now() - lastSwipeAtRef.current < 400
+  ) return
+
+  if (clearDisplay) {
+    onRestoreDisplay?.()
+    return
+  }
+
+  togglePlayback()
+}}
           />
           {!playing ? (
             <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center">
@@ -222,6 +256,8 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           ) : null}
         </>
       ) : null}
+
+      <div className={clearDisplay ? 'hidden' : ''}>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-56 bg-gradient-to-t from-black/85 to-transparent" />
       <div className="pointer-events-none absolute bottom-6 left-3 right-16 z-20">
@@ -269,7 +305,8 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
             {soundEnabled ? <Volume2 size={21}/> : <VolumeX size={21}/>}
           </button>
         </div>
-      ) : null}
+           ) : null}
+      </div>
     </article>
   )
 }
@@ -291,6 +328,44 @@ export default function FastReelsPage({ embedded = false }) {
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [clearDisplay, setClearDisplay] = useState(false)
+
+const [autoScroll, setAutoScroll] = useState(() => {
+  try {
+    return localStorage.getItem(AUTO_SCROLL_KEY) === '1'
+  } catch {
+    return false
+  }
+})
+
+const [hiddenIds, setHiddenIds] = useState(
+  () => new Set(getStoredIds(HIDDEN_KEY))
+)
+
+useEffect(() => {
+  try {
+    localStorage.setItem(
+      AUTO_SCROLL_KEY,
+      autoScroll ? '1' : '0'
+    )
+  } catch {
+    // Storage unavailable
+  }
+}, [autoScroll])
+
+useEffect(() => {
+  const frame = window.requestAnimationFrame(() => {
+    const root = viewportRef.current
+    if (!root) return
+
+    root.scrollTo({
+      top: activeIndexRef.current * root.clientHeight,
+      behavior: 'instant',
+    })
+  })
+
+  return () => window.cancelAnimationFrame(frame)
+}, [clearDisplay])
   const [loading, setLoading] = useState(!initialCache?.videos?.length)
   const [error, setError] = useState('')
   const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? true)
@@ -365,9 +440,17 @@ export default function FastReelsPage({ embedded = false }) {
     if (videos.length && feedTab === 'forYou') cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
   }, [videos, hasMore, activeIndex, feedTab])
 
-  const visibleVideos = useMemo(() => feedTab === 'following'
-    ? videos.filter(video => followedIds.has(String(video.user_id))) : videos,
-  [feedTab, followedIds, videos])
+  const visibleVideos = useMemo(() => {
+  const available = videos.filter(
+    video => !hiddenIds.has(String(video.id))
+  )
+
+  return feedTab === 'following'
+    ? available.filter(
+        video => followedIds.has(String(video.user_id))
+      )
+    : available
+}, [feedTab, followedIds, videos, hiddenIds])
 
   const navigateSlide = useCallback(direction => {
     const root = viewportRef.current
