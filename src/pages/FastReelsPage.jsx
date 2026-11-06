@@ -9,6 +9,7 @@ import {
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
+import AuthorPageShareSheet from '../components/AuthorPageShareSheet'
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -333,6 +334,7 @@ export default function FastReelsPage({ embedded = false }) {
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [shareVideo, setShareVideo] = useState(null)
   const [clearDisplay, setClearDisplay] = useState(false)
 
 const [autoScroll, setAutoScroll] = useState(() => {
@@ -581,13 +583,12 @@ useEffect(() => {
       return next
     })
   }
-  const shareReel = async video => {
-    const url = video.video_url || `${window.location.origin}/fast`
-    try {
-      if (navigator.share) await navigator.share({ title: video.title, url })
-      else { await navigator.clipboard.writeText(url); showNotice(t('fastReels.copied')) }
-    } catch (err) { if (err?.name !== 'AbortError') showNotice(t('fastReels.shareFailed')) }
-  }
+  
+const shareReel = video => {
+  if (!video?.id) return
+  setShareVideo(video)
+}
+
   const openComments = video => {
     // The current backend has no Fast comments endpoints; open the REAL YouTube comments, not a fake form.
     window.open(video.video_url, '_blank', 'noopener,noreferrer')
@@ -688,6 +689,30 @@ useEffect(() => {
         }}
         autoScroll={autoScroll}
         onAutoScrollChange={setAutoScroll} />
+
+      
+<AuthorPageShareSheet
+  open={Boolean(shareVideo)}
+  pageName={shareVideo?.title || 'Reel'}
+  pageLink={
+    `${window.location.origin}/fast?reel=${encodeURIComponent(
+      shareVideo?.id || ''
+    )}`
+  }
+  sheetTitle="Share Reel"
+  shareText={`Watch ${shareVideo?.title || 'this Reel'} on Shadow.`}
+  zClassName="z-[200000]"
+  onClose={() => setShareVideo(null)}
+  onCopied={fallbackLink => {
+    showNotice(
+      fallbackLink
+        ? `Copy link: ${fallbackLink}`
+        : t('fastReels.copied')
+    )
+  }}
+/>
+
+      
     </div>
   )
 }
