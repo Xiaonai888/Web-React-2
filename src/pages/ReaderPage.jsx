@@ -8064,13 +8064,8 @@ useEffect(() => {
     }
   }, [episodeId, readingProgress, reviewProgressSaved, storyId])
 
-  useEffect(() => {
-    if (autoScrollFrameRef.current) {
-      cancelAnimationFrame(autoScrollFrameRef.current)
-      autoScrollFrameRef.current = null
-    }
-
-    
+  
+  // Smart Ad: Learn reader genre preferences
   useEffect(() => {
     if (
       !story?.id ||
@@ -8110,23 +8105,30 @@ useEffect(() => {
     offlineMode,
   ])
 
+  // Auto Scroll: Keep original reading behavior
+  useEffect(() => {
+    if (autoScrollFrameRef.current) {
+      cancelAnimationFrame(autoScrollFrameRef.current)
+      autoScrollFrameRef.current = null
+    }
 
     if (
-  isChatStory ||
-  effectiveReadingMode !== 'scroll' ||
-  !autoScrollEnabled ||
-  loading ||
-  settingsOpen ||
-  fontSelectOpen ||
-  resetOpen ||
-  episodeListOpen ||
-  !adultAccepted
-) {
-  return undefined
-}
+      isChatStory ||
+      effectiveReadingMode !== 'scroll' ||
+      !autoScrollEnabled ||
+      loading ||
+      settingsOpen ||
+      fontSelectOpen ||
+      resetOpen ||
+      episodeListOpen ||
+      !adultAccepted
+    ) {
+      return undefined
+    }
 
     const scrollStep = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+      const scrollHeight =
+        document.documentElement.scrollHeight - window.innerHeight
 
       if (scrollHeight <= 0 || window.scrollY >= scrollHeight - 4) {
         setAutoScrollEnabled(false)
@@ -8134,14 +8136,17 @@ useEffect(() => {
       }
 
       window.scrollBy({
-        top: AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.value || AUTO_SCROLL_SPEEDS[1].value,
+        top: AUTO_SCROLL_SPEEDS[autoScrollSpeed]?.value ||
+          AUTO_SCROLL_SPEEDS[1].value,
         behavior: 'auto',
       })
 
-      autoScrollFrameRef.current = requestAnimationFrame(scrollStep)
+      autoScrollFrameRef.current =
+        requestAnimationFrame(scrollStep)
     }
 
-    autoScrollFrameRef.current = requestAnimationFrame(scrollStep)
+    autoScrollFrameRef.current =
+      requestAnimationFrame(scrollStep)
 
     return () => {
       if (autoScrollFrameRef.current) {
@@ -8150,17 +8155,18 @@ useEffect(() => {
       }
     }
   }, [
-  adultAccepted,
-  autoScrollEnabled,
-  autoScrollSpeed,
-  effectiveReadingMode,
-  episodeListOpen,
-  fontSelectOpen,
-  isChatStory,
-  loading,
-  resetOpen,
-  settingsOpen,
-])
+    adultAccepted,
+    autoScrollEnabled,
+    autoScrollSpeed,
+    effectiveReadingMode,
+    episodeListOpen,
+    fontSelectOpen,
+    isChatStory,
+    loading,
+    resetOpen,
+    settingsOpen,
+  ])
+
 
   const sortedReaderEpisodes = useMemo(() => {
     return [...(Array.isArray(episodes) ? episodes : [])].sort(
