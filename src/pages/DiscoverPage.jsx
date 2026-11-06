@@ -5089,51 +5089,60 @@ useEffect(() => {
     discoverAdControl,
   ])
 
+  // Restore the feed even when there are ZERO posts. Auto Story Ads can
+  // occupy the entire feed, so waiting for discoverTimeline.length > 0 would
+  // leave the reader at the top after returning from an episode.
   useEffect(() => {
-  if (
-    realPostsLoading ||
-    readerPostsLoading ||
-    !discoverTimeline.length
-  ) return
+    if (realPostsLoading || readerPostsLoading) return undefined
+    if (
+      !discoverTimeline.length &&
+      discoverAdControl?.mode === 'auto' &&
+      !visibleAutoAds.length &&
+      !smartAutoAdBatches?.length
+    ) return undefined
 
-  let targetY
-  try {
-    const savedPosition = sessionStorage.getItem('shadow_discover_auto_ad_return_y')
-    if (savedPosition === null) return
-    targetY = Number(savedPosition)
-  } catch {
-    return
-  }
+    let targetY
+    try {
+      const savedPosition = sessionStorage.getItem('shadow_discover_auto_ad_return_y')
+      if (savedPosition === null) return undefined
+      targetY = Number(savedPosition)
+    } catch {
+      return undefined
+    }
+    if (!Number.isFinite(targetY) || targetY < 0) return undefined
 
-  // A click near the top of the page has a valid scroll offset of zero.
-  if (!Number.isFinite(targetY) || targetY < 0) return
+    let timer
+    let attempts = 0
+    let cancelled = false
 
-  let timer
-  let attempts = 0
-  let cancelled = false
-
-  function restore() {
-    if (cancelled || window.location.pathname !== '/discover') return
-
-    window.scrollTo(0, targetY)
-
-    if (Math.abs(window.scrollY - targetY) <= 6 || ++attempts >= 30) {
-      try {
-        sessionStorage.removeItem('shadow_discover_auto_ad_return_y')
-      } catch {}
-      return
+    function restore() {
+      if (cancelled || window.location.pathname !== '/discover') return
+      window.scrollTo(0, targetY)
+      if (Math.abs(window.scrollY - targetY) <= 6) {
+        try { sessionStorage.removeItem('shadow_discover_auto_ad_return_y') } catch {}
+        return
+      }
+      // Do not discard a still-unrestored position when the queue or images
+      // have not yet expanded the page. A subsequent feed/queue/tail render
+      // retries using this same saved position.
+      if (++attempts >= 30) return
+      timer = window.setTimeout(restore, 100)
     }
 
-    timer = window.setTimeout(restore, 100)
-  }
-
-  timer = window.setTimeout(restore, 50)
-
-  return () => {
-    cancelled = true
-    window.clearTimeout(timer)
-  }
-}, [realPostsLoading, readerPostsLoading, discoverTimeline.length])
+    timer = window.setTimeout(restore, 50)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [
+    realPostsLoading,
+    readerPostsLoading,
+    discoverTimeline.length,
+    discoverAdControl?.mode,
+    visibleAutoAds.length,
+    smartAutoAdBatches?.length,
+    smartAdTailRenderCount,
+  ])
 
 useEffect(() => {
   if (discoverAdControl?.mode !== 'manual') return
