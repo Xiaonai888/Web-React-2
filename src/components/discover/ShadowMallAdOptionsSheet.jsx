@@ -273,7 +273,7 @@ function ActionButton({
       className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-[7px] text-left active:bg-black/[0.04] dark:active:bg-[var(--shadow-bg-hover)] ${
   danger
     ? 'text-red-600 dark:text-red-400'
-    : 'text-[#111827] dark:text-[var(--shadow-text-primary)] dark:text-[var(--shadow-text-primary)]'
+    : 'text-[#111827] dark:text-[var(--shadow-text-primary)]'
 }`}
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center">
@@ -286,7 +286,7 @@ function ActionButton({
         </span>
 
         {subtitle ? (
-          <span className="mt-px block text-[11px] font-normal leading-4 text-gray-400">
+          <span className="mt-px block text-[11px] font-normal leading-4 text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
             {subtitle}
           </span>
         ) : null}
@@ -518,7 +518,7 @@ export default function ShadowMallAdOptionsSheet({
         <button
           type="button"
           onClick={() => openScreen('quick')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:bg-gray-100"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full active:bg-gray-100 dark:active:bg-[var(--shadow-bg-hover)]"
           aria-label="Back"
         >
           <i className="fa-solid fa-chevron-left text-[16px]" />
@@ -528,7 +528,7 @@ export default function ShadowMallAdOptionsSheet({
           <div className="truncate text-[17px] font-normal text-[#111827] dark:text-[var(--shadow-text-primary)]">
             {title}
           </div>
-          <div className="mt-0.5 text-[11px] font-normal text-gray-400">
+          <div className="mt-0.5 text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
             {subtitle}
           </div>
         </div>
@@ -617,7 +617,7 @@ export default function ShadowMallAdOptionsSheet({
                 title="Why am I seeing this ad?"
                 onClick={() => openScreen('why')}
                 trailing={
-                  <i className="fa-solid fa-chevron-right text-[14px] text-gray-500" />
+                  <i className="fa-solid fa-chevron-right text-[14px] text-gray-500 dark:text-[var(--shadow-text-secondary)]" />
                 }
               />
 
@@ -627,7 +627,7 @@ export default function ShadowMallAdOptionsSheet({
                 title="About this advertiser"
                 onClick={() => openScreen('about')}
                 trailing={
-                  <i className="fa-solid fa-chevron-right text-[14px] text-gray-500" />
+                  <i className="fa-solid fa-chevron-right text-[14px] text-gray-500 dark:text-[var(--shadow-text-secondary)]" />
                 }
               />
 
@@ -666,11 +666,11 @@ export default function ShadowMallAdOptionsSheet({
                 This is a sponsored promotion from {sponsor}.
               </div>
 
-              <div className="mt-3 text-[12px] font-normal leading-5 text-gray-500">
+              <div className="mt-3 text-[12px] font-normal leading-5 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
                 Shadow may show active promotions based on their display order, availability, and your activity in Discover.
               </div>
 
-              <div className="mt-3 text-[12px] font-normal leading-5 text-gray-500">
+              <div className="mt-3 text-[12px] font-normal leading-5 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
                 Use Interested, Not interested, or Hide ad to adjust what appears in this browser.
               </div>
             </div>
@@ -702,7 +702,7 @@ export default function ShadowMallAdOptionsSheet({
                   <div className="truncate text-[15px] font-semibold text-[#111827] dark:text-[var(--shadow-text-primary)]">
                     {sponsor}
                   </div>
-                  <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400">
+                  <div className="mt-0.5 truncate text-[11px] font-normal text-gray-400 dark:text-[var(--shadow-text-tertiary)]">
                     Destination: {domain}
                   </div>
                 </div>
@@ -715,7 +715,7 @@ export default function ShadowMallAdOptionsSheet({
               ) : null}
 
               {item.description ? (
-                <div className="mt-2 text-[12px] font-normal leading-5 text-gray-500">
+                <div className="mt-2 text-[12px] font-normal leading-5 text-gray-500 dark:text-[var(--shadow-text-secondary)]">
                   {item.description}
                 </div>
               ) : null}
