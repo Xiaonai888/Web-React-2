@@ -3,6 +3,13 @@ import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X,
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
+import {
+  getFastReaderToken,
+  listMyFastNotInterested,
+  setMyFastNotInterested,
+} from '../../services/fastNotInterestedApi'
+
+
 registerTranslationNamespace('authorReelGrid', {
   en: { tab: 'Reel', empty: 'No Reels yet', loadError: 'Could not load Reels.', retry: 'Try again', more: 'Load more', back: 'Close Reel', previous: 'Previous Reel', next: 'Next Reel', unmute: 'Turn sound on', mute: 'Mute sound', youtube: 'Open on YouTube', noVideo: 'This Reel is unavailable.' },
   km: { tab: 'Reel', empty: 'មិនទាន់មាន Reel', loadError: 'មិនអាចផ្ទុក Reel បានទេ។', retry: 'ព្យាយាមម្ដងទៀត', more: 'មើលបន្ថែម', back: 'បិទ Reel', previous: 'Reel មុន', next: 'Reel បន្ទាប់', unmute: 'បើកសំឡេង', mute: 'បិទសំឡេង', youtube: 'មើលលើ YouTube', noVideo: 'មិនអាចចាក់ Reel នេះបានទេ។' },
@@ -35,13 +42,78 @@ function getYouTubeId(input) {
   }
 }
 
-function ReelViewer({ videos, index, onIndexChange, onClose, hasMore, onLoadMore, loading, t }) {
-  const [soundEnabled, setSoundEnabled] = useState(false)
+
+function ReelViewer({
+  videos,
+  index,
+  onIndexChange,
+  onClose,
+  hasMore,
+  onLoadMore,
+  loading,
+  onConfirmedPlay,
+  t,
+}) {
+
   const frameRef = useRef(null)
   const touchStart = useRef(null)
   const lastWheel = useRef(0)
   const video = videos[index]
   const youtubeId = getYouTubeId(video?.video_url)
+
+  
+const confirmedPlayIdsRef = useRef(new Set())
+
+useEffect(() => {
+  if (typeof onConfirmedPlay !== 'function') {
+    return undefined
+  }
+
+  const handleMessage = (event) => {
+    if (event.source !== frameRef.current?.contentWindow) return
+
+    if (![
+      'https://www.youtube-nocookie.com',
+      'https://www.youtube.com',
+    ].includes(event.origin)) return
+
+    let data = event.data
+
+    try {
+      if (typeof data === 'string') data = JSON.parse(data)
+    } catch {
+      return
+    }
+
+    if (!data || typeof data !== 'object') return
+
+    const playerState =
+      data.event === 'onStateChange'
+        ? data.info
+        : data.event === 'infoDelivery'
+          ? data.info?.playerState
+          : null
+
+    if (playerState !== 1) return
+
+    const reelId = String(video?.id || '')
+
+    if (
+      !UUID.test(reelId) ||
+      confirmedPlayIdsRef.current.has(reelId)
+    ) return
+
+    confirmedPlayIdsRef.current.add(reelId)
+    onConfirmedPlay(reelId)
+  }
+
+  window.addEventListener('message', handleMessage)
+
+  return () => {
+    window.removeEventListener('message', handleMessage)
+  }
+}, [video?.id, onConfirmedPlay])
+
 
   const change = useCallback((step) => {
     onIndexChange(current => Math.max(0, Math.min(videos.length - 1, current + step)))
@@ -96,7 +168,7 @@ function ReelViewer({ videos, index, onIndexChange, onClose, hasMore, onLoadMore
         }}>
         {youtubeId ? (
           <iframe key={video.id} ref={frameRef} title={video.title || t('authorReelGrid.tab')}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1&controls=1&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=0&mute=1&playsinline=1&controls=1&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`}
             onLoad={() => { if (soundEnabled) command('unMute') }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin" allowFullScreen
