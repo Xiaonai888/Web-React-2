@@ -433,7 +433,15 @@ useEffect(() => {
   useEffect(() => () => window.clearTimeout(toastTimerRef.current), [])
 
   
-const { hiddenIds, hide, undo, undoItem } = useFastNotInterested(
+const {
+  hiddenIds,
+  hide,
+  undo,
+  undoItem,
+  feedbackReady,
+  feedbackError,
+  retryFeedback,
+} = useFastNotInterested(
   error => showNotice(
     error?.message || 'Unable to save Reel feedback'
   )
@@ -549,7 +557,12 @@ useEffect(() => {
   }, [videos, hasMore, activeIndex, feedTab])
 
   
+
+
 const visibleVideos = useMemo(() => {
+  // Wait until Not interested feedback is fully loaded.
+  if (!feedbackReady || feedbackError) return []
+
   const available = videos.filter(video => {
     const id = String(video.id)
 
@@ -572,7 +585,10 @@ const visibleVideos = useMemo(() => {
   hiddenIds,
   requestedReelId,
   dismissedLinkReelId,
+  feedbackReady,
+  feedbackError,
 ])
+
 
 
   // Reuse existing Echo V2 source summary, only for the visible Reel.
@@ -819,7 +835,21 @@ const openEcho = video => {
         </button>
       </header> : null}
       <main className="relative min-h-0 flex-1 bg-black">
-        {visibleVideos.length ? (
+        
+{feedbackError ? (
+  <div className="mx-auto max-w-md px-5 pt-20">
+    <PageErrorState
+      title={feedbackError}
+      actionLabel={t('fastReels.retry')}
+      onAction={retryFeedback}
+    />
+  </div>
+) : !feedbackReady ? (
+  <div className="mx-auto max-w-md px-5 pt-20 text-white">
+    <PageLoadingState label={t('fastReels.loading')} />
+  </div>
+) : visibleVideos.length ? (
+
           <div ref={viewportRef} key={feedTab} className="mx-auto h-full w-full max-w-[520px] snap-y snap-mandatory overflow-y-auto overscroll-y-contain"
             style={{ scrollbarWidth: 'none' }}>
             {visibleVideos.map((video, index) => (
