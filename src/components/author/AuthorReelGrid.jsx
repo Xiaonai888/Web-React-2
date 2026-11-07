@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2 } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ReelEditManager from './ReelEditManager'
 
 import {
   getFastReaderToken,
@@ -368,6 +369,7 @@ function OwnerReelManager() {
   const [link, setLink] = useState('')
   const [description, setDescription] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(null)
+  const [managingVideo, setManagingVideo] = useState(null)
 
   const load = useCallback(async (nextOffset = 0, signal) => {
     const token = authToken()
@@ -526,7 +528,7 @@ disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var
               <p className="line-clamp-2 min-h-[32px] text-xs font-semibold">{video.title}</p>
               {video.access_type === 'paid' ? <p className="text-[10px] text-[var(--shadow-text-secondary)]">{t('authorReelManager.premium')}</p> : null}
               <div className="flex flex-wrap gap-1.5">
-                <button type="button" disabled={busy} onClick={() => openEditor(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] disabled:opacity-50"><Pencil size={12}/>{t('authorReelManager.edit')}</button>
+                <button type="button" disabled={busy} onClick={() => setManagingVideo(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] disabled:opacity-50"><Pencil size={12}/>{t('authorReelManager.edit')}</button>
                 <button type="button" disabled={busy} onClick={() => changeStatus(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] disabled:opacity-50">{video.status === 'published' ? <EyeOff size={12}/> : <Eye size={12}/>}{t(video.status === 'published' ? 'authorReelManager.pause' : 'authorReelManager.publish')}</button>
                 <button type="button" disabled={busy} onClick={() => remove(video)} className="inline-flex items-center gap-1 rounded-md border border-[var(--shadow-border)] px-2 py-1.5 text-[11px] text-[var(--shadow-danger)] disabled:opacity-50"><Trash2 size={12}/>{t('authorReelManager.remove')}</button>
               </div>
@@ -535,7 +537,37 @@ disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var
         })}
       </div> : null}
       {hasMore && videos.length > 0 ? <div className="py-5 text-center"><button type="button" disabled={loading || busy} onClick={() => load(offset)} className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-xs disabled:opacity-50">{t('authorReelManager.more')}</button></div> : null}
-      {selectedIndex !== null && videos[selectedIndex] ? <ReelViewer videos={videos} index={selectedIndex} onIndexChange={setSelectedIndex} onClose={() => setSelectedIndex(null)} hasMore={hasMore} onLoadMore={() => load(offset)} loading={loading} t={t} /> : null}
+      {selectedIndex !== null && videos[selectedIndex] ? (
+  <ReelViewer
+    videos={videos}
+    index={selectedIndex}
+    onIndexChange={setSelectedIndex}
+    onClose={() => setSelectedIndex(null)}
+    hasMore={hasMore}
+    onLoadMore={() => load(offset)}
+    loading={loading}
+    t={t}
+  />
+) : null}
+
+{managingVideo ? (
+  <ReelEditManager
+    key={managingVideo.id}
+    video={managingVideo}
+    onClose={() => setManagingVideo(null)}
+    onSaved={(updated) => {
+      setVideos(items =>
+        items.map(item =>
+          item.id === updated.id ? updated : item
+        )
+      )
+      setManagingVideo(null)
+      setNotice(t('authorReelManager.saved'))
+    }}
+  />
+) : null}
+
+    </section>
     </section>
   )
 }
