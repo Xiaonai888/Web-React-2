@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2 } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -353,6 +354,7 @@ function authToken() {
 }
 
 function OwnerReelManager() {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [videos, setVideos] = useState([])
   const [offset, setOffset] = useState(0)
@@ -476,7 +478,14 @@ function OwnerReelManager() {
     <section className="mx-auto max-w-[980px] text-[var(--shadow-text-primary)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">{t('authorReelManager.myReels')}</h2>
-        <button type="button" onClick={() => openEditor()} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
+        <button type="button" onClick={() =>
+  navigate('/author/reel/add', {
+    state: {
+      returnTo: `${window.location.pathname}${window.location.search}`,
+    },
+  })
+}
+disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
       </div>
       <p className="mb-4 text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.access')}</p>
       {editor ? (
