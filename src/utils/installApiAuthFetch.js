@@ -210,6 +210,27 @@ function handleReaderSessionResponse(fetchPromise, requestToken, path) {
   })
 }
 
+// Attribution is attached only to requests that already require a CORS
+// preflight (authorization, non-safelisted content type, or unsafe method).
+// Attaching a custom header to otherwise-simple public GET requests would
+// unnecessarily increase OPTIONS traffic on the Render backend.
+function pageAttributionValue() {
+  const path = String(window.location.pathname || '/')
+    .replace(/[^a-z0-9_/:.-]/gi, '_')
+    .slice(0, 160)
+  return `WEB:${path.startsWith('/') ? path : `/${path}`}`
+}
+
+function alreadyRequiresPreflight(method, headers) {
+  if (headers.has('Authorization')) return true
+  if (!['GET', 'HEAD', 'POST'].includes(method)) return true
+  const contentType = String(headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase()
+  if (contentType && !['text/plain', 'multipart/form-data', 'application/x-www-form-urlencoded'].includes(contentType)) return true
+  // Existing non-safelisted diagnostics headers already require preflight.
+  if (headers.has('X-Shadow-Visitor-Id') || headers.has('X-Shadow-Country-Ticket')) return true
+  return false
+}
+
 export function installApiAuthFetch() {
   if (window.__shadowApiAuthFetchInstalled) return
   window.__shadowApiAuthFetchInstalled = true
@@ -236,11 +257,17 @@ export function installApiAuthFetch() {
       new Headers(init.headers || {}).forEach((value, key) => originalHeaders.set(key, value))
       const authorization = originalHeaders.get('Authorization') || ''
       const explicitToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
+      if (!originalHeaders.has('X-Shadow-Page') && url.pathname.startsWith('/api/') && alreadyRequiresPreflight(method, originalHeaders)) {
+        originalHeaders.set('X-Shadow-Page', pageAttributionValue())
+        const taggedInput = input instanceof Request ? new Request(input, { ...init, headers: originalHeaders }) : input
+        return handleReaderSessionResponse(nativeFetch(taggedInput, input instanceof Request ? undefined : { ...init, headers: originalHeaders }), explicitToken, url.pathname)
+      }
       return handleReaderSessionResponse(nativeFetch(input, init), explicitToken, url.pathname)
     }
     const headers = new Headers(input instanceof Request ? input.headers : undefined)
     new Headers(init.headers || {}).forEach((value, key) => headers.set(key, value))
     if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
+    if (!headers.has('X-Shadow-Page') && url.pathname.startsWith('/api/')) headers.set('X-Shadow-Page', pageAttributionValue())
     const authorization = headers.get('Authorization') || ''
     const requestToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
     if (input instanceof Request) {
