@@ -560,6 +560,14 @@ registerTranslationNamespace('readerSettings', {
 })
 
 
+registerTranslationNamespace('readerSettings', {
+  en: { items: { 'fast-preferences': { title: 'Reset Fast feedback', subtitle: 'Allow hidden Reels to appear in Fast again.' } } },
+  km: { items: { 'fast-preferences': { title: 'កំណត់ Fast Feedback ឡើងវិញ', subtitle: 'អនុញ្ញាតឱ្យ Reel ដែលបានលាក់អាចបង្ហាញវិញ។' } } },
+  zh: { items: { 'fast-preferences': { title: '重置 Fast 反馈', subtitle: '允许隐藏的 Reel 再次出现。' } } },
+  ja: { items: { 'fast-preferences': { title: 'Fast のフィードバックをリセット', subtitle: '非表示の Reel を再表示できるようにします。' } } },
+  ko: { items: { 'fast-preferences': { title: 'Fast 피드백 초기화', subtitle: '숨긴 Reel을 다시 표시할 수 있습니다.' } } },
+})
+
 const SHADOW_ACCOUNT_ITEMS = [
   {
     key: 'edit-profile',
@@ -623,12 +631,18 @@ const SETTINGS_GROUPS = [
         route: '/notifications',
       },
       {
-  key: 'reading-history',
-  title: 'Reading Summary',
-  subtitle: 'Daily totals of stories and episodes read.',
-  icon: 'fa-solid fa-clock-rotate-left',
-  route: '/profile/settings/reading-summary',
-},
+        key: 'reading-history',
+        title: 'Reading Summary',
+        subtitle: 'Daily totals of stories and episodes read.',
+        icon: 'fa-solid fa-clock-rotate-left',
+        route: '/profile/settings/reading-summary',
+      },
+      {
+        key: 'fast-preferences',
+        title: 'Reset Fast feedback',
+        subtitle: 'Allow hidden Reels to appear in Fast again.',
+        icon: 'fa-solid fa-rotate-left',
+      },
     ],
   },
   {
@@ -734,16 +748,6 @@ function clearReaderSession() {
 }
 
 function ReaderSettingsIcon({ name }) {
-  
-case 'fast-preferences':
-  return (
-    <svg {...commonProps}>
-      <path d="M4 4v6h6" />
-      <path d="M4.8 10a8 8 0 1 1-.5 4" />
-      <path d="M12 8v4l3 2" />
-    </svg>
-  )
-
   const commonProps = {
     viewBox: '0 0 24 24',
     fill: 'none',
@@ -756,6 +760,15 @@ case 'fast-preferences':
   }
 
   switch (name) {
+    case 'fast-preferences':
+      return (
+        <svg {...commonProps}>
+          <path d="M4 4v6h6" />
+          <path d="M4.8 10a8 8 0 1 1-.5 4" />
+          <path d="M12 8v4l3 2" />
+        </svg>
+      )
+
     case 'edit-profile':
       return (
         <svg {...commonProps}>
@@ -1016,14 +1029,13 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
-    
-if (item.key === 'fast-preferences') {
-  setFastResetError('')
-  setFastResetOpen(true)
-  return
-}
+    if (item.key === 'fast-preferences') {
+      setFastResetError('')
+      setFastResetOpen(true)
+      return
+    }
 
-  if (!shadowAccountOpen) sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
+    if (!shadowAccountOpen) sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
   if (item.key === 'messages-replies') {
     navigate(`/profile/settings/messages-replies${fromMeSettings ? '?from=me-settings' : ''}`)
     return
