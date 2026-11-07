@@ -307,6 +307,7 @@ const EpisodeReactionsPage = lazy(() => import('./pages/EpisodeReactionsPage'))
 const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
 const FastReelsPage = lazy(() => import('./pages/FastReelsPage'))
 const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
+const AuthorReelAddPage = lazy(() => import('./pages/Author/AuthorReelAddPage'))
 
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
@@ -524,6 +525,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
     '/event/daily-author-boost',
     '/event/daily-author-80-boost',
     '/author/create',
+    '/author/reel/add',
     '/author/dashboard',
     '/author/profile',
     '/author/insights',
@@ -1601,6 +1603,15 @@ const shouldShowOpeningAds =
   element={
     <LazyPage>
       <FastStudioPage />
+    </LazyPage>
+  }
+/>
+
+          <Route
+  path="/author/reel/add"
+  element={
+    <LazyPage>
+      <AuthorReelAddPage />
     </LazyPage>
   }
 />
