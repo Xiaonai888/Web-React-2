@@ -112,6 +112,54 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   const inputRef = useRef(null)
   const mounted = useRef(true)
 
+    // Drag down to close Comment Sheet
+  const dragStartRef = useRef(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragStart = event => {
+    if (event.button !== undefined && event.button !== 0) return
+    if (event.target.closest('button')) return
+
+    dragStartRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+    }
+
+    setIsDragging(true)
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleDragMove = event => {
+    const start = dragStartRef.current
+    if (!start || start.pointerId !== event.pointerId) return
+
+    setDragOffset(Math.max(0, event.clientY - start.startY))
+  }
+
+  const handleDragEnd = event => {
+    const start = dragStartRef.current
+    if (!start || start.pointerId !== event.pointerId) return
+
+    const distance = Math.max(0, event.clientY - start.startY)
+
+    dragStartRef.current = null
+    setIsDragging(false)
+
+    if (distance > 90) {
+      onClose?.()
+      return
+    }
+
+    setDragOffset(0)
+  }
+
+  const handleDragCancel = () => {
+    dragStartRef.current = null
+    setIsDragging(false)
+    setDragOffset(0)
+  }
+
   const apiBase = `/api/fast/videos/${encodeURIComponent(videoId)}/comments`
   const setCount = useCallback(count => {
     const n = Math.max(0, Number(count || 0))
@@ -316,13 +364,43 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   return createPortal(
     <div className="fixed inset-0 z-[200002] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={t('fastReelComments.title')}>
       <button type="button" aria-label={t('fastReelComments.close')} onClick={onClose} className="absolute inset-0 bg-black/55" />
-      <section className="relative z-10 flex w-full max-w-[560px] flex-col overflow-hidden rounded-t-[24px] bg-white text-gray-900 shadow-2xl dark:bg-[#15171b] dark:text-white"
-        style={{ height: '68dvh', maxHeight: '760px', minHeight: 'min(340px, 85dvh)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300 dark:bg-white/20" />
-        <header className="flex h-14 shrink-0 items-center justify-center border-b border-gray-100 px-4 dark:border-white/10">
-          <h2 className="text-[14px] font-bold">{t('fastReelComments.title')} ({total.toLocaleString()})</h2>
-          <button type="button" aria-label={t('fastReelComments.close')} onClick={onClose} className="absolute right-3 top-4 rounded-full p-2"><X size={20}/></button>
-        </header>
+            <section
+        className="relative z-10 flex w-full max-w-[560px] flex-col overflow-hidden rounded-t-[24px] bg-white text-gray-900 shadow-2xl dark:bg-[#15171b] dark:text-white"
+        style={{
+          height: '68dvh',
+          maxHeight: '760px',
+          minHeight: 'min(340px, 85dvh)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          transform: `translateY(${dragOffset}px)`,
+          transition: isDragging
+            ? 'none'
+            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        <div
+          className="shrink-0 touch-none select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragCancel}
+        >
+          <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20" />
+
+          <header className="flex h-14 items-center justify-center border-b border-gray-100 px-4 dark:border-white/10">
+            <h2 className="text-[14px] font-bold">
+              {t('fastReelComments.title')} ({total.toLocaleString()})
+            </h2>
+
+            <button
+              type="button"
+              aria-label={t('fastReelComments.close')}
+              onClick={onClose}
+              className="absolute right-3 top-4 rounded-full p-2"
+            >
+              <X size={20} />
+            </button>
+          </header>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
           {loading ? <div className="flex justify-center py-14"><Loader2 className="animate-spin" size={24}/></div>
             : error ? <div className="py-12 text-center text-sm text-red-500">{error}<button type="button" onClick={() => { setLoading(true); loadRoots(false).then(() => setError('')).catch(e => setError(e.message)).finally(() => setLoading(false)) }} className="ml-3 font-bold">{t('fastReelComments.retry')}</button></div>
@@ -345,7 +423,11 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
               placeholder={t('fastReelComments.write')} className="max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-[13px] text-gray-900 outline-none focus:border-blue-400 dark:border-white/10 dark:bg-[#26292f] dark:text-white" />
             <button type="button" onClick={submitComment} disabled={busy || !draft.trim()} aria-label={t('fastReelComments.send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white disabled:opacity-40">
-              {busy ? <Loader2 size={17} className="animate-spin"/> : <Send size={17} />}
+                            {busy ? (
+                <Loader2 size={17} className="animate-spin" />
+              ) : (
+                <Send size={17} color="#000000" strokeWidth={2.2} />
+              )}
             </button>
           </div>
         </footer>
