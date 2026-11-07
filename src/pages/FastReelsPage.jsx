@@ -369,6 +369,12 @@ export default function FastReelsPage({ embedded = false }) {
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [dismissedLinkReelId, setDismissedLinkReelId] = useState('')
+
+useEffect(() => {
+  setDismissedLinkReelId('')
+}, [requestedReelId])
+
   const [echoVideo, setEchoVideo] = useState(null)
   const [echoCounts, setEchoCounts] = useState({})
   const [commentVideo, setCommentVideo] = useState(null)
@@ -542,17 +548,32 @@ useEffect(() => {
     if (videos.length && feedTab === 'forYou') cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
   }, [videos, hasMore, activeIndex, feedTab])
 
-  const visibleVideos = useMemo(() => {
-  const available = videos.filter(
-    video => !hiddenIds.has(String(video.id))
-  )
+  
+const visibleVideos = useMemo(() => {
+  const available = videos.filter(video => {
+    const id = String(video.id)
+
+    const openedByDirectLink =
+      requestedReelId === id &&
+      dismissedLinkReelId !== id
+
+    return openedByDirectLink || !hiddenIds.has(id)
+  })
 
   return feedTab === 'following'
     ? available.filter(
         video => followedIds.has(String(video.user_id))
       )
     : available
-}, [feedTab, followedIds, videos, hiddenIds, requestedReelId])
+}, [
+  feedTab,
+  followedIds,
+  videos,
+  hiddenIds,
+  requestedReelId,
+  dismissedLinkReelId,
+])
+
 
   // Reuse existing Echo V2 source summary, only for the visible Reel.
   // Failed counts retain a stable '0' display; clicking Echo still shows API errors.
@@ -625,9 +646,14 @@ const hideCurrentReel = useCallback(() => {
     activeIndexRef.current,
     Math.max(0, visibleVideos.length - 1)
   )
+  
+const reel = visibleVideos[index]
+if (!reel?.id || !hide(reel.id, index)) return
 
-  const reel = visibleVideos[index]
-  if (!reel?.id || !hide(reel.id, index)) return
+if (String(reel.id) === requestedReelId) {
+  setDismissedLinkReelId(String(reel.id))
+}
+
 
   const nextIndex = Math.min(
     index,
@@ -644,7 +670,7 @@ const hideCurrentReel = useCallback(() => {
       behavior: 'instant',
     })
   })
-}, [visibleVideos, hide])
+}, [visibleVideos, hide, requestedReelId])
 
 const undoLastHiddenReel = useCallback(() => {
   const item = undo()
