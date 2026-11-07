@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { PageHeader, PageShell, SurfaceCard } from '../../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -7,6 +7,10 @@ import ReelPlaylistSelector from '../../components/author/ReelPlaylistSelector'
 import ReelTagsField from '../../components/author/ReelTagsField'
 import ReelVideoPreview from '../../components/author/ReelVideoPreview'
 import { getReelYouTubeUrls } from '../../utils/reelYouTube'
+import {
+  listMyReelPlaylists, createReelPlaylist, setReelPlaylistAssignments,
+  createReelVideo, updateReelStatus,
+} from '../../services/reelPlaylistsApi'
 
 // This is the Author Page Add Reel experience, NOT Fast Studio's separate Create Video page.
 // Playlist selection is intentionally UI preview-only until a dedicated owned playlist API exists.
@@ -28,6 +32,7 @@ registerTranslationNamespace('authorReelAdd', {
     tagsMaximum: 'You can add up to 10 tags.', tagsLength: 'A tag must be 24 characters or fewer.',
     tagsChars: 'Tags can use up to 500 characters in total.',
     removeTag: 'Remove {{tag}}', copyTags: 'Copy tags', clearTags: 'Clear all tags',
+    morePlaylists: 'Load more playlists', playlistLoadFailed: 'Could not load playlists.', playlistCreateFailed: 'Could not create playlist.', savedWithoutPlaylists: 'Reel saved, but playlist assignment failed. Try Save Draft or Publish again to retry without creating a duplicate Reel.',
     saveDraft: 'Save Draft', publish: 'Publish', saving: 'Saving...',
     invalidLink: 'Enter a valid YouTube or YouTube Shorts URL.',
     requiredTitle: 'Enter a video title.', login: 'Please sign in to create a Reel.',
@@ -51,6 +56,7 @@ registerTranslationNamespace('authorReelAdd', {
     tagsMaximum: 'អាចដាក់បានអតិបរមា 10 Tags។', tagsLength: 'Tag មួយមិនត្រូវលើស 24 តួអក្សរ។',
     tagsChars: 'Tags សរុបមិនត្រូវលើស 500 តួអក្សរ។',
     removeTag: 'លុប {{tag}}', copyTags: 'ចម្លង Tags', clearTags: 'លុប Tags ទាំងអស់',
+    morePlaylists: 'មើល Playlist បន្ថែម', playlistLoadFailed: 'មិនអាចទាញ Playlists បាន។', playlistCreateFailed: 'មិនអាចបង្កើត Playlist បាន។', savedWithoutPlaylists: 'Reel បានរក្សាទុកហើយ ប៉ុន្តែការភ្ជាប់ Playlist បរាជ័យ។ ចុច Save Draft ឬ Publish ម្តងទៀត ដើម្បីសាកភ្ជាប់ឡើងវិញដោយមិនបង្កើត Reel ស្ទួន។',
     saveDraft: 'រក្សាទុក Draft', publish: 'ផ្សាយ', saving: 'កំពុងរក្សាទុក...',
     invalidLink: 'សូមបញ្ចូល YouTube ឬ Shorts Link ត្រឹមត្រូវ។',
     requiredTitle: 'សូមបញ្ចូលចំណងជើងវីដេអូ។', login: 'សូមចូលគណនីដើម្បីបង្កើត Reel។',
@@ -71,6 +77,7 @@ registerTranslationNamespace('authorReelAdd', {
     tagsPlaceholder: '输入标签，按逗号或回车添加', tagLimit: '当前 API 最多支持 10 个标签，每个不超过 24 个字符。',
     tagsMaximum: '最多可添加 10 个标签。', tagsLength: '单个标签最多 24 个字符。', tagsChars: '标签总计最多 500 个字符。',
     removeTag: '删除 {{tag}}', copyTags: '复制标签', clearTags: '清空标签',
+    morePlaylists: '加载更多播放列表', playlistLoadFailed: '无法加载播放列表。', playlistCreateFailed: '无法创建播放列表。', savedWithoutPlaylists: 'Reel 已保存，但播放列表分配失败。再次保存可重试且不会重复创建 Reel。',
     saveDraft: '保存草稿', publish: '发布', saving: '正在保存...', invalidLink: '请输入有效的 YouTube 或 Shorts 链接。',
     requiredTitle: '请输入视频标题。', login: '请先登录。', saveFailed: '无法保存 Reel。', saved: 'Reel 已保存。',
     noTags: '标签是可选项，您可以直接发布。',
@@ -89,6 +96,7 @@ registerTranslationNamespace('authorReelAdd', {
     tagsPlaceholder: 'タグを入力し、カンマかEnterで追加', tagLimit: '現在のAPIは最大10件、1件24文字までです。',
     tagsMaximum: '最大10件のタグを追加できます。', tagsLength: 'タグは24文字以内にしてください。', tagsChars: 'タグ全体は500文字以内です。',
     removeTag: '{{tag}} を削除', copyTags: 'タグをコピー', clearTags: 'すべて削除',
+    morePlaylists: 'プレイリストをもっと見る', playlistLoadFailed: 'プレイリストを取得できません。', playlistCreateFailed: 'プレイリストを作成できません。', savedWithoutPlaylists: 'Reel は保存されましたがプレイリストの割り当てに失敗しました。再度保存すれば重複せず再試行できます。',
     saveDraft: '下書き保存', publish: '公開', saving: '保存中...', invalidLink: '有効なYouTubeリンクを入力してください。',
     requiredTitle: 'タイトルを入力してください。', login: 'ログインしてください。', saveFailed: '保存できませんでした。', saved: '保存しました。',
     noTags: 'タグなしでも公開できます。',
@@ -107,20 +115,17 @@ registerTranslationNamespace('authorReelAdd', {
     tagsPlaceholder: '태그를 입력하고 쉼표 또는 Enter', tagLimit: '현재 API는 태그 최대 10개, 태그당 24자까지 지원합니다.',
     tagsMaximum: '태그는 최대 10개입니다.', tagsLength: '태그는 24자 이하여야 합니다.', tagsChars: '태그 총 길이는 500자 이하여야 합니다.',
     removeTag: '{{tag}} 삭제', copyTags: '태그 복사', clearTags: '모두 지우기',
+    morePlaylists: '재생목록 더 보기', playlistLoadFailed: '재생목록을 불러올 수 없습니다.', playlistCreateFailed: '재생목록을 만들 수 없습니다.', savedWithoutPlaylists: 'Reel은 저장되었지만 재생목록 할당에 실패했습니다. 다시 저장하면 중복 없이 재시도할 수 있습니다.',
     saveDraft: '임시저장', publish: '게시', saving: '저장 중...', invalidLink: '올바른 YouTube 링크를 입력하세요.',
     requiredTitle: '동영상 제목을 입력하세요.', login: '로그인해 주세요.', saveFailed: 'Reel을 저장할 수 없습니다.', saved: '저장되었습니다.',
     noTags: '태그 없이도 게시할 수 있습니다.',
   },
 })
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ||
-  (['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
 const MAX_TAGS = 10
 const MAX_TAG_LENGTH = 24
 const MAX_TOTAL_CHARS = 500
-
-const getToken = () => localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+const PLAYLIST_PAGE_SIZE = 30
 
 export default function AuthorReelAddPage() {
   const { t } = useDisplayTranslation()
@@ -135,66 +140,118 @@ export default function AuthorReelAddPage() {
   const [tagDraft, setTagDraft] = useState('')
   const [playlists, setPlaylists] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [playlistPage, setPlaylistPage] = useState(0)
+  const [playlistHasMore, setPlaylistHasMore] = useState(false)
+  const [playlistLoading, setPlaylistLoading] = useState(false)
+  const [playlistError, setPlaylistError] = useState('')
+  const [pendingVideo, setPendingVideo] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const youtube = useMemo(() => getReelYouTubeUrls(link), [link])
   const videoId = youtube?.id || ''
 
-  // Preview only: DO NOT persist playlist names or imply that they are stored.
-  const createPreviewPlaylist = (name) => {
-    const normalized = String(name || '').trim()
-    if (!normalized) return
-    if (playlists.some(item => item.name.toLocaleLowerCase() === normalized.toLocaleLowerCase())) return
-    const id = `preview-${Date.now()}-${playlists.length}`
-    setPlaylists(items => [...items, { id, name: normalized }])
-    setSelectedIds(ids => [...ids, id])
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300)
+    return () => clearTimeout(timeout)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let active = true
+    setPlaylistLoading(true)
+    setPlaylistError('')
+    // Preserve selected IDs when changing the search; selected items might be
+    // outside the current result page.
+    if (playlistPage === 0) setPlaylists([])
+    listMyReelPlaylists({
+      offset: playlistPage * PLAYLIST_PAGE_SIZE,
+      limit: PLAYLIST_PAGE_SIZE,
+      search: debouncedSearch,
+      signal: controller.signal,
+    }).then(result => {
+      if (!active) return
+      const rows = result.playlists || []
+      setPlaylists(previous => playlistPage === 0
+        ? rows
+        : [...previous, ...rows.filter(row => !previous.some(item => item.id === row.id))])
+      setPlaylistHasMore(Boolean(result.pagination?.has_more))
+    }).catch(cause => {
+      if (!active || controller.signal.aborted) return
+      setPlaylistError(cause.message || t('authorReelAdd.playlistLoadFailed'))
+    }).finally(() => { if (active) setPlaylistLoading(false) })
+    return () => { active = false; controller.abort() }
+  }, [playlistPage, debouncedSearch, t])
+
+  const onPlaylistSearch = value => {
+    setSearchTerm(value)
+    setPlaylistPage(0)
   }
 
-  const save = async (status) => {
-    if (!videoId) { setError(t('authorReelAdd.invalidLink')); return }
+  const createPlaylist = async name => {
+    const result = await createReelPlaylist(name)
+    if (!result?.playlist?.id) throw new Error(t('authorReelAdd.playlistCreateFailed'))
+    const playlist = result.playlist
+    setPlaylists(previous => [playlist, ...previous.filter(item => item.id !== playlist.id)])
+    setSelectedIds(previous => previous.includes(playlist.id) ? previous : [...previous, playlist.id])
+    return playlist
+  }
+
+  const save = async status => {
+    if (!youtube) { setError(t('authorReelAdd.invalidLink')); return }
     if (!title.trim()) { setError(t('authorReelAdd.requiredTitle')); return }
-    const token = getToken()
-    if (!token) { setError(t('authorReelAdd.login')); return }
     const finalTag = tagDraft.trim()
-    const alreadyAdded = tags.some(tag =>
-      tag.toLocaleLowerCase() === finalTag.toLocaleLowerCase()
-    )
-    if (finalTag.includes(',') || (finalTag && finalTag.length > MAX_TAG_LENGTH)) {
+    const duplicate = tags.some(tag => tag.toLocaleLowerCase() === finalTag.toLocaleLowerCase())
+    if (finalTag.includes(',') || finalTag.length > MAX_TAG_LENGTH) {
       setError(t('authorReelAdd.tagsLength'))
       return
     }
-    const committedTags = finalTag && !alreadyAdded ? [...tags, finalTag] : tags
-    if (committedTags.length > MAX_TAGS) {
-      setError(t('authorReelAdd.tagsMaximum'))
-      return
-    }
+    const committedTags = finalTag && !duplicate ? [...tags, finalTag] : tags
+    if (committedTags.length > MAX_TAGS) { setError(t('authorReelAdd.tagsMaximum')); return }
     if (committedTags.join(', ').length > MAX_TOTAL_CHARS) {
       setError(t('authorReelAdd.tagsChars'))
       return
     }
-    if (selectedIds.length && !window.confirm(t('authorReelAdd.playlistConfirm'))) return
     setBusy(true)
     setError('')
+    let savedId = pendingVideo?.id || null
+    let savedStatus = pendingVideo?.status || null
     try {
-      const response = await fetch(`${API_BASE_URL}/api/fast/videos`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (!savedId) {
+        const response = await createReelVideo({
           video_url: youtube.videoUrl,
           thumbnail_url: youtube.thumbnailUrl,
-          title: title.trim(), description: caption.trim(), tags: committedTags,
-          access_type: 'free', unlock_price_diamonds: 0, status,
-        }),
-      })
-      const result = await response.json().catch(() => ({}))
-      if (!response.ok || result.ok === false || !result.video) {
-        throw new Error(result.message || t('authorReelAdd.saveFailed'))
+          title: title.trim(),
+          description: caption.trim(),
+          tags: committedTags,
+          access_type: 'free',
+          unlock_price_diamonds: 0,
+          status,
+        })
+        savedId = response.video?.id
+        savedStatus = status
+        if (!savedId) throw new Error(t('authorReelAdd.saveFailed'))
+        // Keep the created ID: if assignment fails, a retry MUST NOT create
+        // another Reel in Shadow.
+        setPendingVideo({ id: savedId, status: savedStatus })
+      } else if (savedStatus !== status) {
+        await updateReelStatus(savedId, status)
+        savedStatus = status
+        setPendingVideo({ id: savedId, status })
+      }
+      if (selectedIds.length) {
+        await setReelPlaylistAssignments(savedId, selectedIds)
       }
       navigate(returnTo, { replace: true, state: { reelSaved: true, activeTab: 'Reel' } })
     } catch (cause) {
-      setError(cause.message || t('authorReelAdd.saveFailed'))
-    } finally { setBusy(false) }
+      setError(savedId
+        ? `${t('authorReelAdd.savedWithoutPlaylists')} ${cause.message || ''}`
+        : cause.message || t('authorReelAdd.saveFailed'))
+    } finally {
+      setBusy(false)
+    }
   }
 
   const fieldClass = 'app-input mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-[13px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]'
@@ -225,11 +282,17 @@ export default function AuthorReelAddPage() {
             playlists={playlists}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
-            onCreatePlaylist={createPreviewPlaylist}
+            onCreatePlaylist={createPlaylist}
+            onSearchChange={onPlaylistSearch}
+            loading={playlistLoading}
+            hasMore={playlistHasMore}
+            onLoadMore={() => setPlaylistPage(page => page + 1)}
+            loadMoreLabel={t('authorReelAdd.morePlaylists')}
             disabled={busy}
-            previewOnly
+            previewOnly={false}
             t={t}
           />
+          {playlistError ? <p role="alert" className="mt-2 text-xs text-[var(--shadow-danger)]">{playlistError}</p> : null}
         </SurfaceCard>
 
         <SurfaceCard className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
