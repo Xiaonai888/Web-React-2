@@ -21,12 +21,12 @@ const SOURCE_TYPE = 'fast_video'
 const HOLD_MS = 520
 
 function displayCount(value) {
+  // A fixed 0 keeps Save aligned with the Like and Comment counters.
   const numeric = Number(value)
-  if (!Number.isFinite(numeric) || numeric <= 0) return ''
   return new Intl.NumberFormat('en', {
     notation: 'compact',
     maximumFractionDigits: 1,
-  }).format(Math.max(0, numeric))
+  }).format(Number.isFinite(numeric) ? Math.max(0, numeric) : 0)
 }
 
 export default function FastReelSaveButton({ video, active, onAuthRequired, onError, onSuccess }) {
@@ -141,11 +141,22 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
   const toggleSaved = async () => {
     if (!videoId || checking || writeLockRef.current || !requireLogin()) return
     const wasSaved = saved
-    writeLockRef.current = true
-    ++statusSeqRef.current
-    setBusy(true)
-    setSaved(!wasSaved)
-    setSaveCount(n => n === null ? null : Math.max(0, n + (wasSaved ? -1 : 1)))
+const previousCount = saveCount
+
+writeLockRef.current = true
+++statusSeqRef.current
+setBusy(true)
+setSaved(!wasSaved)
+    // Invalidate the in-flight count fetch before the optimistic update.
+    ++countSeqRef.current
+
+setSaveCount(current => {
+  if (current === null) {
+    return wasSaved ? null : 1
+  }
+
+  return Math.max(0, current + (wasSaved ? -1 : 1))
+})
 
     try {
       if (wasSaved) {
@@ -161,8 +172,8 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
       void refreshCount()
     } catch (error) {
       setSaved(wasSaved)
-      setSaveCount(n => n === null ? null : Math.max(0, n + (wasSaved ? 1 : -1)))
-      notifyError(error)
+setSaveCount(previousCount)
+notifyError(error)
       void refreshCount()
     } finally {
       writeLockRef.current = false
@@ -244,6 +255,7 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
         item = result.item
         setSaved(true)
         setSavedItem(item)
+        setSaveCount(n => n === null ? 1 : Math.max(1, n + 1))
         void refreshCount()
       }
 
@@ -287,21 +299,26 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
           openHoldMenu()
         }}
         onClick={handleClick}
-        className="flex min-h-10 w-12 touch-pan-y flex-col items-center justify-center gap-0.5 text-white drop-shadow-lg disabled:opacity-65"
+        className="flex min-h-12 w-12 touch-pan-y flex-col items-center justify-center gap-0.5 text-white drop-shadow-lg disabled:opacity-65"
       >
-        <Bookmark size={25} fill={saved ? 'white' : 'none'} strokeWidth={2} />
-        {displayCount(saveCount) ? (
-  <span className="text-[10px] font-bold tabular-nums">
-    {displayCount(saveCount)}
-  </span>
-) : null}
+        <span className="flex h-8 items-center justify-center">
+          <Bookmark size={25} fill={saved ? 'white' : 'none'} strokeWidth={2} />
+        </span>
+        <span className="min-h-[15px] text-[11px] font-semibold leading-none tabular-nums">
+          {displayCount(saveCount)}
+        </span>
       </button>
 
       {typeof document !== 'undefined' ? createPortal(
         <>
           {menuOpen && (
             <div className="fixed inset-0 z-[200001]" role="presentation">
-              <button type="button" className="absolute inset-0 cursor-default" aria-label="Close collection menu" onClick={() => setMenuOpen(false)} />
+              <button
+                type="button"
+                className="absolute inset-0 cursor-default bg-black/50"
+                aria-label="Close collection menu"
+                onClick={() => setMenuOpen(false)}
+              />
               <div
   className="absolute z-10 rounded-[16px] bg-white p-1.5 text-[#111827] shadow-2xl"
   style={{
