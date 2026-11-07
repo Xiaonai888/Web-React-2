@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import {
-  ChevronDown, Copy, Link2, Plus, Search, X,
-} from 'lucide-react'
 import { PageHeader, PageShell, SurfaceCard } from '../../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import ReelPlaylistSelector from '../../components/author/ReelPlaylistSelector'
+import ReelTagsField from '../../components/author/ReelTagsField'
+import ReelVideoPreview from '../../components/author/ReelVideoPreview'
+import { getReelYouTubeUrls } from '../../utils/reelYouTube'
 
 // This is the Author Page Add Reel experience, NOT Fast Studio's separate Create Video page.
 // Playlist selection is intentionally UI preview-only until a dedicated owned playlist API exists.
@@ -119,22 +120,6 @@ const MAX_TAGS = 10
 const MAX_TAG_LENGTH = 24
 const MAX_TOTAL_CHARS = 500
 
-function getYouTubeId(input) {
-  try {
-    const url = new URL(String(input || '').trim())
-    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return ''
-    const host = url.hostname.toLowerCase()
-    const parts = url.pathname.split('/').filter(Boolean)
-    let id = ''
-    if (host === 'youtu.be' || host === 'www.youtu.be') id = parts[0] || ''
-    if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(host)) {
-      if (parts[0] === 'watch') id = url.searchParams.get('v') || ''
-      if (['shorts', 'embed', 'live'].includes(parts[0])) id = parts[1] || ''
-    }
-    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : ''
-  } catch { return '' }
-}
-
 const getToken = () => localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 
 export default function AuthorReelAddPage() {
@@ -150,64 +135,20 @@ export default function AuthorReelAddPage() {
   const [tagDraft, setTagDraft] = useState('')
   const [playlists, setPlaylists] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
-  const [playlistSearch, setPlaylistSearch] = useState('')
-  const [playlistName, setPlaylistName] = useState('')
-  const [playlistOpen, setPlaylistOpen] = useState(false)
-  const [newPlaylistOpen, setNewPlaylistOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const playlistRef = useRef(null)
-  const videoId = useMemo(() => getYouTubeId(link), [link])
-  const tagCharacters = tags.join(', ').length + (tagDraft ? tagDraft.length + (tags.length ? 2 : 0) : 0)
-  const filteredPlaylists = playlists.filter(item => item.name.toLocaleLowerCase().includes(playlistSearch.toLocaleLowerCase()))
 
-  useEffect(() => {
-    if (!playlistOpen) return undefined
-    const onOutside = (event) => {
-      if (!playlistRef.current?.contains(event.target)) setPlaylistOpen(false)
-    }
-    const onEscape = (event) => { if (event.key === 'Escape') setPlaylistOpen(false) }
-    document.addEventListener('pointerdown', onOutside)
-    document.addEventListener('keydown', onEscape)
-    return () => {
-      document.removeEventListener('pointerdown', onOutside)
-      document.removeEventListener('keydown', onEscape)
-    }
-  }, [playlistOpen])
+  const youtube = useMemo(() => getReelYouTubeUrls(link), [link])
+  const videoId = youtube?.id || ''
 
-  const addTags = (value) => {
-    const tokens = String(value || '').split(',').map(item => item.trim()).filter(Boolean)
-    let message = ''
-    const next = [...tags]
-    for (const tag of tokens) {
-      if (next.some(item => item.toLocaleLowerCase() === tag.toLocaleLowerCase())) continue
-      if (tag.length > MAX_TAG_LENGTH) { message = t('authorReelAdd.tagsLength'); continue }
-      if (next.length >= MAX_TAGS) { message = t('authorReelAdd.tagsMaximum'); break }
-      if ([...next, tag].join(', ').length > MAX_TOTAL_CHARS) {
-        message = t('authorReelAdd.tagsChars')
-        break
-      }
-      next.push(tag)
-    }
-    setTags(next)
-    setError(message)
-  }
-
-  const handleTagChange = (value) => {
-    if (!value.includes(',')) { setTagDraft(value.slice(0,MAX_TOTAL_CHARS)); return }
-    const parts = value.split(',')
-    addTags(parts.slice(0, -1).join(','))
-    setTagDraft(parts.at(-1).slice(0,MAX_TAG_LENGTH))
-  }
-
-  const addPlaylist = () => {
-    const name = playlistName.trim()
-    if (!name || playlists.some(item => item.name.toLocaleLowerCase() === name.toLocaleLowerCase())) return
+  // Preview only: DO NOT persist playlist names or imply that they are stored.
+  const createPreviewPlaylist = (name) => {
+    const normalized = String(name || '').trim()
+    if (!normalized) return
+    if (playlists.some(item => item.name.toLocaleLowerCase() === normalized.toLocaleLowerCase())) return
     const id = `preview-${Date.now()}-${playlists.length}`
-    setPlaylists(items => [...items, { id, name }])
+    setPlaylists(items => [...items, { id, name: normalized }])
     setSelectedIds(ids => [...ids, id])
-    setPlaylistName('')
-    setNewPlaylistOpen(false)
   }
 
   const save = async (status) => {
@@ -216,13 +157,22 @@ export default function AuthorReelAddPage() {
     const token = getToken()
     if (!token) { setError(t('authorReelAdd.login')); return }
     const finalTag = tagDraft.trim()
-    if (finalTag && (finalTag.length > MAX_TAG_LENGTH || tags.length >= MAX_TAGS)) {
-      setError(finalTag.length > MAX_TAG_LENGTH ? t('authorReelAdd.tagsLength') : t('authorReelAdd.tagsMaximum'))
+    const alreadyAdded = tags.some(tag =>
+      tag.toLocaleLowerCase() === finalTag.toLocaleLowerCase()
+    )
+    if (finalTag.includes(',') || (finalTag && finalTag.length > MAX_TAG_LENGTH)) {
+      setError(t('authorReelAdd.tagsLength'))
       return
     }
-    const committedTags = finalTag && !tags.some(tag => tag.toLocaleLowerCase() === finalTag.toLocaleLowerCase())
-      ? [...tags, finalTag] : tags
-    if (committedTags.join(', ').length > MAX_TOTAL_CHARS) { setError(t('authorReelAdd.tagsChars')); return }
+    const committedTags = finalTag && !alreadyAdded ? [...tags, finalTag] : tags
+    if (committedTags.length > MAX_TAGS) {
+      setError(t('authorReelAdd.tagsMaximum'))
+      return
+    }
+    if (committedTags.join(', ').length > MAX_TOTAL_CHARS) {
+      setError(t('authorReelAdd.tagsChars'))
+      return
+    }
     if (selectedIds.length && !window.confirm(t('authorReelAdd.playlistConfirm'))) return
     setBusy(true)
     setError('')
@@ -231,8 +181,8 @@ export default function AuthorReelAddPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          video_url: `https://www.youtube.com/watch?v=${videoId}`,
-          thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          video_url: youtube.videoUrl,
+          thumbnail_url: youtube.thumbnailUrl,
           title: title.trim(), description: caption.trim(), tags: committedTags,
           access_type: 'free', unlock_price_diamonds: 0, status,
         }),
@@ -248,7 +198,6 @@ export default function AuthorReelAddPage() {
   }
 
   const fieldClass = 'app-input mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-[13px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]'
-  const iconButton = 'rounded-md p-1.5 text-[var(--shadow-text-secondary)] hover:bg-[var(--shadow-bg-hover)]'
 
   return (
     <PageShell className="pb-24 text-[var(--shadow-text-primary)]">
@@ -268,102 +217,30 @@ export default function AuthorReelAddPage() {
             <textarea rows={4} value={caption} maxLength={500} onChange={event => setCaption(event.target.value)}
               placeholder={t('authorReelAdd.captionPlaceholder')} className={`${fieldClass} resize-y`} />
           </label>
-          {videoId ? (
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--shadow-border)] p-2">
-              <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} alt={t('authorReelAdd.preview')}
-                className="h-[72px] w-[128px] shrink-0 rounded object-cover" loading="lazy" />
-              <div className="min-w-0 space-y-1">
-                <p className="line-clamp-2 text-sm font-medium">{title || t('authorReelAdd.preview')}</p>
-                <p className="text-[11px] text-[var(--shadow-text-secondary)]">YouTube · {videoId}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="flex items-center gap-2 text-xs text-[var(--shadow-text-tertiary)]"><Link2 size={14} />{t('authorReelAdd.youtubeOnly')}</p>
-          )}
+          <ReelVideoPreview videoUrl={link} title={title} t={t} />
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-2 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
-          <label className="block text-[13px] font-semibold">{t('authorReelAdd.playlists')}</label>
-          <p className="text-xs leading-5 text-[var(--shadow-text-secondary)]">{t('authorReelAdd.playlistsHelp')}</p>
-          <div className="relative" ref={playlistRef}>
-            <button type="button" onClick={() => setPlaylistOpen(value => !value)} aria-expanded={playlistOpen}
-              className="flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-[var(--shadow-border-strong)] bg-[var(--shadow-input-bg)] px-3 py-2 text-left text-[13px]">
-              <span>{selectedIds.length ? t('authorReelAdd.selectedCount', { count: selectedIds.length }) : t('authorReelAdd.selectPlaylists')}</span>
-              <ChevronDown size={17} aria-hidden="true" />
-            </button>
-            {playlistOpen ? (
-              <div className="app-elevated absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-elevated)] shadow-xl">
-                <div className="border-b border-[var(--shadow-border)] p-3">
-                  <p className="mb-2 text-xs font-semibold">{t('authorReelAdd.playlists')}</p>
-                  <div className="flex items-center gap-2 rounded-full border border-[var(--shadow-border-strong)] px-3">
-                    <Search size={16} className="text-[var(--shadow-text-tertiary)]" />
-                    <input type="search" value={playlistSearch} onChange={event => setPlaylistSearch(event.target.value)}
-                      placeholder={t('authorReelAdd.searchPlaylist')}
-                      className="w-full bg-transparent py-2.5 text-[13px] outline-none placeholder:text-[var(--shadow-placeholder)]" />
-                  </div>
-                </div>
-                <div className="max-h-[220px] overflow-y-auto p-2">
-                  {!filteredPlaylists.length ? <p className="p-4 text-center text-xs text-[var(--shadow-text-tertiary)]">{t('authorReelAdd.noPlaylists')}</p> : null}
-                  {filteredPlaylists.map(item => (
-                    <label key={item.id} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-[13px] hover:bg-[var(--shadow-bg-hover)]">
-                      <input type="checkbox" className="h-4 w-4 accent-[var(--shadow-text-primary)]" checked={selectedIds.includes(item.id)}
-                        onChange={() => setSelectedIds(ids => ids.includes(item.id) ? ids.filter(id => id !== item.id) : [...ids,item.id])} />
-                      <span className="min-w-0 break-words">{item.name}</span>
-                    </label>
-                  ))}
-                </div>
-                {newPlaylistOpen ? (
-                  <div className="border-t border-[var(--shadow-border)] p-3">
-                    <input autoFocus maxLength={80} value={playlistName} onChange={event => setPlaylistName(event.target.value)}
-                      onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addPlaylist() } }}
-                      placeholder={t('authorReelAdd.playlistName')} className={fieldClass} />
-                    <div className="mt-2 flex justify-end gap-2">
-                      <button type="button" className="rounded-lg px-3 py-1.5 text-xs" onClick={() => setNewPlaylistOpen(false)}><X size={16}/></button>
-                      <button type="button" disabled={!playlistName.trim()} onClick={addPlaylist} className="rounded-full bg-[var(--shadow-bg-soft)] px-3 py-1.5 text-xs font-semibold disabled:opacity-40">{t('authorReelAdd.create')}</button>
-                    </div>
-                  </div>
-                ) : null}
-                <div className="flex items-center justify-between border-t border-[var(--shadow-border)] p-2">
-                  <button type="button" onClick={() => setNewPlaylistOpen(value => !value)} className="flex items-center gap-1 rounded-full bg-[var(--shadow-bg-soft)] px-3 py-2 text-xs font-semibold"><Plus size={14}/>{t('authorReelAdd.newPlaylist')}</button>
-                  <button type="button" onClick={() => setPlaylistOpen(false)} className="rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-xs font-semibold">{t('authorReelAdd.done')}</button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-          <p className="text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{t('authorReelAdd.playlistPreview')}</p>
+        <SurfaceCard className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
+          <ReelPlaylistSelector
+            playlists={playlists}
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            onCreatePlaylist={createPreviewPlaylist}
+            disabled={busy}
+            previewOnly
+            t={t}
+          />
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-2 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
-          <label htmlFor="author-reel-tags" className="block text-[13px] font-semibold">{t('authorReelAdd.tags')}</label>
-          <p className="text-xs leading-5 text-[var(--shadow-text-secondary)]">{t('authorReelAdd.tagsHelp')}</p>
-          <div className="flex min-h-[120px] flex-wrap content-start items-start gap-1.5 rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] p-2.5 focus-within:border-[var(--shadow-border-strong)]">
-            {tags.map(tag => (
-              <span key={tag} className="inline-flex max-w-full items-center gap-1 rounded-md bg-[var(--shadow-bg-soft)] px-2 py-1 text-[11px] leading-4">
-                <span className="truncate">{tag}</span>
-                <button type="button" aria-label={t('authorReelAdd.removeTag',{tag})} onClick={() => setTags(items => items.filter(item => item !== tag))} className="rounded-full hover:opacity-60"><X size={13}/></button>
-              </span>
-            ))}
-            <input id="author-reel-tags" value={tagDraft}
-              onChange={event => handleTagChange(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter' || event.key === ',') {
-                  event.preventDefault(); addTags(tagDraft); setTagDraft('')
-                } else if (event.key === 'Backspace' && !tagDraft && tags.length) {
-                  setTags(items => items.slice(0,-1))
-                }
-              }}
-              placeholder={!tags.length ? t('authorReelAdd.tagsPlaceholder') : ''}
-              className="min-w-[140px] flex-1 bg-transparent px-1 py-1 text-xs outline-none placeholder:text-[var(--shadow-placeholder)]" />
-            <button type="button" title={t('authorReelAdd.copyTags')} aria-label={t('authorReelAdd.copyTags')}
-              onClick={() => { if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(tags.join(', ')).catch(() => {}) }} className={iconButton}><Copy size={17}/></button>
-            <button type="button" title={t('authorReelAdd.clearTags')} aria-label={t('authorReelAdd.clearTags')}
-              onClick={() => {setTags([]);setTagDraft('')}} className={iconButton}><X size={18}/></button>
-          </div>
-          <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--shadow-text-tertiary)]">
-            <span>{t('authorReelAdd.tagsPlaceholder')}</span>
-            <span className="shrink-0 tabular-nums">{tagCharacters}/{MAX_TOTAL_CHARS}</span>
-          </div>
-          <p className="text-[11px] leading-5 text-[var(--shadow-text-secondary)]">{t('authorReelAdd.tagLimit')}</p>
+        <SurfaceCard className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
+          <ReelTagsField
+            tags={tags}
+            draft={tagDraft}
+            onTagsChange={setTags}
+            onDraftChange={setTagDraft}
+            disabled={busy}
+            t={t}
+          />
         </SurfaceCard>
 
         {error ? <p role="alert" className="rounded-lg border border-[var(--shadow-border)] p-3 text-xs text-[var(--shadow-danger)]">{error}</p> : null}
