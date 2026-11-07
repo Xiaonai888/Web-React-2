@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getFastReaderToken } from '../../services/fastNotInterestedApi'
 
 registerTranslationNamespace('readerSettings', {
   "en": {
@@ -489,6 +490,76 @@ registerTranslationNamespace('readerSettings', {
   ko: { items: { 'shadow-account': { title: 'Shadow 계정', subtitle: '프로필, 비밀번호, 이메일 및 계정 보안을 관리하세요.' } } },
 })
 
+
+registerTranslationNamespace('readerSettings', {
+  en: {
+    fastReset: {
+      title: 'Reset Fast feedback',
+      subtitle: 'Allow hidden Reels to appear in Fast again.',
+      question: 'Reset all Not interested feedback?',
+      help: 'Previously hidden Reels may appear in Fast again.',
+      cancel: 'Cancel',
+      confirm: 'Reset',
+      saving: 'Resetting...',
+      success: 'Fast feedback has been reset.',
+      error: 'Could not reset Fast feedback.',
+    },
+  },
+  km: {
+    fastReset: {
+      title: 'កំណត់ Fast Feedback ឡើងវិញ',
+      subtitle: 'អនុញ្ញាតឱ្យ Reel ដែលបានលាក់អាចបង្ហាញវិញ។',
+      question: 'តើអ្នកចង់លុប Not interested ទាំងអស់មែនទេ?',
+      help: 'Reel ដែលធ្លាប់លាក់អាចបង្ហាញក្នុង Fast វិញ។',
+      cancel: 'បោះបង់',
+      confirm: 'កំណត់ឡើងវិញ',
+      saving: 'កំពុងដំណើរការ...',
+      success: 'បានកំណត់ Fast Feedback ឡើងវិញ។',
+      error: 'មិនអាចកំណត់ Fast Feedback ឡើងវិញបានទេ។',
+    },
+  },
+  zh: {
+    fastReset: {
+      title: '重置 Fast 反馈',
+      subtitle: '允许隐藏的 Reel 再次出现。',
+      question: '重置所有“不感兴趣”反馈？',
+      help: '以前隐藏的 Reel 可能再次出现在 Fast 中。',
+      cancel: '取消',
+      confirm: '重置',
+      saving: '正在重置...',
+      success: 'Fast 反馈已重置。',
+      error: '无法重置 Fast 反馈。',
+    },
+  },
+  ja: {
+    fastReset: {
+      title: 'Fast のフィードバックをリセット',
+      subtitle: '非表示の Reel を再表示できるようにします。',
+      question: '「興味なし」をすべてリセットしますか？',
+      help: '非表示にした Reel が再表示される場合があります。',
+      cancel: 'キャンセル',
+      confirm: 'リセット',
+      saving: 'リセット中...',
+      success: 'Fast のフィードバックをリセットしました。',
+      error: 'リセットできませんでした。',
+    },
+  },
+  ko: {
+    fastReset: {
+      title: 'Fast 피드백 초기화',
+      subtitle: '숨긴 Reel이 다시 표시되도록 허용합니다.',
+      question: '관심 없음 피드백을 모두 초기화할까요?',
+      help: '숨긴 Reel이 Fast에 다시 나타날 수 있습니다.',
+      cancel: '취소',
+      confirm: '초기화',
+      saving: '초기화 중...',
+      success: 'Fast 피드백이 초기화되었습니다.',
+      error: 'Fast 피드백을 초기화할 수 없습니다.',
+    },
+  },
+})
+
+
 const SHADOW_ACCOUNT_ITEMS = [
   {
     key: 'edit-profile',
@@ -507,6 +578,15 @@ const SHADOW_ACCOUNT_ITEMS = [
 ]
 
 const SETTINGS_GROUPS = [
+  
+{
+  key: 'fast-preferences',
+  title: 'Reset Fast feedback',
+  subtitle: 'Allow hidden Reels to appear in Fast again.',
+  icon: 'fa-solid fa-rotate-left',
+},
+
+  
   {
     title: 'Your account',
     items: [
@@ -661,6 +741,16 @@ function clearReaderSession() {
 }
 
 function ReaderSettingsIcon({ name }) {
+  
+case 'fast-preferences':
+  return (
+    <svg {...commonProps}>
+      <path d="M4 4v6h6" />
+      <path d="M4.8 10a8 8 0 1 1-.5 4" />
+      <path d="M12 8v4l3 2" />
+    </svg>
+  )
+
   const commonProps = {
     viewBox: '0 0 24 24',
     fill: 'none',
@@ -901,6 +991,10 @@ export default function ReaderSettingsPage() {
     })
   }, [shadowAccountOpen])
   const [message, setMessage] = useState('')
+  const [fastResetOpen, setFastResetOpen] = useState(false)
+  const [fastResetBusy, setFastResetBusy] = useState(false)
+  const [fastResetError, setFastResetError] = useState('')
+
   const groups = useMemo(() => SETTINGS_GROUPS, [])
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -929,6 +1023,13 @@ const filteredGroups = groups.map((group, index) => ({
   }
 
   function handleOpen(item) {
+    
+if (item.key === 'fast-preferences') {
+  setFastResetError('')
+  setFastResetOpen(true)
+  return
+}
+
   if (!shadowAccountOpen) sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
   if (item.key === 'messages-replies') {
     navigate(`/profile/settings/messages-replies${fromMeSettings ? '?from=me-settings' : ''}`)
@@ -984,6 +1085,70 @@ const filteredGroups = groups.map((group, index) => ({
     clearReaderSession()
     navigate('/login', { replace: true })
   }
+
+  
+async function confirmResetFast() {
+  if (fastResetBusy) return
+
+  setFastResetBusy(true)
+  setFastResetError('')
+
+  try {
+    const token = getFastReaderToken()
+
+    if (token) {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL ||
+        (['localhost', '127.0.0.1'].includes(
+          window.location.hostname
+        )
+          ? 'http://localhost:5000'
+          : 'https://shadow-backend-kucw.onrender.com')
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/fast/videos/not-interested/mine`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || data.ok !== true) {
+        throw new Error(
+          data.message || t('readerSettings.fastReset.error')
+        )
+      }
+    }
+
+    // Remove guest/browser-only feedback too.
+    try {
+      localStorage.removeItem('shadow_fast_hidden_reels_v1')
+    } catch {
+      // Browser storage may be unavailable.
+    }
+
+    setFastResetOpen(false)
+    setMessage(t('readerSettings.fastReset.success'))
+
+    window.clearTimeout(showComingSoon.timer)
+    showComingSoon.timer = window.setTimeout(
+      () => setMessage(''),
+      3000
+    )
+  } catch (error) {
+    setFastResetError(
+      error?.message || t('readerSettings.fastReset.error')
+    )
+  } finally {
+    setFastResetBusy(false)
+  }
+}
+
 
   return (
     <main className="app-page min-h-screen pb-[calc(28px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]" style={{ background: 'var(--shadow-bg-surface)' }}>
@@ -1066,6 +1231,62 @@ const filteredGroups = groups.map((group, index) => ({
           </>
         )}
       </div>
+
+      
+{fastResetOpen && (
+  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 px-4">
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="fast-reset-title"
+      aria-describedby="fast-reset-description"
+      className="w-full max-w-[420px] rounded-[22px] bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-2xl"
+    >
+      <h2
+        id="fast-reset-title"
+        className="text-[17px] font-semibold"
+      >
+        {t('readerSettings.fastReset.question')}
+      </h2>
+
+      <p
+        id="fast-reset-description"
+        className="mt-3 text-[13px] leading-6 text-[var(--shadow-text-secondary)]"
+      >
+        {t('readerSettings.fastReset.help')}
+      </p>
+
+      {fastResetError && (
+        <p role="alert" className="mt-3 text-[12px] text-red-500">
+          {fastResetError}
+        </p>
+      )}
+
+      <div className="mt-6 flex gap-3">
+        <button
+          type="button"
+          disabled={fastResetBusy}
+          onClick={() => setFastResetOpen(false)}
+          className="flex-1 rounded-xl bg-[var(--shadow-bg-soft)] px-4 py-3 text-[13px] font-medium disabled:opacity-50"
+        >
+          {t('readerSettings.fastReset.cancel')}
+        </button>
+
+        <button
+          type="button"
+          disabled={fastResetBusy}
+          onClick={confirmResetFast}
+          className="flex-1 rounded-xl bg-[#18181b] px-4 py-3 text-[13px] font-semibold text-white disabled:opacity-50"
+        >
+          {fastResetBusy
+            ? t('readerSettings.fastReset.saving')
+            : t('readerSettings.fastReset.confirm')}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {message ? (
         <div className="fixed bottom-[calc(28px+env(safe-area-inset-bottom))] left-1/2 z-[100] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#111827] px-4 py-2.5 text-[12px] font-normal text-white shadow-xl">
