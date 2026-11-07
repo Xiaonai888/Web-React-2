@@ -1,5 +1,5 @@
 import { Link2 } from 'lucide-react'
-import { getReelYouTubeUrls } from '../../../utils/reelYouTube'
+import { getReelYouTubeUrls } from '../../utils/reelYouTube'
 
 /** Lightweight thumbnail only: no YouTube iframe/API requests on form load. */
 export default function ReelVideoPreview({ videoUrl = '', title = '', t }) {
