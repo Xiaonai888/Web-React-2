@@ -54,7 +54,7 @@ function ReelViewer({
   onConfirmedPlay,
   t,
 }) {
-
+  const [soundEnabled, setSoundEnabled] = useState(false)
   const frameRef = useRef(null)
   const touchStart = useRef(null)
   const lastWheel = useRef(0)
@@ -62,58 +62,50 @@ function ReelViewer({
   const youtubeId = getYouTubeId(video?.video_url)
 
   
-const confirmedPlayIdsRef = useRef(new Set())
+  // Confirm actual playback from this iframe only; opening the viewer is not Play.
+  const confirmedPlayIdsRef = useRef(new Set())
 
-useEffect(() => {
-  if (typeof onConfirmedPlay !== 'function') {
-    return undefined
-  }
-
-  const handleMessage = (event) => {
-    if (event.source !== frameRef.current?.contentWindow) return
-
-    if (![
-      'https://www.youtube-nocookie.com',
-      'https://www.youtube.com',
-    ].includes(event.origin)) return
-
-    let data = event.data
-
-    try {
-      if (typeof data === 'string') data = JSON.parse(data)
-    } catch {
-      return
+  useEffect(() => {
+    if (!youtubeId || !UUID.test(String(video?.id || '')) || typeof onConfirmedPlay !== 'function') {
+      return undefined
     }
 
-    if (!data || typeof data !== 'object') return
+    const handleMessage = (event) => {
+      if (event.source !== frameRef.current?.contentWindow) return
+      if (![
+        'https://www.youtube-nocookie.com',
+        'https://www.youtube.com',
+      ].includes(event.origin)) return
 
-    const playerState =
-      data.event === 'onStateChange'
+      let data = event.data
+      if (typeof data === 'string') {
+        try { data = JSON.parse(data) } catch { return }
+      }
+      if (!data || typeof data !== 'object') return
+
+      const playerState = data.event === 'onStateChange'
         ? data.info
         : data.event === 'infoDelivery'
           ? data.info?.playerState
           : null
 
-    if (playerState !== 1) return
+      // YouTube state 1 = PLAYING; autoplay=0 below prevents opening from counting.
+      if (playerState !== 1) return
+      const reelId = String(video.id)
+      if (confirmedPlayIdsRef.current.has(reelId)) return
 
-    const reelId = String(video?.id || '')
+      confirmedPlayIdsRef.current.add(reelId)
+      try {
+        void onConfirmedPlay(reelId)
+      } catch (error) {
+        confirmedPlayIdsRef.current.delete(reelId)
+        console.warn('[FAST_AUTHOR_REEL_PLAY_CALLBACK_ERROR]', error)
+      }
+    }
 
-    if (
-      !UUID.test(reelId) ||
-      confirmedPlayIdsRef.current.has(reelId)
-    ) return
-
-    confirmedPlayIdsRef.current.add(reelId)
-    onConfirmedPlay(reelId)
-  }
-
-  window.addEventListener('message', handleMessage)
-
-  return () => {
-    window.removeEventListener('message', handleMessage)
-  }
-}, [video?.id, onConfirmedPlay])
-
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [video?.id, youtubeId, onConfirmedPlay])
 
   const change = useCallback((step) => {
     onIndexChange(current => Math.max(0, Math.min(videos.length - 1, current + step)))
@@ -143,7 +135,6 @@ useEffect(() => {
     const next = !soundEnabled
     setSoundEnabled(next)
     command(next ? 'unMute' : 'mute')
-    if (next) command('playVideo')
   }
 
   const onWheel = (event) => {
@@ -169,7 +160,13 @@ useEffect(() => {
         {youtubeId ? (
           <iframe key={video.id} ref={frameRef} title={video.title || t('authorReelGrid.tab')}
             src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=0&mute=1&playsinline=1&controls=1&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`}
-            onLoad={() => { if (soundEnabled) command('unMute') }}
+            onLoad={() => {
+              frameRef.current?.contentWindow?.postMessage(
+                JSON.stringify({ event: 'listening', id: youtubeId }),
+                'https://www.youtube-nocookie.com'
+              )
+              if (soundEnabled) command('unMute')
+            }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin" allowFullScreen
             className="absolute inset-0 h-full w-full" />
@@ -199,6 +196,66 @@ function PublicReelGrid({ userId }) {
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
   const validUser = UUID.test(String(userId || ''))
+
+  // Fetch hidden feedback only after first confirmed Play, never while browsing.
+  const hiddenLookupRef = useRef({ token: '', promise: null })
+  const restoringIdsRef = useRef(new Set())
+
+  const handleConfirmedPlay = useCallback(async (videoId) => {
+    const id = String(videoId || '')
+    if (!UUID.test(id) || restoringIdsRef.current.has(id)) return
+    restoringIdsRef.current.add(id)
+
+    try {
+      const token = getFastReaderToken()
+      if (!token) {
+        // Guests use the same browser-only hidden list as Fast.
+        const key = 'shadow_fast_hidden_reels_v1'
+        const saved = JSON.parse(localStorage.getItem(key) || '[]')
+        if (Array.isArray(saved) && saved.some(value => String(value) === id)) {
+          localStorage.setItem(
+            key,
+            JSON.stringify(saved.filter(value => String(value) !== id))
+          )
+        }
+        return
+      }
+
+      // Cache this reader's hidden IDs so repeated Plays create no extra reads.
+      if (hiddenLookupRef.current.token !== token) {
+        hiddenLookupRef.current = { token, promise: null }
+      }
+      const cache = hiddenLookupRef.current
+      if (!cache.promise) {
+        cache.promise = (async () => {
+          const hidden = new Set()
+          let offset = 0
+          for (let page = 0; page < 50; page += 1) {
+            const result = await listMyFastNotInterested({ token, offset })
+            for (const reelId of result.video_ids || []) hidden.add(String(reelId))
+            if (!result.pagination?.has_more) break
+            const nextOffset = Number(result.pagination.next_offset)
+            if (!Number.isSafeInteger(nextOffset) || nextOffset <= offset) break
+            offset = nextOffset
+          }
+          return hidden
+        })().catch(error => {
+          cache.promise = null // Allow retries if the initial read failed.
+          throw error
+        })
+      }
+
+      const hidden = await cache.promise
+      if (!hidden.has(id)) return // Do not write if this Reel was never hidden.
+
+      await setMyFastNotInterested(id, false, { token })
+      hidden.delete(id) // It can now re-enter the ordinary Fast feed selection.
+    } catch (error) {
+      console.warn('[FAST_AUTHOR_REEL_UNHIDE_FAILED]', error)
+    } finally {
+      restoringIdsRef.current.delete(id)
+    }
+  }, [])
 
   useEffect(() => {
     if (!validUser) return undefined
@@ -257,7 +314,17 @@ function PublicReelGrid({ userId }) {
       {error ? <div className="mt-4 text-center"><p role="alert" className="text-xs text-red-500">{t('authorReelGrid.loadError')}</p><button type="button" onClick={() => setRetryCount(v => v + 1)} className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--shadow-border)] px-4 py-2 text-xs"><RefreshCw size={14}/>{t('authorReelGrid.retry')}</button></div> : null}
       {hasMore && videos.length > 0 && !error ? <div className="py-5 text-center"><button type="button" disabled={loading} onClick={loadMore} className="rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 py-2.5 text-xs text-[var(--shadow-text-primary)] disabled:opacity-60">{t('authorReelGrid.more')}</button></div> : null}
       {selectedIndex !== null && videos[selectedIndex] ? (
-        <ReelViewer videos={videos} index={selectedIndex} onIndexChange={setSelectedIndex} onClose={closeViewer} hasMore={hasMore} onLoadMore={loadMore} loading={loading} t={t} />
+        <ReelViewer
+          videos={videos}
+          index={selectedIndex}
+          onIndexChange={setSelectedIndex}
+          onClose={closeViewer}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+          loading={loading}
+          onConfirmedPlay={handleConfirmedPlay}
+          t={t}
+        />
       ) : null}
     </section>
   )
