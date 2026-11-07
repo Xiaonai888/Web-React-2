@@ -21,10 +21,12 @@ const SOURCE_TYPE = 'fast_video'
 const HOLD_MS = 520
 
 function displayCount(value) {
-  if (value === null || value === undefined) return '—'
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return ''
   return new Intl.NumberFormat('en', {
-    notation: 'compact', maximumFractionDigits: 1,
-  }).format(Math.max(0, Number(value) || 0))
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(Math.max(0, numeric))
 }
 
 export default function FastReelSaveButton({ video, active, onAuthRequired, onError, onSuccess }) {
@@ -43,7 +45,7 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
   const [checking, setChecking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ right: 12, bottom: 100 })
+  const [menuPosition, setMenuPosition] = useState({ left: 12, top: 100 })
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorSubmitting, setEditorSubmitting] = useState(false)
   const [editorError, setEditorError] = useState('')
@@ -169,14 +171,28 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
   }
 
   const openHoldMenu = () => {
-    if (!videoId) return
-    const rect = buttonRef.current?.getBoundingClientRect()
-    setMenuPosition({
-      right: rect ? Math.max(10, window.innerWidth - rect.right) : 12,
-      bottom: rect ? Math.max(16, window.innerHeight - rect.top + 12) : 100,
-    })
+  if (!videoId) return
+
+  const rect = buttonRef.current?.getBoundingClientRect()
+  const menuWidth = 196
+  const menuHeight = 56
+  const gap = 10
+
+  if (!rect) {
+    setMenuPosition({ left: 12, top: 100 })
     setMenuOpen(true)
+    return
   }
+
+  const left = Math.max(12, rect.left - menuWidth - gap)
+  const top = Math.min(
+    window.innerHeight - menuHeight - 12,
+    Math.max(12, rect.top + rect.height / 2 - menuHeight / 2)
+  )
+
+  setMenuPosition({ left, top })
+  setMenuOpen(true)
+}
 
   const beginHold = event => {
     if (event.button !== undefined && event.button !== 0) return
@@ -274,7 +290,11 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
         className="flex min-h-10 w-12 touch-pan-y flex-col items-center justify-center gap-0.5 text-white drop-shadow-lg disabled:opacity-65"
       >
         <Bookmark size={25} fill={saved ? 'white' : 'none'} strokeWidth={2} />
-        <span className="text-[10px] font-bold tabular-nums">{displayCount(saveCount)}</span>
+        {displayCount(saveCount) ? (
+  <span className="text-[10px] font-bold tabular-nums">
+    {displayCount(saveCount)}
+  </span>
+) : null}
       </button>
 
       {typeof document !== 'undefined' ? createPortal(
@@ -282,7 +302,14 @@ export default function FastReelSaveButton({ video, active, onAuthRequired, onEr
           {menuOpen && (
             <div className="fixed inset-0 z-[200001]" role="presentation">
               <button type="button" className="absolute inset-0 cursor-default" aria-label="Close collection menu" onClick={() => setMenuOpen(false)} />
-              <div className="absolute z-10 rounded-[16px] bg-white p-1.5 text-[#111827] shadow-2xl" style={{ right: menuPosition.right, bottom: menuPosition.bottom, minWidth: 196 }}>
+              <div
+  className="absolute z-10 rounded-[16px] bg-white p-1.5 text-[#111827] shadow-2xl"
+  style={{
+    left: menuPosition.left,
+    top: menuPosition.top,
+    minWidth: 196,
+  }}
+>
                 <button
                   type="button"
                   onClick={() => {
