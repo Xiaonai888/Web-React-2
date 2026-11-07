@@ -16,6 +16,10 @@ import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
+import useFastNotInterested from '../hooks/useFastNotInterested'
+import FastNotInterestedToast from '../components/fast/FastNotInterestedToast'
+
+
 // REPLACE: src/pages/FastReelsPage.jsx
 // No database changes. Existing /api/fast/videos and /api/authors/following APIs are reused.
 registerTranslationNamespace('fastReels', {
@@ -61,7 +65,7 @@ function formatActionCount(value) {
 }
 
 
-const HIDDEN_KEY = 'shadow_fast_hidden_reels_v1'
+
 const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
 let cachedFeed = null
 
@@ -379,9 +383,6 @@ const [autoScroll, setAutoScroll] = useState(() => {
   }
 })
 
-const [hiddenIds, setHiddenIds] = useState(
-  () => new Set(getStoredIds(HIDDEN_KEY))
-)
 
 useEffect(() => {
   try {
@@ -424,6 +425,14 @@ useEffect(() => {
     toastTimerRef.current = window.setTimeout(() => setNotice(''), 2600)
   }, [])
   useEffect(() => () => window.clearTimeout(toastTimerRef.current), [])
+
+  
+const { hiddenIds, hide, undo, undoItem } = useFastNotInterested(
+  error => showNotice(
+    error?.message || 'Unable to save Reel feedback'
+  )
+)
+
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMoreRef.current) return
@@ -535,7 +544,7 @@ useEffect(() => {
 
   const visibleVideos = useMemo(() => {
   const available = videos.filter(
-    video => String(video.id) === requestedReelId || !hiddenIds.has(String(video.id))
+    video => !hiddenIds.has(String(video.id))
   )
 
   return feedTab === 'following'
@@ -610,24 +619,52 @@ useEffect(() => {
     if (activeIndexRef.current < visibleVideos.length - 1) navigateSlide(1)
   }, [autoScroll, settingsOpen, visibleVideos.length, navigateSlide])
 
-  const hideCurrentReel = useCallback(() => {
-    const index = Math.min(activeIndexRef.current, Math.max(0, visibleVideos.length - 1))
-    const reel = visibleVideos[index]
-    if (!reel?.id) return
-    setHiddenIds(previous => {
-      const next = new Set(previous)
-      next.add(String(reel.id))
-      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next])) } catch { /* storage blocked */ }
-      return next
+  
+const hideCurrentReel = useCallback(() => {
+  const index = Math.min(
+    activeIndexRef.current,
+    Math.max(0, visibleVideos.length - 1)
+  )
+
+  const reel = visibleVideos[index]
+  if (!reel?.id || !hide(reel.id, index)) return
+
+  const nextIndex = Math.min(
+    index,
+    Math.max(0, visibleVideos.length - 2)
+  )
+
+  activeIndexRef.current = nextIndex
+  setActiveIndex(nextIndex)
+  setSettingsOpen(false)
+
+  window.requestAnimationFrame(() => {
+    viewportRef.current?.scrollTo({
+      top: nextIndex * (viewportRef.current?.clientHeight || 0),
+      behavior: 'instant',
     })
-    const nextIndex = Math.min(index, Math.max(0, visibleVideos.length - 2))
-    activeIndexRef.current = nextIndex
-    setActiveIndex(nextIndex)
+  })
+}, [visibleVideos, hide])
+
+const undoLastHiddenReel = useCallback(() => {
+  const item = undo()
+  if (!item) return
+
+  const index = Math.max(0, item.index)
+  activeIndexRef.current = index
+  setActiveIndex(index)
+  navigationLockUntilRef.current = Date.now() + 350
+
+  window.requestAnimationFrame(() =>
     window.requestAnimationFrame(() => {
-      viewportRef.current?.scrollTo({ top: nextIndex * (viewportRef.current?.clientHeight || 0), behavior: 'instant' })
+      viewportRef.current?.scrollTo({
+        top: index * (viewportRef.current?.clientHeight || 0),
+        behavior: 'instant',
+      })
     })
-    setSettingsOpen(false)
-  }, [visibleVideos])
+  )
+}, [undo])
+
 
   const changeTab = tab => {
     if (feedTab === tab) return
@@ -848,6 +885,12 @@ const openEcho = video => {
       [String(echoVideo.id)]: Math.max(0, Number(nextTotal || 0)),
     }))
   }}
+/>
+
+      
+<FastNotInterestedToast
+  item={undoItem}
+  onUndo={undoLastHiddenReel}
 />
 
       
