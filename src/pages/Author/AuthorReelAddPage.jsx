@@ -191,7 +191,7 @@ export default function AuthorReelAddPage() {
       if (!response.ok || result.ok === false || !result.video) {
         throw new Error(result.message || t('authorReelAdd.saveFailed'))
       }
-      navigate(returnTo, { replace: true, state: { reelSaved: true } })
+      navigate(returnTo, { replace: true, state: { reelSaved: true, activeTab: 'Reel' } })
     } catch (cause) {
       setError(cause.message || t('authorReelAdd.saveFailed'))
     } finally { setBusy(false) }
@@ -202,7 +202,7 @@ export default function AuthorReelAddPage() {
   return (
     <PageShell className="pb-24 text-[var(--shadow-text-primary)]">
       <PageHeader title={t('authorReelAdd.heading')} subtitle={t('authorReelAdd.subtitle')}
-        onBack={() => navigate(returnTo)} backLabel={t('authorReelAdd.back')} />
+        onBack={() => navigate(returnTo, { state: { activeTab: 'Reel' } })} backLabel={t('authorReelAdd.back')} />
       <main className="mx-auto w-full max-w-[760px] space-y-5 px-3 py-5 sm:px-5">
         <SurfaceCard className="space-y-4 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4 sm:p-5">
           <label className="block text-xs font-semibold">{t('authorReelAdd.videoLink')}
