@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, Heart, Loader2, MessageCircle, Send, X } from 'lucide-react'
+import { ChevronDown, Heart, Loader2, MessageCircle, X } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -421,14 +421,21 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
             <textarea ref={inputRef} rows={1} maxLength={1000} value={draft} onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment() } }}
               placeholder={t('fastReelComments.write')} className="max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-[13px] text-gray-900 outline-none focus:border-blue-400 dark:border-white/10 dark:bg-[#26292f] dark:text-white" />
-            <button type="button" onClick={submitComment} disabled={busy || !draft.trim()} aria-label={t('fastReelComments.send')}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white disabled:opacity-40">
-                            {busy ? (
-                <Loader2 size={17} className="animate-spin" />
-              ) : (
-                <Send size={17} color="#000000" strokeWidth={2.2} />
-              )}
-            </button>
+            <button
+  type="button"
+  onClick={submitComment}
+  disabled={busy || !draft.trim()}
+  aria-label={t('fastReelComments.send')}
+  className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
+>
+  <i
+    className={`fa-solid ${
+      busy
+        ? 'fa-spinner animate-spin'
+        : 'fa-paper-plane'
+    } text-[13px]`}
+  />
+</button>
           </div>
         </footer>
       </section>
