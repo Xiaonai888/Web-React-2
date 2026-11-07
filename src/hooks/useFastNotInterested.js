@@ -40,6 +40,11 @@ export default function useFastNotInterested(onError) {
   const [hiddenIds, setHiddenIds] = useState(() =>
     token ? new Set() : readGuestHiddenIds(),
   )
+  // Do not render/play the Fast feed until all server-hidden IDs are loaded.
+  // Guests have their feedback synchronously from localStorage.
+  const [feedbackReady, setFeedbackReady] = useState(!signedIn)
+  const [feedbackError, setFeedbackError] = useState('')
+  const [feedbackAttempt, setFeedbackAttempt] = useState(0)
   const [undoItem, setUndoItem] = useState(null)
   const undoRef = useRef(null)
   const overridesRef = useRef(new Map())
@@ -66,6 +71,8 @@ export default function useFastNotInterested(onError) {
     if (!signedIn) return undefined
     const controller = new AbortController()
     let cancelled = false
+    setFeedbackReady(false)
+    setFeedbackError('')
 
     async function loadHiddenReels() {
       try {
@@ -73,26 +80,47 @@ export default function useFastNotInterested(onError) {
         for (let page = 0; page < 50; page += 1) {
           const result = await listMyFastNotInterested({ token, offset, signal: controller.signal })
           if (cancelled) return
+          if (!Array.isArray(result.video_ids)) {
+            throw new Error('Invalid Fast feedback response')
+          }
           setHiddenIds(previous => {
             const next = new Set(previous)
-            for (const id of result.video_ids || []) {
+            for (const id of result.video_ids) {
               if (overridesRef.current.get(String(id)) === false) next.delete(String(id))
               else next.add(String(id))
             }
             return next
           })
-          if (!result.pagination?.has_more) return
+          if (!result.pagination?.has_more) {
+            // Not a single hidden Reel can flash before this completes.
+            if (!cancelled) setFeedbackReady(true)
+            return
+          }
           const nextOffset = Number(result.pagination.next_offset)
-          if (!Number.isSafeInteger(nextOffset) || nextOffset <= offset) return
+          if (!Number.isSafeInteger(nextOffset) || nextOffset <= offset) {
+            throw new Error('Invalid Fast feedback pagination')
+          }
           offset = nextOffset
         }
+        throw new Error('Too many hidden Reels to load safely')
       } catch (error) {
-        if (!cancelled && error?.name !== 'AbortError') onErrorRef.current?.(error)
+        if (!cancelled && error?.name !== 'AbortError') {
+          // Fail closed: do NOT show an unfiltered feed on error.
+          setFeedbackError(error?.message || 'Unable to load Fast feedback')
+          onErrorRef.current?.(error)
+        }
       }
     }
     void loadHiddenReels()
     return () => { cancelled = true; controller.abort() }
-  }, [signedIn, token])
+  }, [signedIn, token, feedbackAttempt])
+
+  const retryFeedback = useCallback(() => {
+    if (!signedIn) return
+    setFeedbackReady(false)
+    setFeedbackError('')
+    setFeedbackAttempt(attempt => attempt + 1)
+  }, [signedIn])
 
   const hide = useCallback((videoId, index) => {
     const id = String(videoId || '')
@@ -161,5 +189,13 @@ export default function useFastNotInterested(onError) {
     return entry
   }, [signedIn, token])
 
-  return { hiddenIds, hide, undo, undoItem }
+  return {
+    hiddenIds,
+    hide,
+    undo,
+    undoItem,
+    feedbackReady,
+    feedbackError,
+    retryFeedback,
+  }
 }
