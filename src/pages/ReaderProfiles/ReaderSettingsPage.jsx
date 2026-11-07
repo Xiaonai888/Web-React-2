@@ -577,18 +577,11 @@ const SHADOW_ACCOUNT_ITEMS = [
   },
 ]
 
-const SETTINGS_GROUPS = [
-  
-{
-  key: 'fast-preferences',
-  title: 'Reset Fast feedback',
-  subtitle: 'Allow hidden Reels to appear in Fast again.',
-  icon: 'fa-solid fa-rotate-left',
-},
 
-  
+const SETTINGS_GROUPS = [
   {
     title: 'Your account',
+
     items: [
       {
         key: 'shadow-account',
