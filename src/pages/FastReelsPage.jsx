@@ -3,13 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
   Check, MessageCircle, Play, Plus,
-  RefreshCw, Search, Share2, Volume2, VolumeX,
+  RefreshCw, Search, Volume2, VolumeX,
 } from 'lucide-react'
 
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
-import AuthorPageShareSheet from '../components/AuthorPageShareSheet'
+import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
@@ -25,7 +25,7 @@ registerTranslationNamespace('fastReels', {
     soundOn: 'Enable sound', soundOff: 'Mute', autoplaySound: 'Auto sound', mutedAutoplay: 'Muted autoplay',
     speed: 'Playback speed', settings: 'Video settings', close: 'Close settings',
     creatorProfile: 'Author profile', follow: 'Follow author', liked: 'Like', save: 'Save', saved: 'Saved',
-    share: 'Share', comments: 'Comments', copied: 'Link copied', shareFailed: 'Unable to share link',
+    share: 'Echo', comments: 'Comments', copied: 'Link copied', shareFailed: 'Unable to share link',
     login: 'Sign in to use Following.', followEmpty: 'No Reels from followed authors yet.',
     followHelp: 'Follow authors to see their Reels here.', followingError: 'Could not load followed authors.',
     play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more',
@@ -36,7 +36,7 @@ registerTranslationNamespace('fastReels', {
     soundOn: 'បើកសំឡេង', soundOff: 'បិទសំឡេង', autoplaySound: 'បើកសំឡេងស្វ័យប្រវត្តិ', mutedAutoplay: 'ចាប់ផ្ដើមដោយគ្មានសំឡេង',
     speed: 'ល្បឿនចាក់', settings: 'ការកំណត់វីដេអូ', close: 'បិទការកំណត់',
     creatorProfile: 'ទំព័រអ្នកនិពន្ធ', follow: 'Follow អ្នកនិពន្ធ', liked: 'ចូលចិត្ត', save: 'រក្សាទុក', saved: 'បានរក្សាទុក',
-    share: 'ចែករំលែក', comments: 'មតិយោបល់', copied: 'បានចម្លង Link', shareFailed: 'មិនអាចចែករំលែកបាន',
+    share: 'Echo', comments: 'មតិយោបល់', copied: 'បានចម្លង Link', shareFailed: 'មិនអាចចែករំលែកបាន',
     login: 'សូម Login ដើម្បីមើល Following។', followEmpty: 'មិនទាន់មាន Reel ពីអ្នកនិពន្ធដែលបាន Follow។',
     followHelp: 'Follow អ្នកនិពន្ធ ដើម្បីឃើញ Reel របស់ពួកគេ។', followingError: 'មិនអាចទាញបញ្ជី Following បាន។',
     play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម',
@@ -52,6 +52,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
 const PAGE_SIZE = 8
 const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
+
+function formatActionCount(value) {
+  const count = Number(value)
+  return new Intl.NumberFormat('en', {
+    notation: 'compact', maximumFractionDigits: 1,
+  }).format(Number.isFinite(count) ? Math.max(0, count) : 0)
+}
+
 
 const HIDDEN_KEY = 'shadow_fast_hidden_reels_v1'
 const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
@@ -86,7 +94,7 @@ function youtubeId(value) {
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate,
   onSaveAuthRequired, onSaveError, onSaveSuccess,
-  onLikeAuthRequired, onLikeError, onShare, onComment, commentCount,
+  onLikeAuthRequired, onLikeError, onEcho, onComment, commentCount, echoCount,
   clearDisplay, onRestoreDisplay, onEnded, t }) {
 
   const id = useMemo(() => youtubeId(video.video_url), [video.video_url])
@@ -292,11 +300,11 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 />
 
           <button type="button" aria-label={t('fastReels.comments')} onClick={() => onComment(video)}
-            className="flex min-h-10 w-12 flex-col items-center justify-center gap-0.5 drop-shadow-lg">
-            <MessageCircle size={25}/>
-            {Number.isFinite(Number(commentCount)) && commentCount !== null && commentCount !== undefined ? (
-              <span className="text-[10px] font-bold">{Number(commentCount).toLocaleString()}</span>
-            ) : null}
+            className="flex min-h-12 w-12 flex-col items-center justify-center gap-0.5 drop-shadow-lg">
+            <span className="flex h-8 items-center justify-center"><MessageCircle size={25}/></span>
+            <span className="min-h-[15px] text-[11px] font-semibold leading-none tabular-nums">
+              {formatActionCount(commentCount)}
+            </span>
           </button>
           <FastReelSaveButton
             video={video}
@@ -305,8 +313,16 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
             onError={onSaveError}
             onSuccess={onSaveSuccess}
           />
-          <button type="button" aria-label={t('fastReels.share')} onClick={() => onShare(video)}
-            className="flex h-9 w-9 items-center justify-center drop-shadow-lg"><Share2 size={24}/></button>
+          <button type="button" aria-label="Echo Reel" onClick={() => onEcho(video)}
+            className="flex min-h-12 w-12 flex-col items-center justify-center gap-0.5 text-white drop-shadow-lg">
+            <span className="flex h-8 items-center justify-center">
+              <img src="/assets/Icons/echo.svg" alt="" aria-hidden="true"
+                className="h-[25px] w-[25px] object-contain brightness-0 invert" />
+            </span>
+            <span className="min-h-[15px] text-[11px] font-semibold leading-none tabular-nums">
+              {formatActionCount(echoCount)}
+            </span>
+          </button>
           {(!soundEnabled || !playing) ? (
             <button type="button" aria-label={t(soundEnabled ? 'fastReels.soundOff' : 'fastReels.soundOn')}
               onPointerDown={handleSoundDown} onPointerUp={clearLongPress} onPointerCancel={clearLongPress}
@@ -349,7 +365,8 @@ export default function FastReelsPage({ embedded = false }) {
   const [soundEnabled, setSoundEnabled] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [shareVideo, setShareVideo] = useState(null)
+  const [echoVideo, setEchoVideo] = useState(null)
+  const [echoCounts, setEchoCounts] = useState({})
   const [commentVideo, setCommentVideo] = useState(null)
   const [commentCounts, setCommentCounts] = useState({})
   const [clearDisplay, setClearDisplay] = useState(false)
@@ -528,6 +545,31 @@ useEffect(() => {
     : available
 }, [feedTab, followedIds, videos, hiddenIds, requestedReelId])
 
+  // Reuse existing Echo V2 source summary, only for the visible Reel.
+  // Failed counts retain a stable '0' display; clicking Echo still shows API errors.
+  const activeEchoReelId = visibleVideos[
+    Math.min(activeIndex, Math.max(0, visibleVideos.length - 1))
+  ]?.id || ''
+  useEffect(() => {
+    if (!activeEchoReelId) return undefined
+    const controller = new AbortController()
+    fetch(`${API_BASE_URL}/api/echo-v2/source/fast_video/${encodeURIComponent(activeEchoReelId)}?limit=1`, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+      .then(response => response.json().then(data => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!controller.signal.aborted && ok && data.ok === true) {
+          setEchoCounts(current => ({
+            ...current,
+            [String(activeEchoReelId)]: Math.max(0, Number(data.echo_count || 0)),
+          }))
+        }
+      })
+      .catch(() => { /* Echo count is optional before the backend migration. */ })
+    return () => controller.abort()
+  }, [activeEchoReelId])
+
   const onFastCommentCount = useCallback((reelId, count) => {
     setCommentCounts(current => ({
       ...current,
@@ -668,9 +710,9 @@ useEffect(() => {
   }
 
 
-const shareReel = video => {
+const openEcho = video => {
   if (!video?.id) return
-  setShareVideo(video)
+  setEchoVideo(video)
 }
 
   const openComments = video => {
@@ -730,8 +772,9 @@ const shareReel = video => {
                   onLikeAuthRequired={() => navigate('/login')}
                   onLikeError={error => showNotice(error?.message || 'Unable to update Reel Like')}
 
-                  onShare={shareReel} onComment={openComments}
-                  commentCount={commentCounts[String(video.id)] ?? video.comment_count ?? null}
+                  onEcho={openEcho} onComment={openComments}
+                  commentCount={commentCounts[String(video.id)] ?? video.comment_count ?? 0}
+                  echoCount={echoCounts[String(video.id)] ?? video.echo_count ?? 0}
                   clearDisplay={clearDisplay}
                   onRestoreDisplay={() => setClearDisplay(false)}
                   onEnded={handleVideoEnded}
@@ -787,24 +830,23 @@ const shareReel = video => {
       ) : null}
 
       
-<AuthorPageShareSheet
-  open={Boolean(shareVideo)}
-  pageName={shareVideo?.title || 'Reel'}
-  pageLink={
-    `${window.location.origin}/fast?reel=${encodeURIComponent(
-      shareVideo?.id || ''
-    )}`
-  }
-  sheetTitle="Share Reel"
-  shareText={`Watch ${shareVideo?.title || 'this Reel'} on Shadow.`}
-  zClassName="z-[200000]"
-  onClose={() => setShareVideo(null)}
-  onCopied={fallbackLink => {
-    showNotice(
-      fallbackLink
-        ? `Copy link: ${fallbackLink}`
-        : t('fastReels.copied')
-    )
+<EchoShareSheetV2Connected
+  open={Boolean(echoVideo)}
+  sourceType="fast_video"
+  sourceId={echoVideo?.id || ''}
+  sourceName={echoVideo?.creator?.page_name || echoVideo?.creator?.page_username || 'Shadow Fast'}
+  sourceAvatarUrl={echoVideo?.creator?.avatar_url || ''}
+  sourceContent={[echoVideo?.title, echoVideo?.description].filter(Boolean).join(' — ')}
+  sourceImageUrl={echoVideo?.thumbnail_url || ''}
+  sourceLabel="Fast Reel"
+  shareUrl={`${window.location.origin}/fast?reel=${encodeURIComponent(echoVideo?.id || '')}`}
+  onClose={() => setEchoVideo(null)}
+  onEchoed={(_, nextTotal) => {
+    if (!echoVideo?.id) return
+    setEchoCounts(current => ({
+      ...current,
+      [String(echoVideo.id)]: Math.max(0, Number(nextTotal || 0)),
+    }))
   }}
 />
 
