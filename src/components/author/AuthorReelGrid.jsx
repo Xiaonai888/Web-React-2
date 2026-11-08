@@ -361,6 +361,7 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
   const [sort, setSort] = useState('latest')
   const [sortOpen, setSortOpen] = useState(false)
   const sortMenuRef = useRef(null)
+‌  const loadVersionRef = useRef(0)
   const pickerRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [localPreview, setLocalPreview] = useState('')
@@ -393,33 +394,44 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
   const hasViewStatistics = galleryVideos.some(video => reelViewsValue(video) !== null)
 
   const load = useCallback(async (nextOffset = 0, signal) => {
+  const version = loadVersionRef.current
     const token = authToken()
     if (!token) { setError(t('authorReelManager.login')); setLoading(false); return }
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/fast/videos/mine?limit=${PAGE_SIZE}&offset=${nextOffset}`, {
+      const mode = studioMode ? 'manager' : 'gallery'
+const response = await fetch(
+  `${API_BASE_URL}/api/fast/videos/mine?limit=${PAGE_SIZE}&offset=${nextOffset}&mode=${mode}&sort=${sort}`,
+  {
         headers: { Authorization: `Bearer ${token}` }, signal, cache: 'no-store',
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok || !result.ok || !Array.isArray(result.videos)) throw new Error(result.message || t('authorReelManager.error'))
-      if (signal?.aborted) return
+      if (signal?.aborted || version !== loadVersionRef.current) return
       setVideos(current => nextOffset === 0 ? result.videos : [...current, ...result.videos.filter(v => !current.some(old => old.id === v.id))])
       setOffset(Number(result.pagination?.next_offset ?? nextOffset + result.videos.length))
       setHasMore(Boolean(result.pagination?.has_more))
     } catch (err) {
-      if (!signal?.aborted) setError(err.message || t('authorReelManager.error'))
-    } finally {
-      if (!signal?.aborted) setLoading(false)
-    }
-  }, [t])
+  if (!signal?.aborted && version === loadVersionRef.current)
+    setError(err.message || t('authorReelManager.error'))
+} finally {
+  if (!signal?.aborted && version === loadVersionRef.current)
+    setLoading(false)
+}
+}, [t, studioMode, sort])
 
   useEffect(() => {
-    const controller = new AbortController()
-    load(0, controller.signal)
-    return () => controller.abort()
-  }, [load])
+  loadVersionRef.current += 1
+  setVideos([])
+  setOffset(0)
+  setHasMore(false)
 
+  const controller = new AbortController()
+  load(0, controller.signal)
+
+  return () => controller.abort()
+}, [load])
   const openEditor = (video = null) => {
     setEditor(video || 'new')
     setTitle(video?.title || '')
