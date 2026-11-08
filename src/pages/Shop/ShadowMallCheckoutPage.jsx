@@ -864,7 +864,18 @@ export default function ShadowMallCheckoutPage() {
         <section className="mt-4 rounded-[24px] bg-[var(--shadow-bg-surface)] p-4 shadow-sm ring-1 ring-[var(--shadow-border)]">
           <div className="text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{t('shadowMallCheckoutPage.paymentSummary')}</div>
 
+          <div className="mt-3 flex min-h-[62px] items-center gap-3 rounded-[16px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#ED1C2E] text-[10px] font-black tracking-[-0.3px] text-white">
+              KHQR
+            </span>
+            <span className="min-w-0 flex-1 text-[13px] font-black text-[var(--shadow-text-primary)]">
+              ABA / PayWay
+            </span>
+            <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-primary)]" aria-hidden="true" />
+          </div>
+
           <div className="mt-4 space-y-3">
+
             <div className="flex items-center justify-between text-[13px] font-semibold text-[var(--shadow-text-secondary)]">
               <span>{t('shadowMallCheckoutPage.subtotal')}</span>
               <span className="font-extrabold text-[var(--shadow-text-primary)]">{formatUsd(subtotal)}</span>
