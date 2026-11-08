@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2, Clapperboard, ArrowLeft, Check } from 'lucide-react'
+import ReelEditManager from './ReelEditManager'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import ReelEditManager from './ReelEditManager'
 
 import {
   getFastReaderToken,
@@ -56,6 +56,7 @@ function ReelViewer({
   onConfirmedPlay,
   t,
 }) {
+
   const [soundEnabled, setSoundEnabled] = useState(false)
   const frameRef = useRef(null)
   const touchStart = useRef(null)
@@ -63,48 +64,27 @@ function ReelViewer({
   const video = videos[index]
   const youtubeId = getYouTubeId(video?.video_url)
 
-  
-  // Confirm actual playback from this iframe only; opening the viewer is not Play.
+  // Report only an actual YouTube PLAYING state; merely opening is not playback.
   const confirmedPlayIdsRef = useRef(new Set())
-
   useEffect(() => {
-    if (!youtubeId || !UUID.test(String(video?.id || '')) || typeof onConfirmedPlay !== 'function') {
-      return undefined
-    }
-
+    if (!youtubeId || !UUID.test(String(video?.id || '')) || typeof onConfirmedPlay !== 'function') return undefined
     const handleMessage = (event) => {
       if (event.source !== frameRef.current?.contentWindow) return
-      if (![
-        'https://www.youtube-nocookie.com',
-        'https://www.youtube.com',
-      ].includes(event.origin)) return
-
+      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
       let data = event.data
-      if (typeof data === 'string') {
-        try { data = JSON.parse(data) } catch { return }
-      }
+      if (typeof data === 'string') { try { data = JSON.parse(data) } catch { return } }
       if (!data || typeof data !== 'object') return
-
-      const playerState = data.event === 'onStateChange'
-        ? data.info
-        : data.event === 'infoDelivery'
-          ? data.info?.playerState
-          : null
-
-      // YouTube state 1 = PLAYING; autoplay=0 below prevents opening from counting.
+      const playerState = data.event === 'onStateChange' ? data.info :
+        data.event === 'infoDelivery' ? data.info?.playerState : null
       if (playerState !== 1) return
       const reelId = String(video.id)
       if (confirmedPlayIdsRef.current.has(reelId)) return
-
       confirmedPlayIdsRef.current.add(reelId)
-      try {
-        void onConfirmedPlay(reelId)
-      } catch (error) {
+      try { void onConfirmedPlay(reelId) } catch (error) {
         confirmedPlayIdsRef.current.delete(reelId)
         console.warn('[FAST_AUTHOR_REEL_PLAY_CALLBACK_ERROR]', error)
       }
     }
-
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [video?.id, youtubeId, onConfirmedPlay])
@@ -199,34 +179,24 @@ function PublicReelGrid({ userId }) {
   const [retryCount, setRetryCount] = useState(0)
   const validUser = UUID.test(String(userId || ''))
 
-  // Fetch hidden feedback only after first confirmed Play, never while browsing.
+  // Only unhide a reel after YouTube confirms playback (same rule as Fast).
   const hiddenLookupRef = useRef({ token: '', promise: null })
   const restoringIdsRef = useRef(new Set())
-
   const handleConfirmedPlay = useCallback(async (videoId) => {
     const id = String(videoId || '')
     if (!UUID.test(id) || restoringIdsRef.current.has(id)) return
     restoringIdsRef.current.add(id)
-
     try {
       const token = getFastReaderToken()
       if (!token) {
-        // Guests use the same browser-only hidden list as Fast.
         const key = 'shadow_fast_hidden_reels_v1'
         const saved = JSON.parse(localStorage.getItem(key) || '[]')
         if (Array.isArray(saved) && saved.some(value => String(value) === id)) {
-          localStorage.setItem(
-            key,
-            JSON.stringify(saved.filter(value => String(value) !== id))
-          )
+          localStorage.setItem(key, JSON.stringify(saved.filter(value => String(value) !== id)))
         }
         return
       }
-
-      // Cache this reader's hidden IDs so repeated Plays create no extra reads.
-      if (hiddenLookupRef.current.token !== token) {
-        hiddenLookupRef.current = { token, promise: null }
-      }
+      if (hiddenLookupRef.current.token !== token) hiddenLookupRef.current = { token, promise: null }
       const cache = hiddenLookupRef.current
       if (!cache.promise) {
         cache.promise = (async () => {
@@ -241,23 +211,19 @@ function PublicReelGrid({ userId }) {
             offset = nextOffset
           }
           return hidden
-        })().catch(error => {
-          cache.promise = null // Allow retries if the initial read failed.
-          throw error
-        })
+        })().catch(error => { cache.promise = null; throw error })
       }
-
       const hidden = await cache.promise
-      if (!hidden.has(id)) return // Do not write if this Reel was never hidden.
-
+      if (!hidden.has(id)) return
       await setMyFastNotInterested(id, false, { token })
-      hidden.delete(id) // It can now re-enter the ordinary Fast feed selection.
+      hidden.delete(id)
     } catch (error) {
       console.warn('[FAST_AUTHOR_REEL_UNHIDE_FAILED]', error)
     } finally {
       restoringIdsRef.current.delete(id)
     }
   }, [])
+
 
   useEffect(() => {
     if (!validUser) return undefined
@@ -304,7 +270,7 @@ function PublicReelGrid({ userId }) {
                   className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 <Play className="absolute right-2 top-2 drop-shadow" size={17} fill="currentColor" aria-hidden="true" />
-                <div className="absolute bottom-2 left-2 right-2 line-clamp-2 text-left text-[11px] font-medium drop-shadow sm:text-xs">{video.title}</div>
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-left text-xs font-medium text-white drop-shadow sm:text-sm"><Eye size={14} aria-hidden="true" />{formatReelViews(video)}</div>
               </button>
             )
           })}
@@ -316,17 +282,7 @@ function PublicReelGrid({ userId }) {
       {error ? <div className="mt-4 text-center"><p role="alert" className="text-xs text-red-500">{t('authorReelGrid.loadError')}</p><button type="button" onClick={() => setRetryCount(v => v + 1)} className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--shadow-border)] px-4 py-2 text-xs"><RefreshCw size={14}/>{t('authorReelGrid.retry')}</button></div> : null}
       {hasMore && videos.length > 0 && !error ? <div className="py-5 text-center"><button type="button" disabled={loading} onClick={loadMore} className="rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 py-2.5 text-xs text-[var(--shadow-text-primary)] disabled:opacity-60">{t('authorReelGrid.more')}</button></div> : null}
       {selectedIndex !== null && videos[selectedIndex] ? (
-        <ReelViewer
-          videos={videos}
-          index={selectedIndex}
-          onIndexChange={setSelectedIndex}
-          onClose={closeViewer}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
-          loading={loading}
-          onConfirmedPlay={handleConfirmedPlay}
-          t={t}
-        />
+        <ReelViewer videos={videos} index={selectedIndex} onIndexChange={setSelectedIndex} onClose={closeViewer} hasMore={hasMore} onLoadMore={loadMore} loading={loading} onConfirmedPlay={handleConfirmedPlay} t={t} />
       ) : null}
     </section>
   )
@@ -354,6 +310,35 @@ function authToken() {
   return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
 }
 
+function reelViewsValue(video) {
+  const value = video?.view_count ?? video?.views_count ?? video?.play_count ?? video?.views
+  const number = Number(value)
+  return value !== undefined && value !== null && Number.isFinite(number) && number >= 0
+    ? number : null
+}
+
+function formatReelViews(video) {
+  const count = reelViewsValue(video)
+  if (count === null) return '—'
+  return Intl.NumberFormat('en', { notation: count >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(count)
+}
+
+function sortReels(rows, sort) {
+  return [...rows].sort((a, b) => {
+    if (sort === 'popular') {
+      const av = reelViewsValue(a)
+      const bv = reelViewsValue(b)
+      // Missing view statistics do not get converted into fabricated zeroes.
+      if (av !== null && bv !== null && av !== bv) return bv - av
+      if (av === null && bv !== null) return 1
+      if (bv === null && av !== null) return -1
+    }
+    const ad = new Date(a.published_at || 0).getTime() || 0
+    const bd = new Date(b.published_at || 0).getTime() || 0
+    return (sort === 'oldest' ? ad - bd : bd - ad) || String(b.id).localeCompare(String(a.id))
+  })
+}
+
 function OwnerReelManager() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -370,6 +355,40 @@ function OwnerReelManager() {
   const [description, setDescription] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [managingVideo, setManagingVideo] = useState(null)
+  const [studioOpen, setStudioOpen] = useState(false)
+  const [sort, setSort] = useState('latest')
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortMenuRef = useRef(null)
+  const pickerRef = useRef(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [localPreview, setLocalPreview] = useState('')
+  const [pickerError, setPickerError] = useState('')
+
+  const createRoute = useCallback(() => navigate('/author/reel/add', {
+    state: { returnTo: `${window.location.pathname}${window.location.search}` },
+  }), [navigate])
+
+  const chooseVideo = useCallback(() => pickerRef.current?.click(), [])
+  useEffect(() => {
+    if (!selectedFile) { setLocalPreview(''); return undefined }
+    const objectUrl = URL.createObjectURL(selectedFile)
+    setLocalPreview(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [selectedFile])
+  useEffect(() => {
+    if (!sortOpen) return undefined
+    const onDocumentDown = (event) => {
+      if (!sortMenuRef.current?.contains(event.target)) setSortOpen(false)
+    }
+    document.addEventListener('pointerdown', onDocumentDown)
+    return () => document.removeEventListener('pointerdown', onDocumentDown)
+  }, [sortOpen])
+
+  const published = useMemo(() => videos.filter(video =>
+    video.status === 'published' && video.access_type !== 'paid' && getYouTubeId(video.video_url)
+  ), [videos])
+  const galleryVideos = useMemo(() => sortReels(published, sort), [published, sort])
+  const hasViewStatistics = galleryVideos.some(video => reelViewsValue(video) !== null)
 
   const load = useCallback(async (nextOffset = 0, signal) => {
     const token = authToken()
@@ -476,18 +495,176 @@ function OwnerReelManager() {
   }
 
   const activeVideoId = getYouTubeId(link)
+
+  if (!studioOpen) return (
+    <section className="relative mx-auto max-w-[980px] pb-24 text-[var(--shadow-text-primary)]">
+      <input
+        ref={pickerRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        aria-label="Choose a video from device"
+        onChange={event => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (!file) return
+          if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(file.name)) {
+            setPickerError('Please choose a video file.')
+            return
+          }
+          setPickerError('')
+          setSelectedFile(file)
+        }}
+      />
+
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div ref={sortMenuRef} className="relative min-w-0">
+          <button
+            type="button"
+            onClick={() => setSortOpen(open => !open)}
+            aria-label="Sort My Reels"
+            aria-expanded={sortOpen}
+            aria-haspopup="menu"
+            className="inline-flex min-h-10 items-center gap-2 text-left text-base font-semibold"
+          >
+            <span>My Reels</span>
+            <span aria-hidden="true" className="inline-block text-[11px] leading-none text-[var(--shadow-text-primary)]">
+              {sortOpen ? '▼' : '▲'}
+            </span>
+          </button>
+          {sortOpen && (
+            <div role="menu" aria-label="Sort reels" className="absolute left-0 top-full z-40 mt-1 w-[168px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1 text-black shadow-lg">
+              {[
+                ['latest', 'Latest'],
+                ['popular', 'Popular'],
+                ['oldest', 'Oldest'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  role="menuitemradio"
+                  aria-checked={sort === value}
+                  type="button"
+                  onClick={() => { setSort(value); setSortOpen(false) }}
+                  className="flex min-h-11 w-full items-center justify-between px-4 text-left text-sm hover:bg-gray-100"
+                >
+                  {label}
+                  {sort === value ? <Check size={16} className="text-violet-600" /> : null}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => { setSelectedIndex(null); setStudioOpen(true) }}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ffbf00] px-3 py-2 text-[11px] font-semibold text-black sm:text-xs"
+        >
+          <Clapperboard size={15} /> Shadow Studio
+        </button>
+      </div>
+      <p className="mb-3 text-[11px] text-[var(--shadow-text-secondary)]">{t('authorReelManager.access')}</p>
+      {sort === 'popular' && !hasViewStatistics && galleryVideos.length > 0 ? (
+        <p className="mb-2 text-[11px] text-amber-700" role="status">View statistics are not available from the Reel API yet. Showing newest first.</p>
+      ) : null}
+
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
+        <button
+          type="button"
+          onClick={chooseVideo}
+          aria-label="Create Reel from device"
+          className="relative flex aspect-[9/16] min-w-0 flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#ffd500] via-[#ffbd14] to-[#ff8a00] px-1 text-center text-white shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+        >
+          <span className="mb-2 inline-flex items-center justify-center rounded-full bg-white/20 p-2.5 sm:p-4"><Clapperboard size={26} strokeWidth={2.2} className="sm:h-9 sm:w-9" /></span>
+          <span className="text-xs font-semibold drop-shadow-sm sm:text-lg">Create Reel</span>
+        </button>
+        {galleryVideos.map((video, index) => {
+          const id = getYouTubeId(video.video_url)
+          const fallback = `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+          return (
+            <button
+              type="button"
+              key={video.id}
+              onClick={() => setSelectedIndex(index)}
+              aria-label={`Play ${video.title}`}
+              className="group relative aspect-[9/16] min-w-0 overflow-hidden rounded-md bg-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--shadow-accent)]"
+            >
+              <img
+                src={video.thumbnail_url || fallback}
+                alt=""
+                loading="lazy"
+                onError={event => { if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+              <Play size={15} fill="currentColor" aria-hidden="true" className="absolute right-2 top-2 drop-shadow" />
+              <span className="absolute bottom-2 left-2 flex items-center gap-1.5 text-xs font-medium text-white drop-shadow-sm sm:text-sm">
+                <Eye size={15} aria-hidden="true" /> {formatReelViews(video)}
+              </span>
+            </button>
+          )
+        })}
+        {loading && !videos.length ? Array.from({ length: 5 }, (_, index) => (
+          <div key={`skeleton-${index}`} className="aspect-[9/16] animate-pulse rounded-md bg-[var(--shadow-bg-soft)]" />
+        )) : null}
+      </div>
+      {error ? <div className="mt-3 flex items-center gap-3 text-xs text-red-600" role="alert"><span>{error}</span><button type="button" onClick={() => load(0)} className="rounded-full border border-[var(--shadow-border)] px-3 py-1.5 text-[var(--shadow-text-primary)]">Retry</button></div> : null}
+      {hasMore && !error ? (
+        <div className="py-5 text-center">
+          <button type="button" disabled={loading} onClick={() => load(offset)} className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-sm disabled:opacity-50">
+            {loading ? t('authorReelManager.loading') : t('authorReelManager.more')}
+          </button>
+        </div>
+      ) : null}
+
+      {/* Fixed above the author page bottom navigation; not inside the scrolling grid. */}
+      <button
+        type="button"
+        onClick={chooseVideo}
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-40 inline-flex min-h-12 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[0_2px_16px_rgba(0,0,0,0.15)] sm:text-base"
+      >
+        <Clapperboard size={20} fill="currentColor" /> Create reel
+      </button>
+
+      {selectedIndex !== null && galleryVideos[selectedIndex] ? (
+        <ReelViewer
+          videos={galleryVideos}
+          index={selectedIndex}
+          onIndexChange={setSelectedIndex}
+          onClose={() => setSelectedIndex(null)}
+          hasMore={hasMore}
+          onLoadMore={() => load(offset)}
+          loading={loading}
+          t={t}
+        />
+      ) : null}
+
+      {/* Local-file selection is only a preview; Shadow never stores the video binary. */}
+      {selectedFile && (
+        <div role="dialog" aria-modal="true" aria-label="Selected video" className="fixed inset-0 z-[100600] flex items-center justify-center bg-black/70 px-4 py-8">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 text-black shadow-xl">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-base font-bold">Selected video</h3>
+              <button type="button" onClick={() => setSelectedFile(null)} aria-label="Close selected video"><X size={22} /></button>
+            </div>
+            <p className="mb-3 truncate text-xs text-gray-600" title={selectedFile.name}>{selectedFile.name}</p>
+            {localPreview ? <video key={localPreview} controls playsInline src={localPreview} className="mx-auto max-h-[45vh] w-full rounded-lg bg-black" /> : null}
+            <p className="mt-3 text-xs text-gray-600">Shadow currently publishes YouTube links only. Upload this video to YouTube, then add its link to Shadow.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <a href="https://www.youtube.com/upload" target="_blank" rel="noopener noreferrer" className="rounded-full border border-gray-300 px-3 py-2 text-xs font-semibold">Upload to YouTube</a>
+              <button type="button" onClick={() => { setSelectedFile(null); createRoute() }} className="rounded-full bg-[#ffbf00] px-3 py-2 text-xs font-semibold">Continue with YouTube link</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {pickerError ? <p role="alert" className="fixed bottom-32 left-1/2 z-50 w-max max-w-[90vw] -translate-x-1/2 rounded-xl bg-red-600 px-4 py-2 text-xs text-white">{pickerError}</p> : null}
+    </section>
+  )
+
   return (
     <section className="mx-auto max-w-[980px] text-[var(--shadow-text-primary)]">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">{t('authorReelManager.myReels')}</h2>
-        <button type="button" onClick={() =>
-  navigate('/author/reel/add', {
-    state: {
-      returnTo: `${window.location.pathname}${window.location.search}`,
-    },
-  })
-}
-disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
+        <button type="button" onClick={() => setStudioOpen(false)} className="inline-flex items-center gap-1.5 text-base font-semibold" aria-label="Back to My Reels"><ArrowLeft size={18}/> Shadow Studio</button>
+        <button type="button" onClick={createRoute} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
       </div>
       <p className="mb-4 text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.access')}</p>
       {editor ? (
@@ -537,36 +714,19 @@ disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var
         })}
       </div> : null}
       {hasMore && videos.length > 0 ? <div className="py-5 text-center"><button type="button" disabled={loading || busy} onClick={() => load(offset)} className="rounded-full border border-[var(--shadow-border)] px-5 py-2 text-xs disabled:opacity-50">{t('authorReelManager.more')}</button></div> : null}
-      {selectedIndex !== null && videos[selectedIndex] ? (
-  <ReelViewer
-    videos={videos}
-    index={selectedIndex}
-    onIndexChange={setSelectedIndex}
-    onClose={() => setSelectedIndex(null)}
-    hasMore={hasMore}
-    onLoadMore={() => load(offset)}
-    loading={loading}
-    t={t}
-  />
-) : null}
-
-{managingVideo ? (
-  <ReelEditManager
-    key={managingVideo.id}
-    video={managingVideo}
-    onClose={() => setManagingVideo(null)}
-    onSaved={(updated) => {
-      setVideos(items =>
-        items.map(item =>
-          item.id === updated.id ? updated : item
-        )
-      )
-      setManagingVideo(null)
-      setNotice(t('authorReelManager.saved'))
-    }}
-  />
-) : null}
-
+      {selectedIndex !== null && videos[selectedIndex] ? <ReelViewer videos={videos} index={selectedIndex} onIndexChange={setSelectedIndex} onClose={() => setSelectedIndex(null)} hasMore={hasMore} onLoadMore={() => load(offset)} loading={loading} t={t} /> : null}
+      {managingVideo ? (
+        <ReelEditManager
+          key={managingVideo.id}
+          video={managingVideo}
+          onClose={() => setManagingVideo(null)}
+          onSaved={(updated) => {
+            setVideos(items => items.map(item => item.id === updated.id ? updated : item))
+            setManagingVideo(null)
+            setNotice(t('authorReelManager.saved'))
+          }}
+        />
+      ) : null}
     </section>
   )
 }
