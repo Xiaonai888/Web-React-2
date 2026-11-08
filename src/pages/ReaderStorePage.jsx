@@ -915,7 +915,7 @@ const browseKey = BROWSE_KEYS.has(requestedBrowseKey)
     return
   }
 
-  navigate(`/store?browse=${encodeURIComponent(key)}`)
+  navigate(`/store?browse=${encodeURIComponent(key)}`, { state: { fromStore: true } })
 }
   const browseTitles = {
     from_author_stores: t('readerStore.fromAuthors'),
@@ -952,11 +952,14 @@ const browseKey = BROWSE_KEYS.has(requestedBrowseKey)
   <>
     <button
       type="button"
-      onClick={() =>
-        browseKey
-          ? navigate('/store')
-          : navigate(-1)
-      }
+      onClick={() => {
+  if (browseKey) {
+    if (location.state?.fromStore) navigate(-1)
+    else navigate('/store', { replace: true })
+    return
+  }
+  navigate('/me', { replace: true })
+}}
       aria-label={t('readerStore.goBack')}
       className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
     >
