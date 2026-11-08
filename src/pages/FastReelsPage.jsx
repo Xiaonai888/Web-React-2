@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
-  Check, MessageCircle, Play, Plus,
+  ArrowLeft, Check, MessageCircle, Play, Plus,
   RefreshCw, Search, Volume2, VolumeX,
 } from 'lucide-react'
 
@@ -368,6 +368,12 @@ export default function FastReelsPage({ embedded = false }) {
   const location = useLocation()
   const requestedReelId =
   new URLSearchParams(location.search).get('reel') || ''
+  const ownerReturnPath =
+  location.state?.fromAuthorReel === true &&
+  typeof location.state?.returnTo === 'string' &&
+  /^\/author\/(?:reel\/studio|page(?:\/[^?#]*)?)(?:[?#].*)?$/.test(location.state.returnTo)
+    ? location.state.returnTo
+    : ''
   const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
   const initialCache = initialCacheRef.current
   const viewportRef = useRef(null)
@@ -833,6 +839,21 @@ const openEcho = video => {
       style={embedded && !clearDisplay ? { height: 'calc(100dvh - 114px - env(safe-area-inset-bottom))' } : undefined}>
       {/* The header is a sibling of the YouTube iframe, never an overlay hiding YouTube attribution. */}
       {!clearDisplay ? <header className="relative z-40 flex h-14 shrink-0 items-center justify-center bg-black px-3 text-white">
+        {!embedded && ownerReturnPath && (
+  <button
+    type="button"
+    aria-label="Back to Author Reels"
+    onClick={() =>
+      navigate(ownerReturnPath, {
+        replace: true,
+        state: { activeTab: 'Reel' },
+      })
+    }
+    className="absolute left-3 top-1/2 z-50 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white hover:bg-white/10"
+  >
+    <ArrowLeft size={22} />
+  </button>
+)}
         <nav className="flex items-center gap-6" aria-label="Fast feeds">
           {[['following', t('fastReels.following')], ['forYou', t('fastReels.forYou')]].map(([key, label]) => (
             <button type="button" key={key} onClick={() => changeTab(key)} aria-current={feedTab === key ? 'page' : undefined}
