@@ -1251,18 +1251,30 @@ export default function AuthorCheckoutPage() {
           {!needsDelivery && items.length > 0 ? (
             <div className="mt-3 space-y-2">
               <div className="text-[12px] font-bold text-[var(--shadow-text-primary)]">{t('authorCheckout.pdf_method')}</div>
-              <div className="grid grid-cols-2 gap-3">
-                {methodAvailability.aba ? <button type="button" aria-pressed={paymentMethod === 'aba'}
-                  onClick={() => setPaymentMethod('aba')}
-                  className={`min-h-11 rounded-xl border px-3 text-[12px] font-bold ${paymentMethod === 'aba' ? 'border-yellow-500 bg-yellow-50 text-black' : 'border-[var(--shadow-border)]'}`}>
-                  {t('authorCheckout.pdf_aba')}
-                </button> : null}
+              <div className="flex flex-col gap-2">
+                {methodAvailability.aba ? (
+                  <button
+                    type="button"
+                    aria-pressed={paymentMethod === 'aba'}
+                    onClick={() => setPaymentMethod('aba')}
+                    className={`flex min-h-[62px] w-full items-center gap-3 rounded-[16px] border bg-[var(--shadow-bg-surface)] px-3 py-2.5 text-left transition active:scale-[0.99] ${paymentMethod === 'aba' ? 'border-[var(--shadow-border-strong)]' : 'border-[var(--shadow-border)]'}`}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#ED1C2E] text-[10px] font-black tracking-[-0.3px] text-white">
+                      KHQR
+                    </span>
+                    <span className="min-w-0 flex-1 text-[13px] font-black text-[var(--shadow-text-primary)]">
+                      ABA / PayWay
+                    </span>
+                    <i className="fa-solid fa-chevron-right text-[12px] text-[var(--shadow-text-primary)]" aria-hidden="true" />
+                  </button>
+                ) : null}
                 {methodAvailability.binance ? <button type="button" aria-pressed={paymentMethod === 'binance'}
                   onClick={() => setPaymentMethod('binance')}
                   className={`min-h-11 rounded-xl border px-3 text-[12px] font-bold ${paymentMethod === 'binance' ? 'border-yellow-500 bg-yellow-50 text-black' : 'border-[var(--shadow-border)]'}`}>
                   {t('authorCheckout.pdf_binance')}
                 </button> : null}
               </div>
+
               {methodAvailability.ready && !methodAvailability.aba && !methodAvailability.binance ?
                 <p className="text-[12px] text-red-600">{t('authorCheckout.pdf_binanceUnavailable')}</p> : null}
               {paymentMethod === 'binance' && methodAvailability.binance ? <div className="text-[12px] font-bold text-emerald-700">
