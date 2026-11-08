@@ -308,6 +308,9 @@ const FastStudioPage = lazy(() => import('./pages/FastStudioPage'))
 const FastReelsPage = lazy(() => import('./pages/FastReelsPage'))
 const FastCreateVideoPage = lazy(() => import('./pages/FastCreateVideoPage'))
 const AuthorReelAddPage = lazy(() => import('./pages/Author/AuthorReelAddPage'))
+const AuthorShadowStudioPage = lazy(() =>
+  import('./pages/Author/AuthorShadowStudioPage')
+)
 
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
@@ -1605,6 +1608,11 @@ const shouldShowOpeningAds =
       <FastStudioPage />
     </LazyPage>
   }
+/>
+
+          <Route
+  path="/author/reel/studio"
+  element={<LazyPage><AuthorShadowStudioPage /></LazyPage>}
 />
 
           <Route
