@@ -14,6 +14,7 @@ import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Conn
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
+import { recordFastReelView } from '../services/fastReelViewsApi'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -140,9 +141,12 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       }
       const state = data.event === 'onStateChange' ? data.info : data.event === 'infoDelivery' ? data.info?.playerState : null
       if (state === 1) {
-        setPlaying(true)
-        endedRef.current = false
-      }
+  setPlaying(true)
+  endedRef.current = false
+  void recordFastReelView(video.id).catch(error => {
+    console.warn('[FAST_REEL_VIEW_TRACK_ERROR]', error)
+  })
+}
       if ([0, 2, 5].includes(state)) setPlaying(false)
       if (state === 0 && !endedRef.current) {
         endedRef.current = true
