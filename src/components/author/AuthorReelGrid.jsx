@@ -169,6 +169,7 @@ function ReelViewer({
 }
 
 function PublicReelGrid({ userId }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [videos, setVideos] = useState([])
   const [page, setPage] = useState(0)
@@ -263,7 +264,9 @@ function PublicReelGrid({ userId }) {
           {videos.map((video, index) => {
             const id = getYouTubeId(video.video_url)
             return (
-              <button key={video.id} type="button" onClick={() => setSelectedIndex(index)} aria-label={video.title}
+              <button key={video.id} type="button" onClick={() => navigate(`/fast?reel=${encodeURIComponent(String(video.id))}`, {
+                state: { fromAuthorReel: true, returnTo: `${window.location.pathname}${window.location.search}` },
+              })} aria-label={video.title}
                 className="group relative aspect-[9/16] overflow-hidden rounded-md bg-[#171717] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--shadow-accent)]">
                 <img src={video.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy"
                   onError={event => { const fallback = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }}
@@ -339,7 +342,7 @@ function sortReels(rows, sort) {
   })
 }
 
-function OwnerReelManager() {
+function OwnerReelManager({ studioMode = false, onExitStudio }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [videos, setVideos] = useState([])
@@ -355,7 +358,6 @@ function OwnerReelManager() {
   const [description, setDescription] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [managingVideo, setManagingVideo] = useState(null)
-  const [studioOpen, setStudioOpen] = useState(false)
   const [sort, setSort] = useState('latest')
   const [sortOpen, setSortOpen] = useState(false)
   const sortMenuRef = useRef(null)
@@ -496,7 +498,7 @@ function OwnerReelManager() {
 
   const activeVideoId = getYouTubeId(link)
 
-  if (!studioOpen) return (
+  if (!studioMode) return (
     <section className="relative mx-auto max-w-[980px] pb-24 text-[var(--shadow-text-primary)]">
       <input
         ref={pickerRef}
@@ -556,7 +558,9 @@ function OwnerReelManager() {
         </div>
         <button
           type="button"
-          onClick={() => { setSelectedIndex(null); setStudioOpen(true) }}
+          onClick={() => navigate('/author/reel/studio', {
+            state: { returnTo: `${window.location.pathname}${window.location.search}` },
+          })}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ffbf00] px-3 py-2 text-[11px] font-semibold text-black sm:text-xs"
         >
           <Clapperboard size={15} /> Shadow Studio
@@ -584,7 +588,9 @@ function OwnerReelManager() {
             <button
               type="button"
               key={video.id}
-              onClick={() => setSelectedIndex(index)}
+              onClick={() => navigate(`/fast?reel=${encodeURIComponent(String(video.id))}`, {
+                state: { fromAuthorReel: true, returnTo: `${window.location.pathname}${window.location.search}` },
+              })}
               aria-label={`Play ${video.title}`}
               className="group relative aspect-[9/16] min-w-0 overflow-hidden rounded-md bg-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--shadow-accent)]"
             >
@@ -663,7 +669,10 @@ function OwnerReelManager() {
   return (
     <section className="mx-auto max-w-[980px] text-[var(--shadow-text-primary)]">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <button type="button" onClick={() => setStudioOpen(false)} className="inline-flex items-center gap-1.5 text-base font-semibold" aria-label="Back to My Reels"><ArrowLeft size={18}/> Shadow Studio</button>
+        <button type="button" onClick={() => {
+          if (typeof onExitStudio === 'function') onExitStudio()
+          else navigate('/author/page', { state: { activeTab: 'Reel' } })
+        }} className="inline-flex items-center gap-1.5 text-base font-semibold" aria-label="Back to My Reels"><ArrowLeft size={18}/> Shadow Studio</button>
         <button type="button" onClick={createRoute} disabled={busy} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--shadow-accent)] px-3.5 py-2 text-xs font-semibold text-[var(--shadow-accent-text)] disabled:opacity-50"><Plus size={15}/>{t('authorReelManager.add')}</button>
       </div>
       <p className="mb-4 text-xs text-[var(--shadow-text-secondary)]">{t('authorReelManager.access')}</p>
@@ -696,7 +705,15 @@ function OwnerReelManager() {
         {videos.map((video,index) => {
           const ytId = getYouTubeId(video.video_url)
           return <div key={video.id} className="overflow-hidden rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
-            <button type="button" onClick={() => setSelectedIndex(index)} disabled={!ytId} className="relative block aspect-[9/16] w-full overflow-hidden bg-black text-white disabled:opacity-50">
+            <button type="button" onClick={() => {
+              if (video.status === 'published' && video.access_type === 'free') {
+                navigate(`/fast?reel=${encodeURIComponent(String(video.id))}`, {
+                  state: { fromAuthorReel: true, returnTo: `${window.location.pathname}${window.location.search}` },
+                })
+              } else {
+                setSelectedIndex(index) // Unpublished/draft preview stays private to Shadow Studio.
+              }
+            }} disabled={!ytId} className="relative block aspect-[9/16] w-full overflow-hidden bg-black text-white disabled:opacity-50">
               {ytId ? <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="" loading="lazy" onError={event => { const fallback = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`; if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }} className="h-full w-full object-cover" /> : null}
               <Play size={23} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow" fill="currentColor" />
               <span className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-1 text-[10px] text-white">{t(video.status === 'published' ? 'authorReelManager.published' : 'authorReelManager.draft')}</span>
@@ -731,6 +748,8 @@ function OwnerReelManager() {
   )
 }
 
-export default function AuthorReelGrid({ userId, isOwner = false }) {
-  return isOwner ? <OwnerReelManager /> : <PublicReelGrid userId={userId} />
+export default function AuthorReelGrid({ userId, isOwner = false, studioMode = false, onExitStudio }) {
+  return isOwner
+    ? <OwnerReelManager studioMode={studioMode} onExitStudio={onExitStudio} />
+    : <PublicReelGrid userId={userId} />
 }
