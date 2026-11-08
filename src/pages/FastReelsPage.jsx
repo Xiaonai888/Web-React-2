@@ -9,6 +9,7 @@ import {
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../components/common/PagePrimitives'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import FastReelSettingsSheet from '../components/fast/FastReelSettingsSheet'
+import FastReelSeekBar from '../components/fast/FastReelSeekBar'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
@@ -32,7 +33,7 @@ registerTranslationNamespace('fastReels', {
     share: 'Echo', comments: 'Comments', copied: 'Link copied', shareFailed: 'Unable to share link',
     login: 'Sign in to use Following.', followEmpty: 'No Reels from followed authors yet.',
     followHelp: 'Follow authors to see their Reels here.', followingError: 'Could not load followed authors.',
-    play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more',
+    play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more', seek: 'Seek video',
   },
   km: {
     following: 'Following', forYou: 'For You', search: 'ស្វែងរក', loading: 'កំពុងផ្ទុកវីដេអូ...', empty: 'មិនទាន់មានវីដេអូ',
@@ -43,11 +44,11 @@ registerTranslationNamespace('fastReels', {
     share: 'Echo', comments: 'មតិយោបល់', copied: 'បានចម្លង Link', shareFailed: 'មិនអាចចែករំលែកបាន',
     login: 'សូម Login ដើម្បីមើល Following។', followEmpty: 'មិនទាន់មាន Reel ពីអ្នកនិពន្ធដែលបាន Follow។',
     followHelp: 'Follow អ្នកនិពន្ធ ដើម្បីឃើញ Reel របស់ពួកគេ។', followingError: 'មិនអាចទាញបញ្ជី Following បាន។',
-    play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម',
+    play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម', seek: 'អូសទៅពេលវេលាវីដេអូ',
   },
-  zh: { following: '关注', forYou: '为你推荐', search: '搜索', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '已发布的 Reel 显示在这里。', error: '无法加载视频', retry: '重试', soundOn: '打开声音', soundOff: '静音', autoplaySound: '自动播放声音', mutedAutoplay: '静音自动播放', speed: '播放速度', settings: '视频设置', close: '关闭设置', creatorProfile: '作者主页', follow: '关注作者', liked: '喜欢', save: '收藏', saved: '已收藏', share: '分享', comments: '评论', copied: '已复制链接', shareFailed: '无法分享链接', login: '请登录以查看关注内容。', followEmpty: '暂无关注作者的 Reel。', followHelp: '关注作者以观看他们的 Reel。', followingError: '无法加载关注列表。', play: '播放', pause: '暂停', source: 'YouTube', loadMore: '加载更多' },
-  ja: { following: 'フォロー中', forYou: 'おすすめ', search: '検索', loading: '動画を読み込み中...', empty: '動画がありません', emptyBody: '公開された Reel がここに表示されます。', error: '動画を読み込めません', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', autoplaySound: '自動再生音声', mutedAutoplay: 'ミュートで自動再生', speed: '再生速度', settings: '動画の設定', close: '閉じる', creatorProfile: '作者のページ', follow: '作者をフォロー', liked: 'いいね', save: '保存', saved: '保存済み', share: '共有', comments: 'コメント', copied: 'リンクをコピーしました', shareFailed: '共有できません', login: 'フォローを見るにはログインしてください。', followEmpty: 'フォロー中の作者の Reel はまだありません。', followHelp: '作者をフォローすると Reel が表示されます。', followingError: 'フォロー一覧を読み込めません。', play: '再生', pause: '一時停止', source: 'YouTube', loadMore: 'もっと見る' },
-  ko: { following: '팔로잉', forYou: '추천', search: '검색', loading: '동영상 불러오는 중...', empty: '동영상 없음', emptyBody: '게시된 Reel이 여기에 표시됩니다.', error: '동영상 로드 실패', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', autoplaySound: '자동 재생 소리', mutedAutoplay: '음소거 자동 재생', speed: '재생 속도', settings: '동영상 설정', close: '닫기', creatorProfile: '작가 프로필', follow: '작가 팔로우', liked: '좋아요', save: '저장', saved: '저장됨', share: '공유', comments: '댓글', copied: '링크 복사됨', shareFailed: '공유 실패', login: '팔로잉을 보려면 로그인하세요.', followEmpty: '팔로우한 작가의 Reel이 없습니다.', followHelp: '작가를 팔로우하면 Reel을 볼 수 있습니다.', followingError: '팔로잉 목록을 불러올 수 없습니다.', play: '재생', pause: '일시정지', source: 'YouTube', loadMore: '더 보기' },
+  zh: { following: '关注', forYou: '为你推荐', search: '搜索', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '已发布的 Reel 显示在这里。', error: '无法加载视频', retry: '重试', soundOn: '打开声音', soundOff: '静音', autoplaySound: '自动播放声音', mutedAutoplay: '静音自动播放', speed: '播放速度', settings: '视频设置', close: '关闭设置', creatorProfile: '作者主页', follow: '关注作者', liked: '喜欢', save: '收藏', saved: '已收藏', share: '分享', comments: '评论', copied: '已复制链接', shareFailed: '无法分享链接', login: '请登录以查看关注内容。', followEmpty: '暂无关注作者的 Reel。', followHelp: '关注作者以观看他们的 Reel。', followingError: '无法加载关注列表。', play: '播放', pause: '暂停', source: 'YouTube', loadMore: '加载更多', seek: '调整视频进度' },
+  ja: { following: 'フォロー中', forYou: 'おすすめ', search: '検索', loading: '動画を読み込み中...', empty: '動画がありません', emptyBody: '公開された Reel がここに表示されます。', error: '動画を読み込めません', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', autoplaySound: '自動再生音声', mutedAutoplay: 'ミュートで自動再生', speed: '再生速度', settings: '動画の設定', close: '閉じる', creatorProfile: '作者のページ', follow: '作者をフォロー', liked: 'いいね', save: '保存', saved: '保存済み', share: '共有', comments: 'コメント', copied: 'リンクをコピーしました', shareFailed: '共有できません', login: 'フォローを見るにはログインしてください。', followEmpty: 'フォロー中の作者の Reel はまだありません。', followHelp: '作者をフォローすると Reel が表示されます。', followingError: 'フォロー一覧を読み込めません。', play: '再生', pause: '一時停止', source: 'YouTube', loadMore: 'もっと見る', seek: '再生位置を変更' },
+  ko: { following: '팔로잉', forYou: '추천', search: '검색', loading: '동영상 불러오는 중...', empty: '동영상 없음', emptyBody: '게시된 Reel이 여기에 표시됩니다.', error: '동영상 로드 실패', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', autoplaySound: '자동 재생 소리', mutedAutoplay: '음소거 자동 재생', speed: '재생 속도', settings: '동영상 설정', close: '닫기', creatorProfile: '작가 프로필', follow: '작가 팔로우', liked: '좋아요', save: '저장', saved: '저장됨', share: '공유', comments: '댓글', copied: '링크 복사됨', shareFailed: '공유 실패', login: '팔로잉을 보려면 로그인하세요.', followEmpty: '팔로우한 작가의 Reel이 없습니다.', followHelp: '작가를 팔로우하면 Reel을 볼 수 있습니다.', followingError: '팔로잉 목록을 불러올 수 없습니다.', play: '재생', pause: '일시정지', source: 'YouTube', loadMore: '더 보기', seek: '영상 위치 이동' },
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
@@ -266,7 +267,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 
       <div className={clearDisplay ? 'hidden' : ''}>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-56 bg-gradient-to-t from-black/85 to-transparent" />
-      <div className="pointer-events-none absolute bottom-6 left-3 right-16 z-20">
+      <div className="pointer-events-none absolute bottom-[72px] left-3 right-16 z-20">
         {creator?.page_username ? (
           <button type="button" onClick={() => onAuthorOpen(creator.page_username)}
             className="pointer-events-auto mb-2 flex max-w-full items-center gap-2 text-left">
@@ -281,7 +282,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       </div>
 
       {active ? (
-        <div className="absolute bottom-7 right-2 z-30 flex w-12 flex-col items-center gap-3 text-white">
+        <div className="absolute bottom-[72px] right-2 z-30 flex w-12 flex-col items-center gap-3 text-white">
           {creator?.page_username ? (
             <div className="relative mb-1">
               <button type="button" onClick={() => onAuthorOpen(creator.page_username)} aria-label={t('fastReels.creatorProfile')}
@@ -344,7 +345,15 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           ) : null}
         </div>
            ) : null}
-      </div>
+            </div>
+
+      <FastReelSeekBar
+        active={active}
+        videoId={id}
+        frameRef={frameRef}
+        visible={!clearDisplay}
+        t={t}
+      />
     </article>
   )
 }
