@@ -165,13 +165,17 @@ function isSameCharacterGroup(first, second) {
   return getCharacterId(first) === getCharacterId(second)
 }
 
-function isRightMessage(message, character, leadCharacterId) {
-  return (
-    getCharacterId(message) === String(leadCharacterId || '') ||
-    character?.is_lead === true ||
-    character?.chat_side === 'right'
+
+function isRightMessage(message, _character, leadCharacterId) {
+  const characterId = getCharacterId(message)
+
+  return Boolean(
+    characterId &&
+    leadCharacterId &&
+    characterId === String(leadCharacterId)
   )
 }
+
 
 function CharacterAvatar({ character }) {
   return (
