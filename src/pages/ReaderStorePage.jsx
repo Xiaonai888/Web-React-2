@@ -662,12 +662,19 @@ function EditorPickCard({ book, t, onOpen, badgeType = '', rank = 0, className =
       </div>
       <button type="button" onClick={onOpen} className="block w-full text-left transition active:scale-[0.98]">
         <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{displayTitle}</h3>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] font-extrabold text-[#7c3aed]">
-          <span>{formatMoney(book.priceValue)}</span>
-          {badgeType === 'discount' && book.oldPriceValue > book.priceValue ? (
-            <span className="text-[9px] font-medium text-[var(--shadow-text-tertiary)] line-through">{formatMoney(book.oldPriceValue)}</span>
-          ) : null}
+
+        <div className="mt-0.5 flex items-end justify-between gap-1">
+          <span className="min-w-0 flex flex-wrap items-center gap-x-1.5 text-[10.5px] font-extrabold text-[#7c3aed]">
+            <span>{formatMoney(book.priceValue)}</span>
+            {badgeType === 'discount' && book.oldPriceValue > book.priceValue ? (
+              <span className="text-[9px] font-medium text-[var(--shadow-text-tertiary)] line-through">{formatMoney(book.oldPriceValue)}</span>
+            ) : null}
+          </span>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${soldOut ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-tertiary)]' : 'bg-[#111827] text-white dark:bg-white dark:text-[#111827]'}`}>
+            <i className="fa-solid fa-bag-shopping text-[11px]" />
+          </span>
         </div>
+
       </button>
     </article>
   )
