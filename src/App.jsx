@@ -311,6 +311,7 @@ const AuthorReelAddPage = lazy(() => import('./pages/Author/AuthorReelAddPage'))
 const AuthorShadowStudioPage = lazy(() =>
   import('./pages/Author/AuthorShadowStudioPage')
 )
+const AuthorStudioDashboardPage = lazy(() => import('./pages/Author/AuthorStudioDashboardPage'))
 
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
@@ -614,6 +615,7 @@ const finishShadowSplash = useCallback(() => setShowShadowSplash(false), [])
   location.pathname.startsWith('/reader/post/') ||
   location.pathname.startsWith('/author/post/') ||
   location.pathname.startsWith('/author/story/') ||
+  location.pathname.startsWith('/author/reel/studio') ||
   location.pathname === '/author/page' ||
   location.pathname.startsWith('/author/page/') ||
   location.pathname.startsWith('/shop/mall/') ||
@@ -1613,6 +1615,11 @@ const shouldShowOpeningAds =
           <Route
   path="/author/reel/studio"
   element={<LazyPage><AuthorShadowStudioPage /></LazyPage>}
+/>
+
+          <Route
+  path="/author/reel/studio/dashboard"
+  element={<LazyPage><AuthorStudioDashboardPage /></LazyPage>}
 />
 
           <Route
