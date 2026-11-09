@@ -1,0 +1,72 @@
+name: Retry CodeQL Initialization
+
+on:
+  workflow_run:
+    workflows: ["Push on main"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Failed CodeQL workflow run ID"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  retry-codeql:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.path == 'dynamic/github-code-scanning/codeql' &&
+        github.event.workflow_run.conclusion == 'failure' &&
+        github.event.workflow_run.run_attempt == 1 &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+      - name: Retry failed CodeQL initialization once
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid workflow run ID."
+            exit 1
+          fi
+
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")"
+          run_path="$(jq -r '.path' <<< "$run_json")"
+          run_status="$(jq -r '.conclusion' <<< "$run_json")"
+          run_attempt="$(jq -r '.run_attempt' <<< "$run_json")"
+          run_repo="$(jq -r '.head_repository.full_name' <<< "$run_json")"
+
+          if [[ "$run_path" != "dynamic/github-code-scanning/codeql" ||
+                "$run_status" != "failure" ||
+                "$run_attempt" != "1" ||
+                "$run_repo" != "$GITHUB_REPOSITORY" ]]; then
+            echo "Not an eligible first-attempt failed CodeQL scan; skipping."
+            exit 0
+          fi
+
+          failed_inits="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs?per_page=100" \
+            --jq '[.jobs[] | select(.conclusion == "failure") | .steps[] |
+            select(.name == "Initialize CodeQL" and .conclusion == "failure")] | length')"
+
+          if [[ "$failed_inits" -eq 0 ]]; then
+            echo "CodeQL initialization did not fail; no retry needed."
+            exit 0
+          fi
+
+          echo "CodeQL initialization failed; retrying failed jobs once."
+          sleep 45
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/rerun-failed-jobs"
+          echo "Re-run requested for CodeQL run $RUN_ID."
