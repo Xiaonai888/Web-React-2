@@ -98,3 +98,10 @@ export async function getStudioVideoAnalytics(videoId, { signal } = {}) {
     authenticated: true,
   })
 }
+
+export async function getStudioRanking(videoId, { signal } = {}) {
+  return request(`/api/shadow-studio/analytics/ranking?video_id=${encodeURIComponent(videoId)}`, {
+    signal,
+    authenticated: true,
+  })
+}
