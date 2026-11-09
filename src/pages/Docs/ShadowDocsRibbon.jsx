@@ -314,7 +314,12 @@ export default function ShadowDocsRibbon({
           onPointerDown={event => event.preventDefault()}
           onClick={() => selectTab('tools')}
         >
-          <Settings2 />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+  <rect x="4" y="4" width="6" height="6" rx="1" />
+  <rect x="14" y="4" width="6" height="6" rx="1" />
+  <rect x="4" y="14" width="6" height="6" rx="1" />
+  <rect x="14" y="14" width="6" height="6" rx="1" />
+</svg>
           <span className="sd-mobile-tool-label">Tools</span>
         </button>
         <button
