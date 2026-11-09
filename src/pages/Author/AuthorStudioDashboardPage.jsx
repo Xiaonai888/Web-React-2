@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
-import { getStudioVideoActivity, listRecentStudioLongVideos } from '../../services/shadowStudioAnalyticsApi'
+import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
 import {
   StudioBackHeader, StudioCard, StudioFrame, StudioMetric, StudioMissing,
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
@@ -12,40 +12,33 @@ export default function AuthorStudioDashboardPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [videos, setVideos] = useState([])
-  const [activity, setActivity] = useState({})
+  const [channel, setChannel] = useState(null)
+  const [coverage, setCoverage] = useState(null)
   const [expanded, setExpanded] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
-  const [partial, setPartial] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    setActivity({})
-    listRecentStudioLongVideos({ take: 3, maxBatches: 5, signal: controller.signal })
-      .then(({ videos: items, hasMore }) => {
+    setChannel(null)
+    setCoverage(null)
+    getStudioDashboard({ signal: controller.signal })
+      .then(data => {
         if (controller.signal.aborted) return
+        const items = Array.isArray(data.latest_long_videos) ? data.latest_long_videos : []
         setVideos(items)
-        setPartial(hasMore && items.length < 3)
+        setChannel(data.channel || null)
+        setCoverage(data.coverage || null)
         setExpanded(items[0] ? { [items[0].id]: true } : {})
         setLoading(false)
-        for (const item of items) {
-          getStudioVideoActivity(item.id, { signal: controller.signal })
-            .then(value => {
-              if (!controller.signal.aborted) {
-                setActivity(current => ({ ...current, [item.id]: value }))
-              }
-            })
-            .catch(() => {})
-        }
       })
       .catch(cause => {
-        if (!controller.signal.aborted) {
-          setError(cause.message || t('shadowStudioStats.unable'))
-          setLoading(false)
-        }
+        if (controller.signal.aborted) return
+        setError(cause.message || t('shadowStudioStats.unable'))
+        setLoading(false)
       })
     return () => controller.abort()
   }, [reload, t])
@@ -62,10 +55,11 @@ export default function AuthorStudioDashboardPage() {
         <span className="shrink-0 text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <StudioMetric label={t('shadowStudioStats.views')} value={null} icon={Eye} />
-        <StudioMetric label={t('shadowStudioStats.watchTime')} value={null} icon={BarChart3} />
+        <StudioMetric label={t('shadowStudioStats.views')} value={channel?.views ?? null} icon={Eye} />
+        <StudioMetric label={t('shadowStudioStats.watchTime')} value={channel?.watch_seconds?.available && channel.watch_seconds.value != null && Number.isFinite(Number(channel.watch_seconds.value)) ? Number(channel.watch_seconds.value) / 3600 : null} icon={BarChart3} />
       </div>
-      <StudioMissing>{t('shadowStudioStats.sourceMissing')}</StudioMissing>
+      {!loading && !coverage?.complete ? <StudioMissing>{t('shadowStudioStats.insufficient')}</StudioMissing> : null}
+      {!loading && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
     </section>
 
     <section className="space-y-3">
@@ -75,7 +69,6 @@ export default function AuthorStudioDashboardPage() {
       {!loading && !error && !videos.length ? <StudioCard><p className="text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.noVideos')}</p></StudioCard> : null}
       {!loading && !error ? videos.map(video => {
         const isOpen = Boolean(expanded[video.id])
-        const counts = activity[video.id] || {}
         return <StudioCard key={video.id} className="space-y-3">
           <button type="button" className="flex w-full items-center gap-3 text-left" onClick={() => goAnalytics(video)} aria-label={t('shadowStudioStats.viewDetails')}>
             <StudioThumbnail video={video} className="h-[58px] w-[104px] sm:h-[73px] sm:w-[130px]" />
@@ -87,8 +80,8 @@ export default function AuthorStudioDashboardPage() {
           <div className="border-t border-[var(--shadow-border)] pt-3">
             <div className="flex items-center gap-5 text-xs">
               <span className="inline-flex items-center gap-1.5"><BarChart3 size={17} />{formatStudioCount(video.view_count != null && Number.isFinite(Number(video.view_count)) ? Number(video.view_count) : null)}</span>
-              <span className="inline-flex items-center gap-1.5"><ThumbsUp size={17} />{formatStudioCount(counts.likes)}</span>
-              <span className="inline-flex items-center gap-1.5"><MessageSquare size={17} />{formatStudioCount(counts.comments)}</span>
+              <span className="inline-flex items-center gap-1.5"><ThumbsUp size={17} />{formatStudioCount(video.likes)}</span>
+              <span className="inline-flex items-center gap-1.5"><MessageSquare size={17} />{formatStudioCount(video.comments)}</span>
               <button type="button" aria-expanded={isOpen} aria-label={isOpen ? 'Collapse' : 'Expand'} onClick={() => setExpanded(current => ({ ...current, [video.id]: !current[video.id] }))} className="ml-auto flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)]">
                 {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
@@ -109,8 +102,7 @@ export default function AuthorStudioDashboardPage() {
           </div> : null}
         </StudioCard>
       }) : null}
-      {!loading && !error && partial ? <StudioMissing>{t('shadowStudioStats.partial')}</StudioMissing> : null}
-      {!loading && !error && videos.length ? <StudioMissing>{t('shadowStudioStats.longNotice')}</StudioMissing> : null}
+      {!loading && !error ? <StudioMissing>{t('shadowStudioStats.longNotice')}</StudioMissing> : null}
     </section>
   </StudioFrame>
 }
