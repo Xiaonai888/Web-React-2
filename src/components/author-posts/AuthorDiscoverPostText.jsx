@@ -86,10 +86,11 @@ export default function AuthorDiscoverPostText({
   const [collapsedText, setCollapsedText] =
     useState(String(text || ''))
 
-  useEffect(() => {
-    setExpanded(false)
-    setCollapsedText(String(text || ''))
-  }, [text])
+useEffect(() => {
+  setExpanded(false)
+  setOverflowing(false)
+  setCollapsedText(String(text || ''))
+}, [text])
 
   useLayoutEffect(() => {
     if (expanded) return undefined
@@ -246,7 +247,7 @@ export default function AuthorDiscoverPostText({
       ) : (
         <p
   onClick={handleTextToggle}
-  className={`whitespace-pre-wrap break-words ${overflowing ? 'cursor-pointer' : ''} ${className}`}
+  className={`line-clamp-2 whitespace-pre-wrap break-words ${overflowing ? 'cursor-pointer' : ''} ${className}`}
 >
           {renderValue(
             overflowing
