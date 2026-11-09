@@ -12,6 +12,7 @@ import ShadowDocsRibbonReviewTab from './ShadowDocsRibbonReviewTab'
 import ShadowDocsRibbonViewTab from './ShadowDocsRibbonViewTab'
 import ShadowDocsRibbonDrawTab from './ShadowDocsRibbonDrawTab'
 import ShadowDocsRibbonToolsTab from './ShadowDocsRibbonToolsTab'
+import ShadowDocsMobileHomeSheet from './ShadowDocsMobileHomeSheet'
 import './ShadowDocsRibbon.css'
 
 const RENDERERS = Object.freeze({
@@ -44,6 +45,7 @@ export default function ShadowDocsRibbon({
   disabled = false,
 }) {
   const [localTab, setLocalTab] = useState('home')
+  const [homeOpen, setHomeOpen] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [keyboardInset, setKeyboardInset] = useState(0)
   const viewportBaselineRef = useRef(0)
