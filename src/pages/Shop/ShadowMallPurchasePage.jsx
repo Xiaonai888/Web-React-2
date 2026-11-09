@@ -34,7 +34,7 @@ export default function ShadowMallPurchasePage() {
 
   return (
     <div className="app-page min-h-screen pb-24">
-      <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] shadow-sm">
+      <header className="sticky top-0 z-40 bg-[#FFE66A] text-[#111827] shadow-sm">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
@@ -42,10 +42,10 @@ export default function ShadowMallPurchasePage() {
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('shadowMallPurchasePage.goBack')}
           >
-            <i className="fas fa-chevron-left text-[18px] text-[var(--shadow-text-primary)]" />
+            <i className="fas fa-chevron-left text-[18px] text-[#111827]" />
           </button>
 
-          <h1 className="text-[18px] font-extrabold tracking-tight text-[var(--shadow-text-primary)]">
+          <h1 className="text-[18px] font-extrabold tracking-tight text-[#111827]">
             {t('shadowMallPurchasePage.purchase')}
           </h1>
         </div>
