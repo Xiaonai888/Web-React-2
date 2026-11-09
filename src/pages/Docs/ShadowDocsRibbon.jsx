@@ -113,11 +113,14 @@ export default function ShadowDocsRibbon({
   }, [])
 
   function selectTab(id) {
-    if (disabled || !RENDERERS[id]) return
-    if (!activeTab) setLocalTab(id)
-    onChangeTab?.(id)
+  if (disabled || !RENDERERS[id]) return
+  if (id === 'tools' && globalThis.matchMedia?.('(max-width:700px)').matches) {
+    setHomeOpen(true)
+    return
   }
-
+  if (!activeTab) setLocalTab(id)
+  onChangeTab?.(id)
+}
   function mobileAction(id) {
     if (disabled) return
     if (id === 'fit') {
@@ -336,6 +339,17 @@ export default function ShadowDocsRibbon({
           <span className="sd-mobile-tool-label">Keyboard</span>
         </button>
       </div>
-    </nav>
+        </nav>
+    <ShadowDocsMobileHomeSheet
+      open={homeOpen}
+      state={commandState}
+      disabled={disabled}
+      onClose={() => setHomeOpen(false)}
+      onCommand={onCommand}
+      onKeyboard={() => {
+        setHomeOpen(false)
+        document.querySelector('.sd-writing-area[contenteditable="true"]')?.focus({ preventScroll: true })
+      }}
+    />
   </>
 }
