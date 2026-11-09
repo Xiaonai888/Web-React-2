@@ -22,7 +22,7 @@ import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createSha
 import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
-import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
+import ShadowDocsFindReplaceMoreOptionsPage from './ShadowDocsFindReplaceMoreOptionsPage'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
 import ShadowDocsExportImageSheet from './ShadowDocsExportImageSheet'
@@ -1806,9 +1806,10 @@ export default function ShadowDocsWritingStudioPanel({
       onAction={action => void runSelectionPopupAction(action)}
     />
     <ShadowDocsFindReplaceModal
-      open={findReplaceOpen}
+      open={findReplaceOpen === true}
       editorRef={editorRef}
       onClose={() => setFindReplaceOpen(false)}
+      onMoreOptions={() => setFindReplaceOpen('more')}
       onChange={html => {
         if (!chapter) return
         onChangeHTML?.(chapter.id, html)
@@ -1816,6 +1817,18 @@ export default function ShadowDocsWritingStudioPanel({
         setLocalSaveSeconds(10)
       }}
     />
+
+    <ShadowDocsFindReplaceMoreOptionsPage
+  open={findReplaceOpen === 'more'}
+  editorRef={editorRef}
+  onBack={() => setFindReplaceOpen(false)}
+  onChange={html => {
+    if (!chapter) return
+    onChangeHTML?.(chapter.id, html)
+    setLocalSaveDirty(true)
+    setLocalSaveSeconds(10)
+  }}
+/>
     <ShadowDocsPrintPanel
       open={printOpen}
       book={book}
