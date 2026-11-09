@@ -51,3 +51,55 @@ export async function recordFastReelView(videoId) {
     throw error
   }
 }
+
+export async function recordFastReelViewV2(
+  videoId,
+  { mode = 'fast', watchedSeconds = 0, durationSeconds = null } = {}
+) {
+  if (!UUID.test(String(videoId || ''))) return null
+
+  const token =
+    localStorage.getItem('shadow_reader_token') ||
+    sessionStorage.getItem('shadow_reader_token')
+
+  if (!token) return null
+
+  const body = { mode }
+
+  if (mode === 'qualified') {
+    if (
+      !Number.isFinite(watchedSeconds) ||
+      !Number.isFinite(durationSeconds) ||
+      durationSeconds <= 0 ||
+      durationSeconds > 43200 ||
+      watchedSeconds < 0 ||
+      watchedSeconds > durationSeconds + 1
+    ) return null
+
+    body.watched_seconds = watchedSeconds
+    body.video_duration_seconds = durationSeconds
+  } else if (mode !== 'fast') {
+    return null
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(videoId)}/view/v2`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok !== true) {
+    throw new Error(data.message || 'Unable to record Reel view')
+  }
+
+  return data
+}
