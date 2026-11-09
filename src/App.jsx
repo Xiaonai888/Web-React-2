@@ -312,6 +312,7 @@ const AuthorShadowStudioPage = lazy(() =>
   import('./pages/Author/AuthorShadowStudioPage')
 )
 const AuthorStudioDashboardPage = lazy(() => import('./pages/Author/AuthorStudioDashboardPage'))
+const AuthorStudioVideoAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioVideoAnalyticsPage'))
 
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
@@ -1620,6 +1621,11 @@ const shouldShowOpeningAds =
           <Route
   path="/author/reel/studio/dashboard"
   element={<LazyPage><AuthorStudioDashboardPage /></LazyPage>}
+/>
+
+          <Route
+  path="/author/reel/studio/videos/:videoId/analytics"
+  element={<LazyPage><AuthorStudioVideoAnalyticsPage /></LazyPage>}
 />
 
           <Route
