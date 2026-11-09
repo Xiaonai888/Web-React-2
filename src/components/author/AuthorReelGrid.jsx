@@ -640,7 +640,7 @@ const response = await fetch(
         onClick={chooseVideo}
         className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-40 inline-flex min-h-12 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[0_2px_16px_rgba(0,0,0,0.15)] sm:text-base"
       >
-        <Clapperboard size={20} fill="currentColor" /> Create reel
+        <Clapperboard size={20} strokeWidth={1.8} /> Create reel
       </button>
 
       {selectedIndex !== null && galleryVideos[selectedIndex] ? (
