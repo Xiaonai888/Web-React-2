@@ -91,3 +91,10 @@ export async function getStudioVideoActivity(videoId, { signal } = {}) {
 export async function getStudioDashboard({ signal } = {}) {
   return request('/api/shadow-studio/analytics/dashboard', { signal, authenticated: true })
 }
+
+export async function getStudioVideoAnalytics(videoId, { signal } = {}) {
+  return request(`/api/shadow-studio/analytics/videos/${encodeURIComponent(videoId)}`, {
+    signal,
+    authenticated: true,
+  })
+}
