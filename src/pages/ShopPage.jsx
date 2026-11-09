@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getShadowMallCartCount } from '../utils/shadowMallCart'
 import { getShadowMallWishlistCount } from '../utils/shadowMallWishlist'
-import { getCountryFeature, isCountryPolicyEnabled, loadCountrySettings } from '../utils/countrySettings'
+import { loadCountrySettings } from '../utils/countrySettings'
 import PlanSection from '../components/Shop/PlanSection'
 import PurchaseSection from '../components/Shop/PurchaseSection'
 import ShadowMallSection from '../components/Shop/ShadowMallSection'
@@ -68,7 +68,7 @@ export default function ShopPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Shadow Mall')
-  const [mallAccess, setMallAccess] = useState({ ready: false, enabled: false, allowed: true, local: true })
+  const [mallAccess, setMallAccess] = useState({ ready: false, allowed: false, local: false })
   const purchaseReturnTo = location.state?.returnTo || location.state?.from || ''
   const [mallSearchOpen, setMallSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getShadowMallCartCount())
@@ -76,20 +76,16 @@ export default function ShopPage() {
 
   useEffect(() => {
     let active = true
-    loadCountrySettings().then(settings => {
+    setMallAccess(previous => ({ ...previous, ready: false }))
+    loadCountrySettings({ force: true }).then(settings => {
       if (!active) return
-      const enabled = isCountryPolicyEnabled(settings)
-      setMallAccess({
-        ready: true,
-        enabled,
-        allowed: !enabled || (
-          settings.countryVerified === true &&
-          getCountryFeature(settings, 'shadowMall', false) === true
-        ),
-        local: !enabled || settings.country === 'KH',
-      })
+      const isCambodia = settings?.countryVerified === true && settings?.country === 'KH'
+      const allowed = isCambodia &&
+        settings?.effective?.shadowMall === true &&
+        settings?.effective?.shopTarget === 'shadow_mall'
+      setMallAccess({ ready: true, allowed, local: isCambodia })
     }).catch(() => {
-      if (active) setMallAccess({ ready: true, enabled: false, allowed: true, local: true })
+      if (active) setMallAccess({ ready: true, allowed: false, local: false })
     })
     return () => { active = false }
   }, [location.key])
@@ -97,12 +93,12 @@ export default function ShopPage() {
   useEffect(() => {
     if (!mallAccess.ready) return
     const requestedTab = location.state?.activeTab
-    if (requestedTab === 'Purchase' || requestedTab === 'Plans') {
-      setActiveTab(requestedTab)
-    } else if (requestedTab === 'Shadow Mall' && mallAccess.allowed) {
-      setActiveTab('Shadow Mall')
+    if (requestedTab === 'Purchase') {
+      setActiveTab('Purchase')
+    } else if (requestedTab === 'Plans' && mallAccess.allowed) {
+      setActiveTab('Plans')
     } else {
-      setActiveTab(mallAccess.enabled && (!mallAccess.allowed || !mallAccess.local) ? 'Purchase' : 'Shadow Mall')
+      setActiveTab(mallAccess.allowed ? 'Shadow Mall' : 'Purchase')
     }
   }, [mallAccess, location.key])
 
@@ -158,7 +154,7 @@ export default function ShopPage() {
                 return
               }
 
-              if (purchaseMode && mallAccess.enabled && (!mallAccess.local || !mallAccess.allowed)) {
+              if (purchaseMode && (!mallAccess.local || !mallAccess.allowed)) {
                 navigate('/', { replace: true })
                 return
               }
