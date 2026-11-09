@@ -149,6 +149,53 @@ useEffect(() => {
     return undefined
   }
 
+    const submitQualifiedView = tracker => {
+  if (
+    !tracker ||
+    tracker.videoId !== video.id ||
+    !tracker.needsQualified ||
+    tracker.qualifiedSent ||
+    !tracker.duration ||
+    Date.now() < tracker.retryAt ||
+    document.visibilityState !== 'visible'
+  ) return
+
+  const required = tracker.duration < 30
+    ? Math.max(3, tracker.duration * 0.6)
+    : Math.max(20, tracker.duration * 0.2)
+
+  if (tracker.watched < required) return
+
+  tracker.qualifiedSent = true
+  tracker.retryAt = Date.now() + 15000
+
+  void recordFastReelViewV2(video.id, {
+    mode: 'qualified',
+    watchedSeconds: Math.min(tracker.watched, tracker.duration + 1),
+    durationSeconds: tracker.duration,
+  })
+    .then(result => {
+      if (viewTrackerRef.current !== tracker) return
+
+      if (result?.reason === 'watch_time_pending') {
+        tracker.qualifiedSent = false
+      } else if (
+        result?.reason === 'fast_view_available' ||
+        result?.reason === 'qualification_session_required'
+      ) {
+        tracker.qualifiedSent = false
+        tracker.fastSent = false
+        tracker.needsQualified = false
+      }
+    })
+    .catch(error => {
+      if (viewTrackerRef.current === tracker) {
+        tracker.qualifiedSent = false
+      }
+      console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
+    })
+}
+
   const onMessage = event => {
     if (event.source !== frameRef.current?.contentWindow) return
     if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
@@ -272,58 +319,19 @@ useEffect(() => {
     }
 
     if (state === 0 && !endedRef.current) {
-      endedRef.current = true
-      onEnded?.()
-    }
+  endedRef.current = true
+  submitQualifiedView(tracker)
+  onEnded?.()
+}
   }
 
   const timer = window.setInterval(() => {
-    const tracker = viewTrackerRef.current
-    if (!tracker || tracker.videoId !== video.id) return
+  const tracker = viewTrackerRef.current
+  if (!tracker || tracker.videoId !== video.id) return
+  if (!tracker.playing && !endedRef.current) return
 
-    const now = Date.now()
-
-if (!tracker.playing || document.visibilityState !== 'visible') return
-
-    if (
-      !tracker.needsQualified ||
-      tracker.qualifiedSent ||
-      !tracker.duration ||
-      now < tracker.retryAt
-    ) return
-
-    const required = tracker.duration < 30
-      ? Math.max(3, tracker.duration * 0.6)
-      : Math.max(20, tracker.duration * 0.2)
-
-    if (tracker.watched < required) return
-
-    tracker.qualifiedSent = true
-    tracker.retryAt = now + 15000
-
-    void recordFastReelViewV2(video.id, {
-      mode: 'qualified',
-      watchedSeconds: Math.min(
-        tracker.watched,
-        tracker.duration + 1
-      ),
-      durationSeconds: tracker.duration,
-    })
-      .then(result => {
-        if (
-          viewTrackerRef.current === tracker &&
-          result?.reason === 'watch_time_pending'
-        ) {
-          tracker.qualifiedSent = false
-        }
-      })
-      .catch(error => {
-        if (viewTrackerRef.current === tracker) {
-          tracker.qualifiedSent = false
-        }
-        console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
-      })
-  }, 1000)
+  submitQualifiedView(tracker)
+}, 1000)
 
   window.addEventListener('message', onMessage)
 
