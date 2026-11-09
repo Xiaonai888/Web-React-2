@@ -14,7 +14,7 @@ import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Conn
 import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
-import { recordFastReelView } from '../services/fastReelViewsApi'
+import { recordFastReelViewV2 } from '../services/fastReelViewsApi'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -110,6 +110,23 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   const longPressedRef = useRef(false)
   const endedRef = useRef(false)
   const lastSwipeAtRef = useRef(0)
+const viewTrackerRef = useRef(null)
+
+useEffect(() => {
+  viewTrackerRef.current = active && id ? {
+    videoId: video.id,
+    playing: false,
+    fastSent: false,
+    needsQualified: false,
+    qualifiedSent: false,
+    watched: 0,
+    duration: 0,
+    lastTick: Date.now(),
+    retryAt: 0,
+  } : null
+
+  return () => { viewTrackerRef.current = null }
+}, [active, id, video.id])
 
   useEffect(() => {
     endedRef.current = false
@@ -127,35 +144,153 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   }, [])
 
   useEffect(() => {
-    if (!active || !id) { setPlaying(false); return undefined }
-    const onMessage = event => {
-      if (event.source !== frameRef.current?.contentWindow) return
-      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
-      let data = event.data
-      try { if (typeof data === 'string') data = JSON.parse(data) } catch { return }
-      if (!data || typeof data !== 'object') return
-      if (data.event === 'onReady') {
-        sendCommand(soundEnabled ? 'unMute' : 'mute')
-        sendCommand('playVideo')
-        if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
-      }
-      const state = data.event === 'onStateChange' ? data.info : data.event === 'infoDelivery' ? data.info?.playerState : null
-      if (state === 1) {
-  setPlaying(true)
-  endedRef.current = false
-  void recordFastReelView(video.id).catch(error => {
-    console.warn('[FAST_REEL_VIEW_TRACK_ERROR]', error)
-  })
-}
-      if ([0, 2, 5].includes(state)) setPlaying(false)
-      if (state === 0 && !endedRef.current) {
-        endedRef.current = true
-        onEnded?.()
+  if (!active || !id) {
+    setPlaying(false)
+    return undefined
+  }
+
+  const onMessage = event => {
+    if (event.source !== frameRef.current?.contentWindow) return
+    if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
+
+    let data = event.data
+    try {
+      if (typeof data === 'string') data = JSON.parse(data)
+    } catch {
+      return
+    }
+
+    if (!data || typeof data !== 'object') return
+
+    const tracker = viewTrackerRef.current
+    if (!tracker || tracker.videoId !== video.id) return
+
+    if (data.event === 'onReady') {
+      sendCommand(soundEnabled ? 'unMute' : 'mute')
+      sendCommand('playVideo')
+      sendCommand('getDuration')
+      if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
+    }
+
+    if (data.event === 'infoDelivery') {
+      const duration = Number(data.info?.duration)
+      if (Number.isFinite(duration) && duration > 0 && duration <= 43200) {
+        tracker.duration = duration
       }
     }
-    window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
-  }, [active, id, soundEnabled, playbackSpeed, sendCommand, onEnded])
+
+    const state = data.event === 'onStateChange'
+      ? data.info
+      : data.event === 'infoDelivery'
+        ? data.info?.playerState
+        : null
+
+    if (state === 1) {
+      if (!tracker.playing) tracker.lastTick = Date.now()
+      tracker.playing = true
+      setPlaying(true)
+      endedRef.current = false
+
+      if (!tracker.fastSent) {
+        tracker.fastSent = true
+
+        void recordFastReelViewV2(video.id, { mode: 'fast' })
+          .then(result => {
+            if (viewTrackerRef.current === tracker) {
+              tracker.needsQualified =
+                result?.requires_qualified_view === true
+            }
+          })
+          .catch(error => {
+            console.warn('[FAST_VIEW_V2_ERROR]', error)
+          })
+      }
+    }
+
+    if ([0, 2, 5].includes(state)) {
+      tracker.playing = false
+      setPlaying(false)
+    }
+
+    if (state === 0 && !endedRef.current) {
+      endedRef.current = true
+      onEnded?.()
+    }
+  }
+
+  const timer = window.setInterval(() => {
+    const tracker = viewTrackerRef.current
+    if (!tracker || tracker.videoId !== video.id) return
+
+    const now = Date.now()
+    const elapsed = Math.max(
+      0,
+      Math.min(1.5, (now - tracker.lastTick) / 1000)
+    )
+    tracker.lastTick = now
+
+    if (!tracker.playing || document.visibilityState !== 'visible') return
+
+    tracker.watched += elapsed * Math.min(
+      2,
+      Math.max(0.25, playbackSpeed)
+    )
+
+    if (
+      !tracker.needsQualified ||
+      tracker.qualifiedSent ||
+      !tracker.duration ||
+      now < tracker.retryAt
+    ) return
+
+    const required = tracker.duration < 30
+      ? Math.max(3, tracker.duration * 0.6)
+      : Math.max(20, tracker.duration * 0.2)
+
+    if (tracker.watched < required) return
+
+    tracker.qualifiedSent = true
+    tracker.retryAt = now + 15000
+
+    void recordFastReelViewV2(video.id, {
+      mode: 'qualified',
+      watchedSeconds: Math.min(
+        tracker.watched,
+        tracker.duration + 1
+      ),
+      durationSeconds: tracker.duration,
+    })
+      .then(result => {
+        if (
+          viewTrackerRef.current === tracker &&
+          result?.reason === 'watch_time_pending'
+        ) {
+          tracker.qualifiedSent = false
+        }
+      })
+      .catch(error => {
+        if (viewTrackerRef.current === tracker) {
+          tracker.qualifiedSent = false
+        }
+        console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
+      })
+  }, 1000)
+
+  window.addEventListener('message', onMessage)
+
+  return () => {
+    window.clearInterval(timer)
+    window.removeEventListener('message', onMessage)
+  }
+}, [
+  active,
+  id,
+  video.id,
+  soundEnabled,
+  playbackSpeed,
+  sendCommand,
+  onEnded,
+])
 
   useEffect(() => {
     if (!active) return undefined
