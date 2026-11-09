@@ -34,7 +34,7 @@ export default function ShadowMallPurchasePage() {
 
   return (
     <div className="app-page min-h-screen pb-24">
-      <header className="sticky top-0 z-40 bg-[#FFE66A] text-[#111827] shadow-sm">
+      <header className="sticky top-0 z-40 bg-[#FFE66A] text-[#111827]">
         <div className="flex h-14 items-center gap-3 px-4">
           <button
             type="button"
@@ -51,7 +51,7 @@ export default function ShadowMallPurchasePage() {
         </div>
       </header>
 
-      <main className="px-4 pt-4">
+      <main className="bg-[#FFE66A] px-4 pt-4">
         <PurchaseSection />
       </main>
     </div>
