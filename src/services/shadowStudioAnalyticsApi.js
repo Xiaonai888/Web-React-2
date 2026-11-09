@@ -14,7 +14,7 @@ function bearerToken() {
 async function request(path, { signal, authenticated = false } = {}) {
   const token = authenticated ? bearerToken() : ''
   if (authenticated && !token) throw new Error('Sign in to view your Studio.')
-  const response = await fetch(`${API_BASE}/api/fast${path}`, {
+  const response = await fetch(`${API_BASE}${path.startsWith('/api/') ? path : `/api/fast${path}`}`, {
     signal,
     cache: 'no-store',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -86,4 +86,8 @@ export async function getStudioVideoActivity(videoId, { signal } = {}) {
     comments: comments.status === 'fulfilled' && comments.value.comment_count != null && Number.isFinite(Number(comments.value.comment_count))
       ? Number(comments.value.comment_count) : null,
   }
+}
+
+export async function getStudioDashboard({ signal } = {}) {
+  return request('/api/shadow-studio/analytics/dashboard', { signal, authenticated: true })
 }
