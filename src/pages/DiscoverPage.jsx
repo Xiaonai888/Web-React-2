@@ -44,6 +44,7 @@ import {
 } from '../services/readerHiddenWordsApi'
 import {
   ProfessionalSinglePostImage,
+  CollapsiblePostText,
 } from '../components/common/ProfessionalPostContent'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -2643,13 +2644,16 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
           <i className="fa-solid fa-ellipsis" aria-hidden="true" />
         </button>
       </header>
-      {description ? (
-        <div className="px-4 pb-3">
-          <p className="line-clamp-2 whitespace-pre-wrap break-words text-[14px] leading-[1.55]">
-            {description}
-          </p>
-        </div>
-      ) : null}
+      
+{description ? (
+  <div className="px-4 pb-3">
+    <AuthorDiscoverPostText
+      text={description}
+      className="text-[14px] leading-[1.55] text-[#111827] dark:text-[var(--shadow-text-primary)]"
+    />
+  </div>
+) : null}
+
       <button type="button" onClick={openFirstEpisode} disabled={firstEpisodeOpening} aria-busy={firstEpisodeOpening} aria-label={`${discoverText('readStory')}: ${ad.title || ''}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
         <div className="relative aspect-video overflow-hidden bg-gray-100 dark:bg-white/5">
           {ad.preview_image_url || ad.cover_url ? (
@@ -2668,14 +2672,9 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
             <div className="line-clamp-2 text-[15px] font-semibold leading-5">{ad.title}</div>
             <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
               <span className="inline-flex items-center gap-1.5">
-                <svg width="16" height="16" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true" className="shrink-0">
-                  <circle cx="9" cy="10" r="8" />
-                  <circle cx="9" cy="32" r="8" />
-                  <circle cx="9" cy="54" r="8" />
-                  <rect x="21" y="2" width="43" height="16" rx="8" />
-                  <rect x="21" y="24" width="43" height="16" rx="8" />
-                  <rect x="21" y="46" width="43" height="16" rx="8" />
-                </svg>
+                
+<i className="fa-regular fa-rectangle-list shrink-0 text-[13px] opacity-70" aria-hidden="true" />
+
                 {Number(ad.episode_count || 0)} Episodes
               </span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
