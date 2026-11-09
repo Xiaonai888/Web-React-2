@@ -355,7 +355,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         active={active}
         videoId={id}
         frameRef={frameRef}
-        visible={!clearDisplay}
+        visible={!clearDisplay && !playing}
         t={t}
       />
     </article>
