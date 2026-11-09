@@ -32,7 +32,7 @@ registerTranslationNamespace('fastReels', {
     share: 'Echo', comments: 'Comments', copied: 'Link copied', shareFailed: 'Unable to share link',
     login: 'Sign in to use Following.', followEmpty: 'No Reels from followed authors yet.',
     followHelp: 'Follow authors to see their Reels here.', followingError: 'Could not load followed authors.',
-    play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more', seek: 'Seek video',
+    play: 'Play video', pause: 'Pause video', source: 'YouTube', loadMore: 'Load more', seek: 'Seek video', more: 'More', less: 'Less',
   },
   km: {
     following: 'Following', forYou: 'For You', search: 'ស្វែងរក', loading: 'កំពុងផ្ទុកវីដេអូ...', empty: 'មិនទាន់មានវីដេអូ',
@@ -43,11 +43,11 @@ registerTranslationNamespace('fastReels', {
     share: 'Echo', comments: 'មតិយោបល់', copied: 'បានចម្លង Link', shareFailed: 'មិនអាចចែករំលែកបាន',
     login: 'សូម Login ដើម្បីមើល Following។', followEmpty: 'មិនទាន់មាន Reel ពីអ្នកនិពន្ធដែលបាន Follow។',
     followHelp: 'Follow អ្នកនិពន្ធ ដើម្បីឃើញ Reel របស់ពួកគេ។', followingError: 'មិនអាចទាញបញ្ជី Following បាន។',
-    play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម', seek: 'អូសទៅពេលវេលាវីដេអូ',
+    play: 'ចាក់វីដេអូ', pause: 'ផ្អាកវីដេអូ', source: 'YouTube', loadMore: 'បង្ហាញបន្ថែម', seek: 'អូសទៅពេលវេលាវីដេអូ', more: 'More', less: 'Less',
   },
-  zh: { following: '关注', forYou: '为你推荐', search: '搜索', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '已发布的 Reel 显示在这里。', error: '无法加载视频', retry: '重试', soundOn: '打开声音', soundOff: '静音', autoplaySound: '自动播放声音', mutedAutoplay: '静音自动播放', speed: '播放速度', settings: '视频设置', close: '关闭设置', creatorProfile: '作者主页', follow: '关注作者', liked: '喜欢', save: '收藏', saved: '已收藏', share: '分享', comments: '评论', copied: '已复制链接', shareFailed: '无法分享链接', login: '请登录以查看关注内容。', followEmpty: '暂无关注作者的 Reel。', followHelp: '关注作者以观看他们的 Reel。', followingError: '无法加载关注列表。', play: '播放', pause: '暂停', source: 'YouTube', loadMore: '加载更多', seek: '调整视频进度' },
-  ja: { following: 'フォロー中', forYou: 'おすすめ', search: '検索', loading: '動画を読み込み中...', empty: '動画がありません', emptyBody: '公開された Reel がここに表示されます。', error: '動画を読み込めません', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', autoplaySound: '自動再生音声', mutedAutoplay: 'ミュートで自動再生', speed: '再生速度', settings: '動画の設定', close: '閉じる', creatorProfile: '作者のページ', follow: '作者をフォロー', liked: 'いいね', save: '保存', saved: '保存済み', share: '共有', comments: 'コメント', copied: 'リンクをコピーしました', shareFailed: '共有できません', login: 'フォローを見るにはログインしてください。', followEmpty: 'フォロー中の作者の Reel はまだありません。', followHelp: '作者をフォローすると Reel が表示されます。', followingError: 'フォロー一覧を読み込めません。', play: '再生', pause: '一時停止', source: 'YouTube', loadMore: 'もっと見る', seek: '再生位置を変更' },
-  ko: { following: '팔로잉', forYou: '추천', search: '검색', loading: '동영상 불러오는 중...', empty: '동영상 없음', emptyBody: '게시된 Reel이 여기에 표시됩니다.', error: '동영상 로드 실패', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', autoplaySound: '자동 재생 소리', mutedAutoplay: '음소거 자동 재생', speed: '재생 속도', settings: '동영상 설정', close: '닫기', creatorProfile: '작가 프로필', follow: '작가 팔로우', liked: '좋아요', save: '저장', saved: '저장됨', share: '공유', comments: '댓글', copied: '링크 복사됨', shareFailed: '공유 실패', login: '팔로잉을 보려면 로그인하세요.', followEmpty: '팔로우한 작가의 Reel이 없습니다.', followHelp: '작가를 팔로우하면 Reel을 볼 수 있습니다.', followingError: '팔로잉 목록을 불러올 수 없습니다.', play: '재생', pause: '일시정지', source: 'YouTube', loadMore: '더 보기', seek: '영상 위치 이동' },
+  zh: { following: '关注', forYou: '为你推荐', search: '搜索', loading: '正在加载视频...', empty: '暂无视频', emptyBody: '已发布的 Reel 显示在这里。', error: '无法加载视频', retry: '重试', soundOn: '打开声音', soundOff: '静音', autoplaySound: '自动播放声音', mutedAutoplay: '静音自动播放', speed: '播放速度', settings: '视频设置', close: '关闭设置', creatorProfile: '作者主页', follow: '关注作者', liked: '喜欢', save: '收藏', saved: '已收藏', share: '分享', comments: '评论', copied: '已复制链接', shareFailed: '无法分享链接', login: '请登录以查看关注内容。', followEmpty: '暂无关注作者的 Reel。', followHelp: '关注作者以观看他们的 Reel。', followingError: '无法加载关注列表。', play: '播放', pause: '暂停', source: 'YouTube', loadMore: '加载更多', seek: '调整视频进度', more: '展开', less: '收起' },
+  ja: { following: 'フォロー中', forYou: 'おすすめ', search: '検索', loading: '動画を読み込み中...', empty: '動画がありません', emptyBody: '公開された Reel がここに表示されます。', error: '動画を読み込めません', retry: '再試行', soundOn: '音声をオン', soundOff: 'ミュート', autoplaySound: '自動再生音声', mutedAutoplay: 'ミュートで自動再生', speed: '再生速度', settings: '動画の設定', close: '閉じる', creatorProfile: '作者のページ', follow: '作者をフォロー', liked: 'いいね', save: '保存', saved: '保存済み', share: '共有', comments: 'コメント', copied: 'リンクをコピーしました', shareFailed: '共有できません', login: 'フォローを見るにはログインしてください。', followEmpty: 'フォロー中の作者の Reel はまだありません。', followHelp: '作者をフォローすると Reel が表示されます。', followingError: 'フォロー一覧を読み込めません。', play: '再生', pause: '一時停止', source: 'YouTube', loadMore: 'もっと見る', seek: '再生位置を変更', more: 'もっと見る', less: '閉じる' },
+  ko: { following: '팔로잉', forYou: '추천', search: '검색', loading: '동영상 불러오는 중...', empty: '동영상 없음', emptyBody: '게시된 Reel이 여기에 표시됩니다.', error: '동영상 로드 실패', retry: '다시 시도', soundOn: '소리 켜기', soundOff: '음소거', autoplaySound: '자동 재생 소리', mutedAutoplay: '음소거 자동 재생', speed: '재생 속도', settings: '동영상 설정', close: '닫기', creatorProfile: '작가 프로필', follow: '작가 팔로우', liked: '좋아요', save: '저장', saved: '저장됨', share: '공유', comments: '댓글', copied: '링크 복사됨', shareFailed: '공유 실패', login: '팔로잉을 보려면 로그인하세요.', followEmpty: '팔로우한 작가의 Reel이 없습니다.', followHelp: '작가를 팔로우하면 Reel을 볼 수 있습니다.', followingError: '팔로잉 목록을 불러올 수 없습니다.', play: '재생', pause: '일시정지', source: 'YouTube', loadMore: '더 보기', seek: '영상 위치 이동', more: '더 보기', less: '접기' },
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
@@ -182,6 +182,11 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     endedRef.current = false
   }, [id, active])
   const [playing, setPlaying] = useState(false)
+  const [captionExpanded, setCaptionExpanded] = useState(false)
+  const [captionHasMore, setCaptionHasMore] = useState(false)
+  const captionMeasureRef = useRef(null)
+  const captionExpandedRef = useRef(false)
+  const resumeAfterCaptionRef = useRef(false)
   const iframeUrl = id
     ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
     : ''
@@ -192,6 +197,46 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       'https://www.youtube-nocookie.com'
     )
   }, [])
+
+  // Each video visit starts with a collapsed caption; do not carry reading state.
+  useEffect(() => {
+    captionExpandedRef.current = false
+    resumeAfterCaptionRef.current = false
+    setCaptionExpanded(false)
+    setCaptionHasMore(false)
+  }, [active, video.id])
+
+  // Leaving the caption controls (clear display) closes reading mode cleanly.
+  useEffect(() => {
+    if (!clearDisplay || !captionExpandedRef.current) return
+    captionExpandedRef.current = false
+    setCaptionExpanded(false)
+    const resume = resumeAfterCaptionRef.current && active
+    resumeAfterCaptionRef.current = false
+    if (resume) sendCommand('playVideo')
+  }, [clearDisplay, active, sendCommand])
+
+  // Measure the full caption separately from the collapsed 3-line display.
+  // This detects text overflow without estimating by characters or language.
+  useEffect(() => {
+    if (!active || clearDisplay) return undefined
+    const node = captionMeasureRef.current
+    if (!node) return undefined
+
+    const measure = () => {
+      const lineHeight = Number.parseFloat(window.getComputedStyle(node).lineHeight) || 20
+      setCaptionHasMore(node.getBoundingClientRect().height > lineHeight * 3 + 2)
+    }
+    const frame = window.requestAnimationFrame(measure)
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null
+    observer?.observe(node)
+    window.addEventListener('resize', measure)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer?.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [active, clearDisplay, video.title, video.description])
 
   useEffect(() => {
     if (!active || !id) {
@@ -323,7 +368,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 
       if (data.event === 'onReady') {
         sendCommand(soundEnabled ? 'unMute' : 'mute')
-        sendCommand('playVideo')
+        sendCommand(captionExpandedRef.current ? 'pauseVideo' : 'playVideo')
         sendCommand('getDuration')
         if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
       }
@@ -338,6 +383,12 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       const state = data.event === 'onStateChange'
         ? data.info
         : data.event === 'infoDelivery' ? data.info?.playerState : null
+      if (state === 1 && captionExpandedRef.current) {
+        tracker.playing = false
+        setPlaying(false)
+        sendCommand('pauseVideo')
+        return
+      }
       if (state === 1) {
         if (!tracker.playing) {
           tracker.lastMediaTime = null
@@ -397,13 +448,32 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       JSON.stringify({ event: 'listening', id }), 'https://www.youtube-nocookie.com'
     )
     sendCommand(soundEnabled ? 'unMute' : 'mute')
-    sendCommand('playVideo')
+    sendCommand(captionExpandedRef.current ? 'pauseVideo' : 'playVideo')
     if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
   }
   const togglePlayback = () => {
-    if (!active || !id) return
+    if (!active || !id || captionExpandedRef.current) return
     sendCommand(playing ? 'pauseVideo' : 'playVideo')
     setPlaying(current => !current)
+  }
+
+  const expandCaption = () => {
+    if (!active || captionExpandedRef.current) return
+    window.clearTimeout(longPressTimerRef.current)
+    resumeAfterCaptionRef.current = playing
+    captionExpandedRef.current = true
+    setCaptionExpanded(true)
+    sendCommand('pauseVideo')
+    setPlaying(false)
+  }
+
+  const collapseCaption = () => {
+    if (!captionExpandedRef.current) return
+    captionExpandedRef.current = false
+    setCaptionExpanded(false)
+    const shouldResume = resumeAfterCaptionRef.current && active
+    resumeAfterCaptionRef.current = false
+    if (shouldResume) sendCommand('playVideo')
   }
 
   const clearLongPress = () => window.clearTimeout(longPressTimerRef.current)
@@ -503,19 +573,70 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       ) : null}
 
       <div className={clearDisplay ? 'hidden' : ''}>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[12] h-56 bg-gradient-to-t from-black/85 to-transparent" />
-      <div className="pointer-events-none absolute bottom-[72px] left-3 right-16 z-20">
+      <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-[12] bg-gradient-to-t ${
+        captionExpanded
+          ? 'h-[70%] from-black/95 via-black/60 to-transparent'
+          : 'h-56 from-black/85 to-transparent'
+      }`} />
+      <div className="pointer-events-none absolute bottom-[72px] left-3 right-16 z-20 flex min-h-0 flex-col"
+        style={captionExpanded ? { maxHeight: '50%' } : undefined}>
         {creator?.page_username ? (
           <button type="button" onClick={() => onAuthorOpen(creator.page_username)}
-            className="pointer-events-auto mb-2 flex max-w-full items-center gap-2 text-left">
+            className="pointer-events-auto mb-2 flex max-w-full shrink-0 items-center gap-2 text-left">
             {creator.avatar_url ? (
               <img src={creator.avatar_url} alt="" loading="lazy" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/80" />
             ) : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm">{String(creator.page_name || 'A')[0]}</span>}
             <span className="max-w-[230px] truncate text-[13px] font-bold drop-shadow-md">{creator.page_name || creator.page_username}</span>
           </button>
         ) : null}
-        <h2 className="line-clamp-2 text-[13px] font-semibold leading-5 drop-shadow-md">{video.title}</h2>
-        {video.description ? <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/90">{video.description}</p> : null}
+        <div className="pointer-events-none invisible absolute inset-x-0 top-0" aria-hidden="true">
+          <p ref={captionMeasureRef} className="break-words whitespace-pre-line text-[13px] leading-5">
+            <span className="font-semibold">{video.title}</span>
+            {video.description ? <span>{'\n'}{video.description}</span> : null}
+          </p>
+        </div>
+        <div data-fast-caption-scroll={captionExpanded ? 'true' : undefined}
+          className={captionExpanded
+            ? 'pointer-events-auto min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y pr-1'
+            : 'pointer-events-auto cursor-pointer'}
+          tabIndex={captionExpanded ? 0 : undefined}
+          onClick={event => {
+            event.stopPropagation()
+            if (!captionExpanded && captionHasMore) expandCaption()
+          }}
+          onPointerDown={event => event.stopPropagation()}
+          onPointerMove={event => event.stopPropagation()}
+          onPointerUp={event => event.stopPropagation()}
+          onTouchMove={event => event.stopPropagation()}
+          onWheel={event => {
+            if (captionExpanded) event.stopPropagation()
+          }}
+          onKeyDown={event => {
+            if (captionExpanded && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) event.stopPropagation()
+            if (!captionExpanded && captionHasMore && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault()
+              event.stopPropagation()
+              expandCaption()
+            }
+          }}>
+          <p className={`break-words whitespace-pre-line text-[13px] leading-5 text-white/95 drop-shadow-md ${
+            captionExpanded ? '' : 'line-clamp-3'
+          }`}>
+            <span className="font-semibold">{video.title}</span>
+            {video.description ? <span className="font-normal text-white/90">{'\n'}{video.description}</span> : null}
+          </p>
+        </div>
+        {(captionHasMore || captionExpanded) ? (
+          <button type="button" aria-expanded={captionExpanded}
+            onClick={event => {
+              event.stopPropagation()
+              if (captionExpanded) collapseCaption()
+              else expandCaption()
+            }}
+            className="pointer-events-auto mt-1 w-fit shrink-0 py-1 text-left text-[13px] font-semibold text-white drop-shadow-md">
+            {t(captionExpanded ? 'fastReels.less' : 'fastReels.more')}
+          </button>
+        ) : null}
       </div>
 
       {active ? (
@@ -995,6 +1116,7 @@ const undoLastHiddenReel = useCallback(() => {
     if (!root || !visibleVideos.length || settingsOpen) return undefined
     let lastWheelAt = 0
     const onWheel = event => {
+      if (event.target?.closest?.('[data-fast-caption-scroll="true"]')) return
       if (Math.abs(event.deltaY) < 18) return
       event.preventDefault()
       const now = Date.now()
