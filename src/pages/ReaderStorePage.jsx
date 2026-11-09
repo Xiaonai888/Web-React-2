@@ -639,8 +639,8 @@ function EditorPickCard({ book, t, onOpen, badgeType = '', rank = 0, className =
         : 'bg-[#f1f5f9] text-[#64748b]'
 
   return (
-    <article className={className}>
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[10px] bg-[var(--shadow-bg-soft)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+    <article className={`${className} overflow-hidden rounded-[14px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]`}>
+      <div className="relative aspect-[3/4] overflow-hidden bg-[var(--shadow-bg-soft)]">
         <button type="button" onClick={onOpen} className="block h-full w-full text-left transition active:scale-[0.98]">
           <ResilientImage
             src={book.cover}
@@ -660,13 +660,13 @@ function EditorPickCard({ book, t, onOpen, badgeType = '', rank = 0, className =
         ) : null}
         <WaitlistHeartButton book={book} t={t} compact />
       </div>
-      <button type="button" onClick={onOpen} className="block w-full text-left transition active:scale-[0.98]">
+      <button type="button" onClick={onOpen} className="flex min-h-[80px] w-full flex-col justify-between px-2.5 py-2 text-left transition active:scale-[0.98]">
         <h3 className="mt-2 line-clamp-1 text-[11px] font-extrabold text-[var(--shadow-text-primary)]">{displayTitle}</h3>
 
         <div className="mt-0.5 flex items-end justify-between gap-1">
-          <span className="min-w-0 flex flex-wrap items-center gap-x-1.5 text-[10.5px] font-extrabold text-[#7c3aed]">
+         <span className="min-w-0 flex flex-col items-start text-[10.5px] font-extrabold text-[#7c3aed]">
             <span>{formatMoney(book.priceValue)}</span>
-            {badgeType === 'discount' && book.oldPriceValue > book.priceValue ? (
+            {book.oldPriceValue > 0 && book.oldPriceValue > book.priceValue ? (
               <span className="text-[9px] font-medium text-[var(--shadow-text-tertiary)] line-through">{formatMoney(book.oldPriceValue)}</span>
             ) : null}
           </span>
