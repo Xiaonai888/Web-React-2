@@ -2673,17 +2673,19 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
             <div className="mt-2 flex items-center gap-3 text-[12px] text-gray-500 dark:text-[var(--shadow-text-tertiary)]">
               <span className="inline-flex items-center gap-1.5">
                 
-<i className="fa-regular fa-rectangle-list shrink-0 text-[13px] opacity-70" aria-hidden="true" />
+<i className="fas fa-list-ul shrink-0 text-[11px] opacity-80" aria-hidden="true" />
 
                 {Number(ad.episode_count || 0)} Episodes
               </span>
               <span className="inline-flex items-center gap-1"><span className="text-[#EF4444]"><FireSolidIcon /></span>{Number(ad.total_likes || 0).toLocaleString()}</span>
             </div>
             {genre || tags.length ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {genre ? <span className="rounded bg-[#e9eaee] px-2 py-1 text-[11px] text-[#667085] dark:bg-white/10 dark:text-gray-300">{genre}</span> : null}
-                {tags.map((tag) => <span key={tag} className="rounded bg-[#e9eaee] px-2 py-1 text-[11px] text-[#667085] dark:bg-white/10 dark:text-gray-300">{tag}</span>)}
-              </div>
+              
+<div className="mt-2 flex flex-wrap gap-2">
+  {genre ? <span className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-medium text-[var(--shadow-text-primary)]">{genre}</span> : null}
+  {tags.map((tag) => <span key={tag} className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-medium text-[var(--shadow-text-primary)]">{tag}</span>)}
+</div>
+
             ) : null}
           </div>
         </div>
