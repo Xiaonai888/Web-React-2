@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, ThumbsUp } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
+import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import {
   StudioBackHeader, StudioCard, StudioFrame, StudioMetric, StudioMissing,
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
@@ -104,5 +105,10 @@ export default function AuthorStudioDashboardPage() {
       }) : null}
       {!loading && !error ? <StudioMissing>{t('shadowStudioStats.longNotice')}</StudioMissing> : null}
     </section>
+    <ShadowStudioFooter
+  activeTab="dashboard"
+  enabledTabs={['dashboard', 'content']}
+  onTabChange={tab => navigate(tab === 'content' ? '/author/reel/studio' : '/author/reel/studio/dashboard')}
+/>
   </StudioFrame>
 }
