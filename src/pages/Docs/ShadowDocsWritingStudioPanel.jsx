@@ -22,6 +22,7 @@ import { buildShadowDocsMergedDocuments, createShadowDocsAddressBlock, createSha
 import { applyShadowDocsCase } from './ShadowDocsTextTransform'
 import ShadowDocsMobileMenu from './ShadowDocsMobileMenu'
 import ShadowDocsShareSheet from './ShadowDocsShareSheet'
+import ShadowDocsFindReplaceModal from './ShadowDocsFindReplaceModal'
 import ShadowDocsFindReplaceMoreOptionsPage from './ShadowDocsFindReplaceMoreOptionsPage'
 import ShadowDocsPrintPanel from './ShadowDocsPrintPanel'
 import ShadowDocsAddToSheet from './ShadowDocsAddToSheet'
