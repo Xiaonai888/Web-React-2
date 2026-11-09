@@ -22,8 +22,6 @@ import useFastNotInterested from '../hooks/useFastNotInterested'
 import FastNotInterestedToast from '../components/fast/FastNotInterestedToast'
 
 
-// REPLACE: src/pages/FastReelsPage.jsx
-// No database changes. Existing /api/fast/videos and /api/authors/following APIs are reused.
 registerTranslationNamespace('fastReels', {
   en: {
     following: 'Following', forYou: 'For You', search: 'Search', loading: 'Loading videos...', empty: 'No videos yet',
@@ -97,6 +95,46 @@ function youtubeId(value) {
 }
 
 
+// Server view quotas reset at midnight in Cambodia; this keeps an open Reel in sync.
+function fastViewCambodiaDay() {
+  return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+// Count unique media positions advanced by the actual player, never seek distance.
+function accumulateFastReelWatch(tracker, position, speed, now) {
+  if (typeof position !== 'number' || !Number.isFinite(position) ||
+      position < 0 || !(tracker.duration > 0)) return
+
+  const previous = tracker.lastMediaTime
+  const elapsed = tracker.lastMediaAt ? Math.max(0, (now - tracker.lastMediaAt) / 1000) : 0
+  tracker.lastMediaTime = position
+  tracker.lastMediaAt = now
+
+  const advance = position - previous
+  const allowed = Math.max(1, Math.min(3, elapsed * Math.min(2, Math.max(0.25, speed)) + 0.75))
+  if (!tracker.playing || document.visibilityState !== 'visible' ||
+      !Number.isFinite(previous) || advance <= 0 || advance > allowed) return
+
+  let from = Math.max(0, previous)
+  let to = Math.min(tracker.duration, position)
+  if (to <= from) return
+
+  const merged = []
+  for (const [start, end] of tracker.coverage) {
+    if (end < from || start > to) merged.push([start, end])
+    else {
+      from = Math.min(from, start)
+      to = Math.max(to, end)
+    }
+  }
+  merged.push([from, to])
+  merged.sort((a, b) => a[0] - b[0])
+  tracker.coverage = merged
+  tracker.watched = Math.min(tracker.duration,
+    merged.reduce((total, [start, end]) => total + end - start, 0))
+}
+
+
 function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   onOpenSettings, onAuthorOpen, onFollow, isFollowing, onNavigate,
   onSaveAuthRequired, onSaveError, onSaveSuccess,
@@ -110,23 +148,35 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   const longPressedRef = useRef(false)
   const endedRef = useRef(false)
   const lastSwipeAtRef = useRef(0)
-const viewTrackerRef = useRef(null)
+  const viewTrackerRef = useRef(null)
 
-useEffect(() => {
-  viewTrackerRef.current = active && id ? {
-    videoId: video.id,
-    playing: false,
-    fastSent: false,
-    needsQualified: false,
-    qualifiedSent: false,
-    watched: 0,
-    duration: 0,
-    lastTick: Date.now(),
-    retryAt: 0,
-  } : null
-
-  return () => { viewTrackerRef.current = null }
-}, [active, id, video.id])
+  // Separate state for each Reel/playback visit. Never transfer a view to another video.
+  useEffect(() => {
+    const tracker = active && id ? {
+      videoId: video.id,
+      day: fastViewCambodiaDay(),
+      playing: false,
+      ended: false,
+      fastSent: false,
+      fastInFlight: false,
+      fastRetryAt: 0,
+      fastFailures: 0,
+      needsQualified: false,
+      qualifiedSent: false,
+      qualifiedInFlight: false,
+      qualifiedRetryAt: 0,
+      qualifiedFailures: 0,
+      watched: 0,
+      duration: 0,
+      coverage: [],
+      lastMediaTime: null,
+      lastMediaAt: 0,
+    } : null
+    viewTrackerRef.current = tracker
+    return () => {
+      if (viewTrackerRef.current === tracker) viewTrackerRef.current = null
+    }
+  }, [active, id, video.id])
 
   useEffect(() => {
     endedRef.current = false
@@ -144,210 +194,189 @@ useEffect(() => {
   }, [])
 
   useEffect(() => {
-  if (!active || !id) {
-    setPlaying(false)
-    return undefined
-  }
+    if (!active || !id) {
+      setPlaying(false)
+      return undefined
+    }
+
+    // Reset only today's quota/session state, never the accumulated total views in SQL.
+    const checkDay = tracker => {
+      const day = fastViewCambodiaDay()
+      if (tracker.day === day) return
+      Object.assign(tracker, {
+        day,
+        fastSent: false,
+        fastInFlight: false,
+        fastRetryAt: 0,
+        fastFailures: 0,
+        needsQualified: false,
+        qualifiedSent: false,
+        qualifiedInFlight: false,
+        qualifiedRetryAt: 0,
+        qualifiedFailures: 0,
+        watched: 0,
+        coverage: [],
+        lastMediaTime: null,
+        lastMediaAt: 0,
+      })
+    }
 
     const submitQualifiedView = tracker => {
-  if (
-    !tracker ||
-    tracker.videoId !== video.id ||
-    !tracker.needsQualified ||
-    tracker.qualifiedSent ||
-    !tracker.duration ||
-    Date.now() < tracker.retryAt ||
-    document.visibilityState !== 'visible'
-  ) return
+      if (!tracker || !tracker.needsQualified || tracker.qualifiedSent ||
+          tracker.qualifiedInFlight || !(tracker.duration > 0) ||
+          Date.now() < tracker.qualifiedRetryAt ||
+          (!tracker.ended && document.visibilityState !== 'visible')) return
 
-  const required = tracker.duration < 30
-    ? Math.max(3, tracker.duration * 0.6)
-    : Math.max(20, tracker.duration * 0.2)
+      const required = tracker.duration < 30
+        ? Math.max(3, tracker.duration * 0.60)
+        : Math.max(20, tracker.duration * 0.20)
+      if (tracker.watched < required) return
 
-  if (tracker.watched < required) return
-
-  tracker.qualifiedSent = true
-  tracker.retryAt = Date.now() + 15000
-
-  void recordFastReelViewV2(video.id, {
-    mode: 'qualified',
-    watchedSeconds: Math.min(tracker.watched, tracker.duration + 1),
-    durationSeconds: tracker.duration,
-  })
-    .then(result => {
-      if (viewTrackerRef.current !== tracker) return
-
-      if (result?.reason === 'watch_time_pending') {
-        tracker.qualifiedSent = false
-      } else if (
-        result?.reason === 'fast_view_available' ||
-        result?.reason === 'qualification_session_required'
-      ) {
-        tracker.qualifiedSent = false
-        tracker.fastSent = false
-        tracker.needsQualified = false
-      }
-    })
-    .catch(error => {
-      if (viewTrackerRef.current === tracker) {
-        tracker.qualifiedSent = false
-      }
-      console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
-    })
-}
-
-  const onMessage = event => {
-    if (event.source !== frameRef.current?.contentWindow) return
-    if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
-
-    let data = event.data
-    try {
-      if (typeof data === 'string') data = JSON.parse(data)
-    } catch {
-      return
-    }
-
-    if (!data || typeof data !== 'object') return
-
-    const tracker = viewTrackerRef.current
-    if (!tracker || tracker.videoId !== video.id) return
-
-    if (data.event === 'onReady') {
-      sendCommand(soundEnabled ? 'unMute' : 'mute')
-      sendCommand('playVideo')
-      sendCommand('getDuration')
-      if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
-    }
-
-    if (data.event === 'infoDelivery') {
-  const duration = Number(data.info?.duration)
-
-  if (Number.isFinite(duration) && duration > 0 && duration <= 43200) {
-    tracker.duration = duration
-  }
-
-  const current = data.info?.currentTime
-
-  if (
-    typeof current === 'number' &&
-    Number.isFinite(current) &&
-    current >= 0 &&
-    tracker.duration > 0
-  ) {
-    const now = Date.now()
-    const previous = tracker.lastMediaTime
-    const gap = tracker.lastMediaAt
-      ? Math.max(0, (now - tracker.lastMediaAt) / 1000)
-      : 0
-
-    tracker.lastMediaTime = current
-    tracker.lastMediaAt = now
-
-    const advance = current - previous
-    const allowedAdvance = Math.max(
-      1,
-      Math.min(
-        3,
-        gap * Math.min(2, Math.max(0.25, playbackSpeed)) + 0.75
-      )
-    )
-
-    if (
-      tracker.playing &&
-      document.visibilityState === 'visible' &&
-      Number.isFinite(previous) &&
-      advance > 0 &&
-      advance <= allowedAdvance
-    ) {
-      let start = Math.max(0, previous)
-      let end = Math.min(tracker.duration, current)
-
-      const merged = []
-
-      for (const [from, to] of tracker.coverage || []) {
-        if (to < start || from > end) {
-          merged.push([from, to])
+      tracker.qualifiedInFlight = true
+      const day = tracker.day
+      void recordFastReelViewV2(video.id, {
+        mode: 'qualified',
+        watchedSeconds: Math.min(tracker.watched, tracker.duration),
+        durationSeconds: tracker.duration,
+      }).then(result => {
+        if (tracker.day !== day) return
+        tracker.qualifiedFailures = 0
+        const reason = result?.reason || ''
+        if (result?.counted === true || reason === 'qualified_counted') {
+          tracker.qualifiedSent = true
+          tracker.needsQualified = false
+        } else if (reason === 'watch_time_pending') {
+          tracker.qualifiedRetryAt = Date.now() + 15000
+        } else if (reason === 'qualification_session_required' || reason === 'fast_view_available') {
+          tracker.needsQualified = false
+          tracker.fastSent = false
+          tracker.fastRetryAt = Date.now() + 1000
+        } else if (reason === 'qualified_cooldown' || reason === 'reel_unavailable' ||
+                   reason === 'invalid_watch_data') {
+          tracker.qualifiedSent = true
+          tracker.needsQualified = false
         } else {
-          start = Math.min(start, from)
-          end = Math.max(end, to)
+          tracker.qualifiedRetryAt = Date.now() + 15000
         }
-      }
-
-      if (end > start) merged.push([start, end])
-      merged.sort((a, b) => a[0] - b[0])
-
-      tracker.coverage = merged
-      tracker.watched = Math.min(
-        tracker.duration,
-        merged.reduce((sum, [from, to]) => sum + to - from, 0)
-      )
+      }).catch(error => {
+        if (tracker.day !== day) return
+        tracker.qualifiedFailures = Math.min(4, tracker.qualifiedFailures + 1)
+        tracker.qualifiedRetryAt = Date.now() + Math.min(60000, 15000 * tracker.qualifiedFailures)
+        console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
+      }).finally(() => {
+        if (tracker.day === day) tracker.qualifiedInFlight = false
+      })
     }
-  }
-}
 
-    const state = data.event === 'onStateChange'
-      ? data.info
-      : data.event === 'infoDelivery'
-        ? data.info?.playerState
-        : null
-
-    if (state === 1) {
-      if (!tracker.playing) tracker.lastTick = Date.now()
-      tracker.playing = true
-      setPlaying(true)
-      endedRef.current = false
-
-      if (!tracker.fastSent) {
+    const submitFastView = tracker => {
+      if (!tracker || !tracker.playing || tracker.fastSent || tracker.fastInFlight ||
+          Date.now() < tracker.fastRetryAt) return
+      // Book views also require a reader account. Do not spam the API for guests.
+      let token = ''
+      try { token = getToken() } catch { /* storage blocked */ }
+      if (!token) {
         tracker.fastSent = true
+        return
+      }
 
-        void recordFastReelViewV2(video.id, { mode: 'fast' })
-          .then(result => {
-            if (viewTrackerRef.current === tracker) {
-              tracker.needsQualified =
-                result?.requires_qualified_view === true
-            }
-          })
-          .catch(error => {
-            console.warn('[FAST_VIEW_V2_ERROR]', error)
-          })
+      tracker.fastInFlight = true
+      const day = tracker.day
+      void recordFastReelViewV2(video.id, { mode: 'fast' }).then(result => {
+        if (tracker.day !== day) return
+        tracker.fastFailures = 0
+        const reason = result?.reason || ''
+        if (result?.counted === true || reason === 'fast_counted') {
+          tracker.fastSent = true
+          tracker.needsQualified = false
+        } else if (result?.requires_qualified_view === true || reason === 'qualified_view_required') {
+          tracker.fastSent = true
+          tracker.needsQualified = true
+          // Handle a Reel that ended before the Fast response arrived.
+          submitQualifiedView(tracker)
+        } else if (reason === 'fast_cooldown') {
+          tracker.fastRetryAt = Date.now() + 61000
+        } else {
+          // A current-day cooldown or unavailable Reel is terminal for this play.
+          tracker.fastSent = true
+          tracker.needsQualified = false
+        }
+      }).catch(error => {
+        if (tracker.day !== day) return
+        tracker.fastFailures = Math.min(4, tracker.fastFailures + 1)
+        tracker.fastRetryAt = Date.now() + Math.min(60000, 15000 * tracker.fastFailures)
+        console.warn('[FAST_VIEW_V2_ERROR]', error)
+      }).finally(() => {
+        if (tracker.day === day) tracker.fastInFlight = false
+      })
+    }
+
+    const onMessage = event => {
+      if (event.source !== frameRef.current?.contentWindow) return
+      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
+      let data = event.data
+      try { if (typeof data === 'string') data = JSON.parse(data) } catch { return }
+      if (!data || typeof data !== 'object') return
+
+      const tracker = viewTrackerRef.current
+      if (!tracker || tracker.videoId !== video.id) return
+      checkDay(tracker)
+
+      if (data.event === 'onReady') {
+        sendCommand(soundEnabled ? 'unMute' : 'mute')
+        sendCommand('playVideo')
+        sendCommand('getDuration')
+        if (playbackSpeed !== 1) sendCommand('setPlaybackRate', [playbackSpeed])
+      }
+
+      if (data.event === 'infoDelivery') {
+        const duration = data.info?.duration
+        if (typeof duration === 'number' && Number.isFinite(duration) &&
+            duration > 0 && duration <= 43200) tracker.duration = duration
+        accumulateFastReelWatch(tracker, data.info?.currentTime, playbackSpeed, Date.now())
+      }
+
+      const state = data.event === 'onStateChange'
+        ? data.info
+        : data.event === 'infoDelivery' ? data.info?.playerState : null
+      if (state === 1) {
+        if (!tracker.playing) {
+          tracker.lastMediaTime = null
+          tracker.lastMediaAt = 0
+        }
+        tracker.playing = true
+        tracker.ended = false
+        setPlaying(true)
+        endedRef.current = false
+        submitFastView(tracker)
+      }
+      if ([0, 2, 5].includes(state)) {
+        tracker.playing = false
+        setPlaying(false)
+      }
+      if (state === 0 && !endedRef.current) {
+        tracker.ended = true
+        endedRef.current = true
+        submitQualifiedView(tracker)
+        onEnded?.()
       }
     }
 
-    if ([0, 2, 5].includes(state)) {
-      tracker.playing = false
-      setPlaying(false)
+    const timer = window.setInterval(() => {
+      const tracker = viewTrackerRef.current
+      if (!tracker || tracker.videoId !== video.id) return
+      checkDay(tracker)
+      if (tracker.playing && document.visibilityState === 'visible') {
+        submitFastView(tracker)
+      }
+      if (tracker.playing || tracker.ended) submitQualifiedView(tracker)
+    }, 1000)
+
+    window.addEventListener('message', onMessage)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('message', onMessage)
     }
-
-    if (state === 0 && !endedRef.current) {
-  endedRef.current = true
-  submitQualifiedView(tracker)
-  onEnded?.()
-}
-  }
-
-  const timer = window.setInterval(() => {
-  const tracker = viewTrackerRef.current
-  if (!tracker || tracker.videoId !== video.id) return
-  if (!tracker.playing && !endedRef.current) return
-
-  submitQualifiedView(tracker)
-}, 1000)
-
-  window.addEventListener('message', onMessage)
-
-  return () => {
-    window.clearInterval(timer)
-    window.removeEventListener('message', onMessage)
-  }
-}, [
-  active,
-  id,
-  video.id,
-  soundEnabled,
-  playbackSpeed,
-  sendCommand,
-  onEnded,
-])
+  }, [active, id, video.id, soundEnabled, playbackSpeed, sendCommand, onEnded])
 
   useEffect(() => {
     if (!active) return undefined
@@ -426,7 +455,19 @@ useEffect(() => {
 
   const creator = video.creator
   return (
-    <article data-fast-slide className="relative h-full w-full shrink-0 snap-start overflow-hidden bg-black text-white" aria-label={video.title}>
+    <article data-fast-slide className="relative h-full w-full shrink-0 snap-start overflow-hidden bg-black text-white" aria-label={video.title}
+      onPointerDownCapture={event => {
+        if (event.target?.type === 'range' && viewTrackerRef.current) {
+          viewTrackerRef.current.lastMediaTime = null
+          viewTrackerRef.current.lastMediaAt = 0
+        }
+      }}
+      onKeyDownCapture={event => {
+        if (event.target?.type === 'range' && viewTrackerRef.current) {
+          viewTrackerRef.current.lastMediaTime = null
+          viewTrackerRef.current.lastMediaAt = 0
+        }
+      }}>
       {active && id ? (
         <iframe ref={frameRef} title={video.title || 'YouTube'} src={iframeUrl} onLoad={handlePlayerLoad}
           className="pointer-events-none absolute inset-0 h-full w-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
