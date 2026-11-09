@@ -173,11 +173,70 @@ useEffect(() => {
     }
 
     if (data.event === 'infoDelivery') {
-      const duration = Number(data.info?.duration)
-      if (Number.isFinite(duration) && duration > 0 && duration <= 43200) {
-        tracker.duration = duration
+  const duration = Number(data.info?.duration)
+
+  if (Number.isFinite(duration) && duration > 0 && duration <= 43200) {
+    tracker.duration = duration
+  }
+
+  const current = data.info?.currentTime
+
+  if (
+    typeof current === 'number' &&
+    Number.isFinite(current) &&
+    current >= 0 &&
+    tracker.duration > 0
+  ) {
+    const now = Date.now()
+    const previous = tracker.lastMediaTime
+    const gap = tracker.lastMediaAt
+      ? Math.max(0, (now - tracker.lastMediaAt) / 1000)
+      : 0
+
+    tracker.lastMediaTime = current
+    tracker.lastMediaAt = now
+
+    const advance = current - previous
+    const allowedAdvance = Math.max(
+      1,
+      Math.min(
+        3,
+        gap * Math.min(2, Math.max(0.25, playbackSpeed)) + 0.75
+      )
+    )
+
+    if (
+      tracker.playing &&
+      document.visibilityState === 'visible' &&
+      Number.isFinite(previous) &&
+      advance > 0 &&
+      advance <= allowedAdvance
+    ) {
+      let start = Math.max(0, previous)
+      let end = Math.min(tracker.duration, current)
+
+      const merged = []
+
+      for (const [from, to] of tracker.coverage || []) {
+        if (to < start || from > end) {
+          merged.push([from, to])
+        } else {
+          start = Math.min(start, from)
+          end = Math.max(end, to)
+        }
       }
+
+      if (end > start) merged.push([start, end])
+      merged.sort((a, b) => a[0] - b[0])
+
+      tracker.coverage = merged
+      tracker.watched = Math.min(
+        tracker.duration,
+        merged.reduce((sum, [from, to]) => sum + to - from, 0)
+      )
     }
+  }
+}
 
     const state = data.event === 'onStateChange'
       ? data.info
@@ -223,18 +282,8 @@ useEffect(() => {
     if (!tracker || tracker.videoId !== video.id) return
 
     const now = Date.now()
-    const elapsed = Math.max(
-      0,
-      Math.min(1.5, (now - tracker.lastTick) / 1000)
-    )
-    tracker.lastTick = now
 
-    if (!tracker.playing || document.visibilityState !== 'visible') return
-
-    tracker.watched += elapsed * Math.min(
-      2,
-      Math.max(0.25, playbackSpeed)
-    )
+if (!tracker.playing || document.visibilityState !== 'visible') return
 
     if (
       !tracker.needsQualified ||
