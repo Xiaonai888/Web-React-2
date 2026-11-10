@@ -7,16 +7,60 @@ import {
   recordSmartFreeUnlockImpression,
 } from '../../services/advertisements/smartFreeUnlockTracking'
 
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+).replace(/\/$/, '')
+const MODE_CACHE_MS = 60000
+const MODE_TIMEOUT_MS = 4000
+let modeCache = null
+let modePending = null
+
+async function isSmartFreeUnlockMode() {
+  if (modeCache && modeCache.expiresAt > Date.now()) return modeCache.enabled
+  if (modePending) return modePending
+
+  const request = (async () => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), MODE_TIMEOUT_MS)
+    try {
+      const response = await fetch(`${API_URL}/api/advertisements/public?placement=freeUnlock`, {
+        signal: controller.signal,
+        cache: 'default',
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true) throw new Error('Advertisement mode unavailable')
+      const mode = String(data.rotation?.mode || '').toLowerCase()
+      const enabled = (mode === 'smart' || mode === 'auto_system') && data.rotation?.enabled === true
+      modeCache = { enabled, expiresAt: Date.now() + MODE_CACHE_MS }
+      return enabled
+    } finally {
+      clearTimeout(timer)
+    }
+  })().catch((error) => {
+    console.warn('SMART_FREE_UNLOCK_MODE_ERROR', error?.message || error)
+    return false
+  }).finally(() => {
+    if (modePending === request) modePending = null
+  })
+
+  modePending = request
+  return request
+}
+
 export default function SmartFreeUnlockAdvertisement({
-  enabled = true,
+  enabled = null,
   currentStoryId = '',
+  legacyAdvertisement = null,
   onFinish,
 }) {
   const navigate = useNavigate()
   const onFinishRef = useRef(onFinish)
   onFinishRef.current = onFinish
   const finishedRef = useRef(false)
-  const [state, setState] = useState({ status: enabled ? 'loading' : 'legacy', selection: null })
+  const [state, setState] = useState({ status: 'loading', selection: null })
 
   const finish = useCallback(() => {
     if (finishedRef.current) return
@@ -27,21 +71,29 @@ export default function SmartFreeUnlockAdvertisement({
   useEffect(() => {
     let cancelled = false
     finishedRef.current = false
-    if (!enabled) {
-      setState({ status: 'legacy', selection: null })
-      return undefined
-    }
     setState({ status: 'loading', selection: null })
-    void takeSmartFreeUnlockAd({ currentStoryId }).then((selection) => {
-      if (cancelled) return
-      setState(selection
-        ? { status: 'smart', selection }
-        : { status: 'legacy', selection: null })
-    }).catch((error) => {
-      if (cancelled) return
-      console.warn('SMART_FREE_UNLOCK_SELECTION_ERROR', error?.message || error)
-      setState({ status: 'legacy', selection: null })
-    })
+
+    async function load() {
+      try {
+        const useSmart = enabled == null ? await isSmartFreeUnlockMode() : Boolean(enabled)
+        if (cancelled) return
+        if (!useSmart) {
+          setState({ status: 'legacy', selection: null })
+          return
+        }
+        const selection = await takeSmartFreeUnlockAd({ currentStoryId })
+        if (cancelled) return
+        setState(selection
+          ? { status: 'smart', selection }
+          : { status: 'legacy', selection: null })
+      } catch (error) {
+        if (cancelled) return
+        console.warn('SMART_FREE_UNLOCK_SELECTION_ERROR', error?.message || error)
+        setState({ status: 'legacy', selection: null })
+      }
+    }
+
+    void load()
     return () => { cancelled = true }
   }, [enabled, currentStoryId])
 
@@ -62,7 +114,14 @@ export default function SmartFreeUnlockAdvertisement({
 
   if (state.status === 'loading') return null
   if (state.status === 'legacy') {
-    return <AdvertisementPopup placement="freeUnlock" blocking onFinish={finish} />
+    return (
+      <AdvertisementPopup
+        placement="freeUnlock"
+        blocking
+        advertisementOverride={legacyAdvertisement}
+        onFinish={finish}
+      />
+    )
   }
 
   const ad = state.selection.advertisement
