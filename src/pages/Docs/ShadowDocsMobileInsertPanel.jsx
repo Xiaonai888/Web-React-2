@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  FileText, ImagePlus, MessageSquarePlus, Minus, PenLine, Plus, ScanText, Shapes, Table2,
+  CalendarClock, FileText, ImagePlus, MessageSquarePlus, Minus, PenLine, Plus, ScanText, Shapes, Table2,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
@@ -40,6 +40,8 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [columns, setColumns] = useState(2)
   const [header, setHeader] = useState(false)
   const [textBoxText, setTextBoxText] = useState('')
+  const [dateTimeLocale, setDateTimeLocale] = useState('km-KH')
+  const [dateTimeIncludeTime, setDateTimeIncludeTime] = useState(true)
 
   function execute(command, value = true) {
     if (disabled || typeof onCommand !== 'function') return
@@ -96,10 +98,39 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('textBox')}><FileText /><span>Text Box</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('scanText')}><ScanText /><span>Scan Text</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('signature')}><PenLine /><span>Signature</span></button>
+      <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('dateTime')}><CalendarClock /><span>Date & Time</span></button>
       </div>
     </> : view === 'shape' ? (
       <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
-    ) : view === 'signature' ? (
+    ) : view === 'dateTime' ? <>
+  <div className="sd-insert-title">
+    <button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>
+    Insert Date & Time
+  </div>
+  <div className="sd-insert-card">
+    <div className="sd-insert-setting-row">
+      <span>Language</span>
+      <div className="sd-insert-options">
+        {[
+          { value: 'km-KH', label: 'Khmer' },
+          { value: 'en-US', label: 'English' },
+        ].map(item => (
+          <button key={item.value} type="button" className={dateTimeLocale === item.value ? 'is-selected' : ''} aria-pressed={dateTimeLocale === item.value} onClick={() => setDateTimeLocale(item.value)}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+    <div className="sd-insert-setting-row">
+      <span>Include Time</span>
+      <button type="button" role="switch" aria-label="Include Time" aria-checked={dateTimeIncludeTime} className={`sd-insert-switch ${dateTimeIncludeTime ? 'is-on' : ''}`} onClick={() => setDateTimeIncludeTime(value => !value)} />
+    </div>
+  </div>
+  <p className="sd-insert-help">Inserts the current date and optionally the current time.</p>
+  <button type="button" className="sd-insert-submit" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => execute('dateTime', { locale: dateTimeLocale, includeTime: dateTimeIncludeTime })}>
+    <CalendarClock size={20} /> Insert Date & Time
+  </button>
+</> : view === 'signature' ? (
   <ShadowDocsMobileSignaturePanel
     disabled={disabled}
     onBack={() => setView('menu')}
