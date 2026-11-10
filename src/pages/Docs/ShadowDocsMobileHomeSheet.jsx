@@ -8,6 +8,7 @@ import {
 import { SHADOW_DOCS_KHMER_FONTS, SHADOW_DOCS_LATIN_FONTS } from './ShadowDocsFontCatalog'
 import { SHADOW_DOCS_STYLES } from './ShadowDocsStyleCatalog'
 import ShadowDocsMobileFontSizePage from './ShadowDocsMobileFontSizePage'
+import ShadowDocsMobileFontStylePage from './ShadowDocsMobileFontStylePage'
 import './ShadowDocsMobileHomeSheet.css'
 
 
@@ -96,7 +97,6 @@ export default function ShadowDocsMobileHomeSheet({
 }) {
   const [page, setPage] = useState('home')
   const [fontMode, setFontMode] = useState('solid')
-  const [moreOpen, setMoreOpen] = useState(false)
   const [styleOpen, setStyleOpen] = useState(false)
   const [recent, setRecent] = useState(() => readColors('recent'))
   const [favorites, setFavorites] = useState(() => readColors('favorites'))
@@ -116,7 +116,6 @@ export default function ShadowDocsMobileHomeSheet({
   useEffect(() => {
     if (!open) {
       setPage('home')
-      setMoreOpen(false)
       setStyleOpen(false)
       setAdvancedParagraph(false)
       setAdvancedNumbering(false)
@@ -188,6 +187,19 @@ export default function ShadowDocsMobileHomeSheet({
     )
   }
 
+    if (page === 'fontStyle') {
+    return (
+      <ShadowDocsMobileFontStylePage
+        open
+        state={state}
+        disabled={!canBasic}
+        onCommand={onCommand}
+        onBack={() => setPage('home')}
+        onKeyboard={onKeyboard}
+      />
+    )
+  }
+
   const colorPanel = page === 'color' || page === 'highlight'
   const isHighlight = page === 'highlight'
 
@@ -227,12 +239,13 @@ export default function ShadowDocsMobileHomeSheet({
               <IconButton label="Underline" active={state.underline} disabled={!canBasic} onClick={() => command('underline', !state.underline)}><u>U</u></IconButton>
               <IconButton label="Strikethrough" active={state.strike} disabled={!canBasic} onClick={() => command('strike', !state.strike)}><s>ab</s></IconButton>
               <IconButton label="Superscript" active={state.superscript} disabled={!canBasic} onClick={() => command('superscript', !state.superscript)}>x²</IconButton>
-              <IconButton label="More font options" onClick={() => setMoreOpen(value => !value)}><MoreHorizontal size={22} /></IconButton>
+              <IconButton
+  label="Open Font Style"
+  onClick={() => setPage('fontStyle')}
+>
+  <MoreHorizontal size={22} />
+</IconButton>
             </div>
-            {moreOpen ? <div className="sd-home-options-row">
-              <button type="button" disabled={!canBasic} onPointerDown={event => event.preventDefault()} onClick={() => command('subscript', !state.subscript)}>Subscript x₂</button>
-              <button type="button" disabled={!canBasic} onPointerDown={event => event.preventDefault()} onClick={() => command('clearFormatting')}>Clear formatting</button>
-            </div> : null}
             <div className="sd-home-toolbar-row sd-home-styles">
               {['heading1', 'heading2', 'heading3', 'normal'].map(id => <button
                 type="button" key={id}
