@@ -29,6 +29,7 @@ export function readShadowDocsFormatState(editor) {
   const blockStyle = block ? getComputedStyle(block) : computed
   const family = cleanFamily(computed.fontFamily)
   const decoration = computed.textDecorationLine || ''
+  const underlineMode = computed.textDecorationStyle || 'solid'
   return {
     selection: captureShadowDocsSelection(editor),
     fontFamily: isShadowDocsFont(family) ? family : '',
@@ -39,6 +40,12 @@ export function readShadowDocsFormatState(editor) {
     italic: computed.fontStyle === 'italic',
     underline: decoration.includes('underline'),
     strike: decoration.includes('line-through'),
+    allCaps: computed.textTransform === 'uppercase',
+    smallCaps: computed.fontVariantCaps === 'small-caps',
+    underlineStyle: decoration.includes('underline')
+      ? ['double', 'wavy'].includes(underlineMode) ? underlineMode : 'single'
+      : '',
+    underlineColor: computed.textDecorationColor || '',
     superscript: computed.verticalAlign === 'super',
     subscript: computed.verticalAlign === 'sub',
     blockType: block?.tagName?.toLowerCase() || 'p',
