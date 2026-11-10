@@ -245,6 +245,8 @@ export default function AdvertisementPopup({
   onFinish = null,
   blocking = false,
   advertisementOverride = null,
+  onImpression = null,
+  onAdClick = null,
 }) {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
@@ -256,6 +258,9 @@ export default function AdvertisementPopup({
   const [skipCountdown, setSkipCountdown] = useState(0)
   const [debugMessage, setDebugMessage] = useState('')
   const finishedRef = useRef(false)
+  const smartOpenRef = useRef(false)
+  const onImpressionRef = useRef(onImpression)
+  onImpressionRef.current = onImpression
 
   const durationSeconds = useMemo(() => {
     return Math.max(1, Number(advertisement?.duration_seconds ?? 5))
@@ -282,6 +287,7 @@ export default function AdvertisementPopup({
 
   useEffect(() => {
     finishedRef.current = false
+    smartOpenRef.current = false
     setAdvertisement(null)
     setVisible(false)
     setCanSkip(false)
@@ -309,7 +315,7 @@ export default function AdvertisementPopup({
           }
         }
 
-        if (advertisementOverride?.image_url && placement !== 'freeUnlock') {
+        if (advertisementOverride?.image_url && (placement !== 'freeUnlock' || Boolean(advertisementOverride.story_id))) {
           if (!shouldShowByFrequency(advertisementOverride)) {
             finishAd()
             return
@@ -394,6 +400,14 @@ export default function AdvertisementPopup({
       cancelled = true
     }
   }, [placement, advertisementOverride])
+
+  useEffect(() => {
+    if (!visible || !imageLoaded || !advertisement?.story_id) return undefined
+    const timer = window.setTimeout(() => {
+      if (!finishedRef.current) onImpressionRef.current?.(advertisement)
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [visible, imageLoaded, advertisement])
 
   useEffect(() => {
     if (!visible || !advertisement) return undefined
@@ -497,6 +511,16 @@ export default function AdvertisementPopup({
 
   function handleAdLink(event) {
     event.preventDefault()
+
+    if (advertisement?.story_id && typeof onAdClick === 'function') {
+      if (smartOpenRef.current) return
+      smartOpenRef.current = true
+      Promise.resolve()
+        .then(() => onAdClick(advertisement))
+        .catch((error) => console.warn('SMART_AD_OPEN_ERROR', error?.message || error))
+        .finally(() => { smartOpenRef.current = false })
+      return
+    }
 
     const link = String(advertisement.link_url || '').trim()
     if (!link) return
