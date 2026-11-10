@@ -8,6 +8,7 @@ import StudioChannelContent from '../../components/author/studio/channel/StudioC
 import StudioChannelAudience from '../../components/author/studio/channel/StudioChannelAudience'
 import StudioChannelTrends from '../../components/author/studio/channel/StudioChannelTrends'
 import useStudioChannelAnalyticsData from '../../components/author/studio/channel/useStudioChannelAnalyticsData'
+import useStudioChannelInsights from '../../components/author/studio/channel/useStudioChannelInsights'
 import '../../components/author/studio/channel/ShadowStudioChannelCopy'
 import '../../components/author/studio/channel/ShadowStudioChannelExtraCopy'
 
@@ -20,7 +21,11 @@ export default function AuthorStudioAnalyticsPage() {
   const extra = key => t(`shadowStudioChannelExtra.${key}`)
   const [section, setSection] = useState('overview')
   const [format, setFormat] = useState('all')
-  const { data, error, loading, retry, supported } = useStudioChannelAnalyticsData(section, format)
+  const primary = useStudioChannelAnalyticsData(section, format)
+  const insights = useStudioChannelInsights(section, 30)
+  const isInsightTab = section === 'audience' || section === 'trends'
+  const current = isInsightTab ? insights : primary
+  const { data, error, loading, retry, supported } = current
 
   const openVideo = video => {
     if (!video?.id) return
@@ -47,8 +52,10 @@ export default function AuthorStudioAnalyticsPage() {
       {section === 'content' && !error ? <StudioChannelContent format={format} data={data} onFormatChange={setFormat}
         onOpenVideo={openVideo} loading={loading} /> : null}
       {section === 'overview' && !error && !loading ? <StudioChannelOverview data={data} onOpenVideo={openVideo} /> : null}
-      {section === 'audience' ? <StudioChannelAudience /> : null}
-      {section === 'trends' ? <StudioChannelTrends /> : null}
+      {section === 'audience' && !error && !loading ? <StudioChannelAudience data={data} /> : null}
+      {section === 'trends' && !error && !loading ? <StudioChannelTrends data={data}
+        onSaveTopic={insights.saveTopic} onRemoveTopic={insights.removeTopic}
+        busyTopic={insights.busyTopic} actionError={insights.actionError} /> : null}
       {supported && loading && section !== 'content' ? <StudioCard><p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{l('loading')}</p></StudioCard> : null}
       {supported && !loading && error ? <StudioRetry message={error} label={l('retry')} onRetry={retry} /> : null}
     </StudioFrame>
