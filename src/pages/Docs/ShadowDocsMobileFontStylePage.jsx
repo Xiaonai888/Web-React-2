@@ -93,10 +93,8 @@ export default function ShadowDocsMobileFontStylePage({
               key={value}
               label={label}
               active={currentUnderline === value}
-              disabled={value === 'single' ? !canBasic : !canOption}
-              onClick={() => value === 'single'
-                ? basic('underline', !state.underline)
-                : option('underlineStyle', value)}
+              disabled={!canOption}
+              onClick={() => option('underlineStyle', value)}
             ><span className={`sd-fs-line sd-fs-line-${value}`}>U</span></Action>)}
           </div>
           <div className="sd-fs-card sd-fs-trio">
