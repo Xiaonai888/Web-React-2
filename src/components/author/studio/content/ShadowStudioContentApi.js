@@ -10,7 +10,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
   ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com'
 )
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PAGE_LIMIT = 24
 
 function requiredId(value) {
@@ -67,12 +67,41 @@ function normalizePage(result, field, limit, offset) {
   }
 }
 
+async function withPlaylistSummaries(page, signal) {
+  if (!page.items.length) return page
+  const ids = page.items.map(item => item.id).filter(id => UUID.test(String(id || '')))
+  if (!ids.length) return page
+  try {
+    const params = new URLSearchParams({ ids: ids.join(',') })
+    const result = await request(`/api/shadow-studio/content/playlists/summaries?${params}`, { signal })
+    const summaries = new Map((Array.isArray(result.summaries) ? result.summaries : [])
+      .filter(row => UUID.test(String(row?.playlist_id || '')))
+      .map(row => [row.playlist_id, row]))
+    return {
+      ...page,
+      items: page.items.map(item => {
+        const summary = summaries.get(item.id)
+        if (!summary) return item
+        const count = Number(summary.video_count)
+        return {
+          ...item,
+          video_count: Number.isSafeInteger(count) && count >= 0 ? count : null,
+          thumbnail_url: typeof summary.thumbnail_url === 'string' ? summary.thumbnail_url : null,
+        }
+      }),
+    }
+  } catch (error) {
+    if (signal?.aborted) throw error
+    return page
+  }
+}
+
 export async function listStudioContentSection(section, { limit = 12, offset = 0, signal } = {}) {
   const pageLimit = safeLimit(limit)
   const pageOffset = safeOffset(offset)
   if (section === 'playlists') {
     const result = await listMyReelPlaylists({ limit: pageLimit, offset: pageOffset, signal })
-    return normalizePage(result, 'playlists', pageLimit, pageOffset)
+    return withPlaylistSummaries(normalizePage(result, 'playlists', pageLimit, pageOffset), signal)
   }
   if (section !== 'videos' && section !== 'shorts') throw new Error('Invalid content section.')
   const params = new URLSearchParams({
@@ -121,4 +150,3 @@ export async function removeStudioPlaylist(playlistId) {
 export function fetchStudioVideoAnalytics(videoId, options = {}) {
   return getStudioVideoAnalytics(requiredId(videoId), options)
 }
-
