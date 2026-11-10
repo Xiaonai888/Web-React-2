@@ -50,6 +50,10 @@ function sanitizeStyle(node) {
   const weight = INLINE_TAGS.has(node.tagName) && ['400', '500', '600', '700', 'bold', 'normal'].includes(String(style.fontWeight || '').toLowerCase()) ? String(style.fontWeight).toLowerCase() : ''
   const italic = INLINE_TAGS.has(node.tagName) && ['italic', 'normal'].includes(String(style.fontStyle || '').toLowerCase()) ? String(style.fontStyle).toLowerCase() : ''
   const decoration = INLINE_TAGS.has(node.tagName) ? String(style.textDecoration || style.textDecorationLine || '').toLowerCase() : ''
+  const transform = INLINE_TAGS.has(node.tagName) && ['uppercase', 'none'].includes(style.textTransform) ? style.textTransform : ''
+  const caps = INLINE_TAGS.has(node.tagName) && ['small-caps', 'normal'].includes(style.fontVariantCaps) ? style.fontVariantCaps : ''
+  const underlineStyle = INLINE_TAGS.has(node.tagName) && ['solid', 'double', 'wavy'].includes(style.textDecorationStyle) ? style.textDecorationStyle : ''
+  const underlineColor = INLINE_TAGS.has(node.tagName) ? safeColor(style.textDecorationColor) : ''
   const vertical = INLINE_TAGS.has(node.tagName) && ['baseline', 'sub', 'super'].includes(String(style.verticalAlign || '').toLowerCase()) ? String(style.verticalAlign).toLowerCase() : ''
   const align = BLOCK_TAGS.has(node.tagName) && ALIGNMENTS.has(style.textAlign) ? style.textAlign : ''
   const lineHeight = BLOCK_TAGS.has(node.tagName) ? safeLineHeight(style.lineHeight) : ''
@@ -83,11 +87,19 @@ function sanitizeStyle(node) {
   if (background) rules.push(`background-color:${background}`)
   if (weight) rules.push(`font-weight:${weight}`)
   if (italic) rules.push(`font-style:${italic}`)
+  if (transform) rules.push(`text-transform:${transform}`)
+  if (caps) rules.push(`font-variant-caps:${caps}`)
   if (decoration.includes('underline') || decoration.includes('line-through') || decoration === 'none') {
     const values = []
     if (decoration.includes('underline')) values.push('underline')
     if (decoration.includes('line-through')) values.push('line-through')
     rules.push(`text-decoration:${values.length ? values.join(' ') : 'none'}`)
+  }
+    if (decoration.includes('underline') && underlineStyle) {
+    rules.push(`text-decoration-style:${underlineStyle}`)
+  }
+  if (decoration.includes('underline') && underlineColor) {
+    rules.push(`text-decoration-color:${underlineColor}`)
   }
   if (vertical) rules.push(`vertical-align:${vertical}`)
   if (align) rules.push(`text-align:${align}`)
