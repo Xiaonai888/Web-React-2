@@ -31,26 +31,34 @@ function wrapTextNodes(fragment, style) {
 
 function insertAndReselect(editor, range, fragment) {
   if (!editor || !range || !fragment || typeof document === 'undefined') return false
-  const start = document.createComment('shadow-docs-selection-start')
-  const end = document.createComment('shadow-docs-selection-end')
-  const insertion = document.createDocumentFragment()
-  insertion.appendChild(start)
-  insertion.appendChild(fragment)
-  insertion.appendChild(end)
-  range.insertNode(insertion)
+
+  const nodes = [...fragment.childNodes]
+  const textNodes = textNodesWithin(fragment)
+
+  if (!nodes.length) return false
+
+  range.insertNode(fragment)
 
   const selection = globalThis.getSelection?.()
+
   if (selection) {
     const next = document.createRange()
-    next.setStartAfter(start)
-    next.setEndBefore(end)
+
+    if (textNodes.length) {
+      const first = textNodes[0]
+      const last = textNodes[textNodes.length - 1]
+
+      next.setStart(first, 0)
+      next.setEnd(last, last.nodeValue?.length || 0)
+    } else {
+      next.setStartBefore(nodes[0])
+      next.setEndAfter(nodes[nodes.length - 1])
+    }
+
     selection.removeAllRanges()
     selection.addRange(next)
   }
 
-  start.remove()
-  end.remove()
-  editor.normalize()
   return true
 }
 
@@ -259,6 +267,10 @@ export function toggleShadowDocsList(editor, snapshot, type = 'ul') {
 
 export function applyShadowDocsCommand(editor, snapshot, command, value) {
   if (!editor || !snapshot) return false
+
+  const nativeResult = toggleShadowDocsNativeFormat(editor, snapshot, command)
+
+  if (nativeResult !== null) return nativeResult
   if (command === 'fontFamily') return applyShadowDocsInlineFormat(editor, snapshot, { fontFamily: value })
   if (command === 'fontSize') return applyShadowDocsInlineFormat(editor, snapshot, { fontSize: value })
   if (command === 'color') return applyShadowDocsInlineFormat(editor, snapshot, { color: value })
