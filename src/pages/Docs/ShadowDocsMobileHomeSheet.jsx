@@ -194,6 +194,7 @@ export default function ShadowDocsMobileHomeSheet({
         state={state}
         disabled={!canBasic}
         onCommand={onCommand}
+        onStyleOption={command}
         onBack={() => setPage('home')}
         onKeyboard={onKeyboard}
       />
