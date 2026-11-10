@@ -132,7 +132,6 @@ export default function AuthorStudioVideoAnalyticsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { videoId } = useParams()
-  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
