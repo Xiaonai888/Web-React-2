@@ -224,7 +224,7 @@ export function sanitizeShadowDocsHTML(source) {
     if (node.tagName === 'IMG') {
       const src = node.getAttribute('src') || ''
       if (!isShadowDocsManuscriptImage(src)) return ''
-      const width = [50, 75, 100].includes(Number(node.getAttribute('data-shadow-docs-width'))) ? Number(node.getAttribute('data-shadow-docs-width')) : 75
+      const width = [25, 50, 75, 100].includes(Number(node.getAttribute('data-shadow-docs-width'))) ? Number(node.getAttribute('data-shadow-docs-width')) : 75
       const align = ['left', 'center', 'right'].includes(node.getAttribute('data-shadow-docs-align')) ? node.getAttribute('data-shadow-docs-align') : 'center'
       const margin = align === 'left' ? '1em auto 1em 0' : align === 'right' ? '1em 0 1em auto' : '1em auto'
       const alt = escapeHTML(String(node.getAttribute('alt') || '').slice(0, 80))
