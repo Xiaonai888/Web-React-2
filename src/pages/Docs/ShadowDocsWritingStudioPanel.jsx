@@ -7,7 +7,7 @@ import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDoc
 import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsParagraphFormat } from './ShadowDocsFormattingEngine'
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
-import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'.
+import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
