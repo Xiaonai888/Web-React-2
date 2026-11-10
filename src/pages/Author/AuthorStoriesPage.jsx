@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import './AuthorStoriesTheme.css'
 import StorySortMenu from '../../components/author/StorySortMenu'
 import StoryActionsSheet from '../../components/author/StoryActionsSheet'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -532,7 +533,7 @@ export default function AuthorStoriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[100px] text-[var(--shadow-text-primary)]">
+    <div className="author-stories-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[100px] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur-xl">
         <div className="mx-auto flex h-[62px] max-w-5xl items-center px-4">
           {searchOpen ? (
