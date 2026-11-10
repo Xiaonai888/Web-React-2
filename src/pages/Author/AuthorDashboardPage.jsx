@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import './AuthorDashboardTheme.css'
 import Author49DayDashboardCard from '../../components/events/Author49DayDashboardCard'
 import AuthorDaily50DashboardCard from '../../components/events/AuthorDaily50DashboardCard'
 import AuthorDaily80DashboardCard from '../../components/events/AuthorDaily80DashboardCard'
@@ -1193,7 +1194,7 @@ return {
 }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[120px]">
+    <div className="author-dashboard-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[120px]">
       <PageMenu open={menuOpen} onClose={() => setMenuOpen(false)} onSelect={handleMenuSelect} />
 
 
