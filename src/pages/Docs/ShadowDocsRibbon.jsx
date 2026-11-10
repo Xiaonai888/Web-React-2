@@ -42,6 +42,7 @@ export default function ShadowDocsRibbon({
   onChangeTab,
   commandState = {},
   onCommand,
+  onAdvancedCommand,
   disabled = false,
 }) {
   const [localTab, setLocalTab] = useState('home')
@@ -346,6 +347,7 @@ export default function ShadowDocsRibbon({
       disabled={disabled}
       onClose={() => setHomeOpen(false)}
       onCommand={onCommand}
+      onAdvancedCommand={onAdvancedCommand}
       onKeyboard={() => {
         setHomeOpen(false)
         document.querySelector('.sd-writing-area[contenteditable="true"]')?.focus({ preventScroll: true })
