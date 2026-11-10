@@ -14,6 +14,7 @@ const API_URL = (
     : 'https://shadow-backend-kucw.onrender.com')
 ).replace(/\/$/, '')
 const MODE_CACHE_MS = 60000
+const MODE_ERROR_CACHE_MS = 15000
 const MODE_TIMEOUT_MS = 4000
 let modeCache = null
 let modePending = null
@@ -33,7 +34,12 @@ async function isSmartFreeUnlockMode() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok !== true) throw new Error('Advertisement mode unavailable')
       const mode = String(data.rotation?.mode || '').toLowerCase()
-      const enabled = (mode === 'smart' || mode === 'auto_system') && data.rotation?.enabled === true
+      if (!['manual', 'auto', 'smart', 'auto_system'].includes(mode)) {
+        throw new Error('Advertisement mode missing')
+      }
+      const enabled = data.rotation.enabled === true
+        ? (mode === 'smart' || mode === 'auto_system')
+        : null
       modeCache = { enabled, expiresAt: Date.now() + MODE_CACHE_MS }
       return enabled
     } finally {
@@ -41,7 +47,8 @@ async function isSmartFreeUnlockMode() {
     }
   })().catch((error) => {
     console.warn('SMART_FREE_UNLOCK_MODE_ERROR', error?.message || error)
-    return false
+    modeCache = { enabled: null, expiresAt: Date.now() + MODE_ERROR_CACHE_MS }
+    return null
   }).finally(() => {
     if (modePending === request) modePending = null
   })
@@ -77,25 +84,31 @@ export default function SmartFreeUnlockAdvertisement({
       try {
         const useSmart = enabled == null ? await isSmartFreeUnlockMode() : Boolean(enabled)
         if (cancelled) return
+        if (useSmart == null) {
+          finish()
+          return
+        }
         if (!useSmart) {
           setState({ status: 'legacy', selection: null })
           return
         }
         const selection = await takeSmartFreeUnlockAd({ currentStoryId })
         if (cancelled) return
-        setState(selection
-          ? { status: 'smart', selection }
-          : { status: 'legacy', selection: null })
+        if (!selection) {
+          finish()
+          return
+        }
+        setState({ status: 'smart', selection })
       } catch (error) {
         if (cancelled) return
         console.warn('SMART_FREE_UNLOCK_SELECTION_ERROR', error?.message || error)
-        setState({ status: 'legacy', selection: null })
+        finish()
       }
     }
 
     void load()
     return () => { cancelled = true }
-  }, [enabled, currentStoryId])
+  }, [enabled, currentStoryId, finish])
 
   const handleOpen = useCallback(async () => {
     const ad = state.selection?.advertisement
@@ -107,7 +120,7 @@ export default function SmartFreeUnlockAdvertisement({
       return true
     } catch (error) {
       console.warn('SMART_FREE_UNLOCK_OPEN_ERROR', error?.message || error)
-      if (error?.status === 410) setState({ status: 'legacy', selection: null })
+      if (error?.status === 410) finish()
       return false
     }
   }, [state.selection, finish, navigate])
