@@ -139,6 +139,12 @@ export default class AppErrorBoundary extends React.Component {
       message: String(error?.message || '').slice(0, 600),
       component_stack: String(errorInfo?.componentStack || '').slice(0, 2000),
         })
+
+        if (incident.path !== '/author/page/notifications') {
+      window.dispatchEvent(new CustomEvent('shadow-reader-health-react-error', {
+        detail: { code: incident.code },
+      }))
+    }
     if (incident.path === '/author/page/notifications') {
       window.dispatchEvent(new ErrorEvent('error', {
         message: `React ${incident.code}: ${String(error?.message || 'Unknown')}`,
