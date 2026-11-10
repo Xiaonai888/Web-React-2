@@ -172,6 +172,46 @@ export function applyShadowDocsInlineFormat(editor, snapshot, format) {
   if (!range || range.collapsed || typeof document === 'undefined') return false
 
   const style = shadowDocsInlineStyle(format)
+
+  if (format.allCaps != null) {
+    style.textTransform = format.allCaps ? 'uppercase' : 'none'
+    if (format.allCaps) style.fontVariantCaps = 'normal'
+  }
+
+  if (format.smallCaps != null) {
+    style.fontVariantCaps = format.smallCaps ? 'small-caps' : 'normal'
+    if (format.smallCaps) style.textTransform = 'none'
+  }
+
+  if (format.underlineStyle != null || format.underlineColor != null) {
+    const node = range.startContainer.nodeType === 3
+      ? range.startContainer.parentElement
+      : range.startContainer
+
+    const existing = globalThis.getComputedStyle?.(node)?.textDecorationLine || ''
+
+    style.textDecorationLine = existing.includes('line-through')
+      ? 'underline line-through'
+      : 'underline'
+
+    if (format.underlineStyle != null) {
+      const styles = {
+        single: 'solid',
+        double: 'double',
+        wavy: 'wavy',
+      }
+
+      style.textDecorationStyle = styles[format.underlineStyle] || 'solid'
+    }
+
+    if (
+      format.underlineColor != null &&
+      /^#[0-9a-f]{6}$/i.test(format.underlineColor)
+    ) {
+      style.textDecorationColor = format.underlineColor
+    }
+  }
+
   if (!Object.keys(style).length) return false
 
   if (format?.color) {
@@ -307,6 +347,10 @@ export function applyShadowDocsCommand(editor, snapshot, command, value) {
   if (nativeResult !== null) return nativeResult
   if (command === 'fontFamily') return applyShadowDocsInlineFormat(editor, snapshot, { fontFamily: value })
   if (command === 'fontSize') return applyShadowDocsInlineFormat(editor, snapshot, { fontSize: value })
+  if (command === 'allCaps') return applyShadowDocsInlineFormat(editor, snapshot, { allCaps: Boolean(value) })
+  if (command === 'smallCaps') return applyShadowDocsInlineFormat(editor, snapshot, { smallCaps: Boolean(value) })
+  if (command === 'underlineStyle') return applyShadowDocsInlineFormat(editor, snapshot, { underlineStyle: value })
+  if (command === 'underlineColor') return applyShadowDocsInlineFormat(editor, snapshot, { underlineColor: value })
   if (command === 'color') return applyShadowDocsInlineFormat(editor, snapshot, { color: value })
   if (command === 'highlight') return applyShadowDocsInlineFormat(editor, snapshot, { backgroundColor: value })
   if (command === 'bold') return applyShadowDocsInlineFormat(editor, snapshot, { bold: Boolean(value) })
