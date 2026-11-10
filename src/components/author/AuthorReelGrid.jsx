@@ -364,7 +364,7 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
   const loadVersionRef = useRef(0)
   const pickerRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [localPreview, setLocalPreview] = useState('')
+  const localPreviewRef = useRef(null)
   const [pickerError, setPickerError] = useState('')
 
   const createRoute = useCallback(() => navigate('/author/reel/add', {
@@ -373,10 +373,16 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
 
   const chooseVideo = useCallback(() => pickerRef.current?.click(), [])
   useEffect(() => {
-    if (!selectedFile) { setLocalPreview(''); return undefined }
+    if (!selectedFile || !localPreviewRef.current) return undefined
+    const videoElement = localPreviewRef.current
     const objectUrl = URL.createObjectURL(selectedFile)
-    setLocalPreview(objectUrl)
-    return () => URL.revokeObjectURL(objectUrl)
+    videoElement.src = objectUrl
+    return () => {
+      videoElement.pause()
+      videoElement.removeAttribute('src')
+      videoElement.load()
+      URL.revokeObjectURL(objectUrl)
+    }
   }, [selectedFile])
   useEffect(() => {
     if (!sortOpen) return undefined
@@ -665,7 +671,7 @@ const response = await fetch(
               <button type="button" onClick={() => setSelectedFile(null)} aria-label="Close selected video"><X size={22} /></button>
             </div>
             <p className="mb-3 truncate text-xs text-gray-600" title={selectedFile.name}>{selectedFile.name}</p>
-            {localPreview ? <video key={localPreview} controls playsInline src={localPreview} className="mx-auto max-h-[45vh] w-full rounded-lg bg-black" /> : null}
+            <video ref={localPreviewRef} controls playsInline className="mx-auto max-h-[45vh] w-full rounded-lg bg-black" />
             <p className="mt-3 text-xs text-gray-600">Shadow currently publishes YouTube links only. Upload this video to YouTube, then add its link to Shadow.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a href="https://www.youtube.com/upload" target="_blank" rel="noopener noreferrer" className="rounded-full border border-gray-300 px-3 py-2 text-xs font-semibold">Upload to YouTube</a>
