@@ -15,7 +15,7 @@ export default function AuthorShadowStudioPage() {
   })
   const viewAnalytics = video => {
     if (!video?.id) return
-    navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics?section=overview`)
+    navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics?section=overview`, { state: { fromContent: true } })
   }
 
   return <main className="min-h-[100dvh] bg-[var(--shadow-bg-surface)] px-3 py-5 pb-28 text-[var(--shadow-text-primary)] sm:px-5">
