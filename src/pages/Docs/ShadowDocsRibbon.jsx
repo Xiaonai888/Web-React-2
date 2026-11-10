@@ -47,6 +47,7 @@ export default function ShadowDocsRibbon({
 }) {
   const [localTab, setLocalTab] = useState('home')
   const [homeOpen, setHomeOpen] = useState(false)
+  const [mobileHomePage, setMobileHomePage] = useState('home')
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [keyboardInset, setKeyboardInset] = useState(0)
   const viewportBaselineRef = useRef(0)
@@ -115,10 +116,11 @@ export default function ShadowDocsRibbon({
 
   function selectTab(id) {
   if (disabled || !RENDERERS[id]) return
-  if (id === 'tools' && globalThis.matchMedia?.('(max-width:700px)').matches) {
-    setHomeOpen(true)
-    return
-  }
+  if (['tools', 'insert'].includes(id) && globalThis.matchMedia?.('(max-width:700px)').matches) {
+  setMobileHomePage(id === 'insert' ? 'insert' : 'home')
+  setHomeOpen(true)
+  return
+}
   if (!activeTab) setLocalTab(id)
   onChangeTab?.(id)
 }
@@ -342,7 +344,8 @@ export default function ShadowDocsRibbon({
       </div>
         </nav>
     <ShadowDocsMobileHomeSheet
-      open={homeOpen}
+  open={homeOpen}
+  initialPage={mobileHomePage}
       state={commandState}
       disabled={disabled}
       onClose={() => setHomeOpen(false)}
