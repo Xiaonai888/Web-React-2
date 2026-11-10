@@ -1,4 +1,5 @@
 import { hasPendingStoryLanguageOnboarding } from './components/StoryLanguageOnboardingGate'
+import { useAuthorThemeScope } from './utils/useAuthorThemeScope'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SmartRefreshProvider } from './providers/SmartRefreshProvider'
@@ -434,6 +435,7 @@ function CountryLocalAppGuard({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  useAuthorThemeScope(location.pathname)
   const readerNavPaths = [
   '/profile',
   '/store',
