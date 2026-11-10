@@ -1,5 +1,10 @@
 import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDocsTemplateCatalog'
 import { isShadowDocsFont } from './ShadowDocsFontCatalog'
+import {
+  parseShadowDocsHomeGradient,
+  serializeShadowDocsHomeGradient,
+  shadowDocsHomeGradientStyle,
+} from './ShadowDocsHomeGradientEngine'
 
 const ids = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
 const PAGE_SIZES = new Set(['A3','A4','A5','A6','B4','B5','B6','C4','C5','C6'])
@@ -56,7 +61,25 @@ function sanitizeStyle(node) {
 
   if (isShadowDocsFont(family)) rules.push(`font-family:'${escapeHTML(family)}'`)
   if (fontSize) rules.push(`font-size:${fontSize}`)
-  if (color) rules.push(`color:${color}`)
+  const gradient = node.tagName === 'SPAN'
+    ? parseShadowDocsHomeGradient(node.getAttribute('data-shadow-docs-gradient'))
+    : null
+
+  if (gradient) {
+    const gradientStyle = shadowDocsHomeGradientStyle(gradient)
+    rules.push(
+      `color:${gradientStyle.color}`,
+      `background-image:${gradientStyle.backgroundImage}`,
+      'background-clip:text',
+      '-webkit-background-clip:text',
+      '-webkit-text-fill-color:transparent',
+      '-webkit-print-color-adjust:exact',
+      'print-color-adjust:exact'
+    )
+  } else if (color) {
+    rules.push(`color:${color}`)
+  }
+
   if (background) rules.push(`background-color:${background}`)
   if (weight) rules.push(`font-weight:${weight}`)
   if (italic) rules.push(`font-style:${italic}`)
@@ -93,6 +116,28 @@ function sanitizeAttributes(node, rules) {
     attributes.push('rel="noopener noreferrer"')
   }
 
+    if (node.tagName === 'OL') {
+    const start = Number(node.getAttribute('start'))
+
+    if (Number.isSafeInteger(start) && start >= 1 && start <= 9999) {
+      attributes.push(`start="${start}"`)
+    }
+
+    const type = node.getAttribute('type')
+
+    if (['1', 'a', 'A', 'i', 'I'].includes(type)) {
+      attributes.push(`type="${type}"`)
+    }
+  }
+
+  if (node.tagName === 'LI') {
+    const value = Number(node.getAttribute('value'))
+
+    if (Number.isSafeInteger(value) && value >= 1 && value <= 9999) {
+      attributes.push(`value="${value}"`)
+    }
+  }
+
   if (node.tagName === 'TABLE' && node.getAttribute('data-shadow-docs-table') === '1') {
     attributes.push('data-shadow-docs-table="1"')
     rules.push('width:100%', 'border-collapse:collapse')
@@ -112,6 +157,16 @@ function sanitizeAttributes(node, rules) {
   }
 
   if (node.tagName === 'SPAN') {
+    const gradient = parseShadowDocsHomeGradient(
+      node.getAttribute('data-shadow-docs-gradient')
+    )
+
+    if (gradient) {
+      attributes.push(
+        `data-shadow-docs-gradient="${serializeShadowDocsHomeGradient(gradient)}"`
+      )
+    }
+
     const commentId = safeToken(node.getAttribute('data-shadow-docs-comment-id'))
     const equation = node.getAttribute('data-shadow-docs-equation') === '1'
     if (commentId) {
