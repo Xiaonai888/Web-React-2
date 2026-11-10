@@ -12,7 +12,7 @@ import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvan
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
-import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
+import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsHorizontalRule, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
 import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
 import { getShadowDocsDesignTheme, SHADOW_DOCS_DESIGN_THEMES } from './ShadowDocsDocumentDesignEngine'
 import { inspectShadowDocsProofing, getShadowDocsProofingStats } from './ShadowDocsProofingEngine'
@@ -716,6 +716,10 @@ export default function ShadowDocsWritingStudioPanel({
       finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot)))
       return
     }
+    if (command === 'horizontalRule') {
+      finishRibbonChange(Boolean(insertShadowDocsHorizontalRule(editor, snapshot)))
+      return
+    }
 
     if (command === 'table') {
   const rows = Math.max(1, Math.min(50, Number(value?.rows) || 2))
@@ -736,83 +740,82 @@ export default function ShadowDocsWritingStudioPanel({
   return
 }
     if (command === 'symbol') {
-      const symbol = globalThis.prompt?.('Enter a symbol:', '©')
+      const symbol = typeof value === 'string' ? value : globalThis.prompt?.('Enter a symbol:', '©')
       if (symbol) finishRibbonChange(Boolean(insertShadowDocsSymbol(editor, snapshot, symbol)))
       return
     }
 
     if (command === 'equation') {
-      const expression = globalThis.prompt?.('Enter an equation:', 'x² + y² = z²')
+      const expression = typeof value === 'string' ? value : globalThis.prompt?.('Enter an equation:', 'x² + y² = z²')
       if (expression) finishRibbonChange(Boolean(insertShadowDocsEquation(editor, snapshot, expression)))
       return
     }
 
     if (command === 'textBox') {
-  const text = typeof value === 'string' ? value : globalThis.prompt?.('Text box content:', '')
-  if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
-  return
-}
+      const text = typeof value === 'string' ? value : globalThis.prompt?.('Text box content:', '')
+      if (text != null && String(text).trim()) {
+        if (editor.innerHTML.length + String(text).length + 180 > 490000) {
+          setRibbonMessage('Document is too large for this text box.')
+          return
+        }
+        finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
+      }
+      return
+    }
 
     if (command === 'link') {
-  if (!snapshot) {
-    setRibbonMessage('Place the cursor or select text first.')
-    return
-  }
-
-  if (value && typeof value === 'object') {
-    const href = String(value.href || '').trim().slice(0, 2048)
-    let parsed
-
-    try {
-      parsed = new URL(href)
-    } catch {
-      setRibbonMessage('Invalid link URL.')
+      if (!snapshot) return setRibbonMessage('Place the cursor or select text first.')
+      const structured = value && typeof value === 'object'
+      const href = String(structured ? value.href || '' : globalThis.prompt?.('Enter link:', 'https://') || '').trim()
+      if (!href || href.length > 2048) return setRibbonMessage('Invalid link URL.')
+      let valid = /^#sd-bookmark-[\p{L}\p{N}_-]{1,80}$/u.test(href)
+      if (!valid) {
+        try {
+          valid = ['http:', 'https:', 'mailto:', 'tel:'].includes(new URL(href).protocol)
+        } catch {
+          valid = false
+        }
+      }
+      if (!valid) return setRibbonMessage('Use a valid web, email, telephone or bookmark link.')
+      if (!snapshot.collapsed) {
+        finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
+        return
+      }
+      if (!structured) return setRibbonMessage('Select text first, or use Insert → Link to add display text.')
+      const label = String(value.text || '').trim().slice(0, 160) || href
+      const escape = text => String(text).replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[character])
+      if (editor.innerHTML.length + href.length + label.length + 160 > 490000) {
+        return setRibbonMessage('Document is too large.')
+      }
+      insertHTMLAtSelection(`<a href="${escape(href)}" rel="noopener noreferrer">${escape(label)}</a>`)
       return
     }
-
-    if (!['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)) {
-      setRibbonMessage('Unsupported link URL.')
-      return
-    }
-
-    if (!snapshot.collapsed) {
-      finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
-      return
-    }
-
-    const label = String(value.text || '').trim().slice(0, 160) || href
-    const escape = text => String(text).replace(/[&<>"']/g, character => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    })[character])
-
-    if (editor.innerHTML.length + href.length + label.length + 160 > 490000) {
-      setRibbonMessage('Document is too large.')
-      return
-    }
-
-    insertHTMLAtSelection(`<a href="${escape(href)}" rel="noopener noreferrer">${escape(label)}</a>`)
-    return
-  }
-
-  if (snapshot.collapsed) {
-    setRibbonMessage('Select text first.')
-    return
-  }
-
-  const href = globalThis.prompt?.('Enter link:', 'https://')
-  if (href) finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
-  return
-}
 
     if (command === 'bookmark') {
+      const name = typeof value === 'string' ? value : globalThis.prompt?.('Bookmark name:', '')
+      const clean = String(name || '').trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80)
+      if (!clean) return setRibbonMessage('Enter a bookmark name.')
+      if (editor.querySelectorAll('[data-shadow-docs-bookmark]').length >= 200) return setRibbonMessage('Bookmark limit reached.')
+      if ([...editor.querySelectorAll('[data-shadow-docs-bookmark]')].some(node => node.dataset.shadowDocsBookmark === clean)) {
+        return setRibbonMessage('This bookmark name is already used in this chapter.')
+      }
       const range = restoreShadowDocsSelection(editor, snapshot)
-      const element = range?.startContainer?.nodeType === 1 ? range.startContainer : range?.startContainer?.parentElement
-      const name = globalThis.prompt?.('Bookmark name:', '')
-      if (element && name && createShadowDocsBookmark(element, name)) finishRibbonChange(true)
+      if (!range) return setRibbonMessage('Place the cursor in the document first.')
+      const parent = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement
+      const element = parent?.closest?.('p,div,h1,h2,h3,li,blockquote,td,th,span')
+      if (element && element !== editor && editor.contains(element) && !element.hasAttribute('data-shadow-docs-bookmark')) {
+        if (createShadowDocsBookmark(element, clean)) finishRibbonChange(true, `Bookmark added: ${clean}`)
+        return
+      }
+      const marker = document.createElement('span')
+      marker.textContent = '\u200b'
+      if (!createShadowDocsBookmark(marker, clean)) return setRibbonMessage('Could not create bookmark.')
+      const insertionRange = range.cloneRange()
+      insertionRange.collapse(true)
+      insertionRange.insertNode(marker)
+      finishRibbonChange(true, `Bookmark added: ${clean}`)
       return
     }
 
@@ -945,13 +948,13 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
     if (command === 'header') {
-      const text = globalThis.prompt?.('Header text:', settings.printHeader || book.title || '')
-      if (text != null) updateSettings({ printHeader: text.slice(0, 80) }, 'Header updated.')
+      const text = typeof value === 'string' ? value : globalThis.prompt?.('Header text:', settings.printHeader || book.title || '')
+      if (text != null) updateSettings({ printHeader: String(text).slice(0, 80) }, 'Header updated.')
       return
     }
     if (command === 'footer') {
-      const text = globalThis.prompt?.('Footer text:', settings.printFooter || '')
-      if (text != null) updateSettings({ printFooter: text.slice(0, 60) }, 'Footer updated.')
+      const text = typeof value === 'string' ? value : globalThis.prompt?.('Footer text:', settings.printFooter || '')
+      if (text != null) updateSettings({ printFooter: String(text).slice(0, 60) }, 'Footer updated.')
       return
     }
     if (command === 'pageNumber') { updateSettings({ pageNumbers: !settings.pageNumbers }, `Page numbers ${settings.pageNumbers ? 'off' : 'on'}.`); return }
@@ -1107,7 +1110,7 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'translate') { setRibbonMessage('Translation requires an external translation service and is not sent anywhere automatically.'); return }
     if (command === 'newComment') {
       if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
-      const text = globalThis.prompt?.('Comment:', '')
+      const text = typeof value === 'string' ? value.trim() : globalThis.prompt?.('Comment:', '')
       if (!text) return
       const record = createShadowDocsCommentRecord({ text, author: book.author || 'Author', chapterId: chapter.id })
       finishRibbonChange(addShadowDocsComment(editor, snapshot, record), `Comment added: ${record.text.slice(0, 80)}`)
