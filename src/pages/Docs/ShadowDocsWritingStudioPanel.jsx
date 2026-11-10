@@ -1100,6 +1100,16 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'inkToShape' || command === 'inkToText' || command === 'inkToMath') { setRibbonMessage('Ink conversion needs a handwriting-recognition engine; no drawing data is uploaded.'); return }
 
     if (command === 'autoCorrect') { setRibbonState(state => ({ ...state, autoCorrect: Boolean(value) })); return }
+    if (command === 'scanTextInsert') {
+  const text = typeof value === 'string' ? value.trim().slice(0, 20000) : ''
+  if (!text) return
+  if (editor.innerHTML.length + text.length > 490000) {
+    setRibbonMessage('Chapter is too large.')
+    return
+  }
+  insertTextAtSelection(text)
+  return
+}
     if (command === 'ocr') { setRibbonMessage('OCR requires an OCR engine. Image insertion remains local and no image is uploaded automatically.'); return }
 
     if (command === 'startMailMerge') { setRibbonState(state => ({ ...state, mailMergeActive: Boolean(value) })); return }
