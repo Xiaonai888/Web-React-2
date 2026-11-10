@@ -5,9 +5,6 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 )
 
 const PAGE_SIZE = 30
-const DASHBOARD_CACHE_TTL_MS = 2 * 60 * 1000
-let dashboardCache = null
-let dashboardCacheVersion = 0
 
 function bearerToken() {
   return localStorage.getItem('shadow_reader_token') ||
@@ -91,38 +88,69 @@ export async function getStudioVideoActivity(videoId, { signal } = {}) {
   }
 }
 
-export function invalidateStudioDashboardCache() {
-  dashboardCache = null
-  dashboardCacheVersion += 1
+const STUDIO_ANALYTICS_TTL = { dashboard: 3 * 60 * 1000, video: 2 * 60 * 1000, ranking: 2 * 60 * 1000 }
+const STUDIO_ANALYTICS_MAX_ENTRIES = 40
+const analyticsCache = new Map()
+let analyticsCacheSession = ''
+let analyticsCacheRevision = 0
+
+function ensureAnalyticsCacheSession() {
+  const session = bearerToken()
+  if (session !== analyticsCacheSession) {
+    analyticsCache.clear()
+    analyticsCacheSession = session
+    analyticsCacheRevision += 1
+  }
+  return Boolean(session)
+}
+
+function readAnalyticsCache(key) {
+  if (!ensureAnalyticsCacheSession()) return null
+  const entry = analyticsCache.get(key)
+  if (!entry) return null
+  if (Date.now() >= entry.expiresAt) {
+    analyticsCache.delete(key)
+    return null
+  }
+  analyticsCache.delete(key)
+  analyticsCache.set(key, entry)
+  return entry.data
+}
+
+export function invalidateStudioAnalyticsCache() {
+  ensureAnalyticsCacheSession()
+  analyticsCacheRevision += 1
+  analyticsCache.clear()
+}
+
+async function cachedAnalyticsRequest(kind, path, { signal, force = false } = {}, identifier = '') {
+  if (!ensureAnalyticsCacheSession()) throw new Error('Sign in to view your Studio.')
+  const owner = analyticsCacheSession
+  const revision = analyticsCacheRevision
+  const key = `${kind}:${identifier}`
+  if (!force) {
+    const cached = readAnalyticsCache(key)
+    if (cached !== null) return cached
+  }
+  const result = await request(path, { signal, authenticated: true })
+  if (!signal?.aborted && ensureAnalyticsCacheSession() && analyticsCacheSession === owner && analyticsCacheRevision === revision) {
+    analyticsCache.delete(key)
+    analyticsCache.set(key, { data: result, expiresAt: Date.now() + STUDIO_ANALYTICS_TTL[kind] })
+    while (analyticsCache.size > STUDIO_ANALYTICS_MAX_ENTRIES) {
+      analyticsCache.delete(analyticsCache.keys().next().value)
+    }
+  }
+  return result
 }
 
 export async function getStudioDashboard({ signal, force = false } = {}) {
-  const token = bearerToken()
-  if (!token) {
-    invalidateStudioDashboardCache()
-    throw new Error('Sign in to view your Studio.')
-  }
-  if (!force && dashboardCache?.token === token && Date.now() < dashboardCache.expiresAt) {
-    return dashboardCache.data
-  }
-  const cacheVersion = dashboardCacheVersion
-  const data = await request('/api/shadow-studio/analytics/dashboard', { signal, authenticated: true })
-  if (!signal?.aborted && cacheVersion === dashboardCacheVersion && bearerToken() === token) {
-    dashboardCache = { token, data, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS }
-  }
-  return data
+  return cachedAnalyticsRequest('dashboard', '/api/shadow-studio/analytics/dashboard', { signal, force })
 }
 
-export async function getStudioVideoAnalytics(videoId, { signal } = {}) {
-  return request(`/api/shadow-studio/analytics/videos/${encodeURIComponent(videoId)}`, {
-    signal,
-    authenticated: true,
-  })
+export async function getStudioVideoAnalytics(videoId, { signal, force = false } = {}) {
+  return cachedAnalyticsRequest('video', `/api/shadow-studio/analytics/videos/${encodeURIComponent(videoId)}`, { signal, force }, String(videoId))
 }
 
-export async function getStudioRanking(videoId, { signal } = {}) {
-  return request(`/api/shadow-studio/analytics/ranking?video_id=${encodeURIComponent(videoId)}`, {
-    signal,
-    authenticated: true,
-  })
+export async function getStudioRanking(videoId, { signal, force = false } = {}) {
+  return cachedAnalyticsRequest('ranking', `/api/shadow-studio/analytics/ranking?video_id=${encodeURIComponent(videoId)}`, { signal, force }, String(videoId))
 }
