@@ -313,6 +313,7 @@ const AuthorShadowStudioPage = lazy(() =>
   import('./pages/Author/AuthorShadowStudioPage')
 )
 const AuthorStudioDashboardPage = lazy(() => import('./pages/Author/AuthorStudioDashboardPage'))
+const AuthorStudioAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioAnalyticsPage'))
 const AuthorStudioVideoAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioVideoAnalyticsPage'))
 const AuthorStudioRankingPage = lazy(() => import('./pages/Author/AuthorStudioRankingPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
@@ -1624,6 +1625,13 @@ const shouldShowOpeningAds =
   path="/author/reel/studio/dashboard"
   element={<LazyPage><AuthorStudioDashboardPage /></LazyPage>}
 />
+
+          
+<Route
+  path="/author/reel/studio/analytics"
+  element={<LazyPage><AuthorStudioAnalyticsPage /></LazyPage>}
+/>
+
 
           <Route
   path="/author/reel/studio/videos/:videoId/analytics"
