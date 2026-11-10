@@ -21,6 +21,7 @@ import {
 } from './services/commentQueue'
 import { installStorySyncResume } from './utils/storySyncResume'
 import { installImageLoadDiagnostics } from './utils/installImageLoadDiagnostics'
+import { installReaderHealthMonitor } from './utils/installReaderHealthMonitor'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -36,6 +37,7 @@ void initializeStoryReactionQueue()
 void initializeCommentQueue()
 installStorySyncResume()
 installImageLoadDiagnostics()
+installReaderHealthMonitor()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
