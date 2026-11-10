@@ -1,0 +1,121 @@
+import { useEffect, useRef, useState } from 'react'
+import { Camera, ChevronLeft, FileImage, ScanText } from 'lucide-react'
+import { recognizeShadowDocsImage } from './ShadowDocsScanTextEngine'
+
+const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
+
+export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack, onInsert }) {
+  const galleryRef = useRef(null)
+  const cameraRef = useRef(null)
+  const busyRef = useRef(false)
+  const mountedRef = useRef(true)
+  const [file, setFile] = useState(null)
+  const [preview, setPreview] = useState('')
+  const [language, setLanguage] = useState('eng+khm')
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  useEffect(() => {
+    if (!file) {
+      setPreview('')
+      return undefined
+    }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  function chooseFile(event) {
+    const chosen = event.target.files?.[0]
+    event.target.value = ''
+    if (!chosen || busyRef.current) return
+    setError('')
+    setText('')
+    setProgress(0)
+    setStatus('')
+    if (!IMAGE_TYPES.has(chosen.type) || chosen.size === 0 || chosen.size > 6_000_000) {
+      setFile(null)
+      setError('Choose a PNG, JPG or WebP image under 6 MB.')
+      return
+    }
+    setFile(chosen)
+  }
+
+  async function scan() {
+    if (!file || disabled || busyRef.current) return
+    busyRef.current = true
+    setBusy(true)
+    setError('')
+    setProgress(0)
+    setStatus('Preparing OCR')
+    try {
+      const extracted = await recognizeShadowDocsImage(file, language, state => {
+        if (!mountedRef.current) return
+        setProgress(state.progress)
+        setStatus(state.status)
+      })
+      if (mountedRef.current) {
+        setText(extracted)
+        setProgress(100)
+        setStatus('Text extracted')
+      }
+    } catch (failure) {
+      if (mountedRef.current) setError(failure instanceof Error ? failure.message : 'Could not scan this image.')
+    } finally {
+      busyRef.current = false
+      if (mountedRef.current) setBusy(false)
+    }
+  }
+
+  return <section className="sd-insert-scan-panel" aria-label="Scan Text">
+    <style>{`
+      .sd-insert-scan-panel{display:grid;gap:12px;color:#ececec;padding-bottom:25px}
+      .sd-insert-scan-select{width:100%;min-height:42px;border:1px solid #555;background:#383838;color:#fff;border-radius:9px;padding:8px}
+      .sd-insert-scan-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .sd-insert-scan-actions button{border:0;border-radius:10px;background:#424242;color:#fff;min-height:46px;display:flex;align-items:center;justify-content:center;gap:7px}
+      .sd-insert-scan-preview{width:100%;max-height:180px;object-fit:contain;border:1px solid #444;border-radius:9px;background:#242424}
+      .sd-insert-scan-panel textarea{width:100%;min-height:150px;border:1px solid #555;border-radius:10px;background:#292929;color:#f5f5f5;padding:12px;font:inherit;font-size:14px;line-height:1.65;resize:vertical}
+      .sd-insert-scan-status{font-size:12px;color:#aaa;min-height:18px}
+      .sd-insert-scan-error{font-size:12px;color:#ff9b9b}
+      .sd-insert-scan-panel button:disabled{opacity:.45}
+      .sd-insert-scan-panel button:focus-visible,.sd-insert-scan-panel select:focus-visible,.sd-insert-scan-panel textarea:focus-visible{outline:2px solid #80b8ff;outline-offset:2px}
+    `}</style>
+    <div className="sd-insert-title">
+      <button type="button" disabled={busy} aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={onBack}><ChevronLeft size={22}/></button>
+      Scan Text
+    </div>
+    <div className="sd-insert-card">
+      <label className="sd-insert-setting-row"><span>Text Language</span>
+        <select className="sd-insert-scan-select" value={language} disabled={disabled || busy} onChange={event => setLanguage(event.target.value)}>
+          <option value="eng+khm">Khmer + English</option>
+          <option value="khm">Khmer</option>
+          <option value="eng">English</option>
+        </select>
+      </label>
+    </div>
+    <div className="sd-insert-scan-actions">
+      <button type="button" disabled={disabled || busy} onClick={() => galleryRef.current?.click()}><FileImage size={19}/> Gallery</button>
+      <button type="button" disabled={disabled || busy} onClick={() => cameraRef.current?.click()}><Camera size={19}/> Camera</button>
+    </div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" ref={galleryRef} hidden onChange={chooseFile}/>
+    <input type="file" accept="image/*" capture="environment" ref={cameraRef} hidden onChange={chooseFile}/>
+    {preview ? <img src={preview} alt="Image to scan" className="sd-insert-scan-preview"/> : null}
+    <button type="button" className="sd-insert-submit" disabled={!file || disabled || busy} onPointerDown={event => event.preventDefault()} onClick={scan}><ScanText size={20}/> {busy ? 'Scanning…' : 'Extract Text'}</button>
+    <div className="sd-insert-scan-status" role="status">{busy ? `${status || 'Scanning'}${progress ? ` · ${progress}%` : ''}` : status}</div>
+    {error ? <p className="sd-insert-scan-error" role="alert">{error}</p> : null}
+    {text ? <>
+      <label htmlFor="sd-insert-scanned-text" className="sd-insert-section-title">Review and edit recognized text</label>
+      <textarea id="sd-insert-scanned-text" value={text} maxLength={20000} disabled={disabled || busy} onChange={event => setText(event.target.value)}/>
+      <button type="button" className="sd-insert-submit" disabled={disabled || busy || !text.trim()} onPointerDown={event => event.preventDefault()} onClick={() => onInsert?.(text.trim())}>Insert Text into Document</button>
+    </> : null}
+    <p className="sd-insert-help">Scanning runs on your device. The first scan downloads the OCR engine and selected language data. No image is uploaded to Shadow servers.</p>
+  </section>
+}
