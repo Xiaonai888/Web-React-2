@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import './AuthorInsightsTheme.css'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -337,7 +338,7 @@ function EngagementItem({ icon, value, label }) {
 function LoadingInsights() {
   const { t } = useDisplayTranslation()
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
+    <div className="author-insights-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
       <header className="h-14 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]" />
       <main className="mx-auto max-w-[720px] px-4 py-5">
         <div className="rounded-[14px] bg-[var(--shadow-bg-surface)] p-10 text-center shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -433,7 +434,7 @@ export default function AuthorInsightsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[94px] text-[var(--shadow-text-primary)]">
+    <div className="author-insights-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[94px] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-50 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur-xl">
         <div className="mx-auto grid h-14 max-w-[720px] grid-cols-[44px_1fr_44px] items-center px-2">
           <button
