@@ -23,6 +23,8 @@
 .sd-home-icon-button.is-active{background:#444;color:#fff}
 .sd-home-icon-button:disabled,.sd-home-sheet button:disabled{opacity:.35;cursor:not-allowed}
 .sd-home-icon-button:not(:disabled):active,.sd-home-sheet button:not(:disabled):active{background-color:#464646}
+.sd-home-sheet .sd-home-font-actions .sd-home-icon-button{font-size:27px;line-height:1}
+.sd-home-sheet .sd-home-font-actions .sd-home-icon-button svg{width:27px;height:27px}
 .sd-home-font-actions strong{font-weight:850}
 .sd-home-font-actions em{font-family:Georgia,serif}
 .sd-home-styles{min-height:74px}
