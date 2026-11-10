@@ -729,10 +729,12 @@ export default function ShadowDocsWritingStudioPanel({
 }
 
     if (command === 'dateTime') {
-      finishRibbonChange(Boolean(insertShadowDocsDateTime(editor, snapshot, { locale: 'km-KH', includeTime: true })))
-      return
-    }
-
+  const options = value && typeof value === 'object' ? value : {}
+  const locale = ['km-KH', 'en-US'].includes(options.locale) ? options.locale : 'km-KH'
+  const includeTime = typeof options.includeTime === 'boolean' ? options.includeTime : true
+  finishRibbonChange(Boolean(insertShadowDocsDateTime(editor, snapshot, { locale, includeTime })))
+  return
+}
     if (command === 'symbol') {
       const symbol = globalThis.prompt?.('Enter a symbol:', '©')
       if (symbol) finishRibbonChange(Boolean(insertShadowDocsSymbol(editor, snapshot, symbol)))
