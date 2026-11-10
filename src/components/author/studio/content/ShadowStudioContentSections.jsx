@@ -10,11 +10,6 @@ import {
 
 const SECTION_KEYS = ['videos', 'shorts', 'playlists']
 
-/**
- * Standalone, presentational Shadow Studio content UI.
- * No fetch, navigation, mutation, or integration with the existing Content Manager.
- * A future parent passes paginated API results and handles all actions via callbacks.
- */
 export default function ShadowStudioContentSections({
   videos = [],
   shorts = [],
@@ -108,6 +103,10 @@ export default function ShadowStudioContentSections({
           {renderCard(item, key, display)}
         </div>)}
       </div> : renderEmpty(key)}
+      {!isHome && shown.length > 0 && errors[key] ? <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--shadow-border)] p-3 text-xs text-[var(--shadow-danger)]">
+        <span className="min-w-0 flex-1">{String(errors[key])}</span>
+        {typeof onLoadMore === 'function' ? <button type="button" disabled={Boolean(loading[key])} onClick={() => onLoadMore(key)} className="inline-flex items-center gap-2 rounded-full border border-[var(--shadow-border)] px-3 py-2 font-semibold disabled:opacity-50"><RefreshCw size={14}/>{t('shadowStudioNext.retry')}</button> : null}
+      </div> : null}
       {!isHome && pagination[key]?.has_more && typeof onLoadMore === 'function' ? <div className="pt-4 text-center">
         <button type="button" disabled={Boolean(loading[key])} onClick={() => onLoadMore(key)}
           className="min-h-10 rounded-full border border-[var(--shadow-border)] px-5 text-xs font-semibold disabled:opacity-50">
