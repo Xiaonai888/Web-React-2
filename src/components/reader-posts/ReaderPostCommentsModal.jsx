@@ -2077,7 +2077,7 @@ export default function ReaderPostCommentsModal({
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
+        className="relative flex h-[calc(100dvh-12px)] w-screen max-w-none shrink-0 flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
@@ -2094,7 +2094,7 @@ export default function ReaderPostCommentsModal({
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onLostPointerCapture={endDrag}
-          className="shrink-0 cursor-grab touch-none border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
           style={{ touchAction: 'none' }}
         >
           <div className="grid grid-cols-3 items-center gap-2 text-center">
