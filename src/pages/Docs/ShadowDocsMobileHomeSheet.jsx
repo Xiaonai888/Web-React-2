@@ -317,16 +317,36 @@ export default function ShadowDocsMobileHomeSheet({
           </Section>
 
           <Section label="Columns">
-            <div className="sd-home-column-grid">
-              {[[1, 'One'], [2, 'Two'], [3, 'Three'], ['left', 'Left'], ['right', 'Right']].map(([value, label]) => <button
-                type="button" key={label} disabled={!canAdvanced}
-                className={state.columnLayout === value || (typeof value === 'number' && state.columns === value && !state.columnLayout) ? 'is-selected' : ''}
-                aria-pressed={state.columnLayout === value || (typeof value === 'number' && state.columns === value && !state.columnLayout)}
-                onPointerDown={event => event.preventDefault()}
-                onClick={() => advanced('columnsLayout', value)}
-              ><Columns3 size={21} strokeWidth={1.4} /><span>{label}</span></button>)}
-            </div>
-          </Section>
+  <div className="sd-home-column-grid">
+    {[[1, 'One'], [2, 'Two'], [3, 'Three'], ['left', 'Left'], ['right', 'Right']].map(([value, label]) => {
+      const layout = typeof value === 'number'
+        ? ['', 'one', 'two', 'three'][value]
+        : value
+
+      const current = state.columnLayout ||
+        ['', 'one', 'two', 'three'][Number(state.columns) || 1]
+
+      const selected = current === layout
+      const unavailable = value === 'left' || value === 'right'
+
+      return (
+        <button
+          type="button"
+          key={label}
+          disabled={!canAdvanced || unavailable}
+          title={unavailable ? 'Unequal columns are not available yet' : label}
+          className={selected ? 'is-selected' : ''}
+          aria-pressed={selected}
+          onPointerDown={event => event.preventDefault()}
+          onClick={() => advanced('columnsLayout', value)}
+        >
+          <Columns3 size={21} strokeWidth={1.4} />
+          <span>{label}</span>
+        </button>
+      )
+    })}
+  </div>
+</Section>
         </> : colorPanel ? <>
           {!isHighlight ? <div className="sd-home-color-tabs" role="tablist" aria-label="Font color mode">
             {['solid', 'gradient', 'custom'].map(mode => <button type="button" role="tab" key={mode} aria-selected={fontMode === mode} className={fontMode === mode ? 'is-active' : ''} onClick={() => setFontMode(mode)}>{mode[0].toUpperCase() + mode.slice(1)}</button>)}
@@ -339,7 +359,10 @@ export default function ShadowDocsMobileHomeSheet({
             {recent.length > 0 ? <><h3 className="sd-home-section-label">Recent Colors</h3><Swatches colors={recent} selected={isHighlight ? selectedHighlight : selectedColor} kind={isHighlight ? 'highlight' : 'font'} disabled={!canBasic} onSelect={color => pickColor(color, isHighlight ? 'highlight' : 'color')} /></> : null}
             {favorites.length > 0 ? <><h3 className="sd-home-section-label">Favorite Colors</h3><Swatches colors={favorites} selected={isHighlight ? selectedHighlight : selectedColor} kind={isHighlight ? 'highlight' : 'font'} disabled={!canBasic} onSelect={color => pickColor(color, isHighlight ? 'highlight' : 'color')} /></> : null}
             <div className="sd-home-palette-actions">
-              <button type="button" disabled={!canBasic} onPointerDown={event => event.preventDefault()} onClick={() => pickColor(isHighlight ? 'transparent' : '#242139', isHighlight ? 'highlight' : 'color')}><RotateCcw size={16} /> {isHighlight ? 'Clear Highlight' : 'Reset Color'}</button>
+              <button type="button" disabled={!canBasic} onPointerDown={event => event.preventDefault()} onClick={() => pickColor(
+  isHighlight ? 'transparent' : (isHex(state.textColor) ? state.textColor : '#242139'),
+  isHighlight ? 'highlight' : 'color'
+)}><RotateCcw size={16} /> {isHighlight ? 'Clear Highlight' : 'Reset Color'}</button>
               <button type="button" disabled={isHighlight && !isHex(selectedHighlight)} onPointerDown={event => event.preventDefault()} onClick={() => toggleFavorite(isHighlight ? selectedHighlight : selectedColor)}><Star size={16} /> {favorites.includes((isHighlight ? selectedHighlight : selectedColor).toLowerCase()) ? 'Unfavorite' : 'Favorite'}</button>
             </div>
           </> : null}
@@ -359,6 +382,16 @@ export default function ShadowDocsMobileHomeSheet({
               <select value={gradientDirection} onChange={event => setGradientDirection(Number(event.target.value))}>{[0, 45, 90, 135, 180, 225, 270, 315].map(angle => <option value={angle} key={angle}>{angle}°</option>)}</select>
             </label>
             <button type="button" className="sd-home-apply" disabled={!canAdvanced} onPointerDown={event => event.preventDefault()} onClick={() => advanced('fontGradient', { colors: gradientColors.slice(0, gradientStops), direction: gradientDirection })}>Apply Gradient</button>
+          <button
+  type="button"
+  className="sd-home-favorite-action"
+  disabled={!canAdvanced}
+  onPointerDown={event => event.preventDefault()}
+  onClick={() => advanced('fontGradientReset')}
+>
+  <RotateCcw size={16} />
+  Remove Gradient
+</button>
           </div> : null}
         </> : null}
       </div>
