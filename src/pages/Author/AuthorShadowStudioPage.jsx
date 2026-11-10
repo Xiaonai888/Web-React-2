@@ -3,12 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import ShadowStudioContentWorkspace from '../../components/author/studio/content/ShadowStudioContentWorkspace'
 import { invalidateStudioContentCache } from '../../components/author/studio/content/ShadowStudioContentCache'
+import { invalidateStudioAnalyticsCache } from '../../services/shadowStudioAnalyticsApi'
 
 export default function AuthorShadowStudioPage() {
   const location = useLocation()
   const navigate = useNavigate()
   useEffect(() => {
-    if (location.state?.reelSaved === true) invalidateStudioContentCache()
+    if (location.state?.reelSaved === true) {
+      invalidateStudioContentCache()
+      invalidateStudioAnalyticsCache()
+    }
   }, [location.state?.reelSaved])
   const requestedReturnTo = location.state?.returnTo
   const returnTo = typeof requestedReturnTo === 'string' &&
