@@ -59,8 +59,8 @@ export default function AuthorStudioDashboardPage() {
         <StudioMetric label={t('shadowStudioStats.views')} value={channel?.views ?? null} icon={Eye} />
         <StudioMetric label={t('shadowStudioStats.watchTime')} value={channel?.watch_seconds?.available && channel.watch_seconds.value != null && Number.isFinite(Number(channel.watch_seconds.value)) ? Number(channel.watch_seconds.value) / 3600 : null} icon={BarChart3} />
       </div>
-      {!loading && !coverage?.complete ? <StudioMissing>{t('shadowStudioStats.insufficient')}</StudioMissing> : null}
-      {!loading && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
+      {!loading && !error && !coverage?.complete ? <StudioMissing>{t('shadowStudioStats.insufficient')}</StudioMissing> : null}
+{!loading && !error && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
     </section>
 
     <section className="space-y-3">
@@ -103,7 +103,7 @@ export default function AuthorStudioDashboardPage() {
           </div> : null}
         </StudioCard>
       }) : null}
-      {!loading && !error ? <StudioMissing>{t('shadowStudioStats.longNotice')}</StudioMissing> : null}
+      
     </section>
     <ShadowStudioFooter
   activeTab="dashboard"
