@@ -746,10 +746,10 @@ export default function ShadowDocsWritingStudioPanel({
     }
 
     if (command === 'textBox') {
-      const text = globalThis.prompt?.('Text box content:', '')
-      if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
-      return
-    }
+  const text = typeof value === 'string' ? value : globalThis.prompt?.('Text box content:', '')
+  if (text != null) finishRibbonChange(Boolean(insertShadowDocsTextBox(editor, snapshot, text)))
+  return
+}
 
     if (command === 'link') {
       if (!snapshot || snapshot.collapsed) {
