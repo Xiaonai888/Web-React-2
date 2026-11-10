@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  ImagePlus, MessageSquarePlus, Minus, Plus, Table2,
+  ImagePlus, MessageSquarePlus, Minus, Plus, Shapes, Table2,
 } from 'lucide-react'
+import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 
 const QUICK_ACTIONS = [
   { id: 'image', label: 'Image', icon: ImagePlus },
@@ -85,8 +86,14 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <h3 className="sd-insert-section-title">Insert</h3>
       <div className="sd-insert-quick">
         {QUICK_ACTIONS.map(({ id, label, icon: Icon }) => <button key={id} type="button" disabled={disabled || typeof onCommand !== 'function'} onPointerDown={event => event.preventDefault()} onClick={() => quickAction(id)}><Icon /><span>{label}</span></button>)}
+           </div>
+      <h3 className="sd-insert-section-title">Shapes</h3>
+      <div className="sd-insert-quick">
+        <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('shape')}><Shapes /><span>Shape</span></button>
       </div>
-    </> : view === 'image' ? <>
+    </> : view === 'shape' ? (
+      <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
+    ) : view === 'image' ? <>
       <div className="sd-insert-title"><button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>Insert Image</div>
       <h3 className="sd-insert-section-title">Image Settings</h3>
       <div className="sd-insert-card">
