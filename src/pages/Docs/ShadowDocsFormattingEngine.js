@@ -54,14 +54,139 @@ function insertAndReselect(editor, range, fragment) {
   return true
 }
 
+function offsetInEditor(editor, node, offset) {
+  const before = document.createRange()
+  before.selectNodeContents(editor)
+  before.setEnd(node, offset)
+  return before.toString().length
+}
+
+function textPoint(root, offset) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  let node = walker.nextNode()
+  let remaining = offset
+  let last = null
+
+  while (node) {
+    last = node
+    const length = node.nodeValue?.length || 0
+    if (remaining <= length) return [node, remaining]
+    remaining -= length
+    node = walker.nextNode()
+  }
+
+  return last ? [last, last.nodeValue.length] : null
+}
+
+function removeGradientFromFragment(fragment) {
+  fragment.querySelectorAll?.('[data-shadow-docs-gradient]').forEach(node => {
+    node.removeAttribute('data-shadow-docs-gradient')
+
+    ;[
+      'background-image',
+      'background-clip',
+      '-webkit-background-clip',
+      '-webkit-text-fill-color',
+      '-webkit-print-color-adjust',
+      'print-color-adjust',
+      'color',
+    ].forEach(name => node.style.removeProperty(name))
+
+    if (!node.style.length) node.removeAttribute('style')
+  })
+}
+
+function isolateSolidColorRange(editor, range) {
+  const start = offsetInEditor(editor, range.startContainer, range.startOffset)
+  const end = offsetInEditor(editor, range.endContainer, range.endOffset)
+
+  const gradients = [...editor.querySelectorAll('span[data-shadow-docs-gradient]')]
+    .filter(span =>
+      range.intersectsNode(span) &&
+      !span.parentElement?.closest('span[data-shadow-docs-gradient]')
+    )
+
+  for (const span of gradients) {
+    if (!span.isConnected || !editor.contains(span)) continue
+
+    const begin = offsetInEditor(editor, span, 0)
+    const left = Math.max(0, start - begin)
+    const right = Math.min(span.textContent?.length || 0, end - begin)
+
+    if (left >= right) continue
+
+    const firstPoint = textPoint(span, left)
+    const lastPoint = textPoint(span, right)
+    if (!firstPoint || !lastPoint) continue
+
+    const before = document.createRange()
+    before.selectNodeContents(span)
+    before.setEnd(...firstPoint)
+
+    const middle = document.createRange()
+    middle.setStart(...firstPoint)
+    middle.setEnd(...lastPoint)
+
+    const after = document.createRange()
+    after.selectNodeContents(span)
+    after.setStart(...lastPoint)
+
+    const first = span.cloneNode(false)
+    first.append(before.cloneContents())
+
+    const selected = middle.cloneContents()
+    removeGradientFromFragment(selected)
+
+    const last = span.cloneNode(false)
+    last.append(after.cloneContents())
+
+    const replacement = document.createDocumentFragment()
+
+    if (first.hasChildNodes()) replacement.append(first)
+    replacement.append(selected)
+    if (last.hasChildNodes()) replacement.append(last)
+
+    span.replaceWith(replacement)
+  }
+
+  const startPoint = textPoint(editor, start)
+  const endPoint = textPoint(editor, end)
+  if (!startPoint || !endPoint) return null
+
+  const next = document.createRange()
+  next.setStart(...startPoint)
+  next.setEnd(...endPoint)
+  return next
+}
+
 export function applyShadowDocsInlineFormat(editor, snapshot, format) {
-  const range = restoreShadowDocsSelection(editor, snapshot)
+  let range = restoreShadowDocsSelection(editor, snapshot)
   if (!range || range.collapsed || typeof document === 'undefined') return false
+
   const style = shadowDocsInlineStyle(format)
   if (!Object.keys(style).length) return false
+
+  if (format?.color) {
+    range = isolateSolidColorRange(editor, range) || range
+  }
+
   const fragment = range.extractContents()
   wrapTextNodes(fragment, style)
-  return insertAndReselect(editor, range, fragment)
+
+  const changed = insertAndReselect(editor, range, fragment)
+
+  if (changed && format?.color) {
+    editor.querySelectorAll('span[data-shadow-docs-gradient]').forEach(span => {
+      if (
+        !span.textContent &&
+        !span.querySelector('img,[data-shadow-docs-equation],[data-shadow-docs-bookmark]')
+      ) {
+        span.remove()
+      }
+    })
+  }
+
+  return changed
 }
 
 export function clearShadowDocsInlineFormatting(editor, snapshot) {
