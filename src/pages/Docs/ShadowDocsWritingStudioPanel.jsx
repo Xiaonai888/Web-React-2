@@ -717,14 +717,15 @@ export default function ShadowDocsWritingStudioPanel({
     }
 
     if (command === 'table') {
-      finishRibbonChange(Boolean(insertShadowDocsTable(editor, snapshot, 2, 2)))
-      return
-    }
-
+  const rows = Math.max(1, Math.min(50, Number(value?.rows) || 2))
+  const columns = Math.max(1, Math.min(20, Number(value?.columns) || 2))
+  finishRibbonChange(Boolean(insertShadowDocsTable(editor, snapshot, rows, columns, { header: value?.header === true })))
+  return
+}
     if (command === 'pictures') {
-      chooseImage()
-      return
-    }
+  chooseImage(value && typeof value === 'object' ? value : {})
+  return
+}
 
     if (command === 'dateTime') {
       finishRibbonChange(Boolean(insertShadowDocsDateTime(editor, snapshot, { locale: 'km-KH', includeTime: true })))
@@ -1534,15 +1535,15 @@ export default function ShadowDocsWritingStudioPanel({
     requestAnimationFrame(() => rememberSelection())
   }
 
-  function chooseImage() {
+  function chooseImage(options = {}) {
     const editor = editorRef.current
     if (!editor || !chapter || imageBusy || typeof onChangeHTML !== 'function') return
     imageTargetRef.current = {
       bookId: book.id,
       chapterId: chapter.id,
       snapshot: currentSnapshot(),
-      width: imageWidth,
-      align: imageAlignment,
+      width: [50, 75, 100].includes(Number(options.width)) ? Number(options.width) : imageWidth,
+      align: ['left', 'center', 'right'].includes(options.align) ? options.align : imageAlignment,
     }
     imageInputRef.current?.click()
   }
