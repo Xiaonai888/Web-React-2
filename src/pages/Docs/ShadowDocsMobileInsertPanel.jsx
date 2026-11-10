@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  FileText, ImagePlus, MessageSquarePlus, Minus, Plus, Shapes, Table2,
+  FileText, ImagePlus, MessageSquarePlus, Minus, Plus, ScanText, Shapes, Table2,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
+import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
 
 const QUICK_ACTIONS = [
   { id: 'image', label: 'Image', icon: ImagePlus },
@@ -92,10 +93,17 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <div className="sd-insert-quick">
         <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('shape')}><Shapes /><span>Shape</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('textBox')}><FileText /><span>Text Box</span></button>
+      <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('scanText')}><ScanText /><span>Scan Text</span></button>
       </div>
     </> : view === 'shape' ? (
       <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
-    ) : view === 'textBox' ? <>
+    ) : view === 'scanText' ? (
+  <ShadowDocsMobileScanTextPanel
+    disabled={disabled}
+    onBack={() => setView('menu')}
+    onInsert={text => execute('scanTextInsert', text)}
+  />
+) : view === 'textBox' ? <>
   <div className="sd-insert-title">
     <button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>
     Insert Text Box
