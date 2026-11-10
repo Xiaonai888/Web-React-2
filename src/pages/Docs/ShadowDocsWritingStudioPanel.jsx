@@ -152,16 +152,27 @@ function mobileDocumentSize(book) {
 
 function explicitFontSize(editor) {
   const selection = globalThis.getSelection?.()
-  if (!editor || !selection?.rangeCount || !editor.contains(selection.anchorNode)) return null
-  let element = selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement
-  while (element && element !== editor) {
-    if (element.style?.fontSize) {
-      const pixels = Number.parseFloat(getComputedStyle(element).fontSize)
-      return Number.isFinite(pixels) ? pixels * 0.75 : null
+  if (!editor || !selection?.rangeCount || typeof document === 'undefined') return null
+  const range = selection.getRangeAt(0)
+  if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return null
+
+  let node = range.startContainer
+  if (!range.collapsed) {
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
+    let textNode = walker.nextNode()
+
+    while (textNode) {
+      if (textNode.nodeValue && range.intersectsNode(textNode)) {
+        node = textNode
+        break
+      }
+      textNode = walker.nextNode()
     }
-    element = element.parentElement
   }
-  return null
+
+  const element = node.nodeType === 3 ? node.parentElement : node
+  const pixels = Number.parseFloat(globalThis.getComputedStyle?.(element || editor)?.fontSize)
+  return Number.isFinite(pixels) && pixels > 0 ? pixels * 0.75 : null
 }
 
 export default function ShadowDocsWritingStudioPanel({
@@ -332,7 +343,6 @@ export default function ShadowDocsWritingStudioPanel({
       author: book?.author || '',
       status,
       fontFamily: settings.font || 'Noto Serif Khmer',
-      fontSize: nearestFontSize(settings.fontSize || 13),
       alignment: ALIGNMENTS.has(settings.alignment) ? settings.alignment : 'left',
       pageSize: settings.size || 'A5',
       orientation: settings.orientation || 'portrait',
@@ -351,7 +361,13 @@ export default function ShadowDocsWritingStudioPanel({
       documentLanguage: settings.documentLanguage || 'km',
     }))
   }, [book?.id, book?.title, book?.author, status, settings.font, settings.fontSize, settings.alignment, settings.size, settings.orientation, settings.columns, settings.lineNumbers, settings.hyphenation, settings.textDirection, settings.pageColor, settings.textColor, settings.accentColor, settings.theme, settings.watermark, settings.borderColor, settings.borderWidth, settings.borderStyle, settings.documentLanguage])
-
+  useEffect(() => {
+    setRibbonState(current => ({
+      ...current,
+      fontSize: nearestFontSize(settings.fontSize || 13),
+    }))
+  }, [book?.id, chapter?.id, settings.fontSize])
+  
   function emitChange() {
     if (editorRef.current && chapter && typeof onChangeHTML === 'function') onChangeHTML(chapter.id, editorRef.current.innerHTML)
     setLocalSaveDirty(true)
@@ -369,7 +385,7 @@ export default function ShadowDocsWritingStudioPanel({
       setRibbonState(current => ({
         ...current,
         fontFamily: state.fontFamily || current.fontFamily,
-        fontSize: nearestFontSize(size ?? settings.fontSize ?? 13),
+        fontSize: size == null ? current.fontSize : nearestFontSize(size),
         color: colorToHex(state.color, current.color || '#242139'),
         backgroundColor: colorToHex(state.backgroundColor, current.backgroundColor || '#fff176'),
         bold: state.bold,
@@ -628,7 +644,7 @@ export default function ShadowDocsWritingStudioPanel({
         setRibbonMessage('Select text first.')
         return
       }
-      const current = explicitFontSize(editor) ?? Number(settings.fontSize || 13)
+      const current = explicitFontSize(editor) ?? (Number(ribbonState.fontSize) || Number(settings.fontSize) || 13)
       const index = Math.max(0, FONT_SIZES.indexOf(nearestFontSize(current)))
       const nextIndex = Math.max(0, Math.min(FONT_SIZES.length - 1, index + (command === 'growFont' ? 1 : -1)))
       const next = FONT_SIZES[nextIndex]
