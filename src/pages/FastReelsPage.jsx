@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
-  ArrowLeft, Check, MessageCircle, Play, Plus,
+  ArrowLeft, Check, MessageCircle, Play, Plus, RotateCcw, RotateCw,
   RefreshCw, Search, Volume2, VolumeX,
 } from 'lucide-react'
 
@@ -149,6 +149,11 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   const endedRef = useRef(false)
   const lastSwipeAtRef = useRef(0)
   const viewTrackerRef = useRef(null)
+  const videoPositionRef = useRef(0)
+  const videoDurationRef = useRef(0)
+  const tapTimerRef = useRef(null)
+  const lastTapRef = useRef(null)
+  const likeButtonContainerRef = useRef(null)
 
   // Separate state for each Reel/playback visit. Never transfer a view to another video.
   useEffect(() => {
@@ -180,7 +185,12 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 
   useEffect(() => {
     endedRef.current = false
-  }, [id, active])
+    videoPositionRef.current = 0
+    videoDurationRef.current = 0
+    window.clearTimeout(tapTimerRef.current)
+    tapTimerRef.current = null
+    lastTapRef.current = null
+  }, [id, active, video.id])
   const [playing, setPlaying] = useState(false)
   const [captionExpanded, setCaptionExpanded] = useState(false)
   const [captionHasMore, setCaptionHasMore] = useState(false)
@@ -376,8 +386,15 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       if (data.event === 'infoDelivery') {
         const duration = data.info?.duration
         if (typeof duration === 'number' && Number.isFinite(duration) &&
-            duration > 0 && duration <= 43200) tracker.duration = duration
-        accumulateFastReelWatch(tracker, data.info?.currentTime, playbackSpeed, Date.now())
+            duration > 0 && duration <= 43200) {
+          tracker.duration = duration
+          videoDurationRef.current = duration
+        }
+        const position = data.info?.currentTime
+        if (typeof position === 'number' && Number.isFinite(position) && position >= 0) {
+          videoPositionRef.current = position
+        }
+        accumulateFastReelWatch(tracker, position, playbackSpeed, Date.now())
       }
 
       const state = data.event === 'onStateChange'
@@ -441,7 +458,10 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     return undefined
   }, [active, playbackSpeed, sendCommand])
 
-  useEffect(() => () => window.clearTimeout(longPressTimerRef.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(longPressTimerRef.current)
+    window.clearTimeout(tapTimerRef.current)
+  }, [])
 
   const handlePlayerLoad = () => {
     frameRef.current?.contentWindow?.postMessage(
@@ -455,6 +475,67 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     if (!active || !id || captionExpandedRef.current) return
     sendCommand(playing ? 'pauseVideo' : 'playVideo')
     setPlaying(current => !current)
+  }
+
+  const seekBySeconds = seconds => {
+    if (!active || !id || captionExpandedRef.current || !Number.isFinite(seconds)) return
+    const duration = videoDurationRef.current
+    if (!(duration > 0)) {
+      sendCommand('getDuration')
+      sendCommand('getCurrentTime')
+      return
+    }
+    const next = Math.max(0, Math.min(duration, videoPositionRef.current + seconds))
+    videoPositionRef.current = next
+    // A seek never contributes its skipped interval to qualified watch time.
+    const tracker = viewTrackerRef.current
+    if (tracker) {
+      tracker.lastMediaTime = null
+      tracker.lastMediaAt = 0
+    }
+    sendCommand('seekTo', [next, true])
+  }
+
+  const likeFromDoubleTap = () => {
+    // Reuse the existing button/hook, including its auth, pending and like checks.
+    const button = likeButtonContainerRef.current?.querySelector('button[aria-pressed]')
+    if (!button || button.getAttribute('aria-pressed') === 'true' ||
+        button.getAttribute('aria-busy') === 'true') return
+    button.click()
+  }
+
+  const handleVideoClick = event => {
+    if (!active || !id) return
+    if (longPressedRef.current || Date.now() - lastSwipeAtRef.current < 400) return
+    if (clearDisplay) { onRestoreDisplay?.(); return }
+    if (captionExpandedRef.current) return
+
+    // Keyboard activation is an immediate Play/Pause, unlike touch double-tap.
+    if (event.detail === 0) {
+      window.clearTimeout(tapTimerRef.current)
+      lastTapRef.current = null
+      togglePlayback()
+      return
+    }
+
+    const now = Date.now()
+    const previous = lastTapRef.current
+    if (previous && now - previous.time <= 300 &&
+        Math.hypot(event.clientX - previous.x, event.clientY - previous.y) < 90) {
+      window.clearTimeout(tapTimerRef.current)
+      tapTimerRef.current = null
+      lastTapRef.current = null
+      likeFromDoubleTap()
+      return
+    }
+
+    window.clearTimeout(tapTimerRef.current)
+    lastTapRef.current = { time: now, x: event.clientX, y: event.clientY }
+    tapTimerRef.current = window.setTimeout(() => {
+      tapTimerRef.current = null
+      lastTapRef.current = null
+      togglePlayback()
+    }, 305)
   }
 
   const expandCaption = () => {
@@ -503,6 +584,9 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     const dx = event.clientX - start.x
     const dy = event.clientY - start.y
     if (Math.abs(dy) >= 48 && Math.abs(dy) > Math.abs(dx) * 1.2) {
+      window.clearTimeout(tapTimerRef.current)
+      tapTimerRef.current = null
+      lastTapRef.current = null
       lastSwipeAtRef.current = Date.now()
       onNavigate(dy < 0 ? 1 : -1)
     }
@@ -558,15 +642,27 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
             onPointerDown={handleDown} onPointerMove={handleMove} onPointerUp={handleUp}
             onPointerCancel={() => { clearLongPress(); gestureRef.current = null }}
             onContextMenu={event => { event.preventDefault(); clearLongPress(); onOpenSettings() }}
-            onClick={() => {
-              if (longPressedRef.current || Date.now() - lastSwipeAtRef.current < 400) return
-              if (clearDisplay) { onRestoreDisplay?.(); return }
-              togglePlayback()
-            }}
+            onClick={handleVideoClick}
           />
-          {!playing ? (
-            <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center">
-              <span className="rounded-full bg-black/45 p-3"><Play size={24} fill="currentColor" /></span>
+          {!playing && !captionExpanded && !clearDisplay ? (
+            <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center gap-5">
+              <button type="button" aria-label="Back 10 seconds" title="Back 10 seconds"
+                className="pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full bg-black/45 text-white"
+                onClick={event => { event.stopPropagation(); seekBySeconds(-10) }}>
+                <RotateCcw size={31} strokeWidth={1.8} aria-hidden="true" />
+                <span className="absolute top-[20px] text-[9px] font-semibold leading-none" aria-hidden="true">10</span>
+              </button>
+              <button type="button" aria-label={t('fastReels.play')}
+                className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-black/50 text-white"
+                onClick={event => { event.stopPropagation(); togglePlayback() }}>
+                <Play size={27} fill="currentColor" aria-hidden="true" />
+              </button>
+              <button type="button" aria-label="Forward 10 seconds" title="Forward 10 seconds"
+                className="pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full bg-black/45 text-white"
+                onClick={event => { event.stopPropagation(); seekBySeconds(10) }}>
+                <RotateCw size={31} strokeWidth={1.8} aria-hidden="true" />
+                <span className="absolute top-[20px] text-[9px] font-semibold leading-none" aria-hidden="true">10</span>
+              </button>
             </div>
           ) : null}
         </>
@@ -654,13 +750,15 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
             </div>
           ) : null}
           
-<FastReelLikeButton
-  videoId={video.id}
-  active={active}
-  initialCount={video.like_count ?? null}
-  onAuthRequired={onLikeAuthRequired}
-  onError={onLikeError}
-/>
+<div ref={likeButtonContainerRef}>
+  <FastReelLikeButton
+    videoId={video.id}
+    active={active}
+    initialCount={video.like_count ?? null}
+    onAuthRequired={onLikeAuthRequired}
+    onError={onLikeError}
+  />
+</div>
 
           <button type="button" aria-label={t('fastReels.comments')} onClick={() => onComment(video)}
             className="flex min-h-12 w-12 flex-col items-center justify-center gap-0.5 drop-shadow-lg">
