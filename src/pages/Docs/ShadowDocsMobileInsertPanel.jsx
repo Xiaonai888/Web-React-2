@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  ImagePlus, MessageSquarePlus, Minus, Plus, Shapes, Table2,
+  FileText, ImagePlus, MessageSquarePlus, Minus, Plus, Shapes, Table2,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 
@@ -37,6 +37,7 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [rows, setRows] = useState(2)
   const [columns, setColumns] = useState(2)
   const [header, setHeader] = useState(false)
+  const [textBoxText, setTextBoxText] = useState('')
 
   function execute(command, value = true) {
     if (disabled || typeof onCommand !== 'function') return
@@ -90,10 +91,32 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <h3 className="sd-insert-section-title">Shapes</h3>
       <div className="sd-insert-quick">
         <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('shape')}><Shapes /><span>Shape</span></button>
+      <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('textBox')}><FileText /><span>Text Box</span></button>
       </div>
     </> : view === 'shape' ? (
       <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
-    ) : view === 'image' ? <>
+    ) : view === 'textBox' ? <>
+  <div className="sd-insert-title">
+    <button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>
+    Insert Text Box
+  </div>
+  <h3 className="sd-insert-section-title">Text Box Content</h3>
+  <div className="sd-insert-card">
+    <textarea
+      aria-label="Text box content"
+      value={textBoxText}
+      maxLength={5000}
+      rows={5}
+      placeholder="Write your text here..."
+      disabled={disabled}
+      onChange={event => setTextBoxText(event.target.value)}
+      style={{ width: '100%', background: 'transparent', color: '#fff', border: 0, outline: 0, resize: 'vertical', padding: '12px 4px' }}
+    />
+  </div>
+  <button type="button" className="sd-insert-submit" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => execute('textBox', textBoxText)}>
+    <FileText size={20} /> Insert Text Box
+  </button>
+</> : view === 'image' ? <>
       <div className="sd-insert-title"><button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>Insert Image</div>
       <h3 className="sd-insert-section-title">Image Settings</h3>
       <div className="sd-insert-card">
