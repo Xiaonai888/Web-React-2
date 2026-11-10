@@ -101,38 +101,3 @@ export function removeShadowDocsHomeGradient(editor, snapshot) {
 
   return applyShadowDocsInlineFormat(editor, snapshot, { color })
 }
-  if (!editor || typeof document === 'undefined') return false
-
-  const range = restoreShadowDocsSelection(editor, snapshot)
-  if (!range || range.collapsed) return false
-
-  const spans = [
-    ...editor.querySelectorAll('span[data-shadow-docs-gradient]'),
-  ].filter(span => range.intersectsNode(span))
-
-  if (!spans.length) return false
-
-  spans.forEach(span => {
-    span.removeAttribute('data-shadow-docs-gradient')
-
-    const properties = [
-      'background-image',
-      'background-clip',
-      '-webkit-background-clip',
-      '-webkit-text-fill-color',
-      '-webkit-print-color-adjust',
-      'print-color-adjust',
-      'color',
-    ]
-
-    properties.forEach(property => {
-      span.style.removeProperty(property)
-    })
-
-    if (!span.style.length) {
-      span.removeAttribute('style')
-    }
-  })
-
-  return true
-}
