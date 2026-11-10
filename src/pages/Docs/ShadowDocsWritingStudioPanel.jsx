@@ -156,10 +156,8 @@ function explicitFontSize(editor) {
   let element = selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement
   while (element && element !== editor) {
     if (element.style?.fontSize) {
-      const raw = String(element.style.fontSize)
-      const number = Number.parseFloat(raw)
-      if (!Number.isFinite(number)) return null
-      return raw.endsWith('px') ? number * 0.75 : number
+      const pixels = Number.parseFloat(getComputedStyle(element).fontSize)
+      return Number.isFinite(pixels) ? pixels * 0.75 : null
     }
     element = element.parentElement
   }
@@ -371,7 +369,7 @@ export default function ShadowDocsWritingStudioPanel({
       setRibbonState(current => ({
         ...current,
         fontFamily: state.fontFamily || current.fontFamily,
-        fontSize: nearestFontSize(size ?? current.fontSize, current.fontSize),
+        fontSize: nearestFontSize(size ?? settings.fontSize ?? 13),
         color: colorToHex(state.color, current.color || '#242139'),
         backgroundColor: colorToHex(state.backgroundColor, current.backgroundColor || '#fff176'),
         bold: state.bold,
@@ -604,7 +602,9 @@ export default function ShadowDocsWritingStudioPanel({
   async function runRibbonCommand(command, value) {
     const editor = editorRef.current
     if (!editor || !chapter) return
-    const snapshot = currentSnapshot()
+    const snapshot = ['fontSize', 'growFont', 'shrinkFont'].includes(command)
+      ? captureShadowDocsSelection(editor) || currentSnapshot()
+      : currentSnapshot()
     setRibbonMessage('')
 
     if (INLINE_COMMANDS.has(command)) {
@@ -628,7 +628,7 @@ export default function ShadowDocsWritingStudioPanel({
         setRibbonMessage('Select text first.')
         return
       }
-      const current = Number(ribbonState.fontSize) || Number(settings.fontSize) || 13
+      const current = explicitFontSize(editor) ?? Number(settings.fontSize || 13)
       const index = Math.max(0, FONT_SIZES.indexOf(nearestFontSize(current)))
       const nextIndex = Math.max(0, Math.min(FONT_SIZES.length - 1, index + (command === 'growFont' ? 1 : -1)))
       const next = FONT_SIZES[nextIndex]
@@ -1997,7 +1997,7 @@ export default function ShadowDocsWritingStudioPanel({
           spellCheck
           style={{
             fontFamily: shadowDocsFontFamily(settings.font),
-            fontSize: `${(Number(settings.fontSize) || 13) + 2}px`,
+            fontSize: `${Number(settings.fontSize) || 13}pt`,
             lineHeight: settings.lineSpacing || 1.65,
             textAlign: settings.alignment || 'left',
             textIndent: `${firstLineIndent}mm`,
