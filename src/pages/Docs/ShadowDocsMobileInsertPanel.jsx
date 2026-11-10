@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  CalendarClock, FileText, ImagePlus, MessageSquarePlus, Minus, PenLine, Plus, ScanText, Shapes, Table2,
+  CalendarClock, FileText, ImagePlus, Link2, MessageSquarePlus, Minus, PenLine, Plus, ScanText, Shapes, Table2,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
@@ -42,6 +42,13 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [textBoxText, setTextBoxText] = useState('')
   const [dateTimeLocale, setDateTimeLocale] = useState('km-KH')
   const [dateTimeIncludeTime, setDateTimeIncludeTime] = useState(true)
+  const [linkUrl, setLinkUrl] = useState('')
+const [linkText, setLinkText] = useState('')
+let validLinkUrl = false
+try {
+  const parsed = new URL(linkUrl.trim())
+  validLinkUrl = ['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol) && linkUrl.trim().length <= 2048
+} catch {}
 
   function execute(command, value = true) {
     if (disabled || typeof onCommand !== 'function') return
@@ -99,10 +106,56 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('scanText')}><ScanText /><span>Scan Text</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('signature')}><PenLine /><span>Signature</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('dateTime')}><CalendarClock /><span>Date & Time</span></button>
+        <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('link')}><Link2 /><span>Link</span></button>
       </div>
     </> : view === 'shape' ? (
       <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
-    ) : view === 'dateTime' ? <>
+   ) : view === 'link' ? <>
+  <div className="sd-insert-title">
+    <button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>
+    Insert Link
+  </div>
+  <div className="sd-insert-card">
+    <label className="sd-insert-setting-row">
+      <span>URL</span>
+    </label>
+    <input
+      type="url"
+      aria-label="Link URL"
+      placeholder="https://example.com"
+      value={linkUrl}
+      maxLength={2048}
+      disabled={disabled}
+      onChange={event => setLinkUrl(event.target.value)}
+      style={{ width: '100%', minHeight: 44, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#383838', color: '#fff' }}
+    />
+    <label className="sd-insert-setting-row">
+      <span>Display Text (Optional)</span>
+    </label>
+    <input
+      type="text"
+      aria-label="Link display text"
+      placeholder="Text to display"
+      value={linkText}
+      maxLength={160}
+      disabled={disabled}
+      onChange={event => setLinkText(event.target.value)}
+      style={{ width: '100%', minHeight: 44, padding: 10, borderRadius: 8, border: '1px solid #555', background: '#383838', color: '#fff' }}
+    />
+  </div>
+  <p className="sd-insert-help">
+    Selected document text will be linked automatically. Otherwise, the display text or URL will be inserted.
+  </p>
+  <button
+    type="button"
+    className="sd-insert-submit"
+    disabled={disabled || !validLinkUrl}
+    onPointerDown={event => event.preventDefault()}
+    onClick={() => execute('link', { href: linkUrl.trim(), text: linkText.trim() })}
+  >
+    <Link2 size={20} /> Insert Link
+  </button>
+</> : view === 'dateTime' ? <>
   <div className="sd-insert-title">
     <button type="button" aria-label="Back to Insert" onPointerDown={event => event.preventDefault()} onClick={() => setView('menu')}><ChevronLeft size={22} /></button>
     Insert Date & Time
