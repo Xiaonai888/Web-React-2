@@ -1,0 +1,47 @@
+.author-profile-theme {
+  --author-profile-accent: var(--author-theme-primary, #ffc400);
+  --author-profile-soft: var(--author-theme-soft, #ffc40022);
+  --author-profile-border: var(--author-theme-border, #ffc40066);
+  --author-profile-foreground: var(--author-theme-foreground, #171717);
+  --author-profile-ink: color-mix(in srgb, var(--author-profile-accent) 55%, #171717);
+}
+
+html.dark .author-profile-theme {
+  --author-profile-ink: color-mix(in srgb, var(--author-profile-accent) 88%, #ffffff);
+}
+
+.author-profile-theme main > section:first-child button:has(> i.fa-envelope),
+.author-profile-theme main > section:first-child button:has(> i.fa-gear),
+.author-profile-theme main > section:first-child button:has(> i.fa-chevron-down) > i {
+  color: var(--author-profile-ink) !important;
+}
+
+.author-profile-theme main > section:first-child button[class*="h-[72px]"] {
+  box-shadow: 0 0 0 2px var(--author-profile-border);
+}
+
+.author-profile-theme main > section:first-child .grid.grid-cols-3 > button > div > div:first-child {
+  color: var(--author-profile-ink) !important;
+}
+
+.author-profile-theme main > section:last-of-type > button > div > div:first-child {
+  background-color: var(--author-profile-soft);
+  color: var(--author-profile-ink) !important;
+  border-radius: 12px;
+}
+
+.author-profile-theme main > section:last-of-type > button:active {
+  background-color: var(--author-profile-soft);
+}
+
+.author-profile-theme > div.fixed button span:has(> i.fa-check) {
+  background-color: var(--author-profile-accent) !important;
+  color: var(--author-profile-foreground) !important;
+}
+
+.author-profile-theme main > section:first-child button:focus-visible,
+.author-profile-theme main > section:last-of-type > button:focus-visible,
+.author-profile-theme > div.fixed button:focus-visible {
+  outline: 2px solid var(--author-profile-accent);
+  outline-offset: 2px;
+}
