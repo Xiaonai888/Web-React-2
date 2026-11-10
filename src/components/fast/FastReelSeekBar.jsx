@@ -91,12 +91,12 @@ export default function FastReelSeekBar({ active, videoId, frameRef, visible = t
     }
   }, [active, videoId, frameRef, send])
 
-  const usable = active && visible && !isLive && Number.isFinite(duration) && duration > 0
-  if (!usable) return null
+  if (!active || !visible) return null
 
-  const clamp = seconds => Math.min(duration, Math.max(0, Number(seconds) || 0))
+  const canSeek = !isLive && Number.isFinite(duration) && duration > 0
+  const clamp = seconds => Math.min(canSeek ? duration : 0, Math.max(0, Number(seconds) || 0))
   const shownTime = clamp(previewTime === null ? currentTime : previewTime)
-  const fraction = Math.min(100, Math.max(0, (shownTime / duration) * 100))
+  const fraction = canSeek ? Math.min(100, Math.max(0, (shownTime / duration) * 100)) : 0
 
   const commit = rawValue => {
     if (!draggingRef.current) return
@@ -117,24 +117,24 @@ export default function FastReelSeekBar({ active, videoId, frameRef, visible = t
       onClick={event => event.stopPropagation()}
       onDoubleClick={event => event.stopPropagation()}
     >
-      <div className="flex items-center justify-between px-0.5 text-[13px] font-medium leading-5 tabular-nums drop-shadow-md">
-        <span>{formatTime(shownTime)}</span>
-        <span>{formatTime(duration)}</span>
+      <div className="px-0.5 text-[13px] font-medium leading-5 tabular-nums drop-shadow-md">
+        <span>{formatTime(shownTime)} / {isLive ? 'LIVE' : canSeek ? formatTime(duration) : '--:--'}</span>
       </div>
       <div className="relative flex h-10 w-full items-center touch-none">
         <div aria-hidden="true" className="pointer-events-none relative h-1 w-full rounded-full bg-white/45">
           <div className="h-full rounded-full bg-white" style={{ width: `${fraction}%` }} />
           <span
-            className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/90 bg-white shadow-[0_1px_5px_rgba(0,0,0,0.6)]"
-            style={{ left: `${fraction}%` }}
+            className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/90 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
+            style={{ left: `clamp(5px, ${fraction}%, calc(100% - 5px))` }}
           />
         </div>
         <input
           type="range"
           min="0"
-          max={duration}
+          max={canSeek ? duration : 1}
           step="0.1"
           value={shownTime}
+          disabled={!canSeek}
           aria-label={t('fastReels.seek')}
           aria-valuetext={`${formatTime(shownTime)} / ${formatTime(duration)}`}
           className="absolute inset-0 z-10 h-10 w-full cursor-pointer touch-none opacity-0"
