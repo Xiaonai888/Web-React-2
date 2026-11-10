@@ -28,8 +28,28 @@ export function readShadowDocsFormatState(editor) {
   const block = nearestBlock(editor, element)
   const blockStyle = block ? getComputedStyle(block) : computed
   const family = cleanFamily(computed.fontFamily)
-  const decoration = computed.textDecorationLine || ''
-  const underlineMode = computed.textDecorationStyle || 'solid'
+  let underline = false
+  let strike = false
+  let underlineStyle = ''
+  let underlineColor = ''
+  let current = element
+
+  while (current && current !== editor) {
+    const style = getComputedStyle(current)
+    const line = style.textDecorationLine || ''
+
+    if (line.includes('underline') && !underline) {
+      underline = true
+      underlineStyle = ['double', 'wavy'].includes(style.textDecorationStyle)
+        ? style.textDecorationStyle
+        : 'single'
+      underlineColor = style.textDecorationColor || ''
+    }
+
+    if (line.includes('line-through')) strike = true
+
+    current = current.parentElement
+  }
   return {
     selection: captureShadowDocsSelection(editor),
     fontFamily: isShadowDocsFont(family) ? family : '',
@@ -38,14 +58,12 @@ export function readShadowDocsFormatState(editor) {
     backgroundColor: computed.backgroundColor || '',
     bold: Number(computed.fontWeight) >= 600 || ['bold', 'bolder'].includes(computed.fontWeight),
     italic: computed.fontStyle === 'italic',
-    underline: decoration.includes('underline'),
-    strike: decoration.includes('line-through'),
+    underline,
+    strike,
     allCaps: computed.textTransform === 'uppercase',
     smallCaps: computed.fontVariantCaps === 'small-caps',
-    underlineStyle: decoration.includes('underline')
-      ? ['double', 'wavy'].includes(underlineMode) ? underlineMode : 'single'
-      : '',
-    underlineColor: computed.textDecorationColor || '',
+    underlineStyle,
+    underlineColor,
     superscript: computed.verticalAlign === 'super',
     subscript: computed.verticalAlign === 'sub',
     blockType: block?.tagName?.toLowerCase() || 'p',
