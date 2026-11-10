@@ -3,9 +3,8 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Heart, Loader2, MessageCircle, X } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import CommentSortSheet from '../comments/CommentSortSheet'
 
-// Only Fast comments are rendered; unlike the Story component, there is no
-// Story Like / Comment / Echo header. The Reel remains the sole target.
 registerTranslationNamespace('fastReelComments', {
   en: {
     title: 'Comments', empty: 'No comments yet. Be the first!', write: 'Write a comment...',
@@ -15,6 +14,10 @@ registerTranslationNamespace('fastReelComments', {
     login: 'Sign in to comment', failed: 'Unable to load comments', retry: 'Try again',
     saveFailed: 'Could not save comment', deleteConfirm: 'Delete this comment?',
     close: 'Close comments', justNow: 'Just now', edited: 'Edited',
+    sortComments: 'Sort comments', closeSort: 'Close comment filter',
+    hotComments: 'Hot comments', hotCommentsDesc: 'Show comments with the most likes first.',
+    newest: 'Newest', newestDesc: 'Show the newest comments first.',
+    allComments: 'All comments', allCommentsDesc: 'Show all comments.',
   },
   km: {
     title: 'មតិយោបល់', empty: 'មិនទាន់មានមតិយោបល់ទេ។ ចាប់ផ្តើមមុនគេ!', write: 'សរសេរមតិយោបល់...',
@@ -24,6 +27,10 @@ registerTranslationNamespace('fastReelComments', {
     login: 'សូមចូលគណនីដើម្បីបញ្ចេញមតិ', failed: 'មិនអាចផ្ទុកមតិយោបល់បាន', retry: 'សាកម្ដងទៀត',
     saveFailed: 'មិនអាចរក្សាមតិយោបល់បាន', deleteConfirm: 'លុបមតិយោបល់នេះមែនទេ?',
     close: 'បិទមតិយោបល់', justNow: 'ទើបតែ', edited: 'បានកែ',
+    sortComments: 'តម្រៀបមតិយោបល់', closeSort: 'បិទការតម្រៀប',
+    hotComments: 'មតិយោបល់ពេញនិយម', hotCommentsDesc: 'បង្ហាញមតិយោបល់ដែលមានការចូលចិត្តច្រើនជាងគេមុន។',
+    newest: 'ថ្មីបំផុត', newestDesc: 'បង្ហាញមតិយោបល់ថ្មីបំផុតមុន។',
+    allComments: 'មតិយោបល់ទាំងអស់', allCommentsDesc: 'បង្ហាញមតិយោបល់ទាំងអស់។',
   },
   zh: {
     title: '评论', empty: '暂无评论，来发表第一条！', write: '写评论...', reply: '回复', replyTo: '回复',
@@ -31,6 +38,8 @@ registerTranslationNamespace('fastReelComments', {
     viewReplies: '查看回复', hideReplies: '收起回复', loadReplies: '加载更多回复', deleted: '评论已删除',
     login: '登录后评论', failed: '无法加载评论', retry: '重试', saveFailed: '无法保存评论',
     deleteConfirm: '删除这条评论？', close: '关闭评论', justNow: '刚刚', edited: '已编辑',
+    sortComments: '评论排序', closeSort: '关闭排序', hotComments: '热门评论', hotCommentsDesc: '优先显示点赞最多的评论。',
+    newest: '最新', newestDesc: '优先显示最新评论。', allComments: '全部评论', allCommentsDesc: '显示所有评论。',
   },
   ja: {
     title: 'コメント', empty: 'まだコメントがありません。', write: 'コメントを書く...', reply: '返信', replyTo: '返信先',
@@ -38,6 +47,8 @@ registerTranslationNamespace('fastReelComments', {
     viewReplies: '返信を見る', hideReplies: '返信を隠す', loadReplies: '返信をさらに表示', deleted: 'コメントは削除されました',
     login: 'ログインしてコメント', failed: 'コメントを読み込めません', retry: '再試行', saveFailed: '保存できませんでした',
     deleteConfirm: 'このコメントを削除しますか？', close: 'コメントを閉じる', justNow: 'たった今', edited: '編集済み',
+    sortComments: 'コメントの並び替え', closeSort: '並び替えを閉じる', hotComments: '人気のコメント', hotCommentsDesc: 'いいねが多いコメントを先に表示します。',
+    newest: '最新', newestDesc: '新しいコメントを先に表示します。', allComments: 'すべてのコメント', allCommentsDesc: 'すべてのコメントを表示します。',
   },
   ko: {
     title: '댓글', empty: '첫 댓글을 남겨보세요!', write: '댓글 작성...', reply: '답글', replyTo: '답글 대상',
@@ -45,6 +56,8 @@ registerTranslationNamespace('fastReelComments', {
     viewReplies: '답글 보기', hideReplies: '답글 숨기기', loadReplies: '답글 더 보기', deleted: '삭제된 댓글',
     login: '로그인 후 댓글 작성', failed: '댓글을 불러올 수 없음', retry: '다시 시도', saveFailed: '댓글 저장 실패',
     deleteConfirm: '댓글을 삭제할까요?', close: '댓글 닫기', justNow: '방금', edited: '수정됨',
+    sortComments: '댓글 정렬', closeSort: '정렬 닫기', hotComments: '인기 댓글', hotCommentsDesc: '좋아요가 많은 댓글부터 표시합니다.',
+    newest: '최신순', newestDesc: '최신 댓글부터 표시합니다.', allComments: '모든 댓글', allCommentsDesc: '모든 댓글을 표시합니다.',
   },
 })
 
@@ -109,10 +122,13 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   const [busy, setBusy] = useState(false)
   const [likingId, setLikingId] = useState('')
   const [formError, setFormError] = useState('')
+  const [sort, setSort] = useState('top')
+  const [sortOpen, setSortOpen] = useState(false)
   const inputRef = useRef(null)
   const mounted = useRef(true)
+  const activeSortRef = useRef(sort)
+  activeSortRef.current = sort
 
-    // Drag down to close Comment Sheet
   const dragStartRef = useRef(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -120,12 +136,7 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   const handleDragStart = event => {
     if (event.button !== undefined && event.button !== 0) return
     if (event.target.closest('button')) return
-
-    dragStartRef.current = {
-      pointerId: event.pointerId,
-      startY: event.clientY,
-    }
-
+    dragStartRef.current = { pointerId: event.pointerId, startY: event.clientY }
     setIsDragging(true)
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
@@ -133,24 +144,16 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   const handleDragMove = event => {
     const start = dragStartRef.current
     if (!start || start.pointerId !== event.pointerId) return
-
     setDragOffset(Math.max(0, event.clientY - start.startY))
   }
 
   const handleDragEnd = event => {
     const start = dragStartRef.current
     if (!start || start.pointerId !== event.pointerId) return
-
     const distance = Math.max(0, event.clientY - start.startY)
-
     dragStartRef.current = null
     setIsDragging(false)
-
-    if (distance > 90) {
-      onClose?.()
-      return
-    }
-
+    if (distance > 90) { onClose?.(); return }
     setDragOffset(0)
   }
 
@@ -169,33 +172,44 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
 
   const loadRoots = useCallback(async (append = false, signal) => {
     const offset = append ? nextOffset : 0
-    const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) })
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset), sort })
     const data = await request(`${apiBase}?${params}`, { signal })
-    if (!mounted.current) return
+    if (!mounted.current || signal?.aborted || activeSortRef.current !== sort) return
     setRows(current => append ? mergeUnique(current, data.comments || []) : (data.comments || []))
     setNextOffset(data.pagination?.next_offset || 0)
     setHasMore(Boolean(data.pagination?.has_more))
     setCount(data.comment_count)
-  }, [apiBase, nextOffset, setCount])
+  }, [apiBase, nextOffset, setCount, sort])
 
   useEffect(() => {
     mounted.current = true
     const controller = new AbortController()
     setLoading(true)
+    setLoadingMore(false)
+    setRows([])
+    setNextOffset(0)
+    setHasMore(false)
     setError('')
     loadRoots(false, controller.signal)
       .catch(err => { if (!controller.signal.aborted) setError(err.message || t('fastReelComments.failed')) })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => { mounted.current = false; controller.abort() }
-    // Run once per Reel; pagination updates must not retrigger initial loading.
+    return () => { controller.abort() }
+    // Reload exactly when the Reel or sort changes, not when pagination advances.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId])
+  }, [videoId, sort])
+
+  useEffect(() => () => { mounted.current = false }, [])
 
   useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose?.() }
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        if (sortOpen) setSortOpen(false)
+        else onClose?.()
+      }
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, sortOpen])
 
   const getReplies = async (rootId, append = false) => {
     const group = replyGroups[rootId]
@@ -217,7 +231,7 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   }
 
   const loadMoreRoots = async () => {
-    if (loadingMore) return
+    if (loadingMore || loading) return
     setLoadingMore(true)
     try { await loadRoots(true) }
     catch (err) { setError(err.message) }
@@ -289,6 +303,7 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
       setRows(patch)
       setReplyGroups(prev => Object.fromEntries(Object.entries(prev).map(([id, group]) =>
         [id, { ...group, rows: patch(group.rows || []) }])))
+      if (sort === 'top' && !comment.parent_id) await loadRoots(false)
     } catch (err) { setFormError(err.message || t('fastReelComments.saveFailed')) }
     finally { setLikingId('') }
   }
@@ -364,7 +379,7 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
   return createPortal(
     <div className="fixed inset-0 z-[200002] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={t('fastReelComments.title')}>
       <button type="button" aria-label={t('fastReelComments.close')} onClick={onClose} className="absolute inset-0 bg-black/55" />
-            <section
+      <section
         className="relative z-10 flex w-full max-w-[560px] flex-col overflow-hidden rounded-t-[24px] bg-white text-gray-900 shadow-2xl dark:bg-[#15171b] dark:text-white"
         style={{
           height: '68dvh',
@@ -372,9 +387,7 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
           minHeight: 'min(340px, 85dvh)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           transform: `translateY(${dragOffset}px)`,
-          transition: isDragging
-            ? 'none'
-            : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: isDragging ? 'none' : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         <div
@@ -385,22 +398,22 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
           onPointerCancel={handleDragCancel}
         >
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20" />
-
-          <header className="flex h-14 items-center justify-center border-b border-gray-100 px-4 dark:border-white/10">
-            <h2 className="text-[14px] font-bold">
-              {t('fastReelComments.title')} ({total.toLocaleString()})
-            </h2>
-
-            <button
-              type="button"
-              aria-label={t('fastReelComments.close')}
-              onClick={onClose}
-              className="absolute right-3 top-4 rounded-full p-2"
-            >
-              <X size={20} />
-            </button>
+          <header className="flex h-14 items-center justify-center px-4">
+            <h2 className="text-[14px] font-bold">{t('fastReelComments.title')} ({total.toLocaleString()})</h2>
+            <button type="button" aria-label={t('fastReelComments.close')} onClick={onClose}
+              className="absolute right-3 top-4 rounded-full p-2"><X size={20} /></button>
           </header>
         </div>
+
+        <div className="shrink-0 px-4 pb-1 pt-1">
+          <button type="button" onClick={() => setSortOpen(true)}
+            aria-haspopup="dialog" aria-label={t('fastReelComments.sortComments')}
+            className="flex min-h-9 items-center gap-1.5 text-[12px] font-medium text-gray-800 dark:text-white/90">
+            {t(`fastReelComments.${sort === 'top' ? 'hotComments' : sort === 'newest' ? 'newest' : 'allComments'}`)}
+            <ChevronDown size={14} />
+          </button>
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
           {loading ? <div className="flex justify-center py-14"><Loader2 className="animate-spin" size={24}/></div>
             : error ? <div className="py-12 text-center text-sm text-red-500">{error}<button type="button" onClick={() => { setLoading(true); loadRoots(false).then(() => setError('')).catch(e => setError(e.message)).finally(() => setLoading(false)) }} className="ml-3 font-bold">{t('fastReelComments.retry')}</button></div>
@@ -411,7 +424,8 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
               </button>}
             </> : <p className="py-14 text-center text-[13px] text-gray-500 dark:text-white/60">{t('fastReelComments.empty')}</p>}
         </div>
-        <footer className="shrink-0 border-t border-gray-100 px-3 pb-3 pt-2 dark:border-white/10">
+
+        <footer className="shrink-0 px-3 pb-3 pt-2">
           {replyTo && <div className="mb-2 flex items-center justify-between rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 dark:bg-blue-950 dark:text-blue-300">
             <span>{t('fastReelComments.replyTo')}: {replyTo.name || 'Reader'}</span>
             <button type="button" onClick={() => setReplyTo(null)}><X size={14}/></button>
@@ -421,24 +435,21 @@ export default function FastReelCommentsSheet({ video, onClose, onAuthRequired, 
             <textarea ref={inputRef} rows={1} maxLength={1000} value={draft} onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment() } }}
               placeholder={t('fastReelComments.write')} className="max-h-28 min-h-10 flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-[13px] text-gray-900 outline-none focus:border-blue-400 dark:border-white/10 dark:bg-[#26292f] dark:text-white" />
-            <button
-  type="button"
-  onClick={submitComment}
-  disabled={busy || !draft.trim()}
-  aria-label={t('fastReelComments.send')}
-  className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
->
-  <i
-    className={`fa-solid ${
-      busy
-        ? 'fa-spinner animate-spin'
-        : 'fa-paper-plane'
-    } text-[13px]`}
-  />
-</button>
+            <button type="button" onClick={submitComment} disabled={busy || !draft.trim()}
+              aria-label={t('fastReelComments.send')}
+              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]">
+              <i className={`fa-solid ${busy ? 'fa-spinner animate-spin' : 'fa-paper-plane'} text-[13px]`} />
+            </button>
           </div>
         </footer>
       </section>
+
+      <CommentSortSheet
+        open={sortOpen}
+        value={sort}
+        onChoose={nextSort => { setSort(nextSort); setSortOpen(false) }}
+        onClose={() => setSortOpen(false)}
+      />
     </div>, document.body,
   )
 }
