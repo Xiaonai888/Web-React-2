@@ -88,6 +88,8 @@ function Swatches({ colors, selected, kind, onSelect, disabled }) {
 
 export default function ShadowDocsMobileHomeSheet({
   open = false,
+  initialPage = 'home',
+  open = false,
   state = {},
   onClose,
   onCommand,
@@ -115,14 +117,16 @@ export default function ShadowDocsMobileHomeSheet({
   const gradientCSS = useMemo(() => `linear-gradient(${gradientDirection}deg, ${gradientColors.slice(0, gradientStops).join(', ')})`, [gradientDirection, gradientColors, gradientStops])
 
   useEffect(() => {
-    if (!open) {
-      setPage('home')
-      setStyleOpen(false)
-      setAdvancedParagraph(false)
-      setAdvancedNumbering(false)
-    }
-  }, [open])
-
+  if (open) {
+    setPage(initialPage === 'insert' ? 'insert' : 'home')
+    return
+  }
+  setPage('home')
+  setStyleOpen(false)
+  setAdvancedParagraph(false)
+  setAdvancedNumbering(false)
+}, [open, initialPage])
+  
   useEffect(() => {
     if (!open) return undefined
     const onKeyDown = event => {
