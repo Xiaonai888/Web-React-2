@@ -136,8 +136,10 @@ export default function AuthorReelAddPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const returnTo = typeof location.state?.returnTo === 'string' && /^\/author\/page(?:\/|$)/.test(location.state.returnTo)
-    ? location.state.returnTo : '/author/page'
+  const requestedReturnTo = location.state?.returnTo
+  const returnTo = typeof requestedReturnTo === 'string' &&
+  (requestedReturnTo === '/author/reel/studio' || /^\/author\/page(?:\/|$)/.test(requestedReturnTo))
+  ? requestedReturnTo : '/author/page'
   const [link, setLink] = useState('')
   const [title, setTitle] = useState('')
   const [caption, setCaption] = useState('')
