@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronLeft, FilePlus2,
-  FileText, ImagePlus, MessageSquarePlus, Minus, Plus, ScanText, Shapes, Table2,
+  FileText, ImagePlus, MessageSquarePlus, Minus, PenLine, Plus, ScanText, Shapes, Table2,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
+import ShadowDocsMobileSignaturePanel from './ShadowDocsMobileSignaturePanel'
 
 const QUICK_ACTIONS = [
   { id: 'image', label: 'Image', icon: ImagePlus },
@@ -94,10 +95,17 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
         <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('shape')}><Shapes /><span>Shape</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('textBox')}><FileText /><span>Text Box</span></button>
       <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('scanText')}><ScanText /><span>Scan Text</span></button>
+      <button type="button" disabled={disabled} onPointerDown={event => event.preventDefault()} onClick={() => setView('signature')}><PenLine /><span>Signature</span></button>
       </div>
     </> : view === 'shape' ? (
       <ShadowDocsMobileShapePanel disabled={disabled} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
-    ) : view === 'scanText' ? (
+    ) : view === 'signature' ? (
+  <ShadowDocsMobileSignaturePanel
+    disabled={disabled}
+    onBack={() => setView('menu')}
+    onInsert={options => execute('signature', options)}
+  />
+) : view === 'scanText' ? (
   <ShadowDocsMobileScanTextPanel
     disabled={disabled}
     onBack={() => setView('menu')}
