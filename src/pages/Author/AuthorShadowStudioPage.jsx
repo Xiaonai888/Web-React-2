@@ -1,33 +1,18 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import AuthorReelGrid from '../../components/author/AuthorReelGrid'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
-import ShadowStudioVideoTypePanel from '../../components/author/studio/ShadowStudioVideoTypePanel'
+import ShadowStudioContentManager from '../../components/author/studio/ShadowStudioContentManager'
 
 export default function AuthorShadowStudioPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const requestedReturnTo = location.state?.returnTo
-  const returnTo =
-    typeof requestedReturnTo === 'string' &&
+  const returnTo = typeof requestedReturnTo === 'string' &&
     /^\/author\/page(?:\/[^?#]*)?(?:[?#].*)?$/.test(requestedReturnTo)
-      ? requestedReturnTo
-      : '/author/page'
+    ? requestedReturnTo : '/author/page'
 
-  return (
-    <main className="min-h-[100dvh] bg-[var(--shadow-bg-surface)] px-3 py-5 pb-28 text-[var(--shadow-text-primary)] sm:px-5">
-      <ShadowStudioVideoTypePanel />
-      <AuthorReelGrid
-        isOwner
-        studioMode
-        onExitStudio={() => navigate(returnTo, { state: { activeTab: 'Reel' } })}
-      />
-      <ShadowStudioFooter
-        activeTab="content"
-        enabledTabs={['dashboard', 'content']}
-        onTabChange={tab => {
-          if (tab === 'dashboard') navigate('/author/reel/studio/dashboard')
-        }}
-      />
-    </main>
-  )
+  return <main className="min-h-[100dvh] bg-[var(--shadow-bg-surface)] px-3 py-5 pb-28 text-[var(--shadow-text-primary)] sm:px-5">
+    <ShadowStudioContentManager onExitStudio={() => navigate(returnTo, { state: { activeTab: 'Reel' } })}/>
+    <ShadowStudioFooter activeTab="content" enabledTabs={['dashboard', 'content']}
+      onTabChange={tab => { if (tab === 'dashboard') navigate('/author/reel/studio/dashboard') }}/>
+  </main>
 }
