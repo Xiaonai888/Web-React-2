@@ -9,6 +9,7 @@ import { SHADOW_DOCS_KHMER_FONTS, SHADOW_DOCS_LATIN_FONTS } from './ShadowDocsFo
 import { SHADOW_DOCS_STYLES } from './ShadowDocsStyleCatalog'
 import ShadowDocsMobileFontSizePage from './ShadowDocsMobileFontSizePage'
 import ShadowDocsMobileFontStylePage from './ShadowDocsMobileFontStylePage'
+import ShadowDocsMobileInsertPanel from './ShadowDocsMobileInsertPanel'
 import './ShadowDocsMobileHomeSheet.css'
 
 
@@ -208,16 +209,20 @@ export default function ShadowDocsMobileHomeSheet({
     <button type="button" className="sd-home-sheet-dismiss" aria-label="Close tools" onClick={onClose} />
     <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
       <header className="sd-home-sheet-header">
-        {page === 'home' ? <div className="sd-home-tabs" role="tablist" aria-label="Document tools">
+        {['home', 'insert'].includes(page) ? <div className="sd-home-tabs" role="tablist" aria-label="Document tools">
           {['Home', 'Insert', 'View', 'Review'].map(tab => <button
             type="button"
             key={tab}
             role="tab"
-            aria-selected={tab === 'Home'}
-            className={tab === 'Home' ? 'is-active' : ''}
-            disabled={tab !== 'Home' && typeof onTabChange !== 'function'}
-            onPointerDown={event => event.preventDefault()}
-            onClick={() => tab !== 'Home' && onTabChange?.(tab.toLowerCase())}
+            aria-selected={tab.toLowerCase() === page}
+className={tab.toLowerCase() === page ? 'is-active' : ''}
+disabled={!['Home', 'Insert'].includes(tab) && typeof onTabChange !== 'function'}
+onPointerDown={event => event.preventDefault()}
+onClick={() => {
+  const next = tab.toLowerCase()
+  if (next === 'home' || next === 'insert') setPage(next)
+  else onTabChange?.(next)
+}}
           >{tab}</button>)}
         </div> : <div className="sd-home-subtitle">
           <IconButton label="Back to Home" onClick={() => setPage('home')}>
@@ -227,13 +232,19 @@ export default function ShadowDocsMobileHomeSheet({
         </div>}
         <div className="sd-home-head-actions">
           <IconButton label="Show keyboard" disabled={typeof onKeyboard !== 'function'} onClick={onKeyboard}><Keyboard size={22} /></IconButton>
-          {page === 'home' ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
+          {['home', 'insert'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
         </div>
       </header>
 
       <div className="sd-home-scroll" key={page}>
-        {page === 'home' ? <>
-          <Section label="Font Format">
+        {page === 'insert' ? (
+  <ShadowDocsMobileInsertPanel
+    disabled={!canBasic}
+    onCommand={command}
+    onClose={onClose}
+  />
+) : page === 'home' ? <>
+  <Section label="Font Format">
             <div className="sd-home-toolbar-row sd-home-font-actions">
               <IconButton label="Bold" active={state.bold} disabled={!canBasic} onClick={() => command('bold', !state.bold)}><strong>B</strong></IconButton>
               <IconButton label="Italic" active={state.italic} disabled={!canBasic} onClick={() => command('italic', !state.italic)}><em>I</em></IconButton>
