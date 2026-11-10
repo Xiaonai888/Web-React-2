@@ -28,18 +28,22 @@
 .sd-home-font-actions strong,.sd-fs-toolbar strong{font-weight:700}
 .sd-home-font-actions em,.sd-fs-toolbar em{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:400}
 .sd-home-font-actions s,.sd-fs-toolbar s{font-size:19px;font-weight:400}
+.sd-home-font-actions s{position:relative;top:3px}
 .sd-home-font-actions sup,.sd-fs-toolbar sup,.sd-fs-toolbar sub{font-size:13px;font-weight:400;line-height:0;vertical-align:super}
 .sd-fs-toolbar sub{vertical-align:sub}
 .sd-home-styles{min-height:74px}
 .sd-home-styles>button:not(.sd-home-icon-button){border:0;border-radius:9px;background:none;color:#eee;font-size:13px;font-weight:700;flex:1 1 0;min-width:0;min-height:55px;line-height:1.1;padding:5px 2px;overflow-wrap:anywhere}
 .sd-home-styles>button.is-selected{background:#424242}
-.sd-home-styles .sd-home-icon-button{flex:0 0 42px}
+.sd-home-styles .sd-home-icon-button{flex:0 0 calc((100% - 10px)/6);min-width:0;margin-left:auto}
 .sd-home-options-row{display:flex;gap:7px;flex-wrap:wrap;padding:9px 4px;border-bottom:1px solid #414141}
 .sd-home-options-row button{background:#404040;color:#efefef;border:0;border-radius:8px;padding:10px 12px;font-size:12px}
 .sd-home-options-row button.is-selected{outline:2px solid #5899eb}
 .sd-home-setting-row{display:flex;min-height:64px;align-items:center;justify-content:space-between;gap:12px;padding:6px 10px;border-bottom:1px solid #414141}
 .sd-home-setting-row>span,.sd-home-menu-row>span:first-child{display:flex;gap:15px;align-items:center;color:#e0e0e0;font-size:14px;white-space:nowrap}
 .sd-home-setting-row select{max-width:55%;min-width:0;border:0;background:transparent;color:#dbdbdb;text-align:right;font-size:14px;outline:none}
+label.sd-home-setting-row:has(> select[aria-label="Font family"]) {gap:7px}
+label.sd-home-setting-row:has(> select[aria-label="Font family"]) select{appearance:none;-webkit-appearance:none;margin-left:auto;max-width:calc(55% - 12px)}
+label.sd-home-setting-row:has(> select[aria-label="Font family"])::after{content:"›";flex:0 0 12px;color:#b4b4b4;font-size:25px;font-weight:400;line-height:1;text-align:center;pointer-events:none}
 .sd-home-setting-row select option,.sd-home-advanced-input select option,.sd-home-gradient-color select option{background:#292929;color:#f5f5f5}
 .sd-home-stepper{display:flex;align-items:center;gap:3px}
 .sd-home-stepper select{min-width:54px;max-width:65px;height:47px;padding:0 7px;background:#454545;border-radius:9px;text-align:center;color:#fafafa}
