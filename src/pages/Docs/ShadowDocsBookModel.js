@@ -44,7 +44,7 @@ function sanitizeStyle(node) {
   const style = node.style || {}
   const rules = []
   const family = INLINE_TAGS.has(node.tagName) ? String(style.fontFamily || '').split(',')[0].trim().replace(/^["']|["']$/g, '') : ''
-  const fontSize = INLINE_TAGS.has(node.tagName) ? safeLength(style.fontSize, 6, 96, ['pt', 'px', 'em', 'rem']) : ''
+  const fontSize = INLINE_TAGS.has(node.tagName) ? safeLength(style.fontSize, 5, 96, ['pt', 'px', 'em', 'rem']) : ''
   const color = INLINE_TAGS.has(node.tagName) ? safeColor(style.color) : ''
   const background = INLINE_TAGS.has(node.tagName) ? safeColor(style.backgroundColor) : ''
   const weight = INLINE_TAGS.has(node.tagName) && ['400', '500', '600', '700', 'bold', 'normal'].includes(String(style.fontWeight || '').toLowerCase()) ? String(style.fontWeight).toLowerCase() : ''
