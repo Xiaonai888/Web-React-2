@@ -523,7 +523,7 @@ export default function CommentsModal({
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100dvh-12px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:rounded-[28px]"
+        className="relative flex h-[calc(100dvh-12px)] w-screen max-w-none shrink-0 flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
