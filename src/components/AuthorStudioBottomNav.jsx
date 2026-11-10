@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { applyAuthorTheme, getAuthorTheme } from '../utils/authorTheme'
 
 registerTranslationNamespace('authorStudioBottomNav', {
   en: {
@@ -161,7 +162,7 @@ function NavButton({ label, active, onClick, children }) {
       type="button"
       onClick={onClick}
       className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 text-[9.5px] font-bold transition active:scale-95 ${
-        active ? 'text-[#6d4aff]' : 'text-[var(--shadow-text-secondary)]'
+        active ? 'text-[var(--author-theme-primary,#FFC400)]' : 'text-[var(--shadow-text-secondary)]'
       }`}
       aria-current={active ? 'page' : undefined}
     >
@@ -177,7 +178,7 @@ const createOptions = [
     titleKey: 'novel',
     subtitleKey: 'novelSubtitle',
     icon: 'fa-solid fa-book-open',
-    iconClass: 'bg-[var(--shadow-bg-soft)] text-[#7c3aed]',
+    iconClass: 'bg-[var(--shadow-bg-soft)] text-[var(--author-theme-primary,#FFC400)]',
   },
   {
     type: 'manga',
@@ -208,6 +209,17 @@ export default function AuthorStudioBottomNav() {
   const dashboardActive = location.pathname === '/author/dashboard'
   const insightsActive = location.pathname === '/author/insights'
   const profileActive = location.pathname === '/author/profile'
+
+  useEffect(() => {
+    const syncTheme = () => applyAuthorTheme(getAuthorTheme())
+    syncTheme()
+    window.addEventListener('storage', syncTheme)
+    window.addEventListener('shadow:author-theme-changed', syncTheme)
+    return () => {
+      window.removeEventListener('storage', syncTheme)
+      window.removeEventListener('shadow:author-theme-changed', syncTheme)
+    }
+  }, [])
 
   useEffect(() => {
     if (!createOpen) return undefined
@@ -350,7 +362,8 @@ export default function AuthorStudioBottomNav() {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="flex h-[58px] w-[58px] -translate-y-[13px] items-center justify-center rounded-full bg-gradient-to-br from-[#8468ff] to-[#5c3df2] text-white ring-[5px] ring-[var(--shadow-bg-page)] transition active:scale-95"
+              className="flex h-[58px] w-[58px] -translate-y-[13px] items-center justify-center rounded-full ring-[5px] ring-[var(--shadow-bg-page)] transition active:scale-95"
+              style={{ background: 'var(--author-theme-gradient,linear-gradient(135deg,#FFC400,#FFC400CC))', color: 'var(--author-theme-foreground,#171717)' }}
               aria-label="Create story"
             >
               <FeatherIcon />
