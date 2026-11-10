@@ -640,7 +640,19 @@ export default function ShadowDocsWritingStudioPanel({
         if (command === 'smallCaps' && value) patch.allCaps = false
         if (command === 'underlineStyle' || command === 'underlineColor') patch.underline = true
         if (command === 'clearFormatting') {
-          setRibbonState(state => ({ ...state, bold: false, italic: false, underline: false, strike: false, superscript: false, subscript: false }))
+        setRibbonState(state => ({
+  ...state,
+  bold: false,
+  italic: false,
+  underline: false,
+  strike: false,
+  superscript: false,
+  subscript: false,
+  allCaps: false,
+  smallCaps: false,
+  underlineStyle: '',
+  underlineColor: '#000000',
+}))
         } else setRibbonState(state => ({ ...state, ...patch }))
       }
       return
