@@ -89,7 +89,6 @@ function Swatches({ colors, selected, kind, onSelect, disabled }) {
 export default function ShadowDocsMobileHomeSheet({
   open = false,
   initialPage = 'home',
-  open = false,
   state = {},
   onClose,
   onCommand,
