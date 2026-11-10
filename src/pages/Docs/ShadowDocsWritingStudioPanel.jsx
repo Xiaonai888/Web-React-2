@@ -754,14 +754,59 @@ export default function ShadowDocsWritingStudioPanel({
 }
 
     if (command === 'link') {
-      if (!snapshot || snapshot.collapsed) {
-        setRibbonMessage('Select text first.')
-        return
-      }
-      const href = globalThis.prompt?.('Enter link:', 'https://')
-      if (href) finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
+  if (!snapshot) {
+    setRibbonMessage('Place the cursor or select text first.')
+    return
+  }
+
+  if (value && typeof value === 'object') {
+    const href = String(value.href || '').trim().slice(0, 2048)
+    let parsed
+
+    try {
+      parsed = new URL(href)
+    } catch {
+      setRibbonMessage('Invalid link URL.')
       return
     }
+
+    if (!['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)) {
+      setRibbonMessage('Unsupported link URL.')
+      return
+    }
+
+    if (!snapshot.collapsed) {
+      finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
+      return
+    }
+
+    const label = String(value.text || '').trim().slice(0, 160) || href
+    const escape = text => String(text).replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[character])
+
+    if (editor.innerHTML.length + href.length + label.length + 160 > 490000) {
+      setRibbonMessage('Document is too large.')
+      return
+    }
+
+    insertHTMLAtSelection(`<a href="${escape(href)}" rel="noopener noreferrer">${escape(label)}</a>`)
+    return
+  }
+
+  if (snapshot.collapsed) {
+    setRibbonMessage('Select text first.')
+    return
+  }
+
+  const href = globalThis.prompt?.('Enter link:', 'https://')
+  if (href) finishRibbonChange(applyShadowDocsLink(editor, snapshot, href))
+  return
+}
 
     if (command === 'bookmark') {
       const range = restoreShadowDocsSelection(editor, snapshot)
