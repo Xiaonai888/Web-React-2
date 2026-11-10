@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Bookmark, Compass, Search, Sparkles, Video } from 'lucide-react'
 import { useDisplayTranslation } from '../../../../utils/displayLanguage'
 import { StudioCard, StudioMissing, formatStudioCount } from '../ShadowStudioAnalyticsShared'
+import StudioChannelTopicBookmark from './StudioChannelTopicBookmark'
 import './ShadowStudioChannelExtraCopy'
 
 function TrendList({ title, icon: Icon, rows, empty }) {
@@ -18,17 +19,18 @@ function TrendList({ title, icon: Icon, rows, empty }) {
   </StudioCard>
 }
 
-export default function StudioChannelTrends({ data = null }) {
+export default function StudioChannelTrends({ data = null, onSaveTopic, onRemoveTopic, busyTopic = '', actionError = '' }) {
   const { t } = useDisplayTranslation()
   const l = key => t(`shadowStudioChannelExtra.${key}`)
   const [query, setQuery] = useState('')
   const topics = Array.isArray(data?.topics) ? data.topics : []
+  const savedTopics = Array.isArray(data?.saved_topics) ? data.saved_topics : []
+  const savedSet = useMemo(() => new Set(savedTopics.map(row => typeof row?.title === 'string' ? row.title.trim().toLocaleLowerCase() : '').filter(Boolean)), [savedTopics])
   const filtered = useMemo(() => topics.filter(row => typeof row?.title === 'string' && row.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())), [topics, query])
   const sections = [
     ['trendsTopSearches', Search, data?.top_searches],
     ['trendsRecent', Video, data?.recent_videos],
     ['trendsGaps', Sparkles, data?.shorts_content_gaps],
-    ['trendsSaved', Bookmark, data?.saved_topics],
   ]
   return <section className="space-y-5" aria-label={t('shadowStudioChannel.trends')}>
     <StudioMissing>{l('trendsIntro')}</StudioMissing>
@@ -41,11 +43,29 @@ export default function StudioChannelTrends({ data = null }) {
           placeholder={l('trendsSearchHint')} className="w-full min-w-0 bg-transparent text-sm outline-none" />
       </label>
       <div className="space-y-2">
-        {filtered.length ? filtered.slice(0, 12).map((topic, index) => <p key={`${topic.id || topic.title}-${index}`} className="rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-sm">{topic.title}</p>)
+        {filtered.length ? filtered.slice(0, 12).map((topic, index) => {
+          const saved = savedSet.has(topic.title.trim().toLocaleLowerCase())
+          return <div key={`${topic.id || topic.title}-${index}`} className="flex items-center gap-2 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-sm">
+            <span className="min-w-0 flex-1 break-words">{topic.title}</span>
+            <StudioChannelTopicBookmark topic={topic.title} saved={saved} busy={busyTopic === topic.title}
+              disabled={Boolean(busyTopic)} onSave={onSaveTopic} onRemove={onRemoveTopic} />
+          </div>
+        })
           : <p className="py-4 text-sm text-[var(--shadow-text-secondary)]">{query.trim() ? l('trendsNoMatches') : l('noTrends')}</p>}
       </div>
     </StudioCard>
     {sections.map(([key, Icon, rows]) => <TrendList key={key} title={l(key)} icon={Icon} rows={rows} empty={l('noTrends')} />)}
+    <StudioCard className="space-y-3">
+      <h3 className="flex items-center gap-2 font-semibold"><Bookmark size={18} />{l('trendsSaved')}</h3>
+      {savedTopics.length ? <div className="space-y-2">
+        {savedTopics.map((topic, index) => <div key={`${topic.title}-${index}`} className="flex items-center gap-2 py-1 text-sm">
+          <span className="min-w-0 flex-1 break-words">{topic.title}</span>
+          <StudioChannelTopicBookmark topic={topic.title} saved busy={busyTopic === topic.title}
+            disabled={Boolean(busyTopic)} onRemove={onRemoveTopic} />
+        </div>)}
+      </div> : <p className="py-5 text-sm text-[var(--shadow-text-secondary)]">{l('noTrends')}</p>}
+    </StudioCard>
+    {actionError ? <StudioCard><p role="alert" className="text-sm text-[var(--shadow-danger)]">{actionError}</p></StudioCard> : null}
     <StudioMissing>{l('trendsNotYoutube')}</StudioMissing>
   </section>
 }
