@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import './AuthorProfileTheme.css'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -443,7 +444,7 @@ export default function AuthorProfilePage() {
   )
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[100px]">
+    <div className="author-profile-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[100px]">
       <ProfileSwitcherSheet
         open={profileSwitcherOpen}
         onClose={() => setProfileSwitcherOpen(false)}
