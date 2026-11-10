@@ -13,7 +13,7 @@ export function normalizeShadowDocsColor(value, fallback = '') {
 }
 
 export function normalizeShadowDocsFontSize(value, fallback = 13) {
-  return number(value, 6, 96, fallback)
+  return number(value, 5, 96, fallback)
 }
 
 export function normalizeShadowDocsLineHeight(value, fallback = 1.65) {
