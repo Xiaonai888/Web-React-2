@@ -7,7 +7,8 @@ import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDoc
 import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsParagraphFormat } from './ShadowDocsFormattingEngine'
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
-import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
+import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'.
+import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
@@ -229,6 +230,41 @@ export default function ShadowDocsWritingStudioPanel({
   const settings = book?.settings || {}
   const firstLineIndent = Math.min(15, Math.max(0, Number(settings.firstLineIndent) || 0))
   const paragraphSpacing = settings.paragraphSpacing == null ? 10 : Math.min(20, Math.max(0, Number(settings.paragraphSpacing) || 0))
+    const homeAdvancedContextRef = useRef(null)
+  const homeAdvancedRef = useRef(null)
+
+  homeAdvancedContextRef.current = {
+    chapter,
+    ribbonState,
+    settings,
+    onChangeHTML,
+    onChangeSettings,
+  }
+
+  if (!homeAdvancedRef.current) {
+    homeAdvancedRef.current = createShadowDocsHomeAdvancedCommandEngine({
+      getEditor: () => editorRef.current,
+      getSnapshot: () =>
+        captureShadowDocsSelection(editorRef.current) || selectionRef.current,
+      getState: () => homeAdvancedContextRef.current?.ribbonState || {},
+      getSettings: () => homeAdvancedContextRef.current?.settings || {},
+      onDocumentChange: html => {
+        const context = homeAdvancedContextRef.current
+        if (!context?.chapter || typeof context.onChangeHTML !== 'function') return
+        context.onChangeHTML(context.chapter.id, html)
+        setLocalSaveDirty(true)
+        setLocalSaveSeconds(10)
+      },
+      onStateChange: patch => {
+        setRibbonState(current => ({ ...current, ...patch }))
+      },
+      onSettingsChange: patch => {
+        homeAdvancedContextRef.current?.onChangeSettings?.(patch)
+        setRibbonState(current => ({ ...current, ...patch }))
+      },
+      onMessage: message => setRibbonMessage(message),
+    })
+  }
 
   useEffect(() => {
     loadShadowDocsFont(settings.font)
@@ -244,6 +280,13 @@ export default function ShadowDocsWritingStudioPanel({
     setMobileMenuOpen(false)
     setShareOpen(false)
     setFindReplaceOpen(false)
+    homeAdvancedRef.current?.reset()
+    setRibbonState(current => ({
+      ...current,
+      autoNumbering: false,
+      paragraphLayout: false,
+      columnLayout: null,
+    }))
     setSelectionPopup({open:false,mode:'expanded',anchor:null})
     setPrintOpen(false)
     setAddToOpen(false)
@@ -1899,7 +1942,12 @@ export default function ShadowDocsWritingStudioPanel({
         </div>
 
         <div className="my-3">
-          <ShadowDocsRibbon commandState={ribbonState} onCommand={runRibbonCommand} disabled={typeof onChangeHTML !== 'function'} />
+          <ShadowDocsRibbon
+  commandState={ribbonState}
+  onCommand={runRibbonCommand}
+  onAdvancedCommand={(command, value) => homeAdvancedRef.current?.run(command, value)}
+  disabled={typeof onChangeHTML !== 'function'}
+/>
           {ribbonMessage && <p role="status" className="mt-2 text-xs text-[#77758b] dark:text-white/60">{ribbonMessage}</p>}
         </div>
 
@@ -1924,7 +1972,9 @@ export default function ShadowDocsWritingStudioPanel({
           contentEditable={typeof onChangeHTML === 'function' && !ribbonState.protectedEditing && ribbonState.viewMode !== 'read'}
           suppressContentEditableWarning
           onBeforeInput={trackBeforeInput}
-          onInput={emitChange}
+          onInput={() => {
+            if (!homeAdvancedRef.current?.onInput()) emitChange()
+          }}
           onBlur={() => { onEditorBlurRef.current?.(book.id); setLocalSaveDirty(false); setLocalSaveSeconds(10) }}
           onPaste={pastePlain}
           onMouseUp={handleEditorMouseUp}
