@@ -86,19 +86,37 @@ export function applyShadowDocsHomeGradient(editor, snapshot, value) {
 
 export function removeShadowDocsHomeGradient(editor, snapshot) {
   if (!editor || typeof document === 'undefined') return false
+
   const range = restoreShadowDocsSelection(editor, snapshot)
-  if (!range || range.collapsed || !range.toString().length) return false
-  const fragment = range.extractContents()
-  const spans = [...fragment.querySelectorAll('[data-shadow-docs-gradient]')]
+  if (!range || range.collapsed) return false
+
+  const spans = [
+    ...editor.querySelectorAll('span[data-shadow-docs-gradient]'),
+  ].filter(span => range.intersectsNode(span))
+
+  if (!spans.length) return false
+
   spans.forEach(span => {
     span.removeAttribute('data-shadow-docs-gradient')
-    span.style.removeProperty('background-image')
-    span.style.removeProperty('background-clip')
-    span.style.removeProperty('-webkit-background-clip')
-    span.style.removeProperty('-webkit-text-fill-color')
-    span.style.removeProperty('-webkit-print-color-adjust')
-    span.style.removeProperty('print-color-adjust')
+
+    const properties = [
+      'background-image',
+      'background-clip',
+      '-webkit-background-clip',
+      '-webkit-text-fill-color',
+      '-webkit-print-color-adjust',
+      'print-color-adjust',
+      'color',
+    ]
+
+    properties.forEach(property => {
+      span.style.removeProperty(property)
+    })
+
+    if (!span.style.length) {
+      span.removeAttribute('style')
+    }
   })
-  insertAndRestore(editor, range, fragment)
-  return spans.length > 0
+
+  return true
 }
