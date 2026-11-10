@@ -8,7 +8,7 @@ import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Conn
 import EchoV2Count from '../components/social/EchoV2Count'
 import ReactionAction from '../components/social/reactions/ReactionAction'
 import { getReactionMeta } from '../components/social/reactions/reactionConfig'
-import AdvertisementPopup from '../components/AdvertisementPopup'
+import SmartFreeUnlockAdvertisement from '../components/advertisements/SmartFreeUnlockAdvertisement'
 import GiftPopup from '../components/reader/GiftPopup'
 import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
@@ -5706,7 +5706,6 @@ function ContinuousEpisodeBlock({
   )
   const adBlocked = Boolean(
     entry?.gate?.ad_policy?.show_read_ad &&
-      entry?.gate?.advertisement?.image_url &&
       !entry?.adFinished
   )
 
@@ -6836,8 +6835,7 @@ async function loadContinuousEpisode(targetEpisode) {
     return { ad_policy: null, advertisement: null }
   })
   const requiresAd = Boolean(
-    gate?.ad_policy?.show_read_ad &&
-      gate?.advertisement?.image_url
+    gate?.ad_policy?.show_read_ad
   )
 
   if (gateVerified && navigator.onLine !== false && response.ok && data.ok === true &&
@@ -7174,8 +7172,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         if (ignore) return
 
         const requiresAd = Boolean(
-          nextReaderAdStatus.ad_policy?.show_read_ad &&
-            nextReaderAdStatus.advertisement?.image_url
+          nextReaderAdStatus.ad_policy?.show_read_ad
         )
 
         if (gateVerified && navigator.onLine !== false && episodeData.locked === false &&
@@ -8915,10 +8912,9 @@ autoScrollEnabled ? (
   }}
 />
       {shouldShowReaderAd && !readerAdFinished ? (
-  <AdvertisementPopup
-  placement="freeUnlock"
-  blocking
-  advertisementOverride={readerAdvertisement}
+  <SmartFreeUnlockAdvertisement
+  currentStoryId={storyId}
+  legacyAdvertisement={readerAdvertisement}
   key={`freeUnlock-${storyId}-${episodeId}`}
   onFinish={() => {
     setReaderAdFinished(true)
