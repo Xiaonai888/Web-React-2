@@ -12,6 +12,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 )
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PAGE_LIMIT = 24
+let summaryUnavailable = false
 
 function requiredId(value) {
   const id = String(value || '')
@@ -38,7 +39,9 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   })
   const data = await response.json().catch(() => null)
   if (!response.ok || data?.ok !== true) {
-    throw new Error(data?.message || `Request failed (${response.status}).`)
+    const error = new Error(data?.message || `Request failed (${response.status}).`)
+    error.status = response.status
+    throw error
   }
   return data
 }
@@ -68,7 +71,7 @@ function normalizePage(result, field, limit, offset) {
 }
 
 async function withPlaylistSummaries(page, signal) {
-  if (!page.items.length) return page
+  if (summaryUnavailable || !page.items.length) return page
   const ids = page.items.map(item => item.id).filter(id => UUID.test(String(id || '')))
   if (!ids.length) return page
   try {
@@ -92,6 +95,7 @@ async function withPlaylistSummaries(page, signal) {
     }
   } catch (error) {
     if (signal?.aborted) throw error
+    if (error?.status === 503) summaryUnavailable = true
     return page
   }
 }
