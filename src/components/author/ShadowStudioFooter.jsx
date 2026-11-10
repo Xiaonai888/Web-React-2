@@ -1,5 +1,5 @@
-
 import { BarChart3, CircleDollarSign, Clapperboard, LayoutDashboard, UsersRound } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -25,6 +25,9 @@ export default function ShadowStudioFooter({
   enabledTabs = TABS.map(tab => tab.key),
 }) {
   const { t } = useDisplayTranslation()
+  const navigate = useNavigate()
+  const analyticsEnabled = enabledTabs.includes('analytics') ||
+    (enabledTabs.includes('dashboard') && enabledTabs.includes('content'))
 
   return (
     <nav
@@ -35,15 +38,18 @@ export default function ShadowStudioFooter({
       <div className="mx-auto grid min-h-[64px] max-w-5xl grid-cols-5 items-stretch">
         {TABS.map(({ key, Icon }) => {
           const selected = activeTab === key
+          const enabled = enabledTabs.includes(key) || (key === 'analytics' && analyticsEnabled)
 
           return (
             <button
               key={key}
               type="button"
-              disabled={!enabledTabs.includes(key)}
+              disabled={!enabled}
               aria-current={selected ? 'page' : undefined}
               aria-label={t(`shadowStudioFooter.${key}`)}
-              onClick={() => onTabChange?.(key)}
+              onClick={() => key === 'analytics'
+                ? navigate('/author/reel/studio/analytics')
+                : onTabChange?.(key)}
               className={`flex min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 transition-colors active:opacity-70 disabled:cursor-not-allowed disabled:opacity-50 ${
                 selected
                   ? 'text-[var(--shadow-text-primary)]'
