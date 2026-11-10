@@ -523,7 +523,7 @@ export default function CommentsModal({
 
       <section
         ref={sheetRef}
-        className={`relative flex max-w-none shrink-0 flex-col overflow-hidden bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px] ${
+        className={`relative flex max-w-none shrink-0 flex-col overflow-hidden bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px] ${
   targetType === 'story' || targetType === 'episode'
     ? 'h-dvh w-full rounded-none'
     : 'h-[calc(100dvh-12px)] w-screen rounded-t-[28px]'
@@ -544,7 +544,7 @@ export default function CommentsModal({
     onPointerUp={handleDragEnd}
     onPointerCancel={handleDragEnd}
     onLostPointerCapture={handleDragEnd}
-    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-elevated)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
     style={{ touchAction: 'none' }}
   >
     <div className="flex justify-center">
@@ -563,7 +563,7 @@ export default function CommentsModal({
     onPointerUp={handleDragEnd}
     onPointerCancel={handleDragEnd}
     onLostPointerCapture={handleDragEnd}
-    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-elevated)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
+    className="shrink-0 cursor-grab touch-none bg-[var(--shadow-bg-surface)] px-4 pb-3 pt-2.5 active:cursor-grabbing"
     style={{ touchAction: 'none' }}
   >
     <div className="grid grid-cols-3 items-center gap-2 text-center">
