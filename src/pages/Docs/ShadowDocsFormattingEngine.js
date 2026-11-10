@@ -265,6 +265,40 @@ export function toggleShadowDocsList(editor, snapshot, type = 'ul') {
   return true
 }
 
+function toggleShadowDocsNativeFormat(editor, snapshot, command) {
+  const names = {
+    bold: 'bold',
+    italic: 'italic',
+    underline: 'underline',
+    strike: 'strikeThrough',
+    superscript: 'superscript',
+    subscript: 'subscript',
+  }
+  const name = names[command]
+  if (!name || typeof document === 'undefined' || typeof document.execCommand !== 'function') return null
+
+  let cssEnabled = false
+  let previousCSS = false
+  try {
+    editor.focus({ preventScroll: true })
+    const range = restoreShadowDocsSelection(editor, snapshot)
+    if (!range || range.collapsed) return false
+
+    previousCSS = Boolean(document.queryCommandState?.('styleWithCSS'))
+    cssEnabled = document.execCommand('styleWithCSS', false, true)
+    const changed = document.execCommand(name, false, null)
+    return changed ? true : null
+  } catch {
+    return null
+  } finally {
+    if (cssEnabled) {
+      try {
+        document.execCommand('styleWithCSS', false, previousCSS)
+      } catch {}
+    }
+  }
+}
+
 export function applyShadowDocsCommand(editor, snapshot, command, value) {
   if (!editor || !snapshot) return false
 
