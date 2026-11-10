@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BarChart3, Clock3, Eye, Heart, MessageCircle, MousePointerClick, UsersRound } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -130,7 +130,9 @@ function MissingMetric({ title, t }) {
 export default function AuthorStudioVideoAnalyticsPage() {
   const { t, language } = useDisplayTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { videoId } = useParams()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -177,7 +179,7 @@ export default function AuthorStudioVideoAnalyticsPage() {
 
   return <>
     <StudioFrame>
-      <StudioBackHeader video={video} title={video?.title || t('shadowStudioStats.analytics')} onBack={() => navigate('/author/reel/studio/dashboard')} />
+      <StudioBackHeader video={video} title={video?.title || t('shadowStudioStats.analytics')} onBack={() => navigate(location.state?.fromContent === true ? '/author/reel/studio' : '/author/reel/studio/dashboard')} />
 
       {video ? <StudioCard className="space-y-3">
         <div className="flex items-center gap-3">
