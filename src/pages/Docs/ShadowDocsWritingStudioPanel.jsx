@@ -116,7 +116,7 @@ function writeShadowDocsVersions(bookId, versions) {
 }
 
 const FONT_SIZES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
-const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
+const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'allCaps', 'smallCaps', 'underlineStyle', 'underlineColor', 'clearFormatting'])
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 
 function nearestFontSize(value, fallback = 13) {
@@ -392,6 +392,10 @@ export default function ShadowDocsWritingStudioPanel({
         italic: state.italic,
         underline: state.underline,
         strike: state.strike,
+        allCaps: state.allCaps,
+        smallCaps: state.smallCaps,
+        underlineStyle: state.underlineStyle,
+        underlineColor: colorToHex(state.underlineColor, current.underlineColor || '#000000'),
         superscript: state.superscript,
         subscript: state.subscript,
         alignment: ALIGNMENTS.has(state.alignment) ? state.alignment : current.alignment,
@@ -632,6 +636,9 @@ export default function ShadowDocsWritingStudioPanel({
       const changed = applyShadowDocsCommand(editor, snapshot, command, value)
       if (finishRibbonChange(changed)) {
         const patch = { [command === 'highlight' ? 'backgroundColor' : command]: value }
+        if (command === 'allCaps' && value) patch.smallCaps = false
+        if (command === 'smallCaps' && value) patch.allCaps = false
+        if (command === 'underlineStyle' || command === 'underlineColor') patch.underline = true
         if (command === 'clearFormatting') {
           setRibbonState(state => ({ ...state, bold: false, italic: false, underline: false, strike: false, superscript: false, subscript: false }))
         } else setRibbonState(state => ({ ...state, ...patch }))
