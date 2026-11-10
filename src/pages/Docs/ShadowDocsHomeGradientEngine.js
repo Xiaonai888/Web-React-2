@@ -1,4 +1,5 @@
 import { restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
+import { applyShadowDocsInlineFormat } from './ShadowDocsFormattingEngine'
 
 const HEX = /^#[0-9a-f]{6}$/i
 const TOKEN_PREFIX = 'v1'
@@ -85,6 +86,21 @@ export function applyShadowDocsHomeGradient(editor, snapshot, value) {
 }
 
 export function removeShadowDocsHomeGradient(editor, snapshot) {
+  if (!editor || typeof document === 'undefined') return false
+
+  const range = restoreShadowDocsSelection(editor, snapshot)
+  if (!range || range.collapsed) return false
+
+  const hasGradient = [
+    ...editor.querySelectorAll('span[data-shadow-docs-gradient]'),
+  ].some(span => range.intersectsNode(span))
+
+  if (!hasGradient) return false
+
+  const color = globalThis.getComputedStyle?.(editor)?.color || '#242139'
+
+  return applyShadowDocsInlineFormat(editor, snapshot, { color })
+}
   if (!editor || typeof document === 'undefined') return false
 
   const range = restoreShadowDocsSelection(editor, snapshot)
