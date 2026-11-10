@@ -9,6 +9,7 @@ import useShadowStudioContentActions from './useShadowStudioContentActions'
 import useShadowStudioContentCollections from './useShadowStudioContentCollections'
 import useShadowStudioContentSelection from './useShadowStudioContentSelection'
 import { invalidateStudioContentCache, invalidateStudioPlaylistCache } from './ShadowStudioContentCache'
+import { invalidateStudioAnalyticsCache } from '../../../../services/shadowStudioAnalyticsApi'
 
 export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo, onViewAnalytics, freshOnMount = false }) {
   const collections = useShadowStudioContentCollections({ pageSize: 12, overviewSize: 6, freshOnMount })
@@ -25,6 +26,7 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
       return
     }
     invalidateStudioPlaylistCache(selection.playlist?.id)
+    invalidateStudioAnalyticsCache()
     if (change.action === 'delete') await Promise.all([refresh('videos'), refresh('shorts'), refresh('playlists')])
     else await Promise.all([refresh('videos'), refresh('shorts')])
   }, [afterMutation, refresh, selection.playlist?.id])
@@ -38,6 +40,7 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
     selection.closeEditor()
     invalidateStudioPlaylistCache(selection.playlist?.id)
     invalidateStudioContentCache()
+    invalidateStudioAnalyticsCache()
     setPlaylistRevision(value => value + 1)
     actions.clearFeedback()
     Promise.all([refresh('videos'), refresh('shorts'), refresh('playlists')]).catch(() => {})
