@@ -1,0 +1,182 @@
+import { registerTranslationNamespace } from '../../../../i18n/registerTranslations'
+import { getReelYouTubeId } from '../../../../utils/reelYouTube'
+
+registerTranslationNamespace('shadowStudioNext', {
+  en: {
+    videos: 'Videos', shorts: 'Shorts', live: 'Live', playlists: 'Playlists', viewAll: 'View all', back: 'Back',
+    filters: 'Filters', type: 'Type', visibility: 'Visibility', views: 'Views', restrictions: 'Restrictions',
+    clips: 'Clips', sortBy: 'Sort by', apply: 'Apply', reset: 'Reset', cancel: 'Cancel',
+    moreThan: 'More than', lessThan: 'Less than', enterViews: 'Number of views',
+    latest: 'Newest', oldest: 'Oldest', popular: 'Most viewed', public: 'Public',
+    private: 'Private', unlisted: 'Unlisted', scheduled: 'Has schedule', draft: 'Draft',
+    madeForKidsAuthor: 'Made for kids (set by you)', madeForKidsYouTube: 'Set to made for kids (by YouTube)',
+    notMadeForKids: 'Not made for kids', notSet: 'Not set', containsClips: 'Video contains clips',
+    unavailable: 'Not available with current Shadow video data', loadMore: 'Load more',
+    loading: 'Loading...', empty: 'Nothing here yet.', retry: 'Retry', paid: 'Paid',
+    published: 'Published', edit: 'Edit', publish: 'Publish', unpublish: 'Unpublish',
+    delete: 'Delete', moveLong: 'Move to Long', moveShort: 'Move to Short', rename: 'Rename',
+    playlistVideos: 'Videos in playlist', videoOptions: 'Video options', playlistOptions: 'Playlist options',
+    loadedOnly: 'Filters and sorting currently apply only to the items already loaded.',
+  },
+  km: {
+    videos: 'Videos', shorts: 'Shorts', live: 'Live', playlists: 'Playlists', viewAll: 'មើលទាំងអស់', back: 'ត្រឡប់ក្រោយ',
+    filters: 'តម្រង', type: 'ប្រភេទ', visibility: 'ភាពមើលឃើញ', views: 'ចំនួនមើល', restrictions: 'ការកំណត់',
+    clips: 'Clips', sortBy: 'តម្រៀបតាម', apply: 'អនុវត្ត', reset: 'កំណត់ឡើងវិញ', cancel: 'បោះបង់',
+    moreThan: 'ច្រើនជាង', lessThan: 'តិចជាង', enterViews: 'បញ្ចូលចំនួនមើល',
+    latest: 'ថ្មីបំផុត', oldest: 'ចាស់បំផុត', popular: 'មើលច្រើនបំផុត', public: 'សាធារណៈ',
+    private: 'ឯកជន', unlisted: 'មិនបង្ហាញក្នុងបញ្ជី', scheduled: 'បានកំណត់ពេល', draft: 'ព្រាង',
+    madeForKidsAuthor: 'សម្រាប់កុមារ (អ្នកកំណត់)', madeForKidsYouTube: 'សម្រាប់កុមារ (YouTube កំណត់)',
+    notMadeForKids: 'មិនសម្រាប់កុមារ', notSet: 'មិនទាន់កំណត់', containsClips: 'វីដេអូមាន Clips',
+    unavailable: 'ទិន្នន័យ Shadow បច្ចុប្បន្នមិនទាន់គាំទ្រ', loadMore: 'ទាញបន្ថែម',
+    loading: 'កំពុងទាញ...', empty: 'មិនទាន់មានទិន្នន័យ។', retry: 'សាកល្បងម្ដងទៀត', paid: 'បង់ប្រាក់',
+    published: 'បានផ្សាយ', edit: 'កែ', publish: 'ផ្សាយ', unpublish: 'បិទការផ្សាយ',
+    delete: 'លុប', moveLong: 'ប្ដូរទៅ Long', moveShort: 'ប្ដូរទៅ Short', rename: 'ប្ដូរឈ្មោះ',
+    playlistVideos: 'វីដេអូក្នុង Playlist', videoOptions: 'ជម្រើសវីដេអូ', playlistOptions: 'ជម្រើស Playlist',
+    loadedOnly: 'តម្រង និងការតម្រៀបបច្ចុប្បន្នអនុវត្តលើទិន្នន័យដែលបានទាញមកប៉ុណ្ណោះ។',
+  },
+  zh: {
+    videos: 'Videos', shorts: 'Shorts', live: 'Live', playlists: 'Playlists', viewAll: '查看全部', back: '返回',
+    filters: '筛选', type: '类型', visibility: '可见性', views: '观看量', restrictions: '限制', clips: '剪辑',
+    sortBy: '排序', apply: '应用', reset: '重置', cancel: '取消', moreThan: '大于', lessThan: '小于',
+    enterViews: '观看次数', latest: '最新', oldest: '最早', popular: '最多观看', public: '公开',
+    private: '私密', unlisted: '不公开列出', scheduled: '已排期', draft: '草稿',
+    madeForKidsAuthor: '面向儿童（由您设定）', madeForKidsYouTube: '面向儿童（YouTube 设定）',
+    notMadeForKids: '不面向儿童', notSet: '未设置', containsClips: '视频包含剪辑',
+    unavailable: '目前 Shadow 视频数据不支持', loadMore: '加载更多', loading: '加载中...', empty: '暂无内容',
+    retry: '重试', paid: '付费', published: '已发布', edit: '编辑', publish: '发布',
+    unpublish: '取消发布', delete: '删除', moveLong: '移至 Long', moveShort: '移至 Short',
+    rename: '重命名', playlistVideos: '播放列表中的视频', videoOptions: '视频选项',
+    playlistOptions: '播放列表选项', loadedOnly: '筛选和排序仅应用于已经加载的项目。',
+  },
+  ja: {
+    videos: 'Videos', shorts: 'Shorts', live: 'Live', playlists: 'Playlists', viewAll: 'すべて表示', back: '戻る',
+    filters: 'フィルター', type: '種類', visibility: '公開設定', views: '視聴回数', restrictions: '制限', clips: 'クリップ',
+    sortBy: '並べ替え', apply: '適用', reset: 'リセット', cancel: 'キャンセル', moreThan: 'より多い', lessThan: 'より少ない',
+    enterViews: '視聴回数', latest: '新しい順', oldest: '古い順', popular: '再生回数順', public: '公開',
+    private: '非公開', unlisted: '限定公開', scheduled: '予約済み', draft: '下書き',
+    madeForKidsAuthor: '子ども向け（本人設定）', madeForKidsYouTube: '子ども向け（YouTube 設定）',
+    notMadeForKids: '子ども向けではない', notSet: '未設定', containsClips: 'クリップあり',
+    unavailable: '現在の Shadow データでは未対応', loadMore: 'さらに読み込む', loading: '読み込み中...',
+    empty: 'まだありません', retry: '再試行', paid: '有料', published: '公開済み', edit: '編集',
+    publish: '公開', unpublish: '非公開にする', delete: '削除', moveLong: 'Long へ',
+    moveShort: 'Short へ', rename: '名前を変更', playlistVideos: '再生リストの動画',
+    videoOptions: '動画オプション', playlistOptions: '再生リストのオプション',
+    loadedOnly: 'フィルターと並び替えは読み込まれた項目だけに適用されます。',
+  },
+  ko: {
+    videos: 'Videos', shorts: 'Shorts', live: 'Live', playlists: 'Playlists', viewAll: '전체 보기', back: '뒤로',
+    filters: '필터', type: '유형', visibility: '공개 상태', views: '조회수', restrictions: '제한', clips: '클립',
+    sortBy: '정렬', apply: '적용', reset: '초기화', cancel: '취소', moreThan: '초과', lessThan: '미만',
+    enterViews: '조회수', latest: '최신순', oldest: '오래된 순', popular: '조회수순', public: '공개',
+    private: '비공개', unlisted: '일부 공개', scheduled: '예약됨', draft: '임시 저장',
+    madeForKidsAuthor: '아동용 (직접 설정)', madeForKidsYouTube: '아동용 (YouTube 설정)',
+    notMadeForKids: '아동용 아님', notSet: '설정 안 함', containsClips: '클립 포함',
+    unavailable: '현재 Shadow 데이터로 지원되지 않음', loadMore: '더 보기', loading: '불러오는 중...',
+    empty: '아직 항목이 없습니다.', retry: '다시 시도', paid: '유료', published: '게시됨', edit: '수정',
+    publish: '게시', unpublish: '게시 취소', delete: '삭제', moveLong: 'Long으로 이동',
+    moveShort: 'Short로 이동', rename: '이름 바꾸기', playlistVideos: '재생목록의 동영상',
+    videoOptions: '동영상 옵션', playlistOptions: '재생목록 옵션',
+    loadedOnly: '필터와 정렬은 로드된 항목에만 적용됩니다.',
+  },
+})
+
+export const NEW_STUDIO_FILTERS = Object.freeze({
+  types: [],
+  visibility: [],
+  views: { comparison: 'more', count: '' },
+  sort: 'latest',
+})
+
+export function studioFilterCopy(value = NEW_STUDIO_FILTERS) {
+  const count = value.views?.count
+  return {
+    types: Array.isArray(value.types) ? [...value.types] : [],
+    visibility: Array.isArray(value.visibility) ? [...value.visibility] : [],
+    views: {
+      comparison: value.views?.comparison === 'less' ? 'less' : 'more',
+      count: count == null ? '' : String(count),
+    },
+    sort: ['latest', 'oldest', 'popular'].includes(value.sort) ? value.sort : 'latest',
+  }
+}
+
+export function studioFormatCount(value) {
+  if (value === null || value === undefined || value === '') return null
+  const n = Number(value)
+  if (!Number.isFinite(n) || n < 0) return null
+  if (n >= 1000) return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
+  return new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(n)
+}
+
+export function studioFormatDuration(value) {
+  const seconds = Number(value)
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) return null
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`
+}
+
+export function studioVideoThumbnail(video) {
+  if (typeof video?.thumbnail_url === 'string' && /^https:\/\//i.test(video.thumbnail_url)) return video.thumbnail_url
+  const id = getReelYouTubeId(video?.video_url)
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
+}
+
+export function studioVideoKind(video) {
+  if (video?.video_type === 'short') return 'short'
+  if (video?.video_type === 'long') return 'long'
+  try {
+    if (new URL(String(video?.video_url || '')).pathname.toLowerCase().startsWith('/shorts/')) return 'short'
+  } catch { /* invalid or absent link */ }
+  return 'long'
+}
+
+export function studioDateLabel(value) {
+  const millis = value ? Date.parse(value) : NaN
+  if (!Number.isFinite(millis)) return null
+  return new Date(millis).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function timestamp(item) {
+  const value = item?.published_at || item?.created_at || item?.updated_at
+  const time = value ? Date.parse(value) : NaN
+  return Number.isFinite(time) ? time : -Infinity
+}
+
+function visibilityOf(item, kind) {
+  if (kind === 'playlists') return item?.is_public === true ? 'published' : item?.is_public === false ? 'private' : null
+  return item?.status === 'published' ? 'published' : item?.status === 'draft' ? 'draft' : null
+}
+
+export function studioFilterItems(items, filters, section) {
+  const selected = studioFilterCopy(filters)
+  const source = Array.isArray(items) ? items : []
+  const number = selected.views.count.trim() === '' ? null : Number(selected.views.count)
+  const validThreshold = number !== null && Number.isSafeInteger(number) && number >= 0
+  return source.filter(item => {
+    const type = section === 'playlists' ? 'playlists' : studioVideoKind(item) === 'short' ? 'shorts' : 'videos'
+    if (selected.types.length && !selected.types.includes(type)) return false
+    if (selected.visibility.length && !selected.visibility.includes(visibilityOf(item, section))) return false
+    if (validThreshold && section !== 'playlists') {
+      const count = Number(item.view_count)
+      if (item.view_count == null || !Number.isFinite(count)) return false
+      if (selected.views.comparison === 'more' && !(count > number)) return false
+      if (selected.views.comparison === 'less' && !(count < number)) return false
+    }
+    return true
+  }).sort((a, b) => {
+    if (selected.sort === 'popular' && section !== 'playlists') {
+      const aViews = Number.isFinite(Number(a.view_count)) && a.view_count != null ? Number(a.view_count) : -1
+      const bViews = Number.isFinite(Number(b.view_count)) && b.view_count != null ? Number(b.view_count) : -1
+      return bViews - aViews || timestamp(b) - timestamp(a)
+    }
+    return selected.sort === 'oldest' ? timestamp(a) - timestamp(b) : timestamp(b) - timestamp(a)
+  })
+}
+
+export function studioFiltersActive(filters) {
+  return Boolean(filters?.types?.length || filters?.visibility?.length ||
+    (filters?.views?.count != null && String(filters.views.count).trim()) ||
+    (filters?.sort && filters.sort !== 'latest'))
+}
