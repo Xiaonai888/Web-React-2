@@ -34,7 +34,11 @@
 .sd-home-styles{min-height:74px}
 .sd-home-styles>button:not(.sd-home-icon-button){border:0;border-radius:9px;background:none;color:#eee;font-size:13px;font-weight:700;flex:1 1 0;min-width:0;min-height:55px;line-height:1.1;padding:5px 2px;overflow-wrap:anywhere}
 .sd-home-styles>button.is-selected{background:#424242}
-.sd-home-styles .sd-home-icon-button{flex:0 0 calc((100% - 10px)/6);min-width:0;margin-left:auto}
+.sd-home-font-actions,.sd-home-styles,.sd-home-color-preview{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));column-gap:0;align-items:center;justify-content:stretch}
+.sd-home-font-actions>.sd-home-icon-button,.sd-home-color-preview>.sd-home-icon-button,.sd-home-styles>.sd-home-icon-button{width:100%;min-width:0;max-width:none;min-height:47px;flex:none;margin:0;padding:2px 1px}
+.sd-home-styles>button:not(.sd-home-icon-button){font-size:clamp(9px,2.6vw,12px);font-weight:650;line-height:1;white-space:nowrap;overflow-wrap:normal;word-break:normal;overflow:hidden;text-overflow:clip;padding:4px 0;min-height:47px;height:47px;width:100%;min-width:0}
+.sd-home-styles>button:nth-child(4){grid-column:span 2;font-size:clamp(11px,3vw,14px);font-weight:400;min-width:0}
+.sd-home-styles>.sd-home-icon-button{grid-column:6}
 .sd-home-options-row{display:flex;gap:7px;flex-wrap:wrap;padding:9px 4px;border-bottom:1px solid #414141}
 .sd-home-options-row button{background:#404040;color:#efefef;border:0;border-radius:8px;padding:10px 12px;font-size:12px}
 .sd-home-options-row button.is-selected{outline:2px solid #5899eb}
@@ -89,4 +93,4 @@ label.sd-home-setting-row:has(> select[aria-label="Font family"])::after{content
 .sd-home-apply{min-height:44px;border:0;border-radius:11px;background:#4c88e6;color:#fff;font-size:14px;font-weight:750}
 .sd-home-icon-button:focus-visible,.sd-home-sheet button:focus-visible,.sd-home-sheet select:focus-visible,.sd-home-sheet input:focus-visible{outline:2px solid #7db7ff;outline-offset:-1px}
 }
-@media(max-width:365px){.sd-home-tabs{gap:7px}.sd-home-tabs button{font-size:14px}.sd-home-scroll{padding-left:10px;padding-right:10px}.sd-home-section-card{padding:2px 5px}.sd-home-icon-button{min-width:28px}.sd-home-styles>button:not(.sd-home-icon-button){font-size:11px}}
+@media(max-width:365px){.sd-home-tabs{gap:7px}.sd-home-tabs button{font-size:14px}.sd-home-scroll{padding-left:10px;padding-right:10px}.sd-home-section-card{padding:2px 5px}.sd-home-icon-button{min-width:28px}.sd-home-styles>button:not(.sd-home-icon-button){font-size:clamp(8px,2.6vw,9.5px)}.sd-home-styles>button:nth-child(4){font-size:12px}}
