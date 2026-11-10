@@ -10,6 +10,7 @@ import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
 import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
+import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
 import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
@@ -907,6 +908,15 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
     if (command === 'pageNumber') { updateSettings({ pageNumbers: !settings.pageNumbers }, `Page numbers ${settings.pageNumbers ? 'off' : 'on'}.`); return }
+    if (command === 'shape') {
+  const src = createShadowDocsShapeImage(value?.type, value?.color)
+  if (!src || editor.innerHTML.length + src.length + 300 > 490000) return setRibbonMessage('Could not insert shape.')
+  const width = [25, 50, 75, 100].includes(Number(value?.width)) ? Number(value.width) : 50
+  const align = ['left', 'center', 'right'].includes(value?.align) ? value.align : 'center'
+  const margin = align === 'left' ? '1em auto 1em 0' : align === 'right' ? '1em 0 1em auto' : '1em auto'
+  insertHTMLAtSelection(`<img src="${src}" alt="Shape" data-shadow-docs-width="${width}" data-shadow-docs-align="${align}" style="display:block;width:${width}%;max-width:100%;height:auto;margin:${margin};break-inside:avoid"><p><br></p>`)
+  return
+}
     if (['shapes', 'icons', 'smartArt', 'chart', 'screenshot'].includes(command)) {
       const label = command === 'smartArt' ? 'SmartArt' : command.charAt(0).toUpperCase() + command.slice(1)
       const text = globalThis.prompt?.(`${label} placeholder text:`, label)
