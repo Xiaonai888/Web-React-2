@@ -5,6 +5,9 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 )
 
 const PAGE_SIZE = 30
+const DASHBOARD_CACHE_TTL_MS = 2 * 60 * 1000
+let dashboardCache = null
+let dashboardCacheVersion = 0
 
 function bearerToken() {
   return localStorage.getItem('shadow_reader_token') ||
@@ -88,8 +91,26 @@ export async function getStudioVideoActivity(videoId, { signal } = {}) {
   }
 }
 
-export async function getStudioDashboard({ signal } = {}) {
-  return request('/api/shadow-studio/analytics/dashboard', { signal, authenticated: true })
+export function invalidateStudioDashboardCache() {
+  dashboardCache = null
+  dashboardCacheVersion += 1
+}
+
+export async function getStudioDashboard({ signal, force = false } = {}) {
+  const token = bearerToken()
+  if (!token) {
+    invalidateStudioDashboardCache()
+    throw new Error('Sign in to view your Studio.')
+  }
+  if (!force && dashboardCache?.token === token && Date.now() < dashboardCache.expiresAt) {
+    return dashboardCache.data
+  }
+  const cacheVersion = dashboardCacheVersion
+  const data = await request('/api/shadow-studio/analytics/dashboard', { signal, authenticated: true })
+  if (!signal?.aborted && cacheVersion === dashboardCacheVersion && bearerToken() === token) {
+    dashboardCache = { token, data, expiresAt: Date.now() + DASHBOARD_CACHE_TTL_MS }
+  }
+  return data
 }
 
 export async function getStudioVideoAnalytics(videoId, { signal } = {}) {
