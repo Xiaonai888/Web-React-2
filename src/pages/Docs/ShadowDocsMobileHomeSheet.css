@@ -23,10 +23,13 @@
 .sd-home-icon-button.is-active{background:#444;color:#fff}
 .sd-home-icon-button:disabled,.sd-home-sheet button:disabled{opacity:.35;cursor:not-allowed}
 .sd-home-icon-button:not(:disabled):active,.sd-home-sheet button:not(:disabled):active{background-color:#464646}
-.sd-home-sheet .sd-home-font-actions .sd-home-icon-button{font-size:27px;line-height:1}
-.sd-home-sheet .sd-home-font-actions .sd-home-icon-button svg{width:27px;height:27px}
-.sd-home-font-actions strong{font-weight:850}
-.sd-home-font-actions em{font-family:Georgia,serif}
+.sd-home-sheet .sd-home-font-actions .sd-home-icon-button,.sd-home-sheet .sd-fs-toolbar .sd-fs-action{font-size:24px;font-weight:400;line-height:1}
+.sd-home-sheet .sd-home-font-actions .sd-home-icon-button svg{width:22px;height:22px}
+.sd-home-font-actions strong,.sd-fs-toolbar strong{font-weight:700}
+.sd-home-font-actions em,.sd-fs-toolbar em{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:400}
+.sd-home-font-actions s,.sd-fs-toolbar s{font-size:19px;font-weight:400}
+.sd-home-font-actions sup,.sd-fs-toolbar sup,.sd-fs-toolbar sub{font-size:13px;font-weight:400;line-height:0;vertical-align:super}
+.sd-fs-toolbar sub{vertical-align:sub}
 .sd-home-styles{min-height:74px}
 .sd-home-styles>button:not(.sd-home-icon-button){border:0;border-radius:9px;background:none;color:#eee;font-size:13px;font-weight:700;flex:1 1 0;min-width:0;min-height:55px;line-height:1.1;padding:5px 2px;overflow-wrap:anywhere}
 .sd-home-styles>button.is-selected{background:#424242}
