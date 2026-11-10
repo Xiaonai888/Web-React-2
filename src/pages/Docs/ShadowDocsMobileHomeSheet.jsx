@@ -7,9 +7,10 @@ import {
 } from 'lucide-react'
 import { SHADOW_DOCS_KHMER_FONTS, SHADOW_DOCS_LATIN_FONTS } from './ShadowDocsFontCatalog'
 import { SHADOW_DOCS_STYLES } from './ShadowDocsStyleCatalog'
+import ShadowDocsMobileFontSizePage from './ShadowDocsMobileFontSizePage'
 import './ShadowDocsMobileHomeSheet.css'
 
-const FONT_SIZES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
+
 const FONT_COLORS = [
   '#80b6ec', '#c897e9', '#b3edb7', '#e7b58c', '#f3d1d5', '#f5f5f5',
   '#368fe4', '#a24fd8', '#56dd78', '#f5c72e', '#c56970', '#bababa',
@@ -169,7 +170,23 @@ export default function ShadowDocsMobileHomeSheet({
     setGradientColors(current => current.map((entry, i) => i === index ? color : entry))
   }
 
-  if (!open) return null
+   if (!open) return null
+
+  if (page === 'fontSize') {
+    return (
+      <ShadowDocsMobileFontSizePage
+        open
+        value={state.fontSize || 13}
+        disabled={!canBasic}
+        onBack={() => setPage('home')}
+        onKeyboard={onKeyboard}
+        onSelect={size => {
+          command('fontSize', size)
+          setPage('home')
+        }}
+      />
+    )
+  }
 
   const colorPanel = page === 'color' || page === 'highlight'
   const isHighlight = page === 'highlight'
@@ -191,9 +208,9 @@ export default function ShadowDocsMobileHomeSheet({
           >{tab}</button>)}
         </div> : <div className="sd-home-subtitle">
           <IconButton label="Back to Home" onClick={() => setPage('home')}>
-  {page === 'fontSize' ? <ChevronLeft size={23} /> : <ChevronDown size={23} />}
+  <ChevronDown size={23} />
 </IconButton>
-<strong>{page === 'fontSize' ? 'Font Size' : isHighlight ? 'Highlight' : 'Font Color'}</strong>
+<strong>{isHighlight ? 'Highlight' : 'Font Color'}</strong>
         </div>}
         <div className="sd-home-head-actions">
           <IconButton label="Show keyboard" disabled={typeof onKeyboard !== 'function'} onClick={onKeyboard}><Keyboard size={22} /></IconButton>
@@ -367,39 +384,7 @@ export default function ShadowDocsMobileHomeSheet({
     })}
   </div>
 </Section>
-        </> : page === 'fontSize' ? (
-          <div style={{ display: 'grid', padding: '0 4px' }}>
-            {FONT_SIZES.map(size => (
-              <button
-                key={size}
-                type="button"
-                disabled={!canBasic}
-                aria-label={`Font size ${size}`}
-                aria-pressed={Number(state.fontSize) === size}
-                onPointerDown={event => event.preventDefault()}
-                onClick={() => {
-                  command('fontSize', size)
-                  setPage('home')
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  minHeight: 68,
-                  width: '100%',
-                  padding: '0 24px',
-                  border: 0,
-                  borderBottom: '1px solid #383838',
-                  background: Number(state.fontSize) === size ? '#343434' : 'transparent',
-                  color: '#eeeeee',
-                  fontSize: 17,
-                  textAlign: 'left',
-                }}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        ) : colorPanel ? <>
+        </> : colorPanel ? <>
           {!isHighlight ? <div className="sd-home-color-tabs" role="tablist" aria-label="Font color mode">
             {['solid', 'gradient', 'custom'].map(mode => <button type="button" role="tab" key={mode} aria-selected={fontMode === mode} className={fontMode === mode ? 'is-active' : ''} onClick={() => setFontMode(mode)}>{mode[0].toUpperCase() + mode.slice(1)}</button>)}
           </div> : null}
