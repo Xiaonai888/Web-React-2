@@ -908,6 +908,22 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
     if (command === 'pageNumber') { updateSettings({ pageNumbers: !settings.pageNumbers }, `Page numbers ${settings.pageNumbers ? 'off' : 'on'}.`); return }
+    if (command === 'signature') {
+  const src = typeof value?.src === 'string' ? value.src : ''
+  if (!/^data:image\/png;base64,[a-z0-9+/=]+$/i.test(src) || src.length > 300000) {
+    setRibbonMessage('Invalid signature image.')
+    return
+  }
+  if (editor.innerHTML.length + src.length + 300 > 490000) {
+    setRibbonMessage('Document is too large for another signature.')
+    return
+  }
+  const width = [25, 50, 75, 100].includes(Number(value.width)) ? Number(value.width) : 50
+  const align = ['left', 'center', 'right'].includes(value.align) ? value.align : 'center'
+  const margin = align === 'left' ? '1em auto 1em 0' : align === 'right' ? '1em 0 1em auto' : '1em auto'
+  insertHTMLAtSelection(`<img src="${src}" alt="Signature" data-shadow-docs-width="${width}" data-shadow-docs-align="${align}" style="display:block;width:${width}%;max-width:100%;height:auto;margin:${margin};break-inside:avoid"><p><br></p>`)
+  return
+}
     if (command === 'shape') {
   const src = createShadowDocsShapeImage(value?.type, value?.color)
   if (!src || editor.innerHTML.length + src.length + 300 > 490000) return setRibbonMessage('Could not insert shape.')
