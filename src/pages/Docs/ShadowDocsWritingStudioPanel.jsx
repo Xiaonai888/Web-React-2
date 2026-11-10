@@ -115,7 +115,7 @@ function writeShadowDocsVersions(bookId, versions) {
   throw new Error('Version history storage is full.')
 }
 
-const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
+const FONT_SIZES = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 72]
 const INLINE_COMMANDS = new Set(['fontFamily', 'fontSize', 'color', 'highlight', 'bold', 'italic', 'underline', 'strike', 'superscript', 'subscript', 'clearFormatting'])
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 
