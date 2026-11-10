@@ -8,22 +8,26 @@ import ShadowStudioVideoDetailSheet from './ShadowStudioVideoDetailSheet'
 import useShadowStudioContentActions from './useShadowStudioContentActions'
 import useShadowStudioContentCollections from './useShadowStudioContentCollections'
 import useShadowStudioContentSelection from './useShadowStudioContentSelection'
+import { invalidateStudioContentCache, invalidateStudioPlaylistCache } from './ShadowStudioContentCache'
 
-export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo, onViewAnalytics }) {
-  const collections = useShadowStudioContentCollections({ pageSize: 12 })
+export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo, onViewAnalytics, freshOnMount = false }) {
+  const collections = useShadowStudioContentCollections({ pageSize: 12, overviewSize: 6, freshOnMount })
   const selection = useShadowStudioContentSelection()
   const [playlistRevision, setPlaylistRevision] = useState(0)
   const refresh = collections.refresh
   const afterMutation = selection.afterMutation
 
-  const handleChanged = useCallback(async (change) => {
+  const handleChanged = useCallback(async change => {
     afterMutation(change)
     if (change.kind === 'playlists') {
+      invalidateStudioPlaylistCache(selection.playlist?.id)
       await refresh('playlists')
       return
     }
-    await Promise.all([refresh('videos'), refresh('shorts')])
-  }, [afterMutation, refresh])
+    invalidateStudioPlaylistCache(selection.playlist?.id)
+    if (change.action === 'delete') await Promise.all([refresh('videos'), refresh('shorts'), refresh('playlists')])
+    else await Promise.all([refresh('videos'), refresh('shorts')])
+  }, [afterMutation, refresh, selection.playlist?.id])
 
   const actions = useShadowStudioContentActions({
     onEdit: selection.editVideo,
@@ -32,10 +36,12 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
 
   const handleSaved = useCallback(() => {
     selection.closeEditor()
+    invalidateStudioPlaylistCache(selection.playlist?.id)
+    invalidateStudioContentCache()
     setPlaylistRevision(value => value + 1)
     actions.clearFeedback()
-    Promise.all([refresh('videos'), refresh('shorts')]).catch(() => {})
-  }, [actions.clearFeedback, refresh, selection.closeEditor])
+    Promise.all([refresh('videos'), refresh('shorts'), refresh('playlists')]).catch(() => {})
+  }, [actions.clearFeedback, refresh, selection.closeEditor, selection.playlist?.id])
 
   return <section className="mx-auto w-full max-w-[980px] space-y-5 text-[var(--shadow-text-primary)]">
     <ShadowStudioContentHeader
@@ -53,10 +59,12 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
         videos={collections.videos}
         shorts={collections.shorts}
         playlists={collections.playlists}
+        previewCount={6}
         loading={collections.loading}
         errors={collections.errors}
         pagination={collections.pagination}
         onLoadMore={collections.loadMore}
+        onSelectSection={collections.ensureFirstPage}
         onRetry={collections.retry}
         onOpenVideo={selection.openVideo}
         onOpenPlaylist={selection.openPlaylist}
