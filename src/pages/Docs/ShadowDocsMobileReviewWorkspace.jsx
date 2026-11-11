@@ -30,32 +30,55 @@ export default function ShadowDocsMobileReviewWorkspace({ state = {}, onCommand,
   const selectionRef = useRef(null)
 
   useEffect(() => {
+    selectionRef.current = captureShadowDocsSelection(editor)
     setScreen('main')
     setSelectedText('')
     setPreferences(readShadowDocsReviewPreferences(documentId))
-  }, [documentId])
+  }, [documentId, editor])
+
+  useEffect(() => {
+    if (!editor || typeof document === 'undefined') return undefined
+    const preserveSelection = () => {
+      const snapshot = captureShadowDocsSelection(editor)
+      if (snapshot) selectionRef.current = snapshot
+    }
+    preserveSelection()
+    document.addEventListener('selectionchange', preserveSelection)
+    editor.addEventListener('pointerup', preserveSelection)
+    editor.addEventListener('keyup', preserveSelection)
+    return () => {
+      document.removeEventListener('selectionchange', preserveSelection)
+      editor.removeEventListener('pointerup', preserveSelection)
+      editor.removeEventListener('keyup', preserveSelection)
+    }
+  }, [editor, documentId])
 
   function notifyContentChange() {
-    editor?.dispatchEvent(new Event('input', { bubbles: true }))
+    if (editor) editor.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   function navigate(to) {
-    selectionRef.current = captureShadowDocsSelection(editor)
+    if (!editor) return
+    const snapshot = captureShadowDocsSelection(editor) || selectionRef.current
+    selectionRef.current = snapshot
     setPreferences(readShadowDocsReviewPreferences(documentId))
-    setSelectedText(selectionRef.current?.text || '')
+    setSelectedText(snapshot?.text || '')
     setScreen(to)
   }
 
   function runCommand(id, value = true) {
-    if (disabled) return
-    if (id === 'newComment') return navigate('comments')
-    onCommand?.(id, value)
+    if (id === 'newComment') {
+      navigate('comments')
+      return
+    }
+    if (!disabled) onCommand?.(id, value)
   }
 
   function changeSpellCheck(value) {
-    const next = saveShadowDocsReviewPreferences(documentId, { ...preferences, spellCheck: value })
+    if (disabled || !editor) return
+    const next = saveShadowDocsReviewPreferences(documentId, { ...readShadowDocsReviewPreferences(documentId), spellCheck: value })
     setPreferences(next)
-    if (editor) editor.spellcheck = next.spellCheck
+    editor.spellcheck = next.spellCheck
   }
 
   const back = () => setScreen('main')
@@ -77,13 +100,15 @@ export default function ShadowDocsMobileReviewWorkspace({ state = {}, onCommand,
         state={state}
         onCommand={runCommand}
         onAITranslate={({ text }) => {
-          setSelectedText(text)
+          const snapshot = captureShadowDocsSelection(editor) || selectionRef.current
+          const currentText = String(text || '').trim()
+          setSelectedText(snapshot?.text?.trim() || currentText)
           setScreen('translate')
         }}
         disabled={disabled}
       />
       <div className="sd-review-workspace-links">
-        {items.map(([id, Icon, label]) => <button type="button" key={id} onPointerDown={event => event.preventDefault()} onClick={() => navigate(id)} disabled={!editor || (disabled && id !== 'proofing')}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}
+        {items.map(([id, Icon, label]) => <button type="button" key={id} onPointerDown={event => event.preventDefault()} onClick={() => navigate(id)} disabled={!editor}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}
       </div>
     </> : null}
     {screen === 'comments' ? <ShadowDocsReviewCommentsPanel
