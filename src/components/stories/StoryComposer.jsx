@@ -456,6 +456,8 @@ async function saveStoryExtras({
         text_overlay_style: textOverlay.trim() ? textSticker : null,
         alt_text: altText.trim(),
         mention_username: mentionUsername.trim(),
+        mention_target_type: mentionTarget?.type || null,
+        mention_target_id: mentionTarget?.id || null,
         link_url: linkUrl.trim(),
       }),
     }
@@ -569,7 +571,8 @@ export default function StoryComposer({ mode }) {
   const [textOverlay, setTextOverlay] = useState('')
   const [textSticker, setTextSticker] = useState(() => normalizeStoryTextSticker(''))
   const [altText, setAltText] = useState('')
-  const [mentionUsername, setMentionUsername] = useState('')
+  const [mentionTarget, setMentionTarget] = useState(null)
+const mentionUsername = mentionTarget?.username || ''
   const [linkUrl, setLinkUrl] = useState('')
   const [sheet, setSheet] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
@@ -635,7 +638,7 @@ export default function StoryComposer({ mode }) {
     setTextOverlay('')
     setTextSticker(normalizeStoryTextSticker(''))
     setAltText('')
-    setMentionUsername('')
+    setMentionTarget(null)
     setLinkUrl('')
     setMoreOpen(false)
     setSheet('')
@@ -644,10 +647,14 @@ export default function StoryComposer({ mode }) {
   }
 
   function saveMention(value) {
-    setMentionUsername(String(value || '').trim().replace(/^@+/, ''))
-    setSheet('')
-  }
-
+  const username = String(value?.username || '').trim().replace(/^@+/, '')
+  setMentionTarget(username ? {
+    username,
+    type: ['reader', 'author'].includes(value?.type) ? value.type : null,
+    id: value?.id || null,
+  } : null)
+  setSheet('')
+}
   function saveLink(value) {
     const raw = String(value || '').trim()
 
@@ -727,8 +734,9 @@ export default function StoryComposer({ mode }) {
           textSticker,
           altText,
           mentionUsername,
-          linkUrl,
-        })
+  mentionTarget,
+  linkUrl,
+}) {
       }
 
       await clearHomeCacheSection('discover-story-feed')
@@ -999,8 +1007,8 @@ export default function StoryComposer({ mode }) {
       {sheet === 'mention' ? (
   <StoryMentionPicker
     mode={mode}
-    value={mentionUsername}
-    onSave={saveMention}
+    value={mentionTarget}
+    onSaveTarget={saveMention}
     onClose={() => setSheet('')}
   />
 ) : null}
