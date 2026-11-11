@@ -56,6 +56,7 @@ export function createShadowDocsReadingController({
   let locked = false
   let lockButton = null
   let frame = 0
+  const originalEditable = element.getAttribute('contenteditable')
   const signal = () => onProgress?.(getShadowDocsReadingProgress(element, current.readingMode))
   const schedule = () => {
     if (frame) return
@@ -96,6 +97,8 @@ export function createShadowDocsReadingController({
     parent.appendChild(lockButton)
   }
 
+  element.blur()
+  element.setAttribute('contenteditable', 'false')
   element.addEventListener('scroll', schedule, { passive: true })
   document.addEventListener('keydown', onKeyDown)
   resize?.observe(element)
@@ -122,6 +125,8 @@ export function createShadowDocsReadingController({
       if (frame) cancelAnimationFrame(frame)
       setLocked(false)
       element.removeAttribute('data-sd-reading-locked')
+      if (originalEditable === null) element.removeAttribute('contenteditable')
+      else element.setAttribute('contenteditable', originalEditable)
       applyShadowDocsReadingAppearance(element, current, false)
     },
   }
