@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Archive, ChevronRight, Clapperboard, FolderOpen, ListVideo, Trash2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import { getStudioMeSummary } from '../../services/shadowStudioMeApi'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -23,6 +23,12 @@ const MENU = [
 
 export default function AuthorStudioMePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.returnTo
+  const returnTo = typeof from === 'string' &&
+  /^\/author\/reel\/studio(?:\/|$|[?#])/.test(from) &&
+  !/^\/author\/reel\/studio\/me(?:\/|$|[?#])/.test(from)
+    ? from : '/author/reel/studio/dashboard'
   const { t } = useDisplayTranslation()
   const [totals, setTotals] = useState(null)
   const [error, setError] = useState('')
@@ -43,7 +49,7 @@ export default function AuthorStudioMePage() {
   return <main className="min-h-[100dvh] bg-[var(--shadow-bg-page)] pb-28 text-[var(--shadow-text-primary)]">
     <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6">
       <header className="mb-6">
-        <button type="button" className="text-xs font-semibold text-[var(--shadow-text-secondary)]" onClick={() => navigate('/author/reel/studio/dashboard')}>{t('shadowStudioMe.studio')}</button>
+        <button type="button" className="text-xs font-semibold text-[var(--shadow-text-secondary)]" onClick={() => navigate(returnTo)}>{t('shadowStudioMe.studio')}</button>
         <h1 className="mt-1 text-2xl font-extrabold">{t('shadowStudioMe.me')}</h1>
       </header>
       <section className="mb-6 grid grid-cols-3 divide-x divide-[var(--shadow-border)] rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-2 py-5 shadow-sm" aria-label={t('shadowStudioMe.total')}>
