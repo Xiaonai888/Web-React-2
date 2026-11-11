@@ -1,53 +1,48 @@
-.author-insights-theme {
+html.shadow-author-theme .author-insights-theme {
   --author-insights-primary: var(--author-theme-primary, #ffc400);
   --author-insights-foreground: var(--author-theme-foreground, #171717);
   --author-insights-soft: var(--author-theme-soft, #ffc40022);
   --author-insights-ink: color-mix(in srgb, var(--author-insights-primary) 55%, #171717);
 }
 
-html.dark .author-insights-theme {
+html.dark.shadow-author-theme .author-insights-theme {
   --author-insights-ink: color-mix(in srgb, var(--author-insights-primary) 85%, #ffffff);
 }
 
-.author-insights-theme [class*="text-[#7c4dff]"],
-.author-insights-theme [class*="text-[#8061e8]"],
-.author-insights-theme [class*="text-[#7250dc]"],
-.author-insights-theme [class*="text-[#7652e8]"],
-.author-insights-theme [class*="text-[#b8a8ef]"] {
+html.shadow-author-theme .author-insights-theme [class*="text-[#7c4dff]"],
+html.shadow-author-theme .author-insights-theme [class*="text-[#8061e8]"],
+html.shadow-author-theme .author-insights-theme [class*="text-[#7250dc]"],
+html.shadow-author-theme .author-insights-theme [class*="text-[#7652e8]"],
+html.shadow-author-theme .author-insights-theme [class*="text-[#b8a8ef]"] {
   color: var(--author-insights-ink) !important;
 }
 
-.author-insights-theme [class*="bg-[#f2edff]"],
-.author-insights-theme [class*="bg-[#f1edff]"],
-.author-insights-theme [class*="bg-[#f1ecff]"] {
+html.shadow-author-theme .author-insights-theme [class*="bg-[#f2edff]"],
+html.shadow-author-theme .author-insights-theme [class*="bg-[#f1edff]"],
+html.shadow-author-theme .author-insights-theme [class*="bg-[#f1ecff]"] {
   background-color: var(--author-insights-soft) !important;
 }
 
-.author-insights-theme [class*="bg-[#9b7cff]"] {
+html.shadow-author-theme .author-insights-theme [class*="bg-[#9b7cff]"] {
   background-color: var(--author-insights-primary) !important;
 }
 
-.author-insights-theme [class*="from-[#7C3AED]"] {
+html.shadow-author-theme .author-insights-theme [class*="from-[#7C3AED]"] {
   background-color: var(--author-insights-primary) !important;
   background-image: var(--author-theme-gradient, linear-gradient(135deg, #ffc400, #ffc400cc)) !important;
   color: var(--author-insights-foreground) !important;
 }
 
-.author-insights-theme svg polyline[stroke="#8b5cf6"],
-.author-insights-theme svg circle[stroke="#8b5cf6"] {
+html.shadow-author-theme .author-insights-theme svg polyline[stroke="#8b5cf6"],
+html.shadow-author-theme .author-insights-theme svg circle[stroke="#8b5cf6"] {
   stroke: var(--author-insights-primary) !important;
 }
 
-.author-insights-theme [class*="border-t-[#8b5cf6]"] {
+html.shadow-author-theme .author-insights-theme [class*="border-t-[#8b5cf6]"] {
   border-top-color: var(--author-insights-primary) !important;
 }
 
-.author-insights-theme [class*="border-[#eee9ff]"] {
+html.shadow-author-theme .author-insights-theme [class*="border-[#eee9ff]"] {
   border-color: var(--author-insights-soft) !important;
   border-top-color: var(--author-insights-primary) !important;
-}
-
-.author-insights-theme [class*="shadow-[0_10px_30px_rgba(87,72,124,0.06)]"],
-.author-insights-theme [class*="shadow-[0_8px_24px_rgba(87,72,124,0.05)]"] {
-  --tw-shadow-color: color-mix(in srgb, var(--author-insights-primary) 12%, transparent);
 }
