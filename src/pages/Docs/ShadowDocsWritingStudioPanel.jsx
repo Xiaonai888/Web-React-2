@@ -11,6 +11,7 @@ import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
+import { buildShadowDocsInsertResource } from './ShadowDocsInsertResourcesEngine'
 import { saveShadowDocsAttachment, deleteShadowDocsAttachment, downloadShadowDocsAttachment } from './ShadowDocsAttachmentEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsHorizontalRule, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
@@ -799,6 +800,16 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'equation') {
       const expression = typeof value === 'string' ? value : globalThis.prompt?.('Enter an equation:', 'x² + y² = z²')
       if (expression) finishRibbonChange(Boolean(insertShadowDocsEquation(editor, snapshot, expression)))
+      return
+    }
+
+    if (command === 'insertResource') {
+      const resource = buildShadowDocsInsertResource(typeof value === 'string' ? value : value?.id)
+      if (!resource) return setRibbonMessage('Resource not found.')
+      if (!snapshot) return setRibbonMessage('Place the cursor in the document first.')
+      if (editor.innerHTML.length + resource.html.length > 490000) return setRibbonMessage('This chapter is too large for this resource.')
+      if (!insertHTMLAtSelection(resource.html)) return setRibbonMessage('Place the cursor in the document first.')
+      setRibbonMessage(`${resource.title} inserted.`)
       return
     }
 
