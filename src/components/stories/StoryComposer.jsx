@@ -6,6 +6,7 @@ import { clearHomeCacheSection } from '../../utils/homeDataCache'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import StoryTextEditor, { normalizeStoryTextSticker } from './StoryTextEditor'
 import StoryTextSticker from './StoryTextSticker'
+import StoryMentionPicker from './StoryMentionPicker'
 
 registerTranslationNamespace('storyComposer', {
   en: {
@@ -996,15 +997,13 @@ export default function StoryComposer({ mode }) {
 ) : null}
 
       {sheet === 'mention' ? (
-        <EditorSheet
-          title={t('storyComposer.mention')}
-          value={mentionUsername ? `@${mentionUsername}` : ''}
-          placeholder="@username"
-          maxLength={81}
-          onSave={saveMention}
-          onClose={() => setSheet('')}
-        />
-      ) : null}
+  <StoryMentionPicker
+    mode={mode}
+    value={mentionUsername}
+    onSave={saveMention}
+    onClose={() => setSheet('')}
+  />
+) : null}
 
       {sheet === 'link' ? (
         <EditorSheet
