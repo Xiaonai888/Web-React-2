@@ -10,6 +10,7 @@ import { SHADOW_DOCS_STYLES } from './ShadowDocsStyleCatalog'
 import ShadowDocsMobileFontSizePage from './ShadowDocsMobileFontSizePage'
 import ShadowDocsMobileFontStylePage from './ShadowDocsMobileFontStylePage'
 import ShadowDocsMobileInsertPanel from './ShadowDocsMobileInsertPanel'
+import ShadowDocsMobileReviewWorkspace from './ShadowDocsMobileReviewWorkspace'
 import ShadowDocsScrollableTabs from './ShadowDocsScrollableTabs'
 import ShadowDocsDrawToolsPanel from './ShadowDocsDrawToolsPanel'
 import './ShadowDocsMobileHomeSheet.css'
@@ -214,7 +215,7 @@ export default function ShadowDocsMobileHomeSheet({
     <button type="button" className="sd-home-sheet-dismiss" aria-label="Close tools" onClick={onClose} />
     <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
       <header className="sd-home-sheet-header">
-{['home', 'insert', 'draw'].includes(page) ? (
+{['home', 'insert', 'draw', 'review'].includes(page) ? (
   <ShadowDocsScrollableTabs
     activeTab={page}
     disabled={disabled}
@@ -222,11 +223,11 @@ export default function ShadowDocsMobileHomeSheet({
       { id: 'home', label: 'Home' },
       { id: 'insert', label: 'Insert' },
       { id: 'view', label: 'View', disabled: !onTabChange },
-      { id: 'review', label: 'Review', disabled: !onTabChange },
+      { id: 'review', label: 'Review' },
       { id: 'draw', label: 'Draw' },
     ]}
     onChange={id => {
-      if (['home', 'insert', 'draw'].includes(id)) setPage(id)
+      if (['home', 'insert', 'draw', 'review'].includes(id)) setPage(id)
       else onTabChange?.(id)
     }}
   />
@@ -238,7 +239,7 @@ export default function ShadowDocsMobileHomeSheet({
         </div>}
         <div className="sd-home-head-actions">
           <IconButton label="Show keyboard" disabled={typeof onKeyboard !== 'function'} onClick={onKeyboard}><Keyboard size={22} /></IconButton>
-          {['home', 'insert', 'draw'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
+          {['home', 'insert', 'draw', 'review'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
         </div>
       </header>
 
@@ -257,6 +258,12 @@ export default function ShadowDocsMobileHomeSheet({
     disabled={!canBasic}
     onCommand={command}
     onClose={onClose}
+  />
+) : page === 'review' ? (
+  <ShadowDocsMobileReviewWorkspace
+    state={state}
+    onCommand={command}
+    disabled={!canBasic}
   />
 ) : page === 'home' ? <>
   <Section label="Font Format">
