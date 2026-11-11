@@ -1,14 +1,14 @@
-import { BarChart3, CircleDollarSign, Clapperboard, LayoutDashboard, UsersRound } from 'lucide-react'
+import { BarChart3, Clapperboard, LayoutDashboard, UserRound, UsersRound } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('shadowStudioFooter', {
-  en: { dashboard: 'Dashboard', content: 'Content', analytics: 'Analytics', community: 'Community', earn: 'Earn' },
-  km: { dashboard: 'Dashboard', content: 'Content', analytics: 'Analytics', community: 'Community', earn: 'Earn' },
-  zh: { dashboard: '数据总览', content: '内容', analytics: '数据分析', community: '社区', earn: '收益' },
-  ja: { dashboard: 'ダッシュボード', content: 'コンテンツ', analytics: 'アナリティクス', community: 'コミュニティ', earn: '収益' },
-  ko: { dashboard: '대시보드', content: '콘텐츠', analytics: '분석', community: '커뮤니티', earn: '수익' },
+  en: { dashboard: 'Dashboard', content: 'Content', analytics: 'Analytics', community: 'Community', me: 'Me' },
+  km: { dashboard: 'Dashboard', content: 'Content', analytics: 'Analytics', community: 'Community', me: 'Me' },
+  zh: { dashboard: '数据总览', content: '内容', analytics: '数据分析', community: '社区', me: '我的' },
+  ja: { dashboard: 'ダッシュボード', content: 'コンテンツ', analytics: 'アナリティクス', community: 'コミュニティ', me: 'マイページ' },
+  ko: { dashboard: '대시보드', content: '콘텐츠', analytics: '분석', community: '커뮤니티', me: '내 정보' },
 })
 
 const TABS = [
@@ -16,7 +16,7 @@ const TABS = [
   { key: 'content', Icon: Clapperboard },
   { key: 'analytics', Icon: BarChart3 },
   { key: 'community', Icon: UsersRound },
-  { key: 'earn', Icon: CircleDollarSign },
+  { key: 'me', Icon: UserRound },
 ]
 
 export default function ShadowStudioFooter({
@@ -38,7 +38,7 @@ export default function ShadowStudioFooter({
       <div className="mx-auto grid min-h-[64px] max-w-5xl grid-cols-5 items-stretch">
         {TABS.map(({ key, Icon }) => {
           const selected = activeTab === key
-          const enabled = enabledTabs.includes(key) || (key === 'analytics' && analyticsEnabled)
+          const enabled = key === 'me' || enabledTabs.includes(key) || (key === 'analytics' && analyticsEnabled)
 
           return (
             <button
@@ -47,12 +47,14 @@ export default function ShadowStudioFooter({
               disabled={!enabled}
               aria-current={selected ? 'page' : undefined}
               aria-label={t(`shadowStudioFooter.${key}`)}
-              onClick={() => key === 'analytics'
-                ? navigate('/author/reel/studio/analytics')
-                : onTabChange?.(key)}
+              onClick={() => {
+                if (key === 'analytics') navigate('/author/reel/studio/analytics')
+                else if (key === 'me') navigate('/author/reel/studio/me')
+                else onTabChange?.(key)
+              }}
               className={`flex min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 transition-colors active:opacity-70 disabled:cursor-not-allowed disabled:opacity-50 ${
                 selected
-                  ? 'text-[var(--shadow-text-primary)]'
+                  ? 'text-[var(--shadow-accent)]'
                   : 'text-[var(--shadow-text-secondary)]'
               }`}
             >
