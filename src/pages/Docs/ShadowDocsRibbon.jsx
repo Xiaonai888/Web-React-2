@@ -53,6 +53,11 @@ export default function ShadowDocsRibbon({
   const [localTab, setLocalTab] = useState('home')
   const [homeOpen, setHomeOpen] = useState(false)
   const [mobileHomePage, setMobileHomePage] = useState('home')
+  const [mobileViewOpen, setMobileViewOpen] = useState(false)
+  const [readingEnabled, setReadingEnabled] = useState(false)
+  const [readingProgress, setReadingProgress] = useState(0)
+  const [viewSession, setViewSession] = useState(0)
+  const readingControllerRef = useRef(null)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [keyboardInset, setKeyboardInset] = useState(0)
   const viewportBaselineRef = useRef(0)
@@ -119,16 +124,78 @@ export default function ShadowDocsRibbon({
     }
   }, [])
 
+  useEffect(() => {
+    if (!readingEnabled || !bookId || !chapterId) return undefined
+
+    const editor = document.querySelector('.sd-writing-area[data-chapter-id]')
+    if (!editor || editor.dataset.chapterId !== String(chapterId)) return undefined
+
+    const controller = createShadowDocsReadingController({
+      element: editor,
+      preferences: readShadowDocsReadingPreferences(bookId),
+      onProgress: percent => setReadingProgress(editor.textContent?.trim() ? percent : 0),
+      onUnlock: () => setViewSession(session => session + 1),
+    })
+    readingControllerRef.current = controller
+
+    return () => {
+      controller?.destroy()
+      if (readingControllerRef.current === controller) readingControllerRef.current = null
+    }
+  }, [readingEnabled, bookId, chapterId])
+
+  function leaveReadingView() {
+    setMobileViewOpen(false)
+    setReadingEnabled(false)
+    setReadingProgress(0)
+    setViewSession(session => session + 1)
+  }
+
+  function changeMobileViewTab(id) {
+    if (disabled) return
+
+    if (id === 'view') {
+      setHomeOpen(false)
+      setMobileViewOpen(true)
+      setReadingEnabled(true)
+      if (!activeTab) setLocalTab('view')
+      onChangeTab?.('view')
+      return
+    }
+
+    leaveReadingView()
+    if (id === 'home' || id === 'insert') {
+      setMobileHomePage(id)
+      setHomeOpen(true)
+      if (!activeTab) setLocalTab(id)
+      onChangeTab?.(id)
+      return
+    }
+
+    setHomeOpen(false)
+    if (RENDERERS[id]) {
+      if (!activeTab) setLocalTab(id)
+      onChangeTab?.(id)
+    }
+  }
+
   function selectTab(id) {
-  if (disabled || !RENDERERS[id]) return
-  if (['tools', 'insert'].includes(id) && globalThis.matchMedia?.('(max-width:700px)').matches) {
-  setMobileHomePage(id === 'insert' ? 'insert' : 'home')
-  setHomeOpen(true)
-  return
-}
-  if (!activeTab) setLocalTab(id)
-  onChangeTab?.(id)
-}
+    if (disabled || !RENDERERS[id]) return
+    if (globalThis.matchMedia?.('(max-width:700px)').matches) {
+      if (id === 'view') {
+        changeMobileViewTab('view')
+        return
+      }
+      if (['home', 'insert', 'tools'].includes(id)) {
+        changeMobileViewTab(id === 'insert' ? 'insert' : 'home')
+        return
+      }
+      if (readingEnabled) leaveReadingView()
+    }
+    if (!activeTab) setLocalTab(id)
+    onChangeTab?.(id)
+  }
+
   function mobileAction(id) {
     if (disabled) return
     if (id === 'fit') {
@@ -349,17 +416,32 @@ export default function ShadowDocsRibbon({
       </div>
         </nav>
     <ShadowDocsMobileHomeSheet
-  open={homeOpen}
-  initialPage={mobileHomePage}
+      open={homeOpen}
+      initialPage={mobileHomePage}
       state={commandState}
       disabled={disabled}
       onClose={() => setHomeOpen(false)}
+      onTabChange={changeMobileViewTab}
       onCommand={onCommand}
       onAdvancedCommand={onAdvancedCommand}
       onKeyboard={() => {
         setHomeOpen(false)
         document.querySelector('.sd-writing-area[contenteditable="true"]')?.focus({ preventScroll: true })
       }}
+    />
+    <ShadowDocsMobileViewSheet
+      key={`${bookId}:${chapterId}:${viewSession}`}
+      open={mobileViewOpen}
+      bookId={bookId}
+      chapterId={chapterId}
+      progress={readingProgress}
+      onClose={() => setMobileViewOpen(false)}
+      onTabChange={changeMobileViewTab}
+      onFindReplace={() => onCommand?.('findReplace', true)}
+      onOutline={() => onCommand?.('navigationPane', true)}
+      onPreferencesChange={next => readingControllerRef.current?.update(next)}
+      onSeek={percent => readingControllerRef.current?.seek(percent)}
+      onLockChange={locked => readingControllerRef.current?.setLocked(locked)}
     />
   </>
 }
