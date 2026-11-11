@@ -27,6 +27,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+function isLocalPreviewVideo(file) {
+  if (!file || !Number.isFinite(file.size) || file.size <= 0) return false
+  const mime = String(file.type || '').toLowerCase()
+  if (mime) return mime.startsWith('video/')
+  return /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(file.name || ''))
+}
+
 function getYouTubeId(input) {
   try {
     const url = new URL(String(input || ''))
@@ -395,7 +402,7 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
 
   const chooseVideo = useCallback(() => pickerRef.current?.click(), [])
   useEffect(() => {
-    if (!selectedFile || !localPreviewRef.current) return undefined
+    if (!isLocalPreviewVideo(selectedFile) || !localPreviewRef.current) return undefined
     const videoElement = localPreviewRef.current
     const objectUrl = URL.createObjectURL(selectedFile)
     videoElement.src = objectUrl
@@ -550,7 +557,7 @@ const response = await fetch(
           const file = event.target.files?.[0]
           event.target.value = ''
           if (!file) return
-          if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(file.name)) {
+          if (!isLocalPreviewVideo(file)) {
             setPickerError('Please choose a video file.')
             return
           }
