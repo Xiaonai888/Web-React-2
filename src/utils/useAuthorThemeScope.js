@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { applyAuthorTheme, getAuthorTheme } from './authorTheme'
+import { applyAuthorTheme, DEFAULT_AUTHOR_THEME, getAuthorTheme } from './authorTheme'
 import './authorThemeGlobal.css'
 
 const MANAGED_AUTHOR_PAGE_SECTIONS = new Set([
@@ -20,9 +20,10 @@ export function useAuthorThemeScope(pathname) {
   useEffect(() => {
     const root = document.documentElement
     const enabled = isAuthorManagementPath(pathname)
-    root.classList.toggle('shadow-author-theme', enabled)
-    if (!enabled) return () => root.classList.remove('shadow-author-theme')
-    const syncTheme = () => applyAuthorTheme(getAuthorTheme())
+    const syncTheme = () => {
+      const color = applyAuthorTheme(getAuthorTheme())
+      root.classList.toggle('shadow-author-theme', enabled && color !== DEFAULT_AUTHOR_THEME)
+    }
     syncTheme()
     window.addEventListener('storage', syncTheme)
     window.addEventListener('shadow:author-theme-changed', syncTheme)
