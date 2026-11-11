@@ -10,12 +10,20 @@ function createSessionId() {
 
 export default function useStudioPlaybackTracking(videoId) {
   const state = useRef({ videoId, sessionId: null, playing: false, since: null, seconds: 0, chain: Promise.resolve(), timer: null })
+  const blockedSession = useRef(null)
 
   const enqueue = useCallback((kind, value, keepalive = false) => {
     const session = state.current
     if (!session.sessionId || !hasStudioViewerSession()) return
     const event = { videoId: session.videoId, sessionId: session.sessionId, kind, playedSeconds: value }
-    session.chain = session.chain.catch(() => {}).then(() => postStudioPlaybackEvent(event, { keepalive })).catch(() => {})
+    session.chain = session.chain.catch(() => {}).then(async () => {
+      if (blockedSession.current === event.sessionId) return
+      try {
+        await postStudioPlaybackEvent(event, { keepalive })
+      } catch {
+        if (kind === 'start') blockedSession.current = event.sessionId
+      }
+    })
   }, [])
 
   const accrue = useCallback(() => {
@@ -47,6 +55,10 @@ export default function useStudioPlaybackTracking(videoId) {
   const onPlay = useCallback(() => {
     const session = state.current
     if (session.playing || !hasStudioViewerSession() || document.visibilityState === 'hidden') return
+    if (session.sessionId && blockedSession.current === session.sessionId) {
+      session.sessionId = null
+      session.seconds = 0
+    }
     if (!session.sessionId) {
       session.sessionId = createSessionId()
       if (!session.sessionId) return
