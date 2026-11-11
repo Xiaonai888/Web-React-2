@@ -194,28 +194,17 @@ export default function ShadowDocsMobileHomeSheet({
     )
   }
 
-    if (page === 'fontStyle') {
-    return (
-      <ShadowDocsMobileFontStylePage
-        open
-        state={state}
-        disabled={!canBasic}
-        onCommand={onCommand}
-        onStyleOption={command}
-        onBack={() => setPage('home')}
-        onKeyboard={onKeyboard}
-      />
-    )
-  }
+
 
   const colorPanel = page === 'color' || page === 'highlight'
   const isHighlight = page === 'highlight'
 
   return <div className="sd-home-sheet-layer" role="presentation">
     <button type="button" className="sd-home-sheet-dismiss" aria-label="Close tools" onClick={onClose} />
-    <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
-      <header className="sd-home-sheet-header">
-{['home', 'insert', 'draw', 'review'].includes(page) ? (
+        <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'fontStyle' ? 'Font Style' : page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
+      <div className={`sd-home-page-slide ${page === 'fontStyle' ? 'is-away' : ''}`}>
+        <header className="sd-home-sheet-header">
+{['home', 'fontStyle', 'insert', 'draw', 'review'].includes(page) ? (
   <ShadowDocsScrollableTabs
     activeTab={page}
     disabled={disabled}
@@ -239,7 +228,7 @@ export default function ShadowDocsMobileHomeSheet({
         </div>}
         <div className="sd-home-head-actions">
           <IconButton label="Show keyboard" disabled={typeof onKeyboard !== 'function'} onClick={onKeyboard}><Keyboard size={22} /></IconButton>
-          {['home', 'insert', 'draw', 'review'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
+          {['home', 'fontStyle', 'insert', 'draw', 'review'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
         </div>
       </header>
 
@@ -265,7 +254,7 @@ export default function ShadowDocsMobileHomeSheet({
     onCommand={command}
     disabled={!canBasic}
   />
-) : page === 'home' ? <>
+) : (page === 'home' || page === 'fontStyle') ? <>
   <Section label="Font Format">
             <div className="sd-home-toolbar-row sd-home-font-actions">
               <IconButton label="Bold" active={state.bold} disabled={!canBasic} onClick={() => command('bold', !state.bold)}><strong>B</strong></IconButton>
@@ -477,7 +466,22 @@ export default function ShadowDocsMobileHomeSheet({
   Remove Gradient
 </button>
           </div> : null}
-        </> : null}
+               </> : null}
+      </div>
+      </div>
+      <div
+        className={`sd-font-style-slide ${page === 'fontStyle' ? 'is-open' : ''}`}
+        aria-hidden={page !== 'fontStyle'}
+      >
+        <ShadowDocsMobileFontStylePage
+          open
+          state={state}
+          disabled={!canBasic}
+          onCommand={onCommand}
+          onStyleOption={command}
+          onBack={() => setPage('home')}
+          onKeyboard={onKeyboard}
+        />
       </div>
     </section>
   </div>
