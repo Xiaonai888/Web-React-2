@@ -111,6 +111,9 @@ export function buildShadowDocsPrintHTML(book) {
 <style>
 ${fontCSS}
 ${sectionsCSS}
+.chapter-body{position:relative}
+.chapter-body.sd-print-has-ink{min-height:110mm}
+.sd-print-ink{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}
 ${namedPageCSS}
 @page{size:${settings.size} ${settings.orientation};margin:${settings.margin}mm;${pageFurnitureCss}}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
