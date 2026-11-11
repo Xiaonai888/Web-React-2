@@ -12,6 +12,7 @@ import Footer from './components/Footer'
 import WorkMaintenanceGuard from './components/common/WorkMaintenanceGuard'
 import CountryGameAccessGuard from './components/common/CountryGameAccessGuard'
 import AuthorPageFooterShell from './components/AuthorPageFooterShell'
+import ShadowStudioShell from './components/author/ShadowStudioShell'
 import ForYou from './pages/ForYou'
 import MangaPage from './pages/MangaPage'
 import ChatStoryHomePage from './pages/ChatStoryHomePage'
@@ -317,6 +318,7 @@ const AuthorStudioDashboardPage = lazy(() => import('./pages/Author/AuthorStudio
 const AuthorStudioAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioAnalyticsPage'))
 const AuthorStudioVideoAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioVideoAnalyticsPage'))
 const AuthorStudioRankingPage = lazy(() => import('./pages/Author/AuthorStudioRankingPage'))
+const AuthorStudioNotificationsPage = lazy(() => import('./pages/Author/AuthorStudioNotificationsPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const MeCommentsPage = lazy(() => import('./pages/Me/MeCommentsPage'))
 const EpisodeEchoesPage = lazy(() => import('./pages/EpisodeEchoesPage'))
@@ -1617,10 +1619,11 @@ const shouldShowOpeningAds =
   }
 />
 
-          <Route
-  path="/author/reel/studio"
-  element={<LazyPage><AuthorShadowStudioPage /></LazyPage>}
-/>
+       <Route element={<ShadowStudioShell />}>
+  <Route
+    path="/author/reel/studio"
+    element={<LazyPage><AuthorShadowStudioPage /></LazyPage>}
+  />
 
           <Route
   path="/author/reel/studio/dashboard"
@@ -1652,6 +1655,12 @@ const shouldShowOpeningAds =
     </LazyPage>
   }
 />
+
+<Route
+  path="/author/reel/studio/notifications"
+  element={<LazyPage><AuthorStudioNotificationsPage /></LazyPage>}
+/>
+</Route>
 
 <Route
   path="/fast/studio/create"
