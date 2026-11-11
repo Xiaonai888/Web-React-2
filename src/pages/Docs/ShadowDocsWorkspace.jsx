@@ -535,7 +535,7 @@ export default function ShadowDocsWorkspace() {
             onAddChapter={addChapter}
             onRenameChapter={(id, title) => patchChapter(id, { title: title.slice(0, 160) })}
             onChangeHTML={(id, html) => patchChapter(id, { html: sanitizeShadowDocsHTML(html) })}
-‌‌            onChangeInk={(id, ink) => patchChapter(id, { ink })}
+            onChangeInk={(id, ink) => patchChapter(id, { ink })}
             onMoveChapter={moveChapter}
             onDeleteChapter={deleteChapter}
             onPreview={() => setSection('preview')}
