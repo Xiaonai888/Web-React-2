@@ -40,7 +40,7 @@ export function readShadowDocsFormatState(editor) {
 
     if (line.includes('underline') && !underline) {
       underline = true
-      underlineStyle = ['double', 'wavy'].includes(style.textDecorationStyle)
+      underlineStyle = ['dashed', 'wavy'].includes(style.textDecorationStyle)
         ? style.textDecorationStyle
         : 'single'
       underlineColor = style.textDecorationColor || ''
