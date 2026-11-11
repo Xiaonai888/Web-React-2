@@ -1,8 +1,8 @@
-export const DEFAULT_AUTHOR_THEME = '#FFC400'
+export const DEFAULT_AUTHOR_THEME = '#7952F5'
 
 export const AUTHOR_THEME_PRESETS = [
-  { id: 'yellow', color: '#FFC400' },
   { id: 'purple', color: '#7952F5' },
+  { id: 'yellow', color: '#FFC400' },
   { id: 'blue', color: '#2684FF' },
   { id: 'pink', color: '#F45DA8' },
   { id: 'green', color: '#20B879' },
@@ -12,7 +12,7 @@ export const AUTHOR_THEME_PRESETS = [
 ]
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i
-const STORAGE_PREFIX = 'shadow_author_theme_v1'
+const STORAGE_PREFIX = 'shadow_author_theme_v2'
 
 function getAuthorThemeStorageKey() {
   try {
@@ -49,9 +49,10 @@ export function applyAuthorTheme(value) {
   const root = document.documentElement
   root.style.setProperty('--author-theme-primary', color)
   root.style.setProperty('--author-theme-foreground', contrast)
-  root.style.setProperty('--author-theme-soft', `${color}22`)
-  root.style.setProperty('--author-theme-border', `${color}66`)
-  root.style.setProperty('--author-theme-gradient', `linear-gradient(135deg, ${color}, ${color}CC)`)
+  root.style.setProperty('--author-theme-soft', `${color}20`)
+  root.style.setProperty('--author-theme-border', `${color}55`)
+  root.style.setProperty('--author-theme-gradient', `linear-gradient(to right, ${color}, color-mix(in srgb, ${color} 58%, white))`)
+  root.style.setProperty('--author-theme-gradient-br', `linear-gradient(to bottom right, ${color}, color-mix(in srgb, ${color} 58%, white))`)
   return color
 }
 
