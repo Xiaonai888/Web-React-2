@@ -120,7 +120,7 @@ export default function ShadowDocsMobileHomeSheet({
 
   useEffect(() => {
   if (open) {
-    setPage(['insert', 'draw'].includes(initialPage) ? initialPage : 'home')
+    setPage(['insert', 'draw', 'review'].includes(initialPage) ? initialPage : 'home')
     return
   }
   setPage('home')
