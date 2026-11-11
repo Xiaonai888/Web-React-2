@@ -8,6 +8,7 @@ import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
 import ShadowDocsMobileSignaturePanel from './ShadowDocsMobileSignaturePanel'
 import ShadowDocsMobileResourcesPanel from './ShadowDocsMobileResourcesPanel'
+import ShadowDocsMobileSectionBreakPanel from './ShadowDocsMobileSectionBreakPanel'
 import { getShadowDocsBookmarks } from './ShadowDocsLinkEngine'
 import { downloadShadowDocsAttachment, listShadowDocsAttachments } from './ShadowDocsAttachmentEngine'
 
@@ -253,16 +254,12 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
     </>
 
     if (view === 'breaks') return <>
-      <InsertTitle title="Insert Break" onBack={() => setView('menu')} />
+      <ShadowDocsMobileSectionBreakPanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={options => execute('sectionBreak', options)} />
       <div className="sd-insert-card sd-insert-breaks">
-        <button type="button" disabled={!canInsert} onPointerDown={event => event.preventDefault()} onClick={() => execute('pageBreak')}>
-          <span><strong>Page Break</strong><small>Continue on a new page</small></span><FilePlus2 size={20} />
-        </button>
         <button type="button" disabled={!canInsert} onPointerDown={event => event.preventDefault()} onClick={() => execute('lineBreak')}>
           <span><strong>Line Break</strong><small>Start a new line without a new paragraph</small></span><Scissors size={20} />
         </button>
       </div>
-      <p className="sd-insert-help">Blank Page inserts an empty page; Page Break continues text on the next page. Section breaks and mixed page orientations are not supported in this document format.</p>
     </>
 
     if (view === 'attachment') return <>
