@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { AlignLeft, CirclePlus, ImagePlus, Keyboard, Maximize2, Settings2, Type } from 'lucide-react'
+import { AlignLeft, CirclePlus, ImagePlus, Keyboard, Maximize2, PenLine, Settings2, Type } from 'lucide-react'
 import { SHADOW_DOCS_RIBBON_TABS } from './ShadowDocsRibbonCatalog'
 import ShadowDocsRibbonFileTab from './ShadowDocsRibbonFileTab'
 import ShadowDocsRibbonHomeTab from './ShadowDocsRibbonHomeTab'
@@ -39,6 +39,7 @@ const MOBILE_ITEMS = [
   { id: 'paragraph', label: 'Paragraph', icon: AlignLeft },
   { id: 'image', label: 'Add Image', icon: ImagePlus },
   { id: 'insert', label: 'Insert', icon: CirclePlus },
+  { id: 'draw', label: 'Draw', icon: PenLine },
 ]
 
 export default function ShadowDocsRibbon({
@@ -186,9 +187,11 @@ export default function ShadowDocsRibbon({
     setViewSession(session => session + 1)
   }
 
-  function changeMobileViewTab(id) {
+    function changeMobileViewTab(id) {
     if (disabled) return
-
+    if (id !== 'draw' && commandState.drawEnabled) {
+      onCommand?.('drawEnabled', false)
+    }
     if (id === 'view') {
       setHomeOpen(false)
       setMobileViewOpen(true)
@@ -199,7 +202,7 @@ export default function ShadowDocsRibbon({
     }
 
     leaveReadingView()
-    if (['home', 'insert', 'review'].includes(id)) {
+    if (['home', 'insert', 'review', 'draw'].includes(id)) {
       setMobileHomePage(id)
       setHomeOpen(true)
       if (!activeTab) setLocalTab(id)
@@ -221,11 +224,14 @@ export default function ShadowDocsRibbon({
         changeMobileViewTab('view')
         return
       }
-      if (['home', 'insert', 'tools'].includes(id)) {
-        changeMobileViewTab(id === 'insert' ? 'insert' : 'home')
+           if (['home', 'insert', 'tools', 'draw'].includes(id)) {
+        changeMobileViewTab(id === 'tools' ? 'home' : id)
         return
       }
       if (readingEnabled) leaveReadingView()
+    }
+    if (id !== 'draw' && commandState.drawEnabled) {
+      onCommand?.('drawEnabled', false)
     }
     if (!activeTab) setLocalTab(id)
     onChangeTab?.(id)
@@ -249,7 +255,7 @@ export default function ShadowDocsRibbon({
       onCommand?.('pictures', true)
       return
     }
-    if (id === 'insert') selectTab('insert')
+    if (id === 'insert' || id === 'draw') selectTab(id)
   }
 
   function toggleKeyboard() {
@@ -481,7 +487,8 @@ export default function ShadowDocsRibbon({
         return result
         }}
       onAdvancedCommand={onAdvancedCommand}
-      onKeyboard={() => {
+            onKeyboard={() => {
+        if (commandState.drawEnabled) onCommand?.('drawEnabled', false)
         const editor = document.querySelector(
           '.sd-writing-area[contenteditable="true"]'
         )
