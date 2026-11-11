@@ -53,8 +53,9 @@ function sanitizeStyle(node) {
   const decoration = INLINE_TAGS.has(node.tagName) ? String(style.textDecoration || style.textDecorationLine || '').toLowerCase() : ''
   const transform = INLINE_TAGS.has(node.tagName) && ['uppercase', 'none'].includes(style.textTransform) ? style.textTransform : ''
   const caps = INLINE_TAGS.has(node.tagName) && ['small-caps', 'normal'].includes(style.fontVariantCaps) ? style.fontVariantCaps : ''
-  const underlineStyle = INLINE_TAGS.has(node.tagName) && ['solid', 'double', 'wavy'].includes(style.textDecorationStyle) ? style.textDecorationStyle : ''
+  const underlineStyle = INLINE_TAGS.has(node.tagName) && ['solid', 'double', 'dashed', 'wavy'].includes(style.textDecorationStyle) ? style.textDecorationStyle : ''
   const underlineColor = INLINE_TAGS.has(node.tagName) ? safeColor(style.textDecorationColor) : ''
+  const underlineThickness = INLINE_TAGS.has(node.tagName) && style.textDecorationThickness === '1px' ? '1px' : ''
   const vertical = INLINE_TAGS.has(node.tagName) && ['baseline', 'sub', 'super'].includes(String(style.verticalAlign || '').toLowerCase()) ? String(style.verticalAlign).toLowerCase() : ''
   const align = BLOCK_TAGS.has(node.tagName) && ALIGNMENTS.has(style.textAlign) ? style.textAlign : ''
   const lineHeight = BLOCK_TAGS.has(node.tagName) ? safeLineHeight(style.lineHeight) : ''
@@ -101,6 +102,9 @@ function sanitizeStyle(node) {
   }
   if (decoration.includes('underline') && underlineColor) {
     rules.push(`text-decoration-color:${underlineColor}`)
+  }
+    if (decoration.includes('underline') && underlineThickness) {
+    rules.push(`text-decoration-thickness:${underlineThickness}`)
   }
   if (vertical) rules.push(`vertical-align:${vertical}`)
   if (align) rules.push(`text-align:${align}`)
