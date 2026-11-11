@@ -1,24 +1,91 @@
-function Button({ id, label, active, disabled, onCommand, value = true }) {
-  return <button type="button" className={`sd-ribbon-button ${active ? 'is-active' : ''}`} aria-pressed={active || undefined} disabled={disabled} onClick={() => onCommand?.(id, value)}>{label}</button>
+function Button({ id, label, active = false, disabled = false, onCommand, value = true, title }) {
+  return <button
+    type="button"
+    className={`sd-ribbon-button ${active ? 'is-active' : ''}`}
+    aria-pressed={Boolean(active)}
+    aria-label={label}
+    title={title || label}
+    disabled={disabled}
+    onClick={() => onCommand?.(id, value)}
+  >{label}</button>
 }
 
+const DRAW_TOOLS = [
+  { id: 'pen', label: 'Pen' },
+  { id: 'pencil', label: 'Pencil' },
+  { id: 'highlighter', label: 'Highlighter' },
+  { id: 'eraser', label: 'Eraser' },
+]
+
 export default function ShadowDocsRibbonDrawTab({ state = {}, onCommand, disabled = false }) {
+  const enabled = Boolean(state.drawEnabled)
+  const inkCount = Math.max(0, Number(state.inkCount) || 0)
+  const undoCount = Math.max(0, Number(state.inkUndoCount) || 0)
+  const thickness = Math.max(1, Math.min(24, Number(state.inkThickness) || 2))
+  const inkColor = /^#[0-9a-f]{6}$/i.test(state.inkColor || '') ? state.inkColor : '#111111'
+  const canUse = !disabled && typeof onCommand === 'function'
+
   return <div className="sd-ribbon-groups" role="tabpanel" aria-label="Draw">
     <div className="sd-ribbon-group">
       <div className="sd-ribbon-row">
-        <Button id="pen" label="Pen" active={state.drawTool === 'pen'} disabled={disabled} onCommand={onCommand} />
-        <Button id="pencil" label="Pencil" active={state.drawTool === 'pencil'} disabled={disabled} onCommand={onCommand} />
-        <Button id="highlighter" label="Highlighter" active={state.drawTool === 'highlighter'} disabled={disabled} onCommand={onCommand} />
-        <Button id="eraser" label="Eraser" active={state.drawTool === 'eraser'} disabled={disabled} onCommand={onCommand} />
-        <Button id="lasso" label="Lasso Select" active={state.drawTool === 'lasso'} disabled={disabled} onCommand={onCommand} />
-        <label className="sd-ribbon-color-control">Ink Color<input type="color" value={state.inkColor || '#111111'} disabled={disabled} onChange={event => onCommand?.('inkColor', event.target.value)} /></label>
-        <label className="sd-ribbon-number-control">Thickness<input type="number" min="1" max="24" value={state.inkThickness || 2} disabled={disabled} onChange={event => onCommand?.('inkThickness', Number(event.target.value))} /></label>
-        <Button id="drawWithTouch" label="Draw with Touch" active={state.drawWithTouch} disabled={disabled} onCommand={onCommand} value={!state.drawWithTouch} />
-        <Button id="inkToShape" label="Ink to Shape" disabled={disabled} onCommand={onCommand} />
-        <Button id="inkToText" label="Ink to Text" disabled={disabled} onCommand={onCommand} />
-        <Button id="inkToMath" label="Ink to Math" disabled={disabled} onCommand={onCommand} />
+        <Button
+          id="drawEnabled"
+          label={enabled ? 'Stop Drawing' : 'Start Drawing'}
+          active={enabled}
+          disabled={!canUse}
+          onCommand={onCommand}
+          value={!enabled}
+        />
+        {DRAW_TOOLS.map(({ id, label }) => <Button
+          key={id}
+          id={id}
+          label={label}
+          active={enabled && state.drawTool === id}
+          disabled={!canUse}
+          onCommand={onCommand}
+        />)}
+        <label className="sd-ribbon-color-control">
+          Ink Color
+          <input
+            type="color"
+            value={inkColor}
+            disabled={!canUse}
+            onChange={event => onCommand?.('inkColor', event.target.value)}
+          />
+        </label>
+        <label className="sd-ribbon-number-control">
+          Thickness
+          <input
+            type="number"
+            min="1"
+            max="24"
+            value={thickness}
+            disabled={!canUse}
+            onChange={event => onCommand?.('inkThickness', Math.max(1, Math.min(24, Number(event.target.value) || 1)))}
+          />
+        </label>
+        <Button
+          id="drawWithTouch"
+          label="Draw with Touch"
+          active={Boolean(state.drawWithTouch)}
+          disabled={!canUse}
+          onCommand={onCommand}
+          value={!state.drawWithTouch}
+        />
+        <Button
+          id="inkUndo"
+          label="Undo Drawing"
+          disabled={!canUse || undoCount === 0}
+          onCommand={onCommand}
+        />
+        <Button
+          id="inkClear"
+          label="Clear Drawing"
+          disabled={!canUse || inkCount === 0}
+          onCommand={onCommand}
+        />
       </div>
-      <span className="sd-ribbon-group-label">Ink</span>
+      <span className="sd-ribbon-group-label">Ink · {inkCount} stroke{inkCount === 1 ? '' : 's'}</span>
     </div>
   </div>
 }
