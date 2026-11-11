@@ -1,5 +1,6 @@
 import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDocsTemplateCatalog'
 import { isShadowDocsFont } from './ShadowDocsFontCatalog'
+import { normalizeShadowDocsInkStrokes } from './ShadowDocsInkEngine'
 import {
   parseShadowDocsHomeGradient,
   serializeShadowDocsHomeGradient,
@@ -260,7 +261,8 @@ export function normalizeShadowDocsBook(source, { duplicate = false } = {}) {
     let id = duplicate ? ids() : brief(chapter.id || ids(), 120)
     if (chapterIds.has(id)) id = ids()
     chapterIds.add(id)
-    return { id, title: brief(chapter.title || `Chapter ${index + 1}`, 160), html: sanitizeShadowDocsHTML(chapter.html) }
+    return { id, title: brief(chapter.title || `Chapter ${index + 1}`, 160), html: sanitizeShadowDocsHTML(chapter.html), ink: normalizeShadowDocsInkStrokes(chapter.ink) }
+    
   })
   const now = Date.now()
   return {
