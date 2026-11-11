@@ -195,13 +195,16 @@ export function applyShadowDocsInlineFormat(editor, snapshot, format) {
       : 'underline'
 
     if (format.underlineStyle != null) {
-      const styles = {
+        const styles = {
         single: 'solid',
-        double: 'double',
+        dashed: 'dashed',
         wavy: 'wavy',
       }
 
       style.textDecorationStyle = styles[format.underlineStyle] || 'solid'
+      style.textDecorationThickness = format.underlineStyle === 'wavy'
+        ? '1px'
+        : 'auto'
     }
 
     if (
