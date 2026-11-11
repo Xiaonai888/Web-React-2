@@ -53,6 +53,11 @@ export function applyAuthorTheme(value) {
   root.style.setProperty('--author-theme-border', `${color}55`)
   root.style.setProperty('--author-theme-gradient', `linear-gradient(to right, ${color}, color-mix(in srgb, ${color} 58%, white))`)
   root.style.setProperty('--author-theme-gradient-br', `linear-gradient(to bottom right, ${color}, color-mix(in srgb, ${color} 58%, white))`)
+  const original = color === DEFAULT_AUTHOR_THEME
+  root.style.setProperty('--author-theme-footer-active', original ? '#6D4AFF' : 'var(--author-ui-ink, var(--author-theme-primary))')
+  root.style.setProperty('--author-theme-footer-novel', original ? '#7C3AED' : 'var(--author-ui-ink, var(--author-theme-primary))')
+  root.style.setProperty('--author-theme-footer-gradient', original ? 'linear-gradient(135deg, #8468FF, #5C3DF2)' : `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 58%, white))`)
+  root.style.setProperty('--author-theme-footer-foreground', original ? '#FFFFFF' : contrast)
   return color
 }
 
