@@ -11,7 +11,11 @@ import {
 
 registerTranslationNamespace('authorThemeSettings', {
   en: {
+    settings: 'Settings',
+    notification: 'Notifications',
+    notificationHelp: 'Manage author notifications',
     title: 'Theme',
+    original: 'Original Purple',
     description: 'Choose your favorite color for the Author interface.',
     preview: 'Live preview',
     example: 'Continue Writing',
@@ -21,7 +25,11 @@ registerTranslationNamespace('authorThemeSettings', {
     colors: 'Theme colors',
   },
   km: {
+    settings: 'ការកំណត់',
+    notification: 'ការជូនដំណឹង',
+    notificationHelp: 'គ្រប់គ្រងការជូនដំណឹងរបស់អ្នកនិពន្ធ',
     title: 'រចនាប័ទ្មពណ៌',
+    original: 'ស្វាយដើម',
     description: 'ជ្រើសរើសពណ៌ដែលអ្នកចូលចិត្តសម្រាប់ផ្ទាំងអ្នកនិពន្ធ។',
     preview: 'បង្ហាញសាកល្បង',
     example: 'បន្តសរសេរ',
@@ -31,7 +39,11 @@ registerTranslationNamespace('authorThemeSettings', {
     colors: 'ពណ៌ Theme',
   },
   zh: {
+    settings: '设置',
+    notification: '通知',
+    notificationHelp: '管理作者通知',
     title: '主题颜色',
+    original: '原始紫色',
     description: '为作者界面选择您喜欢的颜色。',
     preview: '实时预览',
     example: '继续写作',
@@ -41,7 +53,11 @@ registerTranslationNamespace('authorThemeSettings', {
     colors: '主题颜色',
   },
   ja: {
+    settings: '設定',
+    notification: '通知',
+    notificationHelp: '作者の通知を管理する',
     title: 'テーマカラー',
+    original: '元の紫色',
     description: '作者画面のお好きな色を選んでください。',
     preview: 'プレビュー',
     example: '執筆を続ける',
@@ -51,7 +67,11 @@ registerTranslationNamespace('authorThemeSettings', {
     colors: 'テーマカラー',
   },
   ko: {
+    settings: '설정',
+    notification: '알림',
+    notificationHelp: '작가 알림 관리',
     title: '테마 색상',
+    original: '기존 보라색',
     description: '작가 화면에 사용할 색상을 선택하세요.',
     preview: '미리보기',
     example: '계속 쓰기',
@@ -90,12 +110,12 @@ export default function AuthorProfileSettingsPage() {
           <button
             type="button"
             onClick={() => navigate('/author/profile')}
-            aria-label={t('authorPushSettings.back')}
+            aria-label={t('authorThemeSettings.title')}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
           >
             <i className="fa-solid fa-chevron-left text-[16px]" aria-hidden="true" />
           </button>
-          <h1 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPushSettings.settings')}</h1>
+          <h1 className="text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorThemeSettings.title')}</h1>
           <div className="h-10 w-10" />
         </div>
       </header>
@@ -121,7 +141,7 @@ export default function AuthorProfileSettingsPage() {
                 key={item.id}
                 type="button"
                 onClick={() => chooseTheme(item.color)}
-                aria-label={item.id}
+                aria-label={item.id === 'purple' ? t('authorThemeSettings.original') : item.id}
                 aria-pressed={theme === item.color}
                 className="flex min-w-0 flex-col items-center gap-2"
               >
@@ -131,7 +151,7 @@ export default function AuthorProfileSettingsPage() {
                 >
                   {theme === item.color ? <i className="fa-solid fa-check text-[17px]" style={{ color: 'var(--author-theme-foreground)' }} aria-hidden="true" /> : null}
                 </span>
-                <span className="truncate text-[11px] font-medium capitalize text-[var(--shadow-text-primary)]">{item.id}</span>
+                <span className="truncate text-[11px] font-medium capitalize text-[var(--shadow-text-primary)]">{item.id === 'purple' ? t('authorThemeSettings.original') : item.id}</span>
               </button>
             ))}
           </div>
@@ -153,7 +173,7 @@ export default function AuthorProfileSettingsPage() {
               <span className="text-[12px] font-semibold text-[var(--shadow-text-primary)]">{t('authorThemeSettings.example')}</span>
               <span
                 className="flex items-center gap-1 rounded-full px-4 py-2 text-[12px] font-bold"
-                style={{ backgroundColor: 'var(--author-theme-primary)', color: 'var(--author-theme-foreground)' }}
+                style={{ background: 'var(--author-theme-gradient)', color: 'var(--author-theme-foreground)' }}
               >
                 {t('authorThemeSettings.button')}
                 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
@@ -172,8 +192,8 @@ export default function AuthorProfileSettingsPage() {
             <i className="fa-regular fa-bell text-[18px]" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold text-[var(--shadow-text-primary)]">{t('authorPushSettings.notification')}</span>
-            <span className="mt-1 block text-[11px] leading-4 text-[var(--shadow-text-secondary)]">{t('authorPushSettings.notificationHelp')}</span>
+            <span className="block text-[13px] font-semibold text-[var(--shadow-text-primary)]">{t('authorThemeSettings.notification')}</span>
+            <span className="mt-1 block text-[11px] leading-4 text-[var(--shadow-text-secondary)]">{t('authorThemeSettings.notificationHelp')}</span>
           </span>
         </button>
       </main>
