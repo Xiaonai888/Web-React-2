@@ -1897,6 +1897,10 @@ export default function AuthorPublicPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const { pageUsername } = useParams()
+  const studioReturnTo = location.state?.studioCreatePost === true &&
+  /^\/author\/reel\/studio(?:\/|$|[?#])/.test(String(location.state?.studioReturnTo || ''))
+    ? location.state.studioReturnTo
+    : ''
 
   const [author, setAuthor] = useState(null)
   const [activeTab, setActiveTab] = useState(
@@ -4433,10 +4437,12 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
 
     {!loading && author?.page_username ? (
   <AuthorPostsSection
-    author={author}
-    onCountChange={setAuthorPostsCount}
-    onMessage={setMessage}
-  />
+  author={author}
+  onCountChange={setAuthorPostsCount}
+  onMessage={setMessage}
+  openComposerOnMount={Boolean(studioReturnTo && author?.is_owner)}
+  onComposerClose={studioReturnTo ? () => navigate(studioReturnTo, { replace: true }) : undefined}
+/>
 ) : null}
   </div>
 ) : null}
