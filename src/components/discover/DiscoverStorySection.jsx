@@ -22,6 +22,7 @@ import {
   REACTIONS,
   getReactionMeta,
 } from '../social/reactions/reactionConfig'
+import { normalizeStoryTextSticker, getStoryStickerFont, getStoryStickerTextColor } from '../stories/StoryTextEditor'
 
 const API_BASE_URL =
   window.location.hostname ===
@@ -1260,6 +1261,12 @@ function StoryViewer({
   }
 
   if (!story) return null
+  const textStyle = story.text_overlay_style
+  ? normalizeStoryTextSticker({
+      ...story.text_overlay_style,
+      text: story.text_overlay || story.caption || '',
+    })
+  : null
 
   return (
     <>
@@ -1705,13 +1712,39 @@ function StoryViewer({
             </>
           ) : null}
 
-          {story.text_overlay || story.caption ? (
-  <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
-    <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
-      {story.text_overlay || story.caption}
-    </span>
-  </div>
+{story.text_overlay || story.caption ? (
+  textStyle ? (
+    <div className="pointer-events-none absolute inset-0 z-20">
+      <div
+        className="absolute inline-flex max-w-[84%] items-center justify-center"
+        style={{
+          left: `${textStyle.x}%`,
+          top: `${textStyle.y}%`,
+          transform: `translate(-50%, -50%) rotate(${textStyle.rotation}deg) scale(${textStyle.scale})`,
+        }}
+      >
+        <span
+          className="inline-block max-w-full whitespace-pre-wrap break-words rounded-[12px] px-4 py-2.5 text-[29px] font-bold leading-tight shadow-lg"
+          style={{
+            backgroundColor: textStyle.background,
+            color: getStoryStickerTextColor(textStyle.background),
+            textAlign: textStyle.align,
+            fontFamily: getStoryStickerFont(textStyle.font),
+          }}
+        >
+          {textStyle.text}
+        </span>
+      </div>
+    </div>
+  ) : (
+    <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
+      <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
+        {story.text_overlay || story.caption}
+      </span>
+    </div>
+  )
 ) : null}
+
 
 {story.mention_username ? (
   <div
