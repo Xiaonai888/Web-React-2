@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import ShadowStudioHeader from './ShadowStudioHeader'
 import { getStudioVideoNotificationUnreadCount } from '../../services/shadowStudioNotificationsApi'
+import { getMyAuthorPageCachedSnapshot } from '../../services/myAuthorPageClientCache'
 
 const STUDIO_ROOT = '/author/reel/studio'
 
@@ -10,6 +11,10 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
   const location = useLocation()
   const [unread, setUnread] = useState(0)
   const returnTo = `${location.pathname}${location.search}${location.hash}`
+  const token = localStorage.getItem('shadow_reader_token') ||
+  sessionStorage.getItem('shadow_reader_token') || ''
+  const page = getMyAuthorPageCachedSnapshot(token)
+  const profileAvatar = page?.avatar_url || page?.profile_image_url || ''
 
   const refreshUnread = useCallback((signal, force = false) => {
     getStudioVideoNotificationUnreadCount({ signal, force })
@@ -46,7 +51,7 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
 
   return <>
     <ShadowStudioHeader
-      avatarUrl={avatarUrl}
+      avatarUrl={avatarUrl || profileAvatar}
       videoUnreadCount={unread}
       onCreatePost={handleCreatePost}
       onOpenNotifications={handleNotifications}
