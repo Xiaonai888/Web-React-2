@@ -94,6 +94,7 @@ function shadowDocsVersionSnapshot(book) {
           id: item.id,
           title: String(item.title || '').slice(0, 160),
           html: String(item.html || ''),
+          ink: Array.isArray(item.ink) ? item.ink : [],
         }))
       : [],
   }
@@ -1654,8 +1655,20 @@ export default function ShadowDocsWritingStudioPanel({
   async function restoreVersion(version) {
     if (!version?.snapshot || typeof onRestoreBook !== 'function') return
     if (!globalThis.confirm?.('Restore this version? Your current document will be replaced.')) return
-    saveVersion('Before restore')
-    await Promise.resolve(onRestoreBook(version.snapshot))
+        if (!saveVersion('Before restore')) {
+      setRibbonMessage('Unable to save current version. Restore cancelled to protect your work.')
+      return
+    }
+        const chapters = (version.snapshot.chapters || []).map(item => ({
+      ...item,
+      ink: Array.isArray(item.ink)
+        ? item.ink
+        : (book?.chapters || []).find(chapter => chapter.id === item.id)?.ink || [],
+    }))
+    await Promise.resolve(onRestoreBook({
+      ...version.snapshot,
+      chapters,
+    }))
     setVersionHistoryOpen(false)
     setRibbonMessage('Version restored.')
   }
