@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp, ExternalLink, Play, RefreshCw, Volume2, VolumeX, X, Plus, Pencil, Trash2, Eye, EyeOff, Link2, Clapperboard, ArrowLeft, Check } from 'lucide-react'
 import ReelEditManager from './ReelEditManager'
+import useStudioThumbnailTracking from './studio/channel/useStudioThumbnailTracking'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -168,6 +169,32 @@ function ReelViewer({
   )
 }
 
+
+function TrackedPublicReelCard({ video, onOpen }) {
+  const id = getYouTubeId(video.video_url)
+  const { setThumbnailRef, onClick: reportClick } = useStudioThumbnailTracking({
+    videoId: video.id,
+    surface: 'author',
+    enabled: Boolean(id),
+  })
+
+  return (
+    <button ref={setThumbnailRef} type="button" onClick={() => { reportClick(); onOpen() }}
+      aria-label={video.title}
+      className="group relative aspect-[9/16] overflow-hidden rounded-md bg-[#171717] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--shadow-accent)]">
+      <img src={video.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy"
+        onError={event => { const fallback = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }}
+        className="h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      <Play className="absolute right-2 top-2 drop-shadow" size={17} fill="currentColor" aria-hidden="true" />
+      <div className="absolute bottom-2 left-2 flex items-center gap-1 text-left text-xs font-medium text-white drop-shadow sm:text-sm">
+        <Eye size={14} aria-hidden="true" />{formatReelViews(video)}
+      </div>
+    </button>
+  )
+}
+
+
 function PublicReelGrid({ userId }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -261,22 +288,17 @@ function PublicReelGrid({ userId }) {
       <div className="mb-3 text-[16px] font-semibold text-[var(--shadow-text-primary)]">{t('authorReelGrid.tab')}</div>
       {videos.length > 0 ? (
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
-          {videos.map((video, index) => {
-            const id = getYouTubeId(video.video_url)
-            return (
-              <button key={video.id} type="button" onClick={() => navigate(`/fast?reel=${encodeURIComponent(String(video.id))}`, {
-                state: { fromAuthorReel: true, returnTo: `${window.location.pathname}${window.location.search}` },
-              })} aria-label={video.title}
-                className="group relative aspect-[9/16] overflow-hidden rounded-md bg-[#171717] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--shadow-accent)]">
-                <img src={video.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy"
-                  onError={event => { const fallback = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback }}
-                  className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                <Play className="absolute right-2 top-2 drop-shadow" size={17} fill="currentColor" aria-hidden="true" />
-                <div className="absolute bottom-2 left-2 flex items-center gap-1 text-left text-xs font-medium text-white drop-shadow sm:text-sm"><Eye size={14} aria-hidden="true" />{formatReelViews(video)}</div>
-              </button>
-            )
-          })}
+          
+{videos.map(video => (
+  <TrackedPublicReelCard
+    key={video.id}
+    video={video}
+    onOpen={() => navigate(`/fast?reel=${encodeURIComponent(String(video.id))}`, {
+      state: { fromAuthorReel: true, returnTo: `${window.location.pathname}${window.location.search}` },
+    })}
+  />
+))}
+
         </div>
       ) : !loading && !error ? (
         <p className="py-14 text-center text-sm text-[var(--shadow-text-secondary)]">{t('authorReelGrid.empty')}</p>
