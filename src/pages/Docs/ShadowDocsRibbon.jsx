@@ -164,7 +164,7 @@ export default function ShadowDocsRibbon({
     }
 
     leaveReadingView()
-    if (id === 'home' || id === 'insert') {
+    if (['home', 'insert', 'review'].includes(id)) {
       setMobileHomePage(id)
       setHomeOpen(true)
       if (!activeTab) setLocalTab(id)
