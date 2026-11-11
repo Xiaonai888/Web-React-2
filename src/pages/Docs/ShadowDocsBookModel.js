@@ -1,6 +1,7 @@
 import { BOOK_TEMPLATES, getBookTemplate, getPageLayoutPreset } from './ShadowDocsTemplateCatalog'
 import { isShadowDocsFont } from './ShadowDocsFontCatalog'
 import { normalizeShadowDocsInkStrokes } from './ShadowDocsInkEngine'
+import { readShadowDocsSectionBreakMarker, renderShadowDocsSectionBreakMarker } from './ShadowDocsSectionLayoutModel'
 import {
   parseShadowDocsHomeGradient,
   serializeShadowDocsHomeGradient,
@@ -223,7 +224,8 @@ export function sanitizeShadowDocsHTML(source) {
     if (node.tagName === 'HR') {
       if (node.getAttribute('data-shadow-docs-page-break') === '1') return '<hr data-shadow-docs-page-break="1" contenteditable="false">'
       if (node.getAttribute('data-shadow-docs-rule') === '1') return '<hr data-shadow-docs-rule="1">'
-      return ''
+      const sectionBreak = readShadowDocsSectionBreakMarker(node.outerHTML)
+      return sectionBreak ? renderShadowDocsSectionBreakMarker(sectionBreak) : ''
     }
 
     if (node.tagName === 'IMG') {
