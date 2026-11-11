@@ -1499,6 +1499,14 @@ const [deliveryMessage, setDeliveryMessage] = useState('')
                 subtext={settingsText('deliveryCompanyHelp')}
                 onClick={() => setSettingsView('delivery')}
               />
+
+              <div className="mx-3 h-px bg-[var(--shadow-bg-soft)]" />
+<ToolRow
+  icon="fa-solid fa-shield-halved"
+  label={getDisplayText('authorCommentProtection.commentProtection')}
+  subtext={getDisplayText('authorCommentProtection.intro')}
+  onClick={() => navigate('/author/comment-protection?from=page-settings')}
+/>
             </section>
 
             <div className="mt-6 px-1 text-[18px] font-semibold text-[var(--shadow-text-tertiary)]">
