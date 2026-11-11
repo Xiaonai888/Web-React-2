@@ -10,6 +10,8 @@ import { SHADOW_DOCS_STYLES } from './ShadowDocsStyleCatalog'
 import ShadowDocsMobileFontSizePage from './ShadowDocsMobileFontSizePage'
 import ShadowDocsMobileFontStylePage from './ShadowDocsMobileFontStylePage'
 import ShadowDocsMobileInsertPanel from './ShadowDocsMobileInsertPanel'
+import ShadowDocsScrollableTabs from './ShadowDocsScrollableTabs'
+import ShadowDocsDrawToolsPanel from './ShadowDocsDrawToolsPanel'
 import './ShadowDocsMobileHomeSheet.css'
 
 
@@ -117,7 +119,7 @@ export default function ShadowDocsMobileHomeSheet({
 
   useEffect(() => {
   if (open) {
-    setPage(initialPage === 'insert' ? 'insert' : 'home')
+    setPage(['insert', 'draw'].includes(initialPage) ? initialPage : 'home')
     return
   }
   setPage('home')
@@ -212,22 +214,23 @@ export default function ShadowDocsMobileHomeSheet({
     <button type="button" className="sd-home-sheet-dismiss" aria-label="Close tools" onClick={onClose} />
     <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
       <header className="sd-home-sheet-header">
-        {['home', 'insert'].includes(page) ? <div className="sd-home-tabs" role="tablist" aria-label="Document tools">
-          {['Home', 'Insert', 'View', 'Review'].map(tab => <button
-            type="button"
-            key={tab}
-            role="tab"
-            aria-selected={tab.toLowerCase() === page}
-className={tab.toLowerCase() === page ? 'is-active' : ''}
-disabled={!['Home', 'Insert'].includes(tab) && typeof onTabChange !== 'function'}
-onPointerDown={event => event.preventDefault()}
-onClick={() => {
-  const next = tab.toLowerCase()
-  if (next === 'home' || next === 'insert') setPage(next)
-  else onTabChange?.(next)
-}}
-          >{tab}</button>)}
-        </div> : <div className="sd-home-subtitle">
+{['home', 'insert', 'draw'].includes(page) ? (
+  <ShadowDocsScrollableTabs
+    activeTab={page}
+    disabled={disabled}
+    tabs={[
+      { id: 'home', label: 'Home' },
+      { id: 'insert', label: 'Insert' },
+      { id: 'view', label: 'View', disabled: !onTabChange },
+      { id: 'review', label: 'Review', disabled: !onTabChange },
+      { id: 'draw', label: 'Draw' },
+    ]}
+    onChange={id => {
+      if (['home', 'insert', 'draw'].includes(id)) setPage(id)
+      else onTabChange?.(id)
+    }}
+  />
+) : <div className="sd-home-subtitle">
           <IconButton label="Back to Home" onClick={() => setPage('home')}>
   <ChevronDown size={23} />
 </IconButton>
@@ -235,12 +238,21 @@ onClick={() => {
         </div>}
         <div className="sd-home-head-actions">
           <IconButton label="Show keyboard" disabled={typeof onKeyboard !== 'function'} onClick={onKeyboard}><Keyboard size={22} /></IconButton>
-          {['home', 'insert'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
+          {['home', 'insert', 'draw'].includes(page) ? <IconButton label="Close tools" onClick={onClose}><X size={22} /></IconButton> : null}
         </div>
       </header>
 
       <div className="sd-home-scroll" key={page}>
-        {page === 'insert' ? (
+        {page === 'draw' ? (
+  <ShadowDocsDrawToolsPanel
+    state={state}
+    disabled={!canBasic}
+    hasStrokes={Number(state.inkCount) > 0}
+    onCommand={command}
+    onUndo={() => command('inkUndo', true)}
+    onClear={() => command('inkClear', true)}
+  />
+) : page === 'insert' ? (
   <ShadowDocsMobileInsertPanel
     disabled={!canBasic}
     onCommand={command}
