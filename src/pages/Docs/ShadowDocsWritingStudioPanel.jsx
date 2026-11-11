@@ -9,7 +9,7 @@ import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsPar
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
 import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
-import { applyShadowDocsReviewVisibility, readShadowDocsReviewPreferences, saveShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
+import { readShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
@@ -17,6 +17,7 @@ import { buildShadowDocsInsertResource } from './ShadowDocsInsertResourcesEngine
 import { saveShadowDocsAttachment, deleteShadowDocsAttachment, downloadShadowDocsAttachment } from './ShadowDocsAttachmentEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsHorizontalRule, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
+import { insertShadowDocsSectionBreak } from './ShadowDocsSectionBreakEngine'
 import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
 import { getShadowDocsDesignTheme, SHADOW_DOCS_DESIGN_THEMES } from './ShadowDocsDocumentDesignEngine'
 import { inspectShadowDocsProofing, getShadowDocsProofingStats } from './ShadowDocsProofingEngine'
@@ -302,7 +303,6 @@ export default function ShadowDocsWritingStudioPanel({
     inkCurrentRef.current = Array.isArray(chapter?.ink) ? chapter.ink : []
     setRibbonState(current => ({
       ...current,
-      showMarkup: readShadowDocsReviewPreferences(chapter?.id).showMarkup,
       drawEnabled: false,
       autoNumbering: false,
       paragraphLayout: false,
@@ -347,13 +347,6 @@ export default function ShadowDocsWritingStudioPanel({
     selectionRef.current = null
     setRibbonMessage('')
   }, [book?.id, chapter?.id])
-
-    useEffect(() => {
-    applyShadowDocsReviewVisibility(editorRef.current, {
-      ...readShadowDocsReviewPreferences(chapter?.id),
-      showMarkup: ribbonState.showMarkup,
-    })
-  }, [book?.id, chapter?.id, ribbonState.showMarkup])
 
   useEffect(() => {
     setRibbonState(state => ({
@@ -756,6 +749,12 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
 
+    if (command === 'sectionBreak') {
+      if (!snapshot) return setRibbonMessage('Place the cursor in the document first.')
+      if (editor.innerHTML.length + 260 > 490000) return setRibbonMessage('This chapter is too large.')
+      finishRibbonChange(Boolean(insertShadowDocsSectionBreak(editor, snapshot, value)), 'Section break inserted.')
+      return
+    }
     if (command === 'pageBreak') {
       finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot)))
       return
@@ -1259,15 +1258,7 @@ export default function ShadowDocsWritingStudioPanel({
     }
     if (command === 'previousComment' || command === 'nextComment') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-comment-id]', command === 'nextComment' ? 1 : -1) ? 'Comment selected.' : 'No comments found.'); return }
     if (command === 'trackChanges') { setRibbonState(state => ({ ...state, trackChanges: Boolean(value) })); setRibbonMessage(`Track Changes ${value ? 'on' : 'off'}.`); return }
-    if (command === 'showMarkup') {
-  const next = value === false ? false : !ribbonState.showMarkup
-  saveShadowDocsReviewPreferences(chapter.id, {
-    ...readShadowDocsReviewPreferences(chapter.id),
-    showMarkup: next,
-  })
-  setRibbonState(state => ({ ...state, showMarkup: next }))
-  return
-}
+    if (command === 'showMarkup') { setRibbonState(state => ({ ...state, showMarkup: !state.showMarkup })); return }
     if (command === 'reviewPane') { const changes = listShadowDocsChanges(editor); setRibbonMessage(changes.length ? `${changes.length} tracked change(s). ${changes[0].type}: ${changes[0].text}` : 'No tracked changes.'); return }
     if (command === 'displayReview') { setRibbonMessage(`${listShadowDocsChanges(editor).length} tracked change(s) in this chapter.`); return }
     if (command === 'acceptChange' || command === 'rejectChange') {
@@ -1903,7 +1894,7 @@ const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
   if (!book || !chapter) return <section className="sd-card"><BookOpen size={28} /><h2 className="mt-3">Writing Studio</h2><p className="mt-2 text-sm text-[#77758b] dark:text-white/60">Select a book in My Books to start writing.</p></section>
 
   return <section aria-label="Writing Studio" className={`sd-writing-layout ${ribbonState.mobileFit ? 'sd-mobile-fit-mode' : ''}`}>
-    <style>{'.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
+    <style>{'.sd-writing-area hr[data-shadow-docs-column-break="1"],.sd-writing-area hr[data-shadow-docs-section-break="next"],.sd-writing-area hr[data-shadow-docs-blank-page="1"]{border:0;border-top:2px dashed #438fe6;margin:22px 0;min-height:4px}.sd-writing-area hr[data-shadow-docs-page-break="1"]{border:0;border-top:2px dashed #8d76be;margin:22px 0;min-height:4px}.sd-writing-area p,.sd-writing-area div{margin-bottom:var(--sd-paragraph-spacing,.75em)}.sd-writing-area h1,.sd-writing-area h2,.sd-writing-area h3,.sd-writing-area li,.sd-writing-area blockquote{text-indent:0}.sd-writing-area img{max-width:100%;height:auto;break-inside:avoid}.sd-writing-area table{width:100%;border-collapse:collapse;margin:12px 0}.sd-writing-area td,.sd-writing-area th{border:1px solid #b9b4c7;padding:6px}.sd-writing-area.sd-gridlines{background-image:linear-gradient(#0000000d 1px,transparent 1px),linear-gradient(90deg,#0000000d 1px,transparent 1px);background-size:24px 24px}.sd-writing-area ins{background:#dff5e8;text-decoration:underline}.sd-writing-area del{background:#fde2e5;color:#9f3d49}'}</style>
     <style>{`
       .sd-mobile-editor-topbar{display:none}
       .sd-mobile-word-count{display:none}
