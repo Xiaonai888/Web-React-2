@@ -1748,15 +1748,29 @@ function StoryViewer({
 
 {story.mention_username ? (
   <div
-    className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-5 ${
-      group.is_owner
-        ? 'bottom-[112px]'
-        : 'bottom-[178px]'
+    className={`pointer-events-none absolute inset-x-0 z-30 flex justify-center px-5 ${
+      group.is_owner ? 'bottom-[112px]' : 'bottom-[178px]'
     }`}
   >
-    <span className="max-w-full truncate rounded-full bg-white px-4 py-2 text-[15px] font-black text-[#111827] shadow-lg">
+    <button
+      type="button"
+      disabled={
+        !['reader', 'author'].includes(story.mention_target_type) ||
+        !story.mention_target_id
+      }
+      onClick={(event) => {
+        event.stopPropagation()
+        const username = encodeURIComponent(story.mention_username)
+        navigate(
+          story.mention_target_type === 'author'
+            ? `/author/page/${username}`
+            : `/profile?username=${username}`
+        )
+      }}
+      className="pointer-events-auto max-w-full truncate rounded-full bg-white px-4 py-2 text-[15px] font-black text-[#111827] shadow-lg disabled:cursor-default"
+    >
       @{story.mention_username}
-    </span>
+    </button>
   </div>
 ) : null}
 
