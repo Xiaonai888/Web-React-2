@@ -4,7 +4,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
     : 'https://shadow-backend-kucw.onrender.com'
 )
 
-const ROOT = '/api/shadow-studio/notifications'
+const ROOT = '/api/authors/me/page-notifications'
 const CACHE_TTL = 5 * 60 * 1000
 const LIST_TTL = 60 * 1000
 const cache = new Map()
@@ -68,7 +68,7 @@ export async function getStudioVideoNotificationUnreadCount({ signal, force = fa
     const cached = getCached('unread')
     if (cached !== null) return cached
   }
-  const data = await request(`${ROOT}/unread-count`, { signal })
+  const data = await request(`${ROOT}/unread-count?source=fast_reel`, { signal })
   const count = Math.max(0, Number(data.unread_count || 0))
   if (!signal?.aborted) remember('unread', count, CACHE_TTL)
   return count
@@ -77,7 +77,11 @@ export async function getStudioVideoNotificationUnreadCount({ signal, force = fa
 export async function listStudioVideoNotifications({ before = '', limit = 10, unreadOnly = false, signal, force = false } = {}) {
   prepareCache()
   const size = Math.max(1, Math.min(30, Math.floor(Number(limit) || 10)))
-  const params = new URLSearchParams({ limit: String(size) })
+  const params = new URLSearchParams({
+  limit: String(size),
+  source: 'fast_reel',
+  include_meta: 'false',
+})
   if (before) params.set('before', before)
   if (unreadOnly) params.set('unread', 'true')
   const key = `list:${params.toString()}`
