@@ -603,6 +603,12 @@ export default function AuthorCommentProtectionPage() {
   ] = useSearchParams()
   const toastTimerRef =
     useRef(null)
+  useEffect(() => {
+  const from = searchParams.get('from')
+  if (from === 'profile' || from === 'page-settings') {
+    sessionStorage.setItem('author_comment_protection_from', from)
+  }
+}, [searchParams])
   const isWordFilters =
     searchParams.get('view') ===
     'word-filters'
@@ -907,9 +913,11 @@ export default function AuthorCommentProtectionPage() {
       return
     }
 
-    navigate('/author/profile', {
-      replace: true,
-    })
+    const from = sessionStorage.getItem('author_comment_protection_from')
+sessionStorage.removeItem('author_comment_protection_from')
+navigate(from === 'page-settings' ? '/author/page-settings' : '/author/profile', {
+  replace: true,
+})
   }
 
   const handleFilterTypeChange = (
