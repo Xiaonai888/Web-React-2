@@ -325,7 +325,7 @@ function toggleShadowDocsNativeFormat(editor, snapshot, command) {
     if (!range || range.collapsed) return false
 
     previousCSS = Boolean(document.queryCommandState?.('styleWithCSS'))
-    cssEnabled = document.execCommand('styleWithCSS', false, true)
+    cssEnabled = document.execCommand('styleWithCSS', false, !['superscript', 'subscript'].includes(command))
     const changed = document.execCommand(name, false, null)
     return changed ? true : null
   } catch {
