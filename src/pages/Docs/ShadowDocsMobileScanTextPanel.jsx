@@ -3,6 +3,14 @@ import { Camera, ChevronLeft, FileImage, ScanText } from 'lucide-react'
 import { recognizeShadowDocsImage } from './ShadowDocsScanTextEngine'
 
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
+const MAX_SCANNED_TEXT_LENGTH = 20000
+
+function normalizeScannedText(value) {
+  return (typeof value === 'string' ? value : '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
+    .slice(0, MAX_SCANNED_TEXT_LENGTH)
+}
 
 export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack, onInsert }) {
   const galleryRef = useRef(null)
@@ -63,7 +71,7 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
         setStatus(state.status)
       })
       if (mountedRef.current) {
-        setText(extracted)
+        setText(normalizeScannedText(extracted))
         setProgress(100)
         setStatus('Text extracted')
       }
@@ -73,6 +81,13 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
       busyRef.current = false
       if (mountedRef.current) setBusy(false)
     }
+  }
+
+  function insertScannedText() {
+    if (disabled || busy || busyRef.current || typeof onInsert !== 'function') return
+    const plainText = normalizeScannedText(text).trim()
+    if (!plainText) return
+    onInsert(plainText)
   }
 
   return <section className="sd-insert-scan-panel" aria-label="Scan Text">
@@ -113,8 +128,8 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
     {error ? <p className="sd-insert-scan-error" role="alert">{error}</p> : null}
     {text ? <>
       <label htmlFor="sd-insert-scanned-text" className="sd-insert-section-title">Review and edit recognized text</label>
-      <textarea id="sd-insert-scanned-text" value={text} maxLength={20000} disabled={disabled || busy} onChange={event => setText(event.target.value)}/>
-      <button type="button" className="sd-insert-submit" disabled={disabled || busy || !text.trim()} onPointerDown={event => event.preventDefault()} onClick={() => onInsert?.(text.trim())}>Insert Text into Document</button>
+      <textarea id="sd-insert-scanned-text" value={text} maxLength={MAX_SCANNED_TEXT_LENGTH} disabled={disabled || busy} onChange={event => setText(normalizeScannedText(event.target.value))}/>
+      <button type="button" className="sd-insert-submit" disabled={disabled || busy || !text.trim()} onPointerDown={event => event.preventDefault()} onClick={insertScannedText}>Insert Text into Document</button>
     </> : null}
     <p className="sd-insert-help">Scanning runs on your device. The first scan downloads the OCR engine and selected language data. No image is uploaded to Shadow servers.</p>
   </section>
