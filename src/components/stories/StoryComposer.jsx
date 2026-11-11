@@ -4,6 +4,8 @@ import { getDisplayText, useDisplayTranslation } from '../../utils/displayLangua
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { clearHomeCacheSection } from '../../utils/homeDataCache'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import StoryTextEditor, { normalizeStoryTextSticker } from './StoryTextEditor'
+import StoryTextSticker from './StoryTextSticker'
 
 registerTranslationNamespace('storyComposer', {
   en: {
@@ -562,6 +564,7 @@ export default function StoryComposer({ mode }) {
   const [mediaFile, setMediaFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [textOverlay, setTextOverlay] = useState('')
+  const [textSticker, setTextSticker] = useState(() => normalizeStoryTextSticker(''))
   const [altText, setAltText] = useState('')
   const [mentionUsername, setMentionUsername] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
@@ -627,6 +630,7 @@ export default function StoryComposer({ mode }) {
     setMediaFile(file)
     setPreviewUrl(URL.createObjectURL(file))
     setTextOverlay('')
+    setTextSticker(normalizeStoryTextSticker(''))
     setAltText('')
     setMentionUsername('')
     setLinkUrl('')
@@ -889,13 +893,12 @@ export default function StoryComposer({ mode }) {
         </div>
       </header>
 
-      {hasText ? (
-        <button type="button" onClick={() => setSheet('text')} className="absolute inset-x-6 top-[40%] z-20 text-center">
-          <span className="inline-block max-w-full break-words rounded-[12px] bg-black/40 px-4 py-2 text-[28px] font-bold leading-tight text-white shadow-lg backdrop-blur-sm">
-            {textOverlay}
-          </span>
-        </button>
-      ) : null}
+      <StoryTextSticker
+  value={textSticker}
+  onChange={setTextSticker}
+  onEdit={() => setSheet('text')}
+  disabled={sharing}
+/>
 
       {hasMention ? (
         <button type="button" onClick={() => setSheet('mention')} className="absolute inset-x-0 bottom-[225px] z-20 flex justify-center px-5">
@@ -978,19 +981,16 @@ export default function StoryComposer({ mode }) {
       ) : null}
 
       {sheet === 'text' ? (
-        <EditorSheet
-          title={t('storyComposer.text')}
-          value={textOverlay}
-          placeholder={t('storyComposer.writeText')}
-          maxLength={200}
-          multiline
-          onSave={(value) => {
-            setTextOverlay(value)
-            setSheet('')
-          }}
-          onClose={() => setSheet('')}
-        />
-      ) : null}
+  <StoryTextEditor
+    value={textSticker}
+    onSave={(value) => {
+      setTextSticker(value)
+      setTextOverlay(value.text)
+      setSheet('')
+    }}
+    onClose={() => setSheet('')}
+  />
+) : null}
 
       {sheet === 'mention' ? (
         <EditorSheet
