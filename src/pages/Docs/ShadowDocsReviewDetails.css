@@ -1,0 +1,41 @@
+.sd-review-detail-panel{display:flex;flex-direction:column;gap:12px;width:100%;min-width:0;color:#eee;font-family:Inter,"Noto Sans Khmer",system-ui,sans-serif;color-scheme:dark;padding:4px 0 32px}
+.sd-review-detail-panel *{box-sizing:border-box}
+.sd-review-detail-panel button{font:inherit;cursor:pointer}
+.sd-review-detail-panel button:disabled{opacity:.4;cursor:not-allowed}
+.sd-review-detail-header{display:flex;align-items:center;gap:12px;min-height:50px}
+.sd-review-detail-header>button{display:grid;place-items:center;flex:none;width:38px;height:38px;border:0;border-radius:10px;background:#303030;color:#eee}
+.sd-review-detail-header strong{flex:1;font-size:17px;font-weight:650}
+.sd-review-detail-header>span{font-size:12px;color:#aaa}
+.sd-review-detail-list{display:flex;flex-direction:column;gap:11px}
+.sd-review-detail-entry{padding:15px 13px;background:#303030;border-radius:14px;min-width:0}
+.sd-review-detail-entry.is-resolved{opacity:.72}
+.sd-review-detail-meta{display:flex;align-items:center;gap:8px;min-width:0;color:#ddd;font-size:13px}
+.sd-review-detail-meta svg{flex:none;color:#aeb6c4}
+.sd-review-detail-meta strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-review-detail-meta time{margin-left:auto;color:#aaa;font-size:11px;white-space:nowrap}
+.sd-review-detail-entry>small{display:block;margin:5px 0 0 25px;color:#aaa;font-size:11px}
+.sd-review-detail-entry p{margin:11px 0;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.sd-review-detail-entry blockquote{margin:10px 0 0;padding:9px 12px;border-left:3px solid #7aaff6;border-radius:4px;background:#252525;color:#aaa;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sd-review-detail-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:13px}
+.sd-review-detail-actions button{display:flex;align-items:center;gap:5px;justify-content:center;min-height:34px;padding:7px 10px;border:1px solid #4a4a4a;border-radius:9px;background:#393939;color:#e8e8e8;font-size:12px}
+.sd-review-detail-compose{display:flex;flex-direction:column;gap:9px;padding:14px;background:#303030;border-radius:14px}
+.sd-review-detail-compose label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.sd-review-detail-compose textarea,.sd-review-detail-editor textarea{display:block;width:100%;min-height:85px;padding:10px;border:1px solid #595959;border-radius:9px;outline:0;resize:vertical;background:#252525;color:#f8f8f8;font-size:14px;line-height:1.5}
+.sd-review-detail-compose>button{display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:10px;min-height:42px;background:#447ed7;color:#fff;font-weight:650}
+.sd-review-detail-editor{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.sd-review-detail-empty{display:flex;align-items:center;gap:8px;padding:16px;border-radius:13px;background:#303030;color:#bbb;font-size:13px;line-height:1.5}
+.sd-review-detail-status{padding:12px 14px;margin:0;border:1px solid #494949;border-radius:11px;color:#cfcfcf;background:#292929;font-size:12px;line-height:1.5}
+.sd-review-detail-stats{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;color:#bababa;font-size:13px}
+.sd-review-detail-stats span{padding:8px 12px;border-radius:9px;background:#303030}
+.sd-review-detail-setting{display:flex;align-items:center;justify-content:space-between;padding:16px;background:#303030;border-radius:13px}
+.sd-review-detail-setting>div{display:flex;align-items:center;gap:12px;min-width:0;font-size:14px}
+.sd-review-detail-setting svg{flex:none}
+.sd-review-detail-switch{display:flex;align-items:center;flex:none;width:48px;height:29px;border:0;border-radius:30px;padding:3px;background:#525252}
+.sd-review-detail-switch span{display:block;width:23px;height:23px;border-radius:50%;background:#f7f7f7;transition:transform .15s}
+.sd-review-detail-switch.is-on{background:#468cef}
+.sd-review-detail-switch.is-on span{transform:translateX(19px)}
+.sd-review-detail-heading{margin:6px 3px 0;font-size:14px;font-weight:600}
+.sd-review-detail-issue{display:flex;align-items:flex-start;gap:10px;padding:13px 12px;border-radius:11px;background:#303030;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.sd-review-detail-issue svg{flex:none;color:#e6b870}
+.sd-review-detail-panel button:focus-visible,.sd-review-detail-panel textarea:focus-visible{outline:2px solid #88bfff;outline-offset:2px}
+@media(max-width:365px){.sd-review-detail-meta{flex-wrap:wrap}.sd-review-detail-meta time{white-space:normal}.sd-review-detail-actions button{font-size:11px}}
