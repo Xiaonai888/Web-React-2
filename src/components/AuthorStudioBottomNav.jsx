@@ -162,7 +162,7 @@ function NavButton({ label, active, onClick, children }) {
       type="button"
       onClick={onClick}
       className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2 text-[9.5px] font-bold transition active:scale-95 ${
-        active ? 'text-[#FFC400]' : 'text-[var(--shadow-text-secondary)]'
+        active ? 'text-[var(--author-theme-footer-active,#6D4AFF)]' : 'text-[var(--shadow-text-secondary)]'
       }`}
       aria-current={active ? 'page' : undefined}
     >
@@ -178,7 +178,7 @@ const createOptions = [
     titleKey: 'novel',
     subtitleKey: 'novelSubtitle',
     icon: 'fa-solid fa-book-open',
-    iconClass: 'bg-[var(--shadow-bg-soft)] text-[#FFC400]',
+    iconClass: 'bg-[var(--shadow-bg-soft)] text-[var(--author-theme-footer-novel,#7C3AED)]',
   },
   {
     type: 'manga',
@@ -363,7 +363,7 @@ export default function AuthorStudioBottomNav() {
               type="button"
               onClick={() => setCreateOpen(true)}
               className="flex h-[58px] w-[58px] -translate-y-[13px] items-center justify-center rounded-full ring-[5px] ring-[var(--shadow-bg-page)] transition active:scale-95"
-              style={{ background: 'linear-gradient(135deg,#FFC400,#FFC400CC)', color: '#171717' }}
+              style={{ background: 'var(--author-theme-footer-gradient,linear-gradient(135deg,#8468FF,#5C3DF2))', color: 'var(--author-theme-footer-foreground,#FFFFFF)' }}
               aria-label="Create story"
             >
               <FeatherIcon />
