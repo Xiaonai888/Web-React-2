@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, RefreshCw, Search } from 'lucide-react'
+import { Archive, ArrowLeft, RefreshCw, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { listStudioMeVideos } from '../../services/shadowStudioMeApi'
+import { archiveStudioVideo } from '../../services/shadowStudioRecycleApi'
 import ShadowStudioVideoCard from '../../components/author/studio/content/ShadowStudioVideoCard'
 import ShadowStudioVideoDetailSheet from '../../components/author/studio/content/ShadowStudioVideoDetailSheet'
+import StudioMeConfirmDialog from '../../components/author/studio/me/StudioMeConfirmDialog'
 
 registerTranslationNamespace('shadowStudioLibrary', {
-  en: { title: 'Library', search: 'Search all your videos', all: 'All', long: 'Long', short: 'Short', empty: 'No videos found.', loading: 'Loading videos...', more: 'Load more', retry: 'Retry', unavailable: 'Could not load the library.' },
-  km: { title: 'បណ្ណាល័យ', search: 'ស្វែងរកវីដេអូរបស់អ្នក', all: 'ទាំងអស់', long: 'វែង', short: 'ខ្លី', empty: 'រកមិនឃើញវីដេអូ', loading: 'កំពុងទាញវីដេអូ...', more: 'ទាញបន្ថែម', retry: 'សាកល្បងម្ដងទៀត', unavailable: 'មិនអាចទាញបណ្ណាល័យបាន' },
-  zh: { title: '视频库', search: '搜索全部视频', all: '全部', long: '长视频', short: '短视频', empty: '没有找到视频', loading: '正在加载视频...', more: '加载更多', retry: '重试', unavailable: '无法加载视频库' },
-  ja: { title: 'ライブラリ', search: '動画を検索', all: 'すべて', long: '長編', short: 'ショート', empty: '動画が見つかりません', loading: '動画を読み込み中...', more: 'さらに読み込む', retry: '再試行', unavailable: 'ライブラリを読み込めません' },
-  ko: { title: '라이브러리', search: '모든 동영상 검색', all: '전체', long: '긴 동영상', short: '쇼츠', empty: '동영상을 찾을 수 없습니다', loading: '동영상 불러오는 중...', more: '더 보기', retry: '다시 시도', unavailable: '라이브러리를 불러올 수 없습니다' },
+  en: { title: 'Library', search: 'Search all your videos', all: 'All', long: 'Long', short: 'Short', empty: 'No videos found.', loading: 'Loading videos...', more: 'Load more', retry: 'Retry', unavailable: 'Could not load the library.', archive: 'Archive', archiveTitle: 'Archive video?', archiveMessage: 'Hide this video from readers and move it to Archive? You can restore it later.', archived: 'Video moved to Archive.', archiveError: 'Could not archive this video.', cancel: 'Cancel' },
+  km: { title: 'បណ្ណាល័យ', search: 'ស្វែងរកវីដេអូរបស់អ្នក', all: 'ទាំងអស់', long: 'វែង', short: 'ខ្លី', empty: 'រកមិនឃើញវីដេអូ', loading: 'កំពុងទាញវីដេអូ...', more: 'ទាញបន្ថែម', retry: 'សាកល្បងម្ដងទៀត', unavailable: 'មិនអាចទាញបណ្ណាល័យបាន', archive: 'Archive', archiveTitle: 'ផ្លាស់វីដេអូទៅ Archive?', archiveMessage: 'លាក់វីដេអូនេះពីអ្នកមើល និងផ្លាស់ទៅ Archive មែនទេ? អាចស្ដារវិញបានពេលក្រោយ។', archived: 'បានផ្លាស់វីដេអូទៅ Archive', archiveError: 'មិនអាចផ្លាស់វីដេអូទៅ Archive បាន', cancel: 'បោះបង់' },
+  zh: { title: '视频库', search: '搜索全部视频', all: '全部', long: '长视频', short: '短视频', empty: '没有找到视频', loading: '正在加载视频...', more: '加载更多', retry: '重试', unavailable: '无法加载视频库', archive: '归档', archiveTitle: '归档视频？', archiveMessage: '向观众隐藏此视频并移至归档？以后可以恢复。', archived: '视频已归档', archiveError: '无法归档此视频', cancel: '取消' },
+  ja: { title: 'ライブラリ', search: '動画を検索', all: 'すべて', long: '長編', short: 'ショート', empty: '動画が見つかりません', loading: '動画を読み込み中...', more: 'さらに読み込む', retry: '再試行', unavailable: 'ライブラリを読み込めません', archive: 'アーカイブ', archiveTitle: '動画をアーカイブしますか？', archiveMessage: '視聴者に非表示にしてアーカイブへ移動します。あとで復元できます。', archived: 'アーカイブしました', archiveError: 'アーカイブできません', cancel: 'キャンセル' },
+  ko: { title: '라이브러리', search: '모든 동영상 검색', all: '전체', long: '긴 동영상', short: '쇼츠', empty: '동영상을 찾을 수 없습니다', loading: '동영상 불러오는 중...', more: '더 보기', retry: '다시 시도', unavailable: '라이브러리를 불러올 수 없습니다', archive: '보관', archiveTitle: '영상을 보관할까요?', archiveMessage: '시청자에게 숨기고 보관함으로 이동할까요? 나중에 복원할 수 있습니다.', archived: '보관함으로 이동했습니다', archiveError: '보관할 수 없습니다', cancel: '취소' },
 })
 
 const PAGE_SIZE = 12
@@ -31,6 +33,11 @@ export default function AuthorStudioLibraryPage() {
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
   const [retry, setRetry] = useState(0)
+  const [archiveTarget, setArchiveTarget] = useState(null)
+  const [archiveBusy, setArchiveBusy] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const [actionNotice, setActionNotice] = useState('')
+  const archiveLock = useRef(false)
   const requestId = useRef(0)
   const pageRef = useRef({ items: [], offset: 0, more: true })
 
@@ -72,6 +79,26 @@ export default function AuthorStudioLibraryPage() {
     return () => { controller.abort(); requestId.current += 1 }
   }, [load, retry])
 
+  async function confirmArchive() {
+    if (archiveLock.current || !archiveTarget?.id) return
+    archiveLock.current = true
+    setArchiveBusy(true)
+    setActionError('')
+    setActionNotice('')
+    try {
+      await archiveStudioVideo(archiveTarget.id)
+      setArchiveTarget(null)
+      setSelected(null)
+      setActionNotice(t('shadowStudioLibrary.archived'))
+      await load({ force: true })
+    } catch (cause) {
+      setActionError(cause?.message || t('shadowStudioLibrary.archiveError'))
+    } finally {
+      archiveLock.current = false
+      setArchiveBusy(false)
+    }
+  }
+
   return <main className="min-h-[100dvh] bg-[var(--shadow-bg-page)] pb-20 text-[var(--shadow-text-primary)]">
     <div className="mx-auto max-w-4xl px-4 pt-5 sm:px-6">
       <header className="mb-5 flex items-center gap-3">
@@ -85,14 +112,19 @@ export default function AuthorStudioLibraryPage() {
       <div className="my-4 flex flex-wrap gap-2" role="group" aria-label={t('shadowStudioLibrary.title')}>
         {KINDS.map(value => <button type="button" key={value} onClick={() => setKind(value)} aria-pressed={kind === value} className={`min-h-9 rounded-full px-4 text-xs font-semibold transition-colors ${kind === value ? 'bg-[var(--shadow-accent)] text-[var(--shadow-accent-text)]' : 'border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)]'}`}>{t(`shadowStudioLibrary.${value}`)}</button>)}
       </div>
+      {actionError || actionNotice ? <p role={actionError ? 'alert' : 'status'} className={`mb-3 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-3 text-xs ${actionError ? 'text-[var(--shadow-danger)]' : ''}`}>{actionError || actionNotice}</p> : null}
       <section className="overflow-hidden rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 sm:px-4">
-        {items.length ? <div className="divide-y divide-[var(--shadow-border)]">{items.map(video => <ShadowStudioVideoCard key={video.id} video={video} display="list" onOpen={setSelected} />)}</div> : null}
+        {items.length ? <div className="divide-y divide-[var(--shadow-border)]">{items.map(video => <div key={video.id} className="pb-2">
+          <ShadowStudioVideoCard video={video} display="list" onOpen={setSelected} disabled={archiveBusy} />
+          <div className="flex justify-end"><button type="button" disabled={archiveBusy} onClick={() => { setActionError(''); setActionNotice(''); setArchiveTarget(video) }} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--shadow-border)] px-3 text-xs font-semibold text-[var(--shadow-text-secondary)] hover:bg-[var(--shadow-bg-soft)] disabled:opacity-50"><Archive size={14} aria-hidden="true" />{t('shadowStudioLibrary.archive')}</button></div>
+        </div>)}</div> : null}
         {!items.length && !loading && !error ? <p className="py-12 text-center text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioLibrary.empty')}</p> : null}
         {loading ? <p className="py-5 text-center text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioLibrary.loading')}</p> : null}
         {error ? <div className="flex flex-col items-center gap-3 py-6 text-center"><p role="alert" className="text-sm text-[var(--shadow-danger)]">{error}</p><button type="button" onClick={() => setRetry(n => n + 1)} className="flex items-center gap-2 rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-xs font-semibold"><RefreshCw size={15}/>{t('shadowStudioLibrary.retry')}</button></div> : null}
       </section>
       {hasMore && !loading && !error ? <button type="button" onClick={() => void load({ append: true })} className="mx-auto mt-5 block min-h-10 rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-5 text-sm font-semibold">{t('shadowStudioLibrary.more')}</button> : null}
       {selected ? <ShadowStudioVideoDetailSheet video={selected} onClose={() => setSelected(null)} onAnalytics={video => navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics?section=overview`)} /> : null}
+      <StudioMeConfirmDialog open={Boolean(archiveTarget)} title={t('shadowStudioLibrary.archiveTitle')} message={t('shadowStudioLibrary.archiveMessage')} confirmLabel={t('shadowStudioLibrary.archive')} cancelLabel={t('shadowStudioLibrary.cancel')} pending={archiveBusy} onConfirm={confirmArchive} onCancel={() => setArchiveTarget(null)} />
     </div>
   </main>
 }
