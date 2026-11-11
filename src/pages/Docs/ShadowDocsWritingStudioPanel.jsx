@@ -11,6 +11,7 @@ import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
+import { saveShadowDocsAttachment, deleteShadowDocsAttachment, downloadShadowDocsAttachment } from './ShadowDocsAttachmentEngine'
 import { applyShadowDocsLink, createShadowDocsBookmark } from './ShadowDocsLinkEngine'
 import { insertShadowDocsDateTime, insertShadowDocsEquation, insertShadowDocsHorizontalRule, insertShadowDocsPageBreak, insertShadowDocsSymbol, insertShadowDocsTextBox } from './ShadowDocsInsertObjectsEngine'
 import { copyShadowDocsSelection, cutShadowDocsSelection, insertShadowDocsClipboardText } from './ShadowDocsClipboardEngine'
@@ -712,6 +713,21 @@ export default function ShadowDocsWritingStudioPanel({
       return
     }
 
+    if (command === 'lineBreak') {
+      const range = restoreShadowDocsSelection(editor, snapshot)
+      if (!range || typeof document === 'undefined') return setRibbonMessage('Place the cursor in the document first.')
+      range.deleteContents()
+      const breakNode = document.createElement('br')
+      range.insertNode(breakNode)
+      range.setStartAfter(breakNode)
+      range.collapse(true)
+      const selection = globalThis.getSelection?.()
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+      finishRibbonChange(true)
+      return
+    }
+
     if (command === 'pageBreak') {
       finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot)))
       return
@@ -727,6 +743,41 @@ export default function ShadowDocsWritingStudioPanel({
   finishRibbonChange(Boolean(insertShadowDocsTable(editor, snapshot, rows, columns, { header: value?.header === true })))
   return
 }
+    if (command === 'attachmentAdd') {
+      if (!snapshot) return setRibbonMessage('Place the cursor in the document before attaching a file.')
+      if (editor.innerHTML.length + 440 > 490000) return setRibbonMessage('Document is too large.')
+      let saved = null
+      try {
+        saved = await saveShadowDocsAttachment(value, chapter.id)
+        const safeName = saved.name.replace(/[&<>"']/g, character => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        })[character])
+        const html = `<a href="#sd-attachment-${saved.id}" title="Stored in this browser only" rel="noopener noreferrer">📎 ${safeName}</a> `
+        if (!insertHTMLAtSelection(html)) throw new Error('Choose a position in the editor first.')
+        setRibbonMessage('Attachment saved on this browser only. Keep a separate copy of the file.')
+        return true
+      } catch (error) {
+        if (saved?.id) await deleteShadowDocsAttachment(saved.id).catch(() => {})
+        setRibbonMessage(error?.message || 'Could not save attachment.')
+        return false
+      }
+    }
+    if (command === 'attachmentRemove') {
+      const id = String(value || '')
+      if (!/^[a-z0-9-]{10,80}$/i.test(id)) return setRibbonMessage('Invalid attachment.')
+      const links = [...editor.querySelectorAll('a[href^="#sd-attachment-"]')]
+        .filter(node => node.getAttribute('href') === `#sd-attachment-${id}`)
+      if (!links.length) return setRibbonMessage('Attachment reference not found.')
+      try {
+        await deleteShadowDocsAttachment(id)
+        links.forEach(node => node.remove())
+        finishRibbonChange(true, 'Attachment removed from this chapter and browser.')
+        return true
+      } catch (error) {
+        setRibbonMessage(error?.message || 'Could not remove attachment.')
+        return false
+      }
+    }
     if (command === 'pictures') {
   chooseImage(value && typeof value === 'object' ? value : {})
   return
@@ -936,7 +987,12 @@ export default function ShadowDocsWritingStudioPanel({
       insertHTMLAtSelection(`<div style="text-align:center"><h1>${title}</h1><p>${author}</p></div><hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p>`)
       return
     }
-    if (command === 'blankPage' || command === 'breaks') { finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot))); return }
+    if (command === 'blankPage') {
+      if (editor.innerHTML.length + 240 > 490000) return setRibbonMessage('Document is too large.')
+      insertHTMLAtSelection('<hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p><hr data-shadow-docs-page-break="1" contenteditable="false"><p><br></p>')
+      return
+    }
+    if (command === 'breaks') { finishRibbonChange(Boolean(insertShadowDocsPageBreak(editor, snapshot))); return }
     if (command === 'wordArt') {
       if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
       finishRibbonChange(applyShadowDocsInlineFormat(editor, snapshot, { fontSize: 28, bold: true, color: settings.accentColor || '#6f57a5' }))
@@ -2137,6 +2193,14 @@ export default function ShadowDocsWritingStudioPanel({
           contentEditable={typeof onChangeHTML === 'function' && !ribbonState.protectedEditing && ribbonState.viewMode !== 'read'}
           suppressContentEditableWarning
           onBeforeInput={trackBeforeInput}
+          onClick={event => {
+            const element = event.target?.nodeType === 1 ? event.target : event.target?.parentElement
+            const anchor = element?.closest?.('a[href^="#sd-attachment-"]')
+            if (!anchor || !editorRef.current?.contains(anchor)) return
+            event.preventDefault()
+            const id = anchor.getAttribute('href')?.slice('#sd-attachment-'.length)
+            if (id) void downloadShadowDocsAttachment(id).catch(error => setRibbonMessage(error?.message || 'Attachment is unavailable on this browser.'))
+          }}
           onInput={() => {
             if (!homeAdvancedRef.current?.onInput()) emitChange()
           }}
