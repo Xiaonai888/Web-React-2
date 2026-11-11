@@ -13,6 +13,9 @@ import ShadowDocsRibbonViewTab from './ShadowDocsRibbonViewTab'
 import ShadowDocsRibbonDrawTab from './ShadowDocsRibbonDrawTab'
 import ShadowDocsRibbonToolsTab from './ShadowDocsRibbonToolsTab'
 import ShadowDocsMobileHomeSheet from './ShadowDocsMobileHomeSheet'
+import ShadowDocsMobileViewSheet from './ShadowDocsMobileViewSheet'
+import { readShadowDocsReadingPreferences } from './ShadowDocsReadingPreferences'
+import { createShadowDocsReadingController } from './ShadowDocsReadingController'
 import './ShadowDocsRibbon.css'
 
 const RENDERERS = Object.freeze({
@@ -43,6 +46,8 @@ export default function ShadowDocsRibbon({
   commandState = {},
   onCommand,
   onAdvancedCommand,
+  bookId = '',
+  chapterId = '',
   disabled = false,
 }) {
   const [localTab, setLocalTab] = useState('home')
