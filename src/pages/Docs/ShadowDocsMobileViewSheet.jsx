@@ -96,17 +96,25 @@ export default function ShadowDocsMobileViewSheet({
     onLockChange?.(next)
   }
 
-  function toggleBookmark() {
+  function activateBookmark() {
     if (!bookId || !chapterId) return
     if (bookmark) {
-      removeShadowDocsReadingBookmark(bookId, chapterId)
-      setBookmark(null)
-      onBookmarkChange?.(null)
-    } else {
-      const entry = saveShadowDocsReadingBookmark(bookId, chapterId, position)
-      setBookmark(entry)
-      onBookmarkChange?.(entry)
+      const savedProgress = Math.max(0, Math.min(100, Number(bookmark.progress) || 0))
+      setPosition(savedProgress)
+      onSeek?.(savedProgress)
+      onClose?.()
+      return
     }
+    const entry = saveShadowDocsReadingBookmark(bookId, chapterId, position)
+    setBookmark(entry)
+    onBookmarkChange?.(entry)
+  }
+
+  function deleteBookmark() {
+    if (!bookId || !chapterId || !bookmark) return
+    removeShadowDocsReadingBookmark(bookId, chapterId)
+    setBookmark(null)
+    onBookmarkChange?.(null)
   }
 
   return <div className="sd-view-layer">
@@ -210,10 +218,13 @@ export default function ShadowDocsMobileViewSheet({
 
         <ViewSection label={text('navigation')}>
           <div className="sd-view-list">
-            <button type="button" className="sd-view-list-row" disabled={!bookId || !chapterId} onClick={toggleBookmark}>
-              <span>{bookmark ? <BookmarkCheck size={22} /> : <Bookmark size={22} />}{bookmark ? text('saved') : text('bookmark')}</span>
-              <ChevronRight size={18} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: '1px solid #393939' }}>
+              <button type="button" className="sd-view-list-row" disabled={!bookId || !chapterId} onClick={activateBookmark} style={{ flex: '1 1 auto', minWidth: 0, borderBottom: 0 }}>
+                <span>{bookmark ? <BookmarkCheck size={22} /> : <Bookmark size={22} />}{bookmark ? `${text('saved')} · ${Math.round(bookmark.progress)}%` : text('bookmark')}</span>
+                <ChevronRight size={18} />
+              </button>
+              {bookmark && <button type="button" aria-label={text('removeBookmark')} title={text('removeBookmark')} onClick={deleteBookmark} style={{ display: 'grid', placeItems: 'center', flex: '0 0 48px', border: 0, background: 'transparent', color: '#bdbdbd' }}><X size={19} /></button>}
+            </div>
             <button type="button" className="sd-view-list-row" disabled={!onOutline} onClick={() => { onClose?.(); onOutline?.() }}>
               <span><AlignLeft size={22} />{text('outline')}</span><ChevronRight size={18} />
             </button>
