@@ -136,18 +136,16 @@ html.shadow-author-theme :is([class^="border-[#7348e4]" i], [class*=" border-[#7
   border-color: var(--author-ui-accent) !important;
 }
 
-html.shadow-author-theme :is([class^="from-[#8b5cf6]" i], [class*=" from-[#8b5cf6]" i]),
-html.shadow-author-theme :is([class^="from-[#7c3aed]" i], [class*=" from-[#7c3aed]" i]),
-html.shadow-author-theme :is([class^="from-[#9362ef]" i], [class*=" from-[#9362ef]" i]),
-html.shadow-author-theme :is([class^="from-[#9a6af5]" i], [class*=" from-[#9a6af5]" i]),
-html.shadow-author-theme :is([class^="from-[#7045e8]" i], [class*=" from-[#7045e8]" i]),
-html.shadow-author-theme :is([class^="from-[#7348e4]" i], [class*=" from-[#7348e4]" i]),
-html.shadow-author-theme :is([class^="from-[#6335d7]" i], [class*=" from-[#6335d7]" i]),
-html.shadow-author-theme :is([class^="from-[#9b72ec]" i], [class*=" from-[#9b72ec]" i]),
-html.shadow-author-theme :is([class^="from-[#9b7cff]" i], [class*=" from-[#9b7cff]" i]),
-html.shadow-author-theme :is([class^="from-[#6f7eea]" i], [class*=" from-[#6f7eea]" i]) {
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#8b5cf6]" i], [class*=" from-[#8b5cf6]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#7c3aed]" i], [class*=" from-[#7c3aed]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#9362ef]" i], [class*=" from-[#9362ef]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#9a6af5]" i], [class*=" from-[#9a6af5]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#7045e8]" i], [class*=" from-[#7045e8]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#7348e4]" i], [class*=" from-[#7348e4]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#6335d7]" i], [class*=" from-[#6335d7]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#9b72ec]" i], [class*=" from-[#9b72ec]" i]),
+html.shadow-author-theme [class*="bg-gradient-to-"]:is([class^="from-[#9b7cff]" i], [class*=" from-[#9b7cff]" i]) {
   background-image: var(--author-theme-gradient) !important;
-  color: var(--author-ui-foreground) !important;
 }
 
 html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#8b5cf6]" i],
@@ -158,8 +156,7 @@ html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#7045e8]" i]
 html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#7348e4]" i],
 html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#6335d7]" i],
 html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#9b72ec]" i],
-html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#9b7cff]" i],
-html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#6f7eea]" i] {
+html.shadow-author-theme [class*="bg-gradient-to-br"][class*="from-[#9b7cff]" i] {
   background-image: var(--author-theme-gradient-br) !important;
 }
 
@@ -180,4 +177,18 @@ html.shadow-author-theme [class*="focus-within:border-[#9479ec]"]:focus-within {
 
 html.shadow-author-theme [class*="border-t-[#8b5cf6]"] {
   border-top-color: var(--author-ui-accent) !important;
+}
+
+html.shadow-author-theme [class~="bg-gradient-to-b"]:is(
+  [class*="from-[#8b5cf6]" i],
+  [class*="from-[#7c3aed]" i],
+  [class*="from-[#9362ef]" i],
+  [class*="from-[#9a6af5]" i],
+  [class*="from-[#7045e8]" i],
+  [class*="from-[#7348e4]" i],
+  [class*="from-[#6335d7]" i]
+) {
+  background-image: linear-gradient(to bottom,
+    var(--author-ui-accent),
+    color-mix(in srgb, var(--author-ui-accent) 58%, white)) !important;
 }
