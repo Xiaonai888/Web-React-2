@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AlignLeft, CirclePlus, ImagePlus, Keyboard, Maximize2, Settings2, Type } from 'lucide-react'
 import { SHADOW_DOCS_RIBBON_TABS } from './ShadowDocsRibbonCatalog'
 import ShadowDocsRibbonFileTab from './ShadowDocsRibbonFileTab'
@@ -63,6 +63,40 @@ export default function ShadowDocsRibbon({
   const viewportBaselineRef = useRef(0)
   const selected = RENDERERS[activeTab] ? activeTab : localTab
   const Active = RENDERERS[selected] || ShadowDocsRibbonHomeTab
+  const toolPopupOpen = homeOpen || mobileViewOpen
+  const keyboardRestoreRef = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!toolPopupOpen) return undefined
+
+    const editor = document.querySelector(
+      '.sd-writing-area[contenteditable="true"]'
+    )
+
+    if (!editor) return undefined
+
+    const previousInputMode = editor.getAttribute('inputmode')
+
+    editor.setAttribute('inputmode', 'none')
+    editor.blur()
+
+    setKeyboardOpen(false)
+    setKeyboardInset(0)
+
+    return () => {
+      if (!keyboardRestoreRef.current) {
+        editor.blur()
+      }
+
+      if (previousInputMode === null) {
+        editor.removeAttribute('inputmode')
+      } else {
+        editor.setAttribute('inputmode', previousInputMode)
+      }
+
+      keyboardRestoreRef.current = false
+    }
+  }, [toolPopupOpen, chapterId])
 
   useEffect(() => {
     const viewport = globalThis.visualViewport
@@ -361,9 +395,17 @@ export default function ShadowDocsRibbon({
     </section>
 
     <nav
-      className={`sd-mobile-editor-toolbar ${keyboardOpen ? 'is-keyboard-open' : ''}`}
+      className={`sd-mobile-editor-toolbar ${
+        keyboardOpen &&
+        !toolPopupOpen &&
+        document.activeElement?.classList?.contains('sd-writing-area')
+          ? 'is-keyboard-open'
+          : ''
+      }`}
       aria-label="Mobile editor tools"
-      style={{ '--sd-keyboard-inset': `${keyboardInset}px` }}
+      style={{
+        '--sd-keyboard-inset': `${toolPopupOpen ? 0 : keyboardInset}px`
+      }}
     >
       <div className="sd-mobile-editor-scroll">
         {MOBILE_ITEMS.map(item => {
@@ -422,11 +464,35 @@ export default function ShadowDocsRibbon({
       disabled={disabled}
       onClose={() => setHomeOpen(false)}
       onTabChange={changeMobileViewTab}
-      onCommand={onCommand}
+      onCommand={(name, value) => {
+        const result = onCommand?.(name, value)
+
+        requestAnimationFrame(() => {
+          const editor = document.querySelector(
+            '.sd-writing-area[contenteditable="true"]'
+          )
+
+          if (document.activeElement === editor) {
+            editor.blur()
+          }
+        })
+
+        return result
+      }}
       onAdvancedCommand={onAdvancedCommand}
       onKeyboard={() => {
+        const editor = document.querySelector(
+          '.sd-writing-area[contenteditable="true"]'
+        )
+
+        keyboardRestoreRef.current = true
+
+        editor?.removeAttribute('inputmode')
+
         setHomeOpen(false)
-        document.querySelector('.sd-writing-area[contenteditable="true"]')?.focus({ preventScroll: true })
+        setMobileViewOpen(false)
+
+        editor?.focus({ preventScroll: true })
       }}
     />
     <ShadowDocsMobileViewSheet
