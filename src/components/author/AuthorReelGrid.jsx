@@ -405,7 +405,7 @@ function OwnerReelManager({ studioMode = false, onExitStudio }) {
     if (!isLocalPreviewVideo(selectedFile) || !localPreviewRef.current) return undefined
     const videoElement = localPreviewRef.current
     const objectUrl = URL.createObjectURL(selectedFile)
-    videoElement.src = objectUrl
+    videoElement.src = encodeURI(objectUrl)
     return () => {
       videoElement.pause()
       videoElement.removeAttribute('src')
