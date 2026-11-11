@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Check, CornerDownRight, MessageCircle, Plus, Trash2, X } from 'lucide-react'
 import {
   addShadowDocsComment,
@@ -6,7 +6,7 @@ import {
   getShadowDocsCommentMarks,
   removeShadowDocsCommentMark,
 } from './ShadowDocsCommentEngine'
-import { captureShadowDocsSelection, selectShadowDocsNodeContents } from './ShadowDocsSelectionEngine'
+import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDocsNodeContents } from './ShadowDocsSelectionEngine'
 import {
   deleteShadowDocsReviewComment,
   readShadowDocsReviewComments,
@@ -29,19 +29,26 @@ export default function ShadowDocsReviewCommentsPanel({
 }) {
   const labels = LABELS[String(language).slice(0, 2).toLowerCase()] || LABELS.en
   const selectionRef = useRef(null)
+  const usedSelectionRef = useRef(false)
+  const contextRef = useRef(null)
   const [records, setRecords] = useState(() => readShadowDocsReviewComments(documentId, chapterId))
   const [editingId, setEditingId] = useState('')
   const [draft, setDraft] = useState('')
   const [message, setMessage] = useState('')
   const marks = getShadowDocsCommentMarks(editor)
-  const markIds = useMemo(() => new Set(marks.map(mark => mark.id)), [marks])
+  const markIds = new Set(marks.map(mark => mark.id))
   const visible = [...records, ...marks.filter(mark => !records.some(item => item.id === mark.id)).map(mark => ({ id: mark.id, chapterId, author: '', text: labels.missing, quote: mark.text, legacy: true, createdAt: 0, resolvedAt: null }))]
 
   useEffect(() => {
-    setRecords(readShadowDocsReviewComments(documentId, chapterId))
-    setEditingId('')
-    setDraft('')
-    selectionRef.current = selectionSnapshot || captureShadowDocsSelection(editor)
+    const sameContext = contextRef.current?.documentId === documentId && contextRef.current?.chapterId === chapterId && contextRef.current?.editor === editor
+    contextRef.current = { documentId, chapterId, editor }
+    if (!sameContext) {
+      setRecords(readShadowDocsReviewComments(documentId, chapterId))
+      setEditingId('')
+      setDraft('')
+      usedSelectionRef.current = false
+    }
+    if (!usedSelectionRef.current) selectionRef.current = selectionSnapshot || captureShadowDocsSelection(editor)
   }, [documentId, chapterId, editor, selectionSnapshot])
 
   function refresh() {
@@ -50,8 +57,11 @@ export default function ShadowDocsReviewCommentsPanel({
 
   function insert() {
     if (!editor || !chapterId || !onContentChange || disabled) return
-    const snapshot = selectionRef.current || selectionSnapshot || captureShadowDocsSelection(editor)
+    if (usedSelectionRef.current) return setMessage(labels.select)
+    const snapshot = selectionRef.current
     if (!snapshot || snapshot.collapsed || !snapshot.text?.trim()) return setMessage(labels.select)
+    const range = restoreShadowDocsSelection(editor, snapshot)
+    if (!range || range.collapsed || range.toString() !== snapshot.text) return setMessage(labels.select)
     const text = draft.trim()
     if (!text) return
     const record = createShadowDocsCommentRecord({ text, author: userName, chapterId })
@@ -61,12 +71,13 @@ export default function ShadowDocsReviewCommentsPanel({
       deleteShadowDocsReviewComment(documentId, record.id)
       return setMessage(labels.select)
     }
+    selectionRef.current = null
+    usedSelectionRef.current = true
     onContentChange(editor.innerHTML)
     refresh()
     setDraft('')
     setEditingId('')
     setMessage(labels.saved)
-    selectionRef.current = null
   }
 
   function edit(item) {
@@ -90,12 +101,19 @@ export default function ShadowDocsReviewCommentsPanel({
   }
 
   function remove(item) {
-    if (!deleteShadowDocsReviewComment(documentId, item.id)) return setMessage(labels.failure)
-    if (markIds.has(item.id) && editor) {
-      removeShadowDocsCommentMark(editor, item.id)
-      onContentChange?.(editor.innerHTML)
+    if (disabled) return
+    if (item.legacy) {
+      if (!editor || !onContentChange || !removeShadowDocsCommentMark(editor, item.id)) return setMessage(labels.unlinked)
+      onContentChange(editor.innerHTML)
+    } else {
+      if (!deleteShadowDocsReviewComment(documentId, item.id)) return setMessage(labels.failure)
+      if (markIds.has(item.id) && editor && removeShadowDocsCommentMark(editor, item.id)) onContentChange?.(editor.innerHTML)
     }
     refresh()
+    if (editingId === item.id) {
+      setEditingId('')
+      setDraft('')
+    }
     setMessage('')
   }
 
@@ -117,6 +135,7 @@ export default function ShadowDocsReviewCommentsPanel({
         <div className="sd-review-detail-actions">
           {markIds.has(item.id) ? <button type="button" onClick={() => locate(item.id)}><CornerDownRight size={15} />{labels.linked}</button> : null}
           {!disabled && !item.legacy ? <><button type="button" onClick={() => toggleResolved(item)}>{item.resolvedAt ? labels.reopen : labels.resolve}</button><button type="button" onClick={() => edit(item)}>{labels.edit}</button><button type="button" onClick={() => remove(item)}><Trash2 size={15} />{labels.delete}</button></> : null}
+          {!disabled && item.legacy && markIds.has(item.id) && onContentChange ? <button type="button" onClick={() => remove(item)}><Trash2 size={15} />{labels.delete}</button> : null}
         </div>
       </article>) : <p className="sd-review-detail-empty">{labels.empty}</p>}
     </div>
