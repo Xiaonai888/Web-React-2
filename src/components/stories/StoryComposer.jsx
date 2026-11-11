@@ -736,7 +736,7 @@ const mentionUsername = mentionTarget?.username || ''
           mentionUsername,
   mentionTarget,
   linkUrl,
-}) {
+}) 
       }
 
       await clearHomeCacheSection('discover-story-feed')
