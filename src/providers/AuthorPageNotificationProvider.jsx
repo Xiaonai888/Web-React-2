@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react'
 import { useLocation } from 'react-router-dom'
+import { invalidateStudioVideoNotifications } from '../services/shadowStudioNotificationsApi'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -259,8 +260,11 @@ export function AuthorPageNotificationProvider({ children }) {
       }
 
       if (payload?.action === 'created') {
-        notificationRevisionRef.current += 1
-      }
+  notificationRevisionRef.current += 1
+  if (payload?.notification?.metadata?.source === 'fast_reel') {
+    invalidateStudioVideoNotifications()
+  }
+}
     }
 
     const run = async () => {
