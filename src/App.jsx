@@ -64,6 +64,7 @@ import TaskHistoryPage from './pages/TaskHistoryPage'
 import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
+import SmartPlacementAdvertisement from './components/advertisements/SmartPlacementAdvertisement'
 import ShadowSplashScreen from './components/ShadowSplashScreen'
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
@@ -1971,14 +1972,14 @@ const shouldShowOpeningAds =
       ) : null}
 
       {!showShadowSplash && shouldShowOpeningAds && adStep === 'opening' ? (
-        <AdvertisementPopup
+        <SmartPlacementAdvertisement
           placement="opening"
           blocking
           onFinish={() => setAdStep('done')}
         />
       ) : null}
 
-      {shouldShowMeAd ? <AdvertisementPopup placement="me" /> : null}
+      {shouldShowMeAd ? <SmartPlacementAdvertisement placement="me" /> : null}
 
       {isMeLibrary ? <Footer libraryMode /> : !shouldHideFooter ? <Footer /> : null}
     </>
