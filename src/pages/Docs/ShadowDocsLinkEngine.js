@@ -1,11 +1,12 @@
 import { restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
 
 const safeUrl = value => {
-  const raw = String(value || '').trim().slice(0, 2048)
-  if (!raw) return ''
+  const raw = String(value ?? '').trim()
+  if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return ''
   try {
     const url = new URL(raw, globalThis.location?.href || 'https://shadow.local/')
     if (!['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol)) return ''
+    if (['http:', 'https:'].includes(url.protocol) && (!url.hostname || url.username || url.password)) return ''
     return raw
   } catch {
     return ''
@@ -16,10 +17,11 @@ export function applyShadowDocsLink(editor, snapshot, href, { title = '' } = {})
   const range = restoreShadowDocsSelection(editor, snapshot)
   const url = safeUrl(href)
   if (!editor || !range || range.collapsed || !url || typeof document === 'undefined') return false
+  if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return false
   const anchor = document.createElement('a')
   anchor.href = url
   anchor.rel = 'noopener noreferrer'
-  if (String(title || '').trim()) anchor.title = String(title).trim().slice(0, 160)
+  if (String(title ?? '').trim()) anchor.title = String(title).trim().slice(0, 160)
   try {
     range.surroundContents(anchor)
   } catch {
