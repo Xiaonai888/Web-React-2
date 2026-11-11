@@ -9,7 +9,8 @@ import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsPar
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
 import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
-import { readShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
+import { applyShadowDocsReviewVisibility, readShadowDocsReviewPreferences, saveShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
+import { saveShadowDocsReviewComment, deleteShadowDocsReviewComment } from './ShadowDocsReviewCommentsStore'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
@@ -304,6 +305,7 @@ export default function ShadowDocsWritingStudioPanel({
     inkCurrentRef.current = Array.isArray(chapter?.ink) ? chapter.ink : []
     setRibbonState(current => ({
       ...current,
+      showMarkup: readShadowDocsReviewPreferences(chapter?.id).showMarkup,
       drawEnabled: false,
       autoNumbering: false,
       paragraphLayout: false,
@@ -348,6 +350,13 @@ export default function ShadowDocsWritingStudioPanel({
     selectionRef.current = null
     setRibbonMessage('')
   }, [book?.id, chapter?.id])
+
+  useEffect(() => {
+    applyShadowDocsReviewVisibility(editorRef.current, {
+      ...readShadowDocsReviewPreferences(chapter?.id),
+      showMarkup: ribbonState.showMarkup,
+    })
+  }, [book?.id, chapter?.id, ribbonState.showMarkup])
 
   useEffect(() => {
     setRibbonState(state => ({
@@ -1248,18 +1257,37 @@ export default function ShadowDocsWritingStudioPanel({
       const text = typeof value === 'string' ? value.trim() : globalThis.prompt?.('Comment:', '')
       if (!text) return
       const record = createShadowDocsCommentRecord({ text, author: readShadowDocsReviewPreferences(chapter.id).userName, chapterId: chapter.id })
-      finishRibbonChange(addShadowDocsComment(editor, snapshot, record), `Comment added: ${record.text.slice(0, 80)}`)
+      if (!saveShadowDocsReviewComment(chapter.id, record)) return setRibbonMessage('Could not save comment on this device.')
+      if (!addShadowDocsComment(editor, snapshot, record)) {
+        deleteShadowDocsReviewComment(chapter.id, record.id)
+        return setRibbonMessage('Select text first.')
+      }
+      finishRibbonChange(true, `Comment added: ${record.text.slice(0, 80)}`)
       return
     }
     if (command === 'deleteComment') {
       const marks = getShadowDocsCommentMarks(editor)
       if (!marks.length) return setRibbonMessage('No comments found.')
-      finishRibbonChange(removeShadowDocsCommentMark(editor, marks[0].id), 'Comment mark removed.')
+      const removed = removeShadowDocsCommentMark(editor, marks[0].id)
+      if (removed) deleteShadowDocsReviewComment(chapter.id, marks[0].id)
+      finishRibbonChange(removed, 'Comment mark removed.')
       return
     }
     if (command === 'previousComment' || command === 'nextComment') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-comment-id]', command === 'nextComment' ? 1 : -1) ? 'Comment selected.' : 'No comments found.'); return }
     if (command === 'trackChanges') { setRibbonState(state => ({ ...state, trackChanges: Boolean(value) })); setRibbonMessage(`Track Changes ${value ? 'on' : 'off'}.`); return }
-    if (command === 'showMarkup') { setRibbonState(state => ({ ...state, showMarkup: !state.showMarkup })); return }
+    if (command === 'showMarkup') {
+      const next = value === false ? false : !ribbonState.showMarkup
+      saveShadowDocsReviewPreferences(chapter.id, {
+        ...readShadowDocsReviewPreferences(chapter.id),
+        showMarkup: next,
+      })
+      setRibbonState(state => ({ ...state, showMarkup: next }))
+      applyShadowDocsReviewVisibility(editor, {
+        ...readShadowDocsReviewPreferences(chapter.id),
+        showMarkup: next,
+      })
+      return
+    }
     if (command === 'reviewPane') { const changes = listShadowDocsChanges(editor); setRibbonMessage(changes.length ? `${changes.length} tracked change(s). ${changes[0].type}: ${changes[0].text}` : 'No tracked changes.'); return }
     if (command === 'displayReview') { setRibbonMessage(`${listShadowDocsChanges(editor).length} tracked change(s) in this chapter.`); return }
     if (command === 'acceptChange' || command === 'rejectChange') {
@@ -1770,53 +1798,120 @@ export default function ShadowDocsWritingStudioPanel({
   }
 
   function trackBeforeInput(event) {
-  const editor = editorRef.current
-  if (!ribbonState.trackChanges || event.isComposing || !editor || !chapter) return
-  let snapshot = captureShadowDocsSelection(editor)
-  if (!snapshot) return
-  const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
-  if (event.inputType === 'insertText' && event.data) {
-    event.preventDefault()
-    if (markShadowDocsInsertion(editor, snapshot, event.data, reviewerName)) finishRibbonChange(true)
-    return
-  }
-  if (event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward') return
-  if (snapshot.collapsed) {
-    const target = event.nativeEvent?.getTargetRanges?.()[0]
-    if (target && editor.contains(target.startContainer) && editor.contains(target.endContainer)) {
+    const editor = editorRef.current
+    if (!ribbonState.trackChanges || event.isComposing || !editor || !chapter) return
+    let snapshot = captureShadowDocsSelection(editor)
+    if (!snapshot) return
+    const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
+    const selection = globalThis.getSelection?.()
+
+    function moveCaret(changeId, placement) {
+      const element = [...editor.querySelectorAll('[data-shadow-docs-change-id]')]
+        .find(node => node.dataset.shadowDocsChangeId === changeId)
+      if (!element || !selection) return false
       const range = document.createRange()
-      range.setStart(target.startContainer, target.startOffset)
-      range.setEnd(target.endContainer, target.endOffset)
-      const selection = globalThis.getSelection?.()
-      if (!range.collapsed && selection) {
+      if (placement === 'inside') {
+        const lastText = element.lastChild
+        if (lastText?.nodeType === 3) range.setStart(lastText, lastText.nodeValue.length)
+        else range.selectNodeContents(element)
+        range.collapse(false)
+      } else {
+        if (placement === 'before') range.setStartBefore(element)
+        else range.setStartAfter(element)
+        range.collapse(true)
+      }
+      selection.removeAllRanges()
+      selection.addRange(range)
+      return true
+    }
+
+    if (event.inputType === 'insertText' && event.data) {
+      event.preventDefault()
+      const currentRange = selection?.rangeCount ? selection.getRangeAt(0) : null
+      const currentNode = currentRange?.startContainer
+      const currentElement = currentNode?.nodeType === 1 ? currentNode : currentNode?.parentElement
+      const insertion = snapshot.collapsed && currentRange?.collapsed
+        ? currentElement?.closest?.('ins[data-shadow-docs-change-type="insert"]')
+        : null
+      if (insertion && editor.contains(insertion) && insertion.dataset.shadowDocsChangeAuthor === reviewerName) {
+        if (currentNode?.nodeType === 3) {
+          const offset = currentRange.startOffset
+          currentNode.insertData(offset, event.data)
+          currentRange.setStart(currentNode, offset + event.data.length)
+          currentRange.collapse(true)
+        } else {
+          const node = document.createTextNode(event.data)
+          currentRange.insertNode(node)
+          currentRange.setStartAfter(node)
+          currentRange.collapse(true)
+        }
         selection.removeAllRanges()
-        selection.addRange(range)
-        snapshot = captureShadowDocsSelection(editor) || snapshot
+        selection.addRange(currentRange)
+        finishRibbonChange(true)
+        return
+      }
+      if (!snapshot.collapsed) {
+        const deletionId = markShadowDocsDeletion(editor, snapshot, reviewerName)
+        if (!deletionId) {
+          const replacementId = markShadowDocsInsertion(editor, snapshot, event.data, reviewerName)
+          if (replacementId) {
+            moveCaret(replacementId, 'inside')
+            finishRibbonChange(true)
+          }
+          return
+        }
+        if (moveCaret(deletionId, 'after')) snapshot = captureShadowDocsSelection(editor)
+        if (!snapshot || !snapshot.collapsed) {
+          finishRibbonChange(true)
+          return
+        }
+      }
+      const insertionId = markShadowDocsInsertion(editor, snapshot, event.data, reviewerName)
+      if (insertionId) {
+        moveCaret(insertionId, 'inside')
+        finishRibbonChange(true)
+      }
+      return
+    }
+
+    if (event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward') return
+    if (snapshot.collapsed) {
+      const target = event.nativeEvent?.getTargetRanges?.()[0]
+      if (target && editor.contains(target.startContainer) && editor.contains(target.endContainer)) {
+        const range = document.createRange()
+        range.setStart(target.startContainer, target.startOffset)
+        range.setEnd(target.endContainer, target.endOffset)
+        if (!range.collapsed && selection) {
+          selection.removeAllRanges()
+          selection.addRange(range)
+          snapshot = captureShadowDocsSelection(editor) || snapshot
+        }
       }
     }
+    if (snapshot.collapsed) {
+      const node = selection?.anchorNode
+      if (node?.nodeType !== 3) return
+      const offset = selection.anchorOffset
+      const value = node.nodeValue || ''
+      const boundaries = typeof Intl.Segmenter === 'function'
+        ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value), part => part.index)
+        : Array.from(value.matchAll(/[\s\S]/gu), match => match.index)
+      boundaries.push(value.length)
+      const boundary = event.inputType === 'deleteContentBackward'
+        ? boundaries.filter(point => point < offset).at(-1)
+        : boundaries.find(point => point > offset)
+      if (boundary === undefined) return
+      if (event.inputType === 'deleteContentBackward') snapshot.startOffset = boundary
+      else snapshot.endOffset = boundary
+      snapshot.collapsed = false
+    }
+    event.preventDefault()
+    const deletionId = markShadowDocsDeletion(editor, snapshot, reviewerName)
+    if (deletionId) {
+      moveCaret(deletionId, event.inputType === 'deleteContentBackward' ? 'before' : 'after')
+      finishRibbonChange(true)
+    }
   }
-  if (snapshot.collapsed) {
-    const selection = globalThis.getSelection?.()
-    const node = selection?.anchorNode
-    if (node?.nodeType !== 3) return
-    const offset = selection.anchorOffset
-    const value = node.nodeValue || ''
-    const boundaries = typeof Intl.Segmenter === 'function'
-      ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value), part => part.index)
-      : Array.from(value.matchAll(/[\s\S]/gu), match => match.index)
-    boundaries.push(value.length)
-    const boundary = event.inputType === 'deleteContentBackward'
-      ? boundaries.filter(point => point < offset).at(-1)
-      : boundaries.find(point => point > offset)
-    if (boundary === undefined) return
-    if (event.inputType === 'deleteContentBackward') snapshot.startOffset = boundary
-    else snapshot.endOffset = boundary
-    snapshot.collapsed = false
-  }
-  event.preventDefault()
-  if (markShadowDocsDeletion(editor, snapshot, reviewerName)) finishRibbonChange(true)
-}
-
 
   async function loadRecipients(event) {
     const file = event.target.files?.[0]
@@ -2346,7 +2441,7 @@ export default function ShadowDocsWritingStudioPanel({
           role="textbox"
           aria-label="Chapter text editor"
           aria-multiline="true"
-          spellCheck
+          spellCheck={readShadowDocsReviewPreferences(chapter.id).spellCheck}
           style={{
             fontFamily: shadowDocsFontFamily(settings.font),
             fontSize: `${Number(settings.fontSize) || 13}pt`,
