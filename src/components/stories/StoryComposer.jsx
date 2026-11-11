@@ -437,6 +437,7 @@ async function saveStoryExtras({
   storyId,
   token,
   textOverlay,
+  textSticker,
   altText,
   mentionUsername,
   linkUrl,
@@ -451,6 +452,7 @@ async function saveStoryExtras({
       },
       body: JSON.stringify({
         text_overlay: textOverlay.trim(),
+        text_overlay_style: textOverlay.trim() ? textSticker : null,
         alt_text: altText.trim(),
         mention_username: mentionUsername.trim(),
         link_url: linkUrl.trim(),
@@ -721,6 +723,7 @@ export default function StoryComposer({ mode }) {
           storyId: createdStory.id,
           token,
           textOverlay,
+          textSticker,
           altText,
           mentionUsername,
           linkUrl,
