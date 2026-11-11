@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, ClipboardCopy, Languages, LoaderCircle, ShieldCheck, SpellCheck2 } from 'lucide-react'
 import { requestShadowDocsReviewAI } from './ShadowDocsReviewAIApi'
+import { detectShadowDocsLanguage } from './ShadowDocsLanguageEngine'
 import './ShadowDocsReviewAIPanel.css'
 
 const LANGUAGES = [
@@ -30,7 +31,7 @@ export default function ShadowDocsReviewAIPanel({ mode = 'translate', editor = n
   const task = mode === 'proofread' ? 'proofread' : 'translate'
   const source = useMemo(() => String(selectedText || '').trim() || String(editor?.textContent || '').trim() || extractText(html).trim(), [selectedText, editor, html])
   const [draft, setDraft] = useState(source)
-  const [target, setTarget] = useState(code in LABELS ? code : 'en')
+  const [target, setTarget] = useState(() =>   detectShadowDocsLanguage(source).id === 'en' ? 'km' : 'en' )
   const [result, setResult] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
