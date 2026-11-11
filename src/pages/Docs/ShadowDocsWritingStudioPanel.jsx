@@ -8,6 +8,7 @@ import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsPar
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
 import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
+import { readShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
@@ -1220,7 +1221,7 @@ export default function ShadowDocsWritingStudioPanel({
       if (!snapshot || snapshot.collapsed) return setRibbonMessage('Select text first.')
       const text = typeof value === 'string' ? value.trim() : globalThis.prompt?.('Comment:', '')
       if (!text) return
-      const record = createShadowDocsCommentRecord({ text, author: book.author || 'Author', chapterId: chapter.id })
+      const record = createShadowDocsCommentRecord({ text, author: readShadowDocsReviewPreferences(chapter.id).userName, chapterId: chapter.id })
       finishRibbonChange(addShadowDocsComment(editor, snapshot, record), `Comment added: ${record.text.slice(0, 80)}`)
       return
     }
@@ -1697,13 +1698,14 @@ export default function ShadowDocsWritingStudioPanel({
   function trackBeforeInput(event) {
     if (!ribbonState.trackChanges || event.isComposing || !editorRef.current) return
     const snapshot = captureShadowDocsSelection(editorRef.current)
-    if (!snapshot) return
+if (!snapshot) return
+const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
     if (event.inputType === 'insertText' && event.data) {
       event.preventDefault()
-      if (markShadowDocsInsertion(editorRef.current, snapshot, event.data, book.author || 'Author')) finishRibbonChange(true)
+      if (markShadowDocsDeletion(editorRef.current, snapshot, book.author || 'Author')) finishRibbonChange(true)
     } else if ((event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') && !snapshot.collapsed) {
       event.preventDefault()
-      if (markShadowDocsDeletion(editorRef.current, snapshot, book.author || 'Author')) finishRibbonChange(true)
+      if markShadowDocsDeletion(editorRef.current, snapshot, reviewerName)) finishRibbonChange(true)
     }
   }
 
