@@ -1,0 +1,39 @@
+.sd-draw-tab-scroll{display:flex;align-items:stretch;gap:2px;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;scroll-snap-type:x proximity;background:#242424;border-bottom:1px solid #383838}
+.sd-draw-tab-scroll::-webkit-scrollbar{display:none}
+.sd-draw-tab{position:relative;flex:none;min-width:65px;padding:14px 10px 15px;scroll-snap-align:center;background:transparent;border:0;color:#b5b5b5;font-size:12px;font-weight:600;white-space:nowrap}
+.sd-draw-tab.is-active{color:#f7f7f7}
+.sd-draw-tab.is-active::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px;background:#438df0}
+.sd-draw-tab:disabled{opacity:.35}
+.sd-draw-panel{width:100%;min-width:0;padding:14px 12px 18px;background:#1b1b1b;color:#f0f0f0;font-size:13px;overflow-y:auto;max-height:min(68dvh,510px);overscroll-behavior:contain}
+.sd-draw-settings,.sd-draw-toolbox,.sd-draw-colors,.sd-draw-width,.sd-draw-actions{background:#2c2c2c;border-radius:13px;margin-bottom:10px}
+.sd-draw-settings{padding:0 14px}
+.sd-draw-setting{min-height:61px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #393939}
+.sd-draw-setting:last-child{border-bottom:0}
+.sd-draw-setting span{color:#f0f0f0;font-size:14px}
+.sd-draw-switch{width:58px;height:33px;border:0;border-radius:22px;position:relative;background:#555;flex:none;transition:background .15s}
+.sd-draw-switch.is-on{background:#488fea}
+.sd-draw-switch>span{position:absolute;top:4px;left:4px;width:25px;height:25px;border-radius:50%;background:#efefef;box-shadow:0 1px 3px #0005;transition:transform .15s}
+.sd-draw-switch.is-on>span{transform:translateX(25px)}
+.sd-draw-switch:disabled{opacity:.35}
+.sd-draw-toolbox{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:9px}
+.sd-draw-tool{height:53px;border:1px solid transparent;border-radius:9px;background:transparent;color:#d5d5d5;display:flex;align-items:center;justify-content:center}
+.sd-draw-tool.is-selected{background:#393939;border-color:#505050;color:#f4b540}
+.sd-draw-tool:disabled{opacity:.4}
+.sd-draw-colors{display:flex;gap:11px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:15px 13px;-webkit-overflow-scrolling:touch}
+.sd-draw-colors::-webkit-scrollbar{display:none}
+.sd-draw-color{width:31px;height:31px;min-width:31px;border:2px solid transparent;border-radius:50%;background:var(--ink);box-shadow:inset 0 0 0 1px #ffffff35}
+.sd-draw-color.is-selected{outline:2px solid #d1d1d1;outline-offset:3px}
+.sd-draw-custom-color{height:32px;width:33px;min-width:33px;border:2px solid #777;border-radius:50%;background:transparent;padding:2px}
+.sd-draw-width{display:flex;align-items:center;gap:9px;padding:14px 11px}
+.sd-draw-width label{font-size:11px;white-space:nowrap;color:#dedede}
+.sd-draw-width button{width:30px;height:32px;flex:none;border:0;border-radius:8px;background:#373737;color:#eee;display:grid;place-items:center}
+.sd-draw-width input{flex:1;min-width:20px;accent-color:#438df0}
+.sd-draw-width output{font-variant-numeric:tabular-nums;font-size:13px;min-width:18px;text-align:center}
+.sd-draw-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:9px}
+.sd-draw-actions button{min-width:0;min-height:40px;border:1px solid #454545;border-radius:9px;background:#363636;color:#f4f4f4;display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px}
+.sd-draw-actions button:disabled{opacity:.35}
+.sd-ink-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none;z-index:3;background:transparent}
+.sd-ink-canvas.is-enabled{pointer-events:auto;touch-action:pan-y;cursor:crosshair}
+.sd-ink-canvas.is-enabled.is-touch-enabled{touch-action:none}
+@media(min-width:701px){.sd-draw-panel{max-height:490px}.sd-draw-tab{padding:12px 16px}}
+@media(max-width:360px){.sd-draw-panel{padding:10px 9px}.sd-draw-width{gap:5px}.sd-draw-width label{font-size:10px}.sd-draw-tab{min-width:60px;padding-left:8px;padding-right:8px}}
