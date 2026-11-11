@@ -2,14 +2,20 @@ import { restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
 
 const safeUrl = value => {
   const raw = String(value ?? '').trim()
-  if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return ''
+  if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return null
   try {
-    const url = new URL(raw, globalThis.location?.href || 'https://shadow.local/')
-    if (!['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol)) return ''
-    if (['http:', 'https:'].includes(url.protocol) && (!url.hostname || url.username || url.password)) return ''
-    return raw
+    const parsed = new URL(raw, globalThis.location?.href || 'https://shadow.local/')
+    const protocol = parsed.protocol
+    if (protocol === 'https:' || protocol === 'http:') {
+      if (!parsed.hostname || parsed.username || parsed.password) return null
+      return { protocol, suffix: `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}` }
+    }
+    if (protocol === 'mailto:' || protocol === 'tel:') {
+      return { protocol, suffix: `${parsed.pathname}${parsed.search}${parsed.hash}` }
+    }
+    return null
   } catch {
-    return ''
+    return null
   }
 }
 
@@ -19,7 +25,11 @@ export function applyShadowDocsLink(editor, snapshot, href, { title = '' } = {})
   if (!editor || !range || range.collapsed || !url || typeof document === 'undefined') return false
   if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return false
   const anchor = document.createElement('a')
-  anchor.href = url
+  if (url.protocol === 'https:') anchor.href = `https://${url.suffix}`
+  else if (url.protocol === 'http:') anchor.href = `http://${url.suffix}`
+  else if (url.protocol === 'mailto:') anchor.href = `mailto:${url.suffix}`
+  else if (url.protocol === 'tel:') anchor.href = `tel:${url.suffix}`
+  else return false
   anchor.rel = 'noopener noreferrer'
   if (String(title ?? '').trim()) anchor.title = String(title).trim().slice(0, 160)
   try {
