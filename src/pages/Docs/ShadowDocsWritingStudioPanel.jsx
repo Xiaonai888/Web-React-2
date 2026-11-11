@@ -1756,10 +1756,10 @@ if (!snapshot) return
 const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
     if (event.inputType === 'insertText' && event.data) {
       event.preventDefault()
-      if (markShadowDocsDeletion(editorRef.current, snapshot, book.author || 'Author')) finishRibbonChange(true)
+      if (markShadowDocsInsertion(editorRef.current, snapshot, event.data, reviewerName)) finishRibbonChange(true)
     } else if ((event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') && !snapshot.collapsed) {
       event.preventDefault()
-      if markShadowDocsDeletion(editorRef.current, snapshot, reviewerName)) finishRibbonChange(true)
+      if (markShadowDocsDeletion(editorRef.current, snapshot, reviewerName)) finishRibbonChange(true)
     }
   }
 
