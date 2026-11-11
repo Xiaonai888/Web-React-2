@@ -65,7 +65,7 @@ export default function ShadowDocsDrawToolsPanel({
       <output>{width}</output>
     </div>
     <div className="sd-draw-actions">
-      <button type="button" disabled={disabled || !hasStrokes} onClick={onUndo}><RotateCcw size={17} />{text.undo}</button>
+      <button type="button" disabled={disabled || !Number(state.inkUndoCount)} onClick={onUndo}><RotateCcw size={17} />{text.undo}</button>
       <button type="button" disabled={disabled || !hasStrokes} onClick={onClear}><Trash2 size={17} />{text.clear}</button>
     </div>
   </div>
