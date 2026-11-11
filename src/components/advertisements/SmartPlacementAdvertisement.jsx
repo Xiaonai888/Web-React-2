@@ -59,6 +59,15 @@ async function getPlacementMode(placement) {
   return request
 }
 
+function alreadyShownInSession(placement) {
+  try {
+    if (new URLSearchParams(window.location.search).get('adtest') === '1') return false
+    return sessionStorage.getItem(`shadow_ad_seen_${placement}_auto_system_v1`) === '1'
+  } catch {
+    return false
+  }
+}
+
 export default function SmartPlacementAdvertisement({
   placement = 'opening',
   blocking = false,
@@ -100,11 +109,16 @@ export default function SmartPlacementAdvertisement({
           finish()
           return
         }
+        if (!rotation.enabled) {
+          finish()
+          return
+        }
         if (rotation.mode !== 'auto_system') {
+          clearTimeout(timeout)
           setState({ status: 'legacy', advertisement: null })
           return
         }
-        if (!rotation.enabled || await hasPremiumAdFree()) {
+        if (alreadyShownInSession(placement) || await hasPremiumAdFree()) {
           if (!cancelled) finish()
           return
         }
@@ -115,6 +129,7 @@ export default function SmartPlacementAdvertisement({
           finish()
           return
         }
+        clearTimeout(timeout)
         setState({ status: 'smart', advertisement })
       } catch (error) {
         if (cancelled || finishedRef.current) return
