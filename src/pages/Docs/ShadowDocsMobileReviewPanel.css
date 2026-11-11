@@ -1,0 +1,43 @@
+.sd-review-panel{width:100%;min-width:0;color:#eee;font-family:Inter,"Noto Sans Khmer",system-ui,sans-serif;padding:10px 0 28px;color-scheme:dark}
+.sd-review-panel *{box-sizing:border-box}
+.sd-review-panel button{font:inherit;cursor:pointer}
+.sd-review-panel button:disabled{opacity:.42;cursor:not-allowed}
+.sd-review-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:1px 0 12px}
+.sd-review-quick{min-width:0;min-height:96px;padding:11px 6px 12px;border:0;border-radius:16px;background:#303030;color:#e6e6e6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.sd-review-quick svg{flex:none;color:#bcbcbc}
+.sd-review-quick span{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.sd-review-card{background:#303030;border-radius:16px;overflow:hidden;margin:10px 0;padding:0 12px}
+.sd-review-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:70px;padding:12px 8px;color:#e9e9e9}
+.sd-review-item+.sd-review-item{border-top:1px solid #414141}
+.sd-review-action{border:0;background:transparent;text-align:left}
+.sd-review-item-title{display:flex;align-items:center;gap:17px;min-width:0;line-height:1.35;font-size:15px}
+.sd-review-item-title svg{flex:0 0 23px;color:#c7c7c7}
+.sd-review-toggle{display:flex;align-items:center;flex:none;width:48px;height:29px;padding:3px;border:0;border-radius:100px;background:#535353;transition:background .15s ease}
+.sd-review-toggle span{display:block;width:23px;height:23px;border-radius:100px;background:#efefef;transition:transform .15s ease}
+.sd-review-toggle.is-on{background:#468cef}
+.sd-review-toggle.is-on span{transform:translateX(19px)}
+.sd-review-note{margin:13px 5px;padding:12px 14px;border:1px solid #494949;border-radius:12px;background:#282828;color:#cfcfcf;font-size:13px;line-height:1.5}
+.sd-review-page-title{display:flex;align-items:center;gap:11px;min-height:51px;font-size:16px}
+.sd-review-page-title button{display:grid;place-items:center;width:40px;height:40px;border:0;background:transparent;color:#f3f3f3;border-radius:10px}
+.sd-review-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:11px 0}
+.sd-review-metric{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;min-width:0;padding:14px 12px;min-height:88px}
+.sd-review-metric strong{font-size:25px;font-weight:750;line-height:1}
+.sd-review-metric span{font-size:12px;color:#aaa}
+.sd-review-metrics>.sd-review-metric{border-radius:15px;background:#303030}
+.sd-review-revision-summary{display:grid;grid-template-columns:repeat(2,1fr)}
+.sd-review-revision{padding:14px 5px;display:flex;flex-direction:column;gap:5px}
+.sd-review-revision+.sd-review-revision{border-top:1px solid #444}
+.sd-review-revision strong{font-size:14px}
+.sd-review-revision small{font-size:11px;color:#aaa}
+.sd-review-revision p{margin:3px 0 0;overflow-wrap:anywhere;white-space:pre-wrap;color:#ddd;font-size:13px;line-height:1.5}
+.sd-review-revision-actions{display:flex;gap:10px;margin:15px 0}
+.sd-review-revision-actions button{flex:1;border:0;border-radius:11px;padding:13px;background:#383838;color:#eee}
+.sd-review-name-form{padding:17px;display:flex;flex-direction:column;gap:11px}
+.sd-review-name-form label{font-size:13px;color:#bbb}
+.sd-review-name-form input{width:100%;min-height:45px;padding:10px 12px;border:1px solid #555;border-radius:10px;background:#252525;color:#f6f6f6;outline:0;font-size:15px}
+.sd-review-name-form>button{display:flex;gap:7px;justify-content:center;align-items:center;border:0;min-height:43px;border-radius:10px;background:#4489e8;color:#fff;font-weight:650}
+.sd-review-panel button:focus-visible,.sd-review-panel input:focus-visible{outline:2px solid #8bbdff;outline-offset:2px}
+.sd-review-comments-hidden [data-shadow-docs-comment-id]{background-color:transparent!important;box-shadow:none!important}
+.sd-review-markup-hidden [data-shadow-docs-change-type="insert"]{background:transparent!important;text-decoration:none!important;color:inherit!important}
+.sd-review-markup-hidden [data-shadow-docs-change-type="delete"]{display:none!important}
+@media(max-width:365px){.sd-review-quick-grid{gap:7px}.sd-review-quick{min-height:88px;padding-inline:4px}.sd-review-quick span{font-size:11px}.sd-review-item-title{gap:11px;font-size:13px}.sd-review-card{padding-inline:8px}}
