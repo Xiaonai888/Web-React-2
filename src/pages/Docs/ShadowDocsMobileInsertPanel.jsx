@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, BookOpen, Bookmark, CalendarClock, ChevronLeft, ChevronRight,
-  FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, ListOrdered, MessageSquarePlus,
-  Minus, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Trash2, Type,
+  FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, ListOrdered, MessageSquarePlus, Scissors,
+  Download, Minus, Paperclip, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Trash2, Type,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
 import ShadowDocsMobileSignaturePanel from './ShadowDocsMobileSignaturePanel'
 import { getShadowDocsBookmarks } from './ShadowDocsLinkEngine'
+import { downloadShadowDocsAttachment, listShadowDocsAttachments } from './ShadowDocsAttachmentEngine'
 
 const PAGE_ACTIONS = [
   { id: 'coverPage', label: 'Cover Page', icon: FileText },
   { id: 'blankPage', label: 'Blank Page', icon: FilePlus2 },
-  { id: 'pageBreak', label: 'Page Break', icon: FilePlus2 },
+  { id: 'breaks', label: 'Breaks', icon: Scissors },
   { id: 'horizontalRule', label: 'Divider', icon: Minus },
 ]
 const OBJECT_ACTIONS = [
@@ -22,6 +23,7 @@ const OBJECT_ACTIONS = [
   { id: 'textBox', label: 'Text Box', icon: FileText },
   { id: 'scanText', label: 'Scan Text', icon: ScanText },
   { id: 'signature', label: 'Signature', icon: PenLine },
+  { id: 'attachment', label: 'Attachment', icon: Paperclip },
 ]
 const LINK_ACTIONS = [
   { id: 'link', label: 'Link', icon: Link2 },
@@ -45,7 +47,7 @@ const DOCUMENT_ACTIONS = [
   { id: 'footer', label: 'Footer', icon: FileText },
   { id: 'pageNumber', label: 'Page Numbers', icon: FilePlus2 },
 ]
-const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'viewBookmarks', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
+const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'viewBookmarks', 'breaks', 'attachment', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
 const WIDTHS = [50, 75, 100]
 const ALIGNMENTS = [
   { value: 'left', label: 'Left', icon: AlignLeft },
@@ -95,6 +97,10 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [bookmarks, setBookmarks] = useState([])
   const [bookmarkSearch, setBookmarkSearch] = useState('')
   const [pendingBookmarkDelete, setPendingBookmarkDelete] = useState('')
+  const [attachedFiles, setAttachedFiles] = useState([])
+  const [attachmentError, setAttachmentError] = useState('')
+  const [pendingAttachmentDelete, setPendingAttachmentDelete] = useState('')
+  const [attachmentLoading, setAttachmentLoading] = useState(false)
 
   const canInsert = !disabled && typeof onCommand === 'function'
   const bookmarkToken = bookmarkName.trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -157,8 +163,49 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
     refreshBookmarks()
   }
 
+  async function refreshAttachments() {
+    const editor = editorElement()
+    const chapterId = editor?.dataset.chapterId
+    setAttachmentError('')
+    setAttachedFiles([])
+    if (!chapterId) {
+      setAttachmentError('Open a chapter before managing its attachments.')
+      return
+    }
+    setAttachmentLoading(true)
+    try {
+      const references = new Set([...editor.querySelectorAll('a[href^="#sd-attachment-"]')]
+        .map(node => node.getAttribute('href')?.slice('#sd-attachment-'.length)).filter(Boolean))
+      const items = await listShadowDocsAttachments(chapterId)
+      setAttachedFiles(items.filter(item => references.has(item.id)))
+    } catch (error) {
+      setAttachmentError(error?.message || 'Could not open local attachments.')
+    } finally {
+      setAttachmentLoading(false)
+    }
+  }
+
+  async function downloadAttachment(id) {
+    try {
+      setAttachmentError('')
+      await downloadShadowDocsAttachment(id)
+    } catch (error) {
+      setAttachmentError(error?.message || 'Attachment is unavailable on this device.')
+    }
+  }
+
+  function removeAttachment(id) {
+    if (!canInsert) return
+    setPendingAttachmentDelete('')
+    execute('attachmentRemove', id)
+  }
+
   function selectAction(id) {
     if (!canInsert) return
+    if (id === 'attachment') {
+      setPendingAttachmentDelete('')
+      void refreshAttachments()
+    }
     if (id === 'viewBookmarks') {
       setBookmarkSearch('')
       setPendingBookmarkDelete('')
@@ -201,6 +248,52 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       {actionGroup('Text', TEXT_ACTIONS)}
       {actionGroup('Header & Footer', DOCUMENT_ACTIONS)}
       <p className="sd-insert-help">Select text before adding a comment, Word Art or Drop Cap. Put the cursor in the document before inserting other items.</p>
+    </>
+
+    if (view === 'breaks') return <>
+      <InsertTitle title="Insert Break" onBack={() => setView('menu')} />
+      <div className="sd-insert-card sd-insert-breaks">
+        <button type="button" disabled={!canInsert} onPointerDown={event => event.preventDefault()} onClick={() => execute('pageBreak')}>
+          <span><strong>Page Break</strong><small>Continue on a new page</small></span><FilePlus2 size={20} />
+        </button>
+        <button type="button" disabled={!canInsert} onPointerDown={event => event.preventDefault()} onClick={() => execute('lineBreak')}>
+          <span><strong>Line Break</strong><small>Start a new line without a new paragraph</small></span><Scissors size={20} />
+        </button>
+      </div>
+      <p className="sd-insert-help">Blank Page inserts an empty page; Page Break continues text on the next page. Section breaks and mixed page orientations are not supported in this document format.</p>
+    </>
+
+    if (view === 'attachment') return <>
+      <InsertTitle title="Attachments" onBack={() => setView('menu')} />
+      <p className="sd-insert-help">Files are stored only in this browser. They do not travel with document backups, PDF or Word exports. Keep a separate copy of each file.</p>
+      <div className="sd-insert-card">
+        <label className="sd-insert-attachment-picker">
+          <Paperclip size={19} /> Add Attachment
+          <input type="file" disabled={!canInsert} accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.epub,.zip,.md,.json" onChange={event => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (file) execute('attachmentAdd', file)
+          }} />
+        </label>
+        <p className="sd-insert-help">PDF, Office, text, EPUB or ZIP files. Maximum 5 MB each, 25 files or 25 MB per chapter.</p>
+      </div>
+      <h3 className="sd-insert-section-title">Attachments in this Chapter</h3>
+      <div className="sd-insert-attachment-list">
+        {attachmentLoading ? <p className="sd-insert-help">Loading attachments…</p> : null}
+        {!attachmentLoading && !attachedFiles.length ? <p className="sd-insert-help">No locally available attachments in this chapter.</p> : null}
+        {attachedFiles.map(item => <div className="sd-insert-attachment-row" key={item.id}>
+          <span className="sd-insert-attachment-name"><Paperclip size={17} /><span><strong>{item.name}</strong><small>{(item.size / 1024).toFixed(1)} KB</small></span></span>
+          {pendingAttachmentDelete === item.id ? <div className="sd-insert-attachment-confirm">
+            <span>Delete file permanently?</span>
+            <button type="button" onClick={() => setPendingAttachmentDelete('')}>Cancel</button>
+            <button type="button" disabled={!canInsert} onClick={() => removeAttachment(item.id)}>Delete</button>
+          </div> : <div className="sd-insert-attachment-controls">
+            <button type="button" aria-label={`Download ${item.name}`} onClick={() => void downloadAttachment(item.id)}><Download size={19} /></button>
+            <button type="button" aria-label={`Remove ${item.name}`} disabled={!canInsert} onClick={() => setPendingAttachmentDelete(item.id)}><Trash2 size={19} /></button>
+          </div>}
+        </div>)}
+      </div>
+      {attachmentError ? <p role="alert" className="sd-insert-attachment-error">{attachmentError}</p> : null}
     </>
 
     if (view === 'shape') return <ShadowDocsMobileShapePanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
@@ -352,6 +445,25 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       .sd-insert-quick button{min-width:0;min-height:91px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:0;border-radius:13px;background:#303030;color:#ededed;font-size:12px}
       .sd-insert-quick svg{width:29px;height:29px;stroke-width:1.55;color:#cdcdcd}
       .sd-insert-card{margin-top:12px;padding:8px 12px;background:#303030;border-radius:13px}
+      .sd-insert-attachment-picker{position:relative;display:flex;gap:10px;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:#438fe6;color:#fff;font-size:14px;font-weight:650;overflow:hidden}
+      .sd-insert-attachment-picker input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+      .sd-insert-attachment-list{display:grid;gap:8px}
+      .sd-insert-attachment-row{padding:12px;background:#303030;border-radius:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+      .sd-insert-attachment-name{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+      .sd-insert-attachment-name>span{display:grid;gap:3px;min-width:0}
+      .sd-insert-attachment-name strong{overflow-wrap:anywhere;font-size:13px;font-weight:650}
+      .sd-insert-attachment-name small{color:#aaa;font-size:11px}
+      .sd-insert-attachment-controls,.sd-insert-attachment-confirm{display:flex;align-items:center;gap:8px}
+      .sd-insert-attachment-controls button,.sd-insert-attachment-confirm button{border:1px solid #555;border-radius:8px;background:#3c3c3c;color:#eee;padding:9px;display:grid;place-items:center}
+      .sd-insert-attachment-confirm{flex-basis:100%;justify-content:flex-end;font-size:12px}
+      .sd-insert-attachment-error{color:#ff9a9a;font-size:12px;line-height:1.5}
+      .sd-insert-breaks{padding:0 12px}
+      .sd-insert-breaks>button{width:100%;min-height:74px;border:0;border-bottom:1px solid #484848;background:transparent;color:#ededed;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:12px 4px}
+      .sd-insert-breaks>button:last-child{border-bottom:0}
+      .sd-insert-breaks>button span{display:grid;gap:5px}
+      .sd-insert-breaks>button strong{font-size:14px;font-weight:650}
+      .sd-insert-breaks>button small{font-size:12px;color:#aaa}
+      .sd-insert-breaks>button svg{flex-shrink:0;color:#bbb}
       .sd-insert-section-title{margin:18px 4px 8px;font-size:12px;color:#aeb0b5;font-weight:500}
       .sd-insert-setting-row{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #414141;font-size:14px}
       .sd-insert-setting-row:last-child{border-bottom:0}
