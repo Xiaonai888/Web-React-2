@@ -134,12 +134,19 @@ export default function ShadowDocsMobileHomeSheet({
     const onKeyDown = event => {
       if (event.key !== 'Escape') return
       event.stopPropagation()
-      if (page !== 'home') setPage('home')
-      else onClose?.()
+      if (page !== 'home') {
+  if (['insert', 'draw', 'review'].includes(page) && onTabChange) {
+    onTabChange('home')
+  } else {
+    setPage('home')
+  }
+} else {
+  onClose?.()
+}
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open, page, onClose])
+  }, [open, page, onClose, onTabChange])
 
   function command(name, value = true) {
     if (canBasic) onCommand(name, value)
@@ -201,7 +208,7 @@ export default function ShadowDocsMobileHomeSheet({
 
   return <div className="sd-home-sheet-layer" role="presentation">
     <button type="button" className="sd-home-sheet-dismiss" aria-label="Close tools" onClick={onClose} />
-        <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'fontStyle' ? 'Font Style' : page === 'home' ? 'Home tools' : page === 'color' ? 'Font Color' : 'Highlight'}>
+        <section className="sd-home-sheet" role="dialog" aria-modal="true" aria-label={page === 'fontStyle' ? 'Font Style' : page === 'color' ? 'Font Color' : page === 'highlight' ? 'Highlight' : `${page.charAt(0).toUpperCase()}${page.slice(1)} tools`}>
       <div className={`sd-home-page-slide ${page === 'fontStyle' ? 'is-away' : ''}`}>
         <header className="sd-home-sheet-header">
 {['home', 'fontStyle', 'insert', 'draw', 'review'].includes(page) ? (
@@ -216,9 +223,10 @@ export default function ShadowDocsMobileHomeSheet({
       { id: 'draw', label: 'Draw' },
     ]}
     onChange={id => {
-      if (['home', 'insert', 'draw', 'review'].includes(id)) setPage(id)
-      else onTabChange?.(id)
-    }}
+  if (id === page) return
+  if (onTabChange) onTabChange(id)
+  else if (['home', 'insert', 'draw', 'review'].includes(id)) setPage(id)
+}}
   />
 ) : <div className="sd-home-subtitle">
           <IconButton label="Back to Home" onClick={() => setPage('home')}>
