@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import {
-  AlignCenter, AlignLeft, AlignRight, BookOpen, Bookmark, CalendarClock, ChevronLeft,
+  AlignCenter, AlignLeft, AlignRight, BookOpen, Bookmark, CalendarClock, ChevronLeft, ChevronRight,
   FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, ListOrdered, MessageSquarePlus,
-  Minus, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Type,
+  Minus, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Trash2, Type,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
 import ShadowDocsMobileSignaturePanel from './ShadowDocsMobileSignaturePanel'
+import { getShadowDocsBookmarks } from './ShadowDocsLinkEngine'
 
 const PAGE_ACTIONS = [
   { id: 'coverPage', label: 'Cover Page', icon: FileText },
@@ -25,6 +26,7 @@ const OBJECT_ACTIONS = [
 const LINK_ACTIONS = [
   { id: 'link', label: 'Link', icon: Link2 },
   { id: 'bookmark', label: 'Bookmark', icon: Bookmark },
+  { id: 'viewBookmarks', label: 'View Bookmarks', icon: BookOpen },
 ]
 const NOTE_ACTIONS = [
   { id: 'insertFootnote', label: 'Footnote', icon: BookOpen },
@@ -43,7 +45,7 @@ const DOCUMENT_ACTIONS = [
   { id: 'footer', label: 'Footer', icon: FileText },
   { id: 'pageNumber', label: 'Page Numbers', icon: FilePlus2 },
 ]
-const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
+const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'viewBookmarks', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
 const WIDTHS = [50, 75, 100]
 const ALIGNMENTS = [
   { value: 'left', label: 'Left', icon: AlignLeft },
@@ -90,6 +92,9 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [footerText, setFooterText] = useState('')
   const [footnoteText, setFootnoteText] = useState('')
   const [endnoteText, setEndnoteText] = useState('')
+  const [bookmarks, setBookmarks] = useState([])
+  const [bookmarkSearch, setBookmarkSearch] = useState('')
+  const [pendingBookmarkDelete, setPendingBookmarkDelete] = useState('')
 
   const canInsert = !disabled && typeof onCommand === 'function'
   const bookmarkToken = bookmarkName.trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -109,8 +114,56 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
     onClose?.()
   }
 
+  function editorElement() {
+    return typeof document === 'undefined' ? null : document.querySelector('.sd-writing-area')
+  }
+
+  function refreshBookmarks() {
+    const entries = getShadowDocsBookmarks(editorElement())
+      .filter(item => item.name && !item.name.startsWith('note-') && item.name !== 'endnotes-section')
+      .slice(0, 200)
+    setBookmarks(entries)
+  }
+
+  function navigateToBookmark(name) {
+    const editor = editorElement()
+    const target = [...(editor?.querySelectorAll('[data-shadow-docs-bookmark]') || [])]
+      .find(element => element.getAttribute('data-shadow-docs-bookmark') === name)
+    if (!target) {
+      refreshBookmarks()
+      return
+    }
+    onClose?.()
+    requestAnimationFrame(() => target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }))
+  }
+
+  function removeBookmark(name) {
+    const editor = editorElement()
+    if (!canInsert || !editor?.isContentEditable) return
+    const target = [...editor.querySelectorAll('[data-shadow-docs-bookmark]')]
+      .find(element => element.getAttribute('data-shadow-docs-bookmark') === name)
+    if (!target) {
+      refreshBookmarks()
+      return
+    }
+    if (target.tagName === 'SPAN' && target.textContent === '\u200b' && !target.children.length) {
+      target.remove()
+    } else {
+      target.removeAttribute('data-shadow-docs-bookmark')
+      if (target.id === `sd-bookmark-${name}`) target.removeAttribute('id')
+    }
+    editor.dispatchEvent(new Event('input', { bubbles: true }))
+    setPendingBookmarkDelete('')
+    refreshBookmarks()
+  }
+
   function selectAction(id) {
     if (!canInsert) return
+    if (id === 'viewBookmarks') {
+      setBookmarkSearch('')
+      setPendingBookmarkDelete('')
+      refreshBookmarks()
+    }
     if (PANEL_VIEWS.has(id)) {
       setView(id)
       return
@@ -207,6 +260,35 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       {actionButton('Insert Bookmark', 'bookmark', bookmarkName.trim(), <Bookmark size={20} />, Boolean(bookmarkToken))}
     </>
 
+    if (view === 'viewBookmarks') {
+      const results = bookmarks.filter(item => `${item.name} ${item.text}`.toLocaleLowerCase().includes(bookmarkSearch.trim().toLocaleLowerCase()))
+      return <>
+        <InsertTitle title="View Bookmarks" onBack={() => setView('menu')} />
+        <p className="sd-insert-help">Bookmarks in the current chapter. Tap a bookmark to jump to its position.</p>
+        <label className="sd-insert-field">
+          <span>Find Bookmark</span>
+          <input type="search" aria-label="Search bookmarks" value={bookmarkSearch} maxLength={80} placeholder="Search bookmark names..." onChange={event => setBookmarkSearch(event.target.value)} />
+        </label>
+        <div className="sd-insert-bookmark-list">
+          {!bookmarks.length ? <p className="sd-insert-help">There are no bookmarks in this chapter. Use Insert Bookmark to add one.</p> : null}
+          {bookmarks.length > 0 && !results.length ? <p className="sd-insert-help">No matching bookmarks.</p> : null}
+          {results.map(item => <div className="sd-insert-bookmark-row" key={item.name}>
+            <button type="button" className="sd-insert-bookmark-jump" onPointerDown={event => event.preventDefault()} onClick={() => navigateToBookmark(item.name)}>
+              <Bookmark size={18} />
+              <span><strong>{item.name}</strong>{item.text && item.text !== '\u200b' ? <small>{item.text}</small> : null}</span>
+              <ChevronRight size={18} />
+            </button>
+            {pendingBookmarkDelete === item.name ? <div className="sd-insert-bookmark-confirm">
+              <span>Delete this bookmark?</span>
+              <button type="button" onClick={() => setPendingBookmarkDelete('')}>Cancel</button>
+              <button type="button" disabled={!canInsert} onClick={() => removeBookmark(item.name)}>Delete</button>
+            </div> : <button type="button" className="sd-insert-bookmark-delete" aria-label={`Delete bookmark ${item.name}`} title="Delete bookmark" disabled={!canInsert} onPointerDown={event => event.preventDefault()} onClick={() => setPendingBookmarkDelete(item.name)}><Trash2 size={17} /></button>}
+          </div>)}
+        </div>
+        <p className="sd-insert-help">Deleting a bookmark removes its destination, but does not delete the paragraph or text. Links to it will no longer work.</p>
+      </>
+    }
+
     if (view === 'insertFootnote' || view === 'insertEndnote') {
       const isFootnote = view === 'insertFootnote'
       const noteText = isFootnote ? footnoteText : endnoteText
@@ -293,6 +375,16 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       .sd-insert-symbols{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:12px 0}
       .sd-insert-symbols button{min-height:40px;border:1px solid #555;border-radius:8px;background:#414141;color:#fff;font-size:20px}
       .sd-insert-symbols button.is-selected{border-color:#6aa7ec;background:#3e4e65}
+      .sd-insert-bookmark-list{display:grid;gap:8px;margin-top:12px}
+      .sd-insert-bookmark-row{display:flex;align-items:stretch;gap:6px;border:1px solid #474747;border-radius:11px;background:#303030;padding:5px}
+      .sd-insert-bookmark-jump{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:57px;text-align:left;background:transparent;border:0;color:#f0f0f0;padding:7px 9px}
+      .sd-insert-bookmark-jump>span{display:grid;gap:4px;flex:1;min-width:0}
+      .sd-insert-bookmark-jump strong{overflow-wrap:anywhere;font-size:13px}
+      .sd-insert-bookmark-jump small{color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+      .sd-insert-bookmark-delete{width:42px;flex:none;border:0;border-radius:9px;background:#3c3c3c;color:#e8b2b2}
+      .sd-insert-bookmark-confirm{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px;color:#e2c0c0}
+      .sd-insert-bookmark-confirm button{border:0;border-radius:7px;padding:9px;background:#494949;color:white}
+      .sd-insert-bookmark-confirm button:last-child{background:#8b3030}
       .sd-insert-panel button:disabled{opacity:.35}
       .sd-insert-panel button:not(:disabled):active{filter:brightness(1.2)}
       .sd-insert-panel button:focus-visible{outline:2px solid #7db7ff;outline-offset:2px}
