@@ -89,6 +89,10 @@ export function invalidateMyAuthorPageClientCache() {
   localStorage.removeItem(CACHE_KEY)
 }
 
+export function getMyAuthorPageCachedSnapshot(token) {
+  return readCache(token)?.author_page || null
+}
+
 export async function fetchMyAuthorPageCached({
   apiBaseUrl,
   token,
