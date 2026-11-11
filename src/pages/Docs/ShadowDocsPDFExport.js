@@ -5,6 +5,7 @@ import { buildShadowDocsSectionPrintHTML, buildShadowDocsSectionPrintCSS } from 
 import { isShadowDocsFont, shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
+
 function escapeText(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character])
 }
@@ -13,28 +14,23 @@ function safeChapterHTML(source) {
   return sanitizeShadowDocsHTML(String(source || '').slice(0, 500_000))
 }
 
-function buildShadowDocsPrintInk(strokes) {
+function buildShadowDocsPrintInk(strokes, width, height, hasText) {
   const ink = normalizeShadowDocsInkStrokes(strokes)
   if (!ink.length) return ''
 
-  const total = ink.reduce((sum, stroke) => sum + stroke.points.length, 0)
-  const step = Math.max(1, Math.ceil(total / 80000))
-
+  const totalPoints = ink.reduce((sum, stroke) => sum + stroke.points.length, 0)
+  const sampleStep = Math.max(1, Math.ceil(totalPoints / 80_000))
   const paths = ink.map(stroke => {
-    const points = stroke.points.filter((_, index) =>
-      index % step === 0 || index === stroke.points.length - 1
-    )
-    const commands = points.map(([x, y], index) =>
-      `${index ? 'L' : 'M'}${Math.round(x * 1000)} ${Math.round(y * 1000)}`
-    ).join(' ')
+    const points = stroke.points.filter((_, index) => index % sampleStep === 0 || index === stroke.points.length - 1)
+    if (!points.length) return ''
+    const commands = points.map(([x, y], index) => `${index ? 'L' : 'M'}${Math.round(x * 1000)} ${Math.round(y * 1000)}`).join(' ')
     const path = points.length === 1 ? `${commands}l0.01 0` : commands
-    const width = stroke.width * (stroke.tool === 'highlighter' ? 2.5 : 1)
+    const strokeWidth = stroke.width * (stroke.tool === 'highlighter' ? 2.5 : 1)
     const opacity = stroke.tool === 'highlighter' ? 0.34 : stroke.tool === 'pencil' ? 0.78 : 1
-
-    return `<path d="${path}" fill="none" stroke="${stroke.color}" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`
+    return `<path d="${path}" fill="none" stroke="${stroke.color}" stroke-width="${strokeWidth}" stroke-opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`
   }).join('')
 
-  return `<svg class="sd-print-ink" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${paths}</svg>`
+  return `<figure class="sd-print-ink-sheet${hasText ? ' sd-print-ink-after-text' : ''}" style="width:${width}mm;height:${height}mm" aria-label="Chapter drawing"><svg class="sd-print-ink" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${paths}</svg></figure>`
 }
 
 function selectedFontCSS(chapterHTML, defaultFont) {
@@ -96,8 +92,15 @@ export function buildShadowDocsPrintHTML(book) {
   const settings = normalizedSettings(book.settings)
   const [portraitWidth, portraitHeight] = PAGE_SIZES[settings.size]
   const width = settings.orientation === 'landscape' ? portraitHeight : portraitWidth
+  const height = settings.orientation === 'landscape' ? portraitWidth : portraitHeight
+  const inkWidth = Math.max(50, width - settings.margin * 2 - settings.gutter)
+  const inkHeight = Math.max(50, height - settings.margin * 2)
   const chapterHTML = book.chapters.slice(0, 500).map(chapter => safeChapterHTML(chapter?.html))
-  const chapters = chapterHTML.map(html => `<section class="chapter"><div class="chapter-body">${buildShadowDocsSectionPrintHTML(html, settings)}</div></section>`).join('\n')
+  const chapters = chapterHTML.map((html, index) => {
+    const body = buildShadowDocsSectionPrintHTML(html, settings)
+    const ink = buildShadowDocsPrintInk(book.chapters[index]?.ink, inkWidth, inkHeight, Boolean(html.trim()))
+    return `<section class="chapter"><div class="chapter-body">${body}${ink}</div></section>`
+  }).join('\n')
   const fontCSS = selectedFontCSS(chapterHTML, book.settings?.font)
   const pageFurnitureCss = [
     settings.printHeader ? `@top-center{content:${cssString(settings.printHeader)};font:9pt "Noto Sans Khmer","Khmer OS",sans-serif;color:#555}` : '',
@@ -105,23 +108,23 @@ export function buildShadowDocsPrintHTML(book) {
     settings.pageNumbers ? '@bottom-center{content:counter(page);font:9pt Georgia,serif;color:#555}' : '',
   ].filter(Boolean).join('\n')
   const sectionsCSS = buildShadowDocsSectionPrintCSS(settings)
-  const namedPageCSS = ['portrait', 'landscape'].map(orientation => `@page sd-docs-${orientation}{size:${settings.size} ${orientation};margin:${settings.margin}mm;${pageFurnitureCss}}\n@page sd-docs-${orientation}:left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}\n@page sd-docs-${orientation}:right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}`).join('\n')
+  const namedPageCSS = ['portrait', 'landscape'].map(orientation => `@page sd-docs-${orientation}{size:${settings.size} ${orientation};margin:${settings.margin}mm;${pageFurnitureCss}}\n@page sd-docs-${orientation}:left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}\n@page sd-docs-${orientation}:right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm`).join('\n')
   return `<!doctype html>
 <html lang="${settings.documentLanguage}" dir="${settings.textDirection}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
 ${fontCSS}
 ${sectionsCSS}
-.chapter-body{position:relative}
-.chapter-body.sd-print-has-ink{min-height:110mm}
-.sd-print-ink{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:1}
 ${namedPageCSS}
 @page{size:${settings.size} ${settings.orientation};margin:${settings.margin}mm;${pageFurnitureCss}}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
 *{box-sizing:border-box}html{background:#eee}body{position:relative;max-width:${width}mm;margin:18px auto;background:${settings.pageColor};color:${settings.textColor};font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};direction:${settings.textDirection};overflow-wrap:anywhere;border:${settings.borderWidth}px ${settings.borderStyle} ${settings.borderColor}}
 .chapter{position:relative;padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm;hyphens:${settings.hyphenation ? 'auto' : 'manual'}}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}.chapter-body table{width:100%;border-collapse:collapse;break-inside:avoid}.chapter-body td,.chapter-body th{border:1px solid #b9b4c7;padding:6px}.chapter-body ins{text-decoration:underline;text-decoration-color:#2d8a5b}.chapter-body del{text-decoration:line-through;color:#9f3d49}${settings.watermark ? `.chapter::before{content:${cssString(settings.watermark)};position:fixed;inset:40% 8% auto;z-index:0;text-align:center;font-size:42pt;font-weight:700;opacity:${settings.watermarkOpacity};transform:rotate(-35deg);pointer-events:none}` : ''}
-@media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}}
-@media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}}
+.sd-print-ink-sheet{display:block;position:relative;max-width:100%;padding:0;margin:0 auto;overflow:hidden;text-indent:0;break-inside:avoid;page-break-inside:avoid;column-span:all}
+.sd-print-ink-sheet.sd-print-ink-after-text{break-before:page;page-break-before:always}
+.sd-print-ink{display:block;width:100%;height:100%;overflow:hidden;pointer-events:none}
+@media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}.sd-print-ink-sheet{margin-top:15px;box-shadow:0 2px 12px #0002}.sd-print-ink-sheet.sd-print-ink-after-text{border-top:2px dashed #8d76be}}
+@media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}.sd-print-ink-sheet{margin:0 auto;box-shadow:none}}
 </style></head><body>${chapters}</body></html>`
 }
 
