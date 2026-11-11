@@ -18,7 +18,8 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
   const busyRef = useRef(false)
   const mountedRef = useRef(true)
   const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState('')
+  const previewRef = useRef(null)
+  const [previewError, setPreviewError] = useState('')
   const [language, setLanguage] = useState('eng+khm')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -32,13 +33,41 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
   }, [])
 
   useEffect(() => {
-    if (!file) {
-      setPreview('')
+    const canvas = previewRef.current
+    if (!file || !canvas) return undefined
+
+    let cancelled = false
+    if (typeof createImageBitmap !== 'function') {
+      setPreviewError('Image preview is unavailable on this device. Scanning still works.')
       return undefined
     }
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-    return () => URL.revokeObjectURL(url)
+
+    createImageBitmap(file).then(bitmap => {
+      try {
+        if (cancelled) return
+        if (!bitmap.width || !bitmap.height) throw new Error('Invalid image dimensions')
+        const availableWidth = Math.max(1, Math.min(canvas.parentElement?.clientWidth || 640, 640))
+        const scale = Math.min(1, availableWidth / bitmap.width, 180 / bitmap.height)
+        const width = Math.max(1, Math.round(bitmap.width * scale))
+        const height = Math.max(1, Math.round(bitmap.height * scale))
+        canvas.width = width
+        canvas.height = height
+        const context = canvas.getContext('2d')
+        if (!context) throw new Error('Canvas preview unavailable')
+        context.drawImage(bitmap, 0, 0, width, height)
+      } catch {
+        if (!cancelled) setPreviewError('Could not preview this image. You can still scan it.')
+      } finally {
+        bitmap.close?.()
+      }
+    }).catch(() => {
+      if (!cancelled) setPreviewError('Could not preview this image. You can still scan it.')
+    })
+
+    return () => {
+      cancelled = true
+      canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    }
   }, [file])
 
   function chooseFile(event) {
@@ -46,6 +75,7 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
     event.target.value = ''
     if (!chosen || busyRef.current) return
     setError('')
+    setPreviewError('')
     setText('')
     setProgress(0)
     setStatus('')
@@ -96,7 +126,7 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
       .sd-insert-scan-select{width:100%;min-height:42px;border:1px solid #555;background:#383838;color:#fff;border-radius:9px;padding:8px}
       .sd-insert-scan-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
       .sd-insert-scan-actions button{border:0;border-radius:10px;background:#424242;color:#fff;min-height:46px;display:flex;align-items:center;justify-content:center;gap:7px}
-      .sd-insert-scan-preview{width:100%;max-height:180px;object-fit:contain;border:1px solid #444;border-radius:9px;background:#242424}
+      .sd-insert-scan-preview{display:block;max-width:100%;max-height:180px;width:auto;height:auto;object-fit:contain;border:1px solid #444;border-radius:9px;background:#242424;margin:0 auto}
       .sd-insert-scan-panel textarea{width:100%;min-height:150px;border:1px solid #555;border-radius:10px;background:#292929;color:#f5f5f5;padding:12px;font:inherit;font-size:14px;line-height:1.65;resize:vertical}
       .sd-insert-scan-status{font-size:12px;color:#aaa;min-height:18px}
       .sd-insert-scan-error{font-size:12px;color:#ff9b9b}
@@ -122,7 +152,8 @@ export default function ShadowDocsMobileScanTextPanel({ disabled = false, onBack
     </div>
     <input type="file" accept="image/png,image/jpeg,image/webp" ref={galleryRef} hidden onChange={chooseFile}/>
     <input type="file" accept="image/*" capture="environment" ref={cameraRef} hidden onChange={chooseFile}/>
-    {preview ? <img src={preview} alt="Image to scan" className="sd-insert-scan-preview"/> : null}
+    {file ? <canvas ref={previewRef} role="img" aria-label="Image to scan" className="sd-insert-scan-preview" style={previewError ? { display: 'none' } : undefined}/> : null}
+    {previewError ? <p className="sd-insert-scan-status" role="status">{previewError}</p> : null}
     <button type="button" className="sd-insert-submit" disabled={!file || disabled || busy} onPointerDown={event => event.preventDefault()} onClick={scan}><ScanText size={20}/> {busy ? 'Scanning…' : 'Extract Text'}</button>
     <div className="sd-insert-scan-status" role="status">{busy ? `${status || 'Scanning'}${progress ? ` · ${progress}%` : ''}` : status}</div>
     {error ? <p className="sd-insert-scan-error" role="alert">{error}</p> : null}
