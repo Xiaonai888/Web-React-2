@@ -3,11 +3,12 @@ import { restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
 const safeUrl = value => {
   const raw = String(value ?? '').trim()
   if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return ''
+  if (/^#sd-bookmark-[\p{L}\p{N}_-]{1,80}$/u.test(raw)) return encodeURI(raw)
   try {
     const parsed = new URL(raw, globalThis.location?.href || 'https://shadow.local/')
     if (!['https:', 'http:', 'mailto:', 'tel:'].includes(parsed.protocol)) return ''
     if (['https:', 'http:'].includes(parsed.protocol) && (!parsed.hostname || parsed.username || parsed.password)) return ''
-    return parsed.href.replace(/[<>"']/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
+    return encodeURI(parsed.href).replaceAll('%25', '%')
   } catch {
     return ''
   }
