@@ -1,151 +1,169 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AdvertisementPopup from '../AdvertisementPopup'
+import { hasPremiumAdFree } from '../../services/premiumAdVisibility'
 import {
-  getSmartAdReaderKey,
-  getSmartAdVersion,
-  selectSmartAds,
-  recordSmartAdImpressions,
-  openSmartAdEpisodeOne,
-} from '../smartAdClient'
-import {
-  readSmartAdQueue,
-  nextSmartAdFromQueue,
-  appendSmartAdSelection,
-  getSmartAdReservedIds,
-} from '../smartAdQueue'
-import {
-  getSmartFreeUnlockInterests,
-  toSmartFreeUnlockAdvertisement,
-} from './smartFreeUnlockPresentation'
+  openSmartPlacementEpisodeOne,
+  recordSmartPlacementImpression,
+  takeSmartPlacementAdvertisement,
+} from '../../services/advertisements/smartPlacementAds'
 
-const PLACEMENTS = new Set(['opening', 'me'])
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const pending = new Map()
-const emptyRetry = new Map()
-const impressions = new Map()
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:5000'
+    : 'https://shadow-backend-kucw.onrender.com')
+).replace(/\/$/, '')
 
-function assertPlacement(placement) {
-  if (!PLACEMENTS.has(placement)) throw new TypeError('Invalid Smart Ad placement')
-  return placement
-}
+const MODE_CACHE_MS = 60000
+const MODE_ERROR_CACHE_MS = 15000
+const MODE_TIMEOUT_MS = 4000
+const LOAD_TIMEOUT_MS = 12000
+const modeCache = new Map()
+const modePending = new Map()
 
-function findNext(readerKey, placement, version) {
-  for (let i = 0; i < 10; i += 1) {
-    const story = nextSmartAdFromQueue({
-      readerKey,
-      placement,
-      slotKey: version.slot_key,
-      catalogVersion: version.catalog_version,
-    })
-    if (!story) return null
-    const original = toSmartFreeUnlockAdvertisement(story, version.slot_key)
-    if (!original) continue
-    return {
-      ...original,
-      placement,
-      frequency: 'once_per_session',
-      updated_at: 'auto_system_v1',
+async function getPlacementMode(placement) {
+  const saved = modeCache.get(placement)
+  if (saved && saved.expiresAt > Date.now()) return saved.value
+  if (modePending.has(placement)) return modePending.get(placement)
+
+  const request = (async () => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), MODE_TIMEOUT_MS)
+    try {
+      const response = await fetch(
+        `${API_URL}/api/advertisements/public?placement=${encodeURIComponent(placement)}`,
+        { signal: controller.signal, cache: 'default' },
+      )
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.ok !== true) throw new Error('Advertisement mode unavailable')
+      const mode = String(data.rotation?.mode || '').toLowerCase()
+      if (!['manual', 'auto', 'auto_system'].includes(mode)) {
+        throw new Error('Advertisement mode missing')
+      }
+      const result = { mode, enabled: data.rotation?.enabled === true }
+      modeCache.set(placement, { value: result, expiresAt: Date.now() + MODE_CACHE_MS })
+      return result
+    } finally {
+      clearTimeout(timeout)
     }
-  }
-  return null
-}
-
-export async function takeSmartPlacementAdvertisement(placement, signal) {
-  assertPlacement(placement)
-  const version = await getSmartAdVersion({ signal })
-  if (!version?.slot_key || !Number.isSafeInteger(Number(version.catalog_version))) {
-    throw new Error('Invalid Smart Ad version')
-  }
-  const readerKey = getSmartAdReaderKey()
-  const options = {
-    readerKey,
-    placement,
-    slotKey: version.slot_key,
-    catalogVersion: version.catalog_version,
-  }
-  const existing = readSmartAdQueue(options)
-  const cachedAd = findNext(readerKey, placement, version)
-  if (cachedAd) return cachedAd
-  if (existing?.exhausted && !existing.next_cursor) return null
-
-  const key = `${readerKey}:${placement}:${version.slot_key}:${version.catalog_version}`
-  if ((emptyRetry.get(key) || 0) > Date.now()) return null
-  if (!pending.has(key)) {
-    const request = (async () => {
-      const result = await selectSmartAds({
-        placement,
-        cursor: existing?.next_cursor || '0',
-        queueIndex: existing?.queue_index || 0,
-        interests: getSmartFreeUnlockInterests(),
-        excludeStoryIds: getSmartAdReservedIds({
-          readerKey,
-          excludePlacement: placement,
-          slotKey: version.slot_key,
-          catalogVersion: version.catalog_version,
-        }),
-        signal,
-      })
-      if (result.slot_key !== version.slot_key ||
-          Number(result.catalog_version) !== Number(version.catalog_version)) {
-        throw new Error('Smart Ad selection version changed')
-      }
-      if (!Array.isArray(result.ads) || !result.ads.length) {
-        emptyRetry.set(key, Date.now() + 30000)
-        if (emptyRetry.size > 100) emptyRetry.delete(emptyRetry.keys().next().value)
-        return null
-      }
-      return appendSmartAdSelection({
-        readerKey,
-        placement,
-        response: { ...result, ads: result.ads.slice(0, 10) },
-      })
-    })().finally(() => {
-      if (pending.get(key) === request) pending.delete(key)
-    })
-    pending.set(key, request)
-  }
-  const result = await pending.get(key)
-  if (!result) return null
-  return findNext(readerKey, placement, version)
-}
-
-export async function recordSmartPlacementImpression(advertisement) {
-  const placement = assertPlacement(advertisement?.placement)
-  const storyId = String(advertisement?.story_id || '').toLowerCase()
-  const slotKey = String(advertisement?.slot_key || '')
-  if (!UUID.test(storyId) || !slotKey) return false
-  const readerKey = getSmartAdReaderKey()
-  const key = `shadow_smart_impression_v1:${readerKey}:${placement}:${slotKey}:${storyId}`
-  if (impressions.has(key)) return impressions.get(key)
-  try {
-    if (sessionStorage.getItem(key) === '1') return false
-  } catch {}
-  const request = recordSmartAdImpressions({
-    placement,
-    slotKey,
-    storyIds: [storyId],
-  }).then(() => {
-    try { sessionStorage.setItem(key, '1') } catch {}
-    return true
-  }).catch((error) => {
-    impressions.delete(key)
-    throw error
+  })().catch((error) => {
+    console.warn('SMART_PLACEMENT_MODE_ERROR', placement, error?.message || error)
+    modeCache.set(placement, { value: null, expiresAt: Date.now() + MODE_ERROR_CACHE_MS })
+    return null
+  }).finally(() => {
+    if (modePending.get(placement) === request) modePending.delete(placement)
   })
-  impressions.set(key, request)
-  if (impressions.size > 300) impressions.delete(impressions.keys().next().value)
+
+  modePending.set(placement, request)
   return request
 }
 
-export async function openSmartPlacementEpisodeOne(advertisement) {
-  const placement = assertPlacement(advertisement?.placement)
-  const storyId = String(advertisement?.story_id || '').toLowerCase()
-  const slotKey = String(advertisement?.slot_key || '')
-  if (!UUID.test(storyId) || !slotKey) throw new TypeError('Invalid Smart Ad destination')
-  const result = await openSmartAdEpisodeOne({ placement, slotKey, storyId })
-  const episodeId = String(result.first_episode_id || '').toLowerCase()
-  const path = `/story/${storyId}/episode/${episodeId}`
-  if (!UUID.test(episodeId) ||
-      String(result.story_id || '').toLowerCase() !== storyId ||
-      result.reader_path !== path) {
-    throw new Error('Invalid Smart Ad Episode 1 response')
+export default function SmartPlacementAdvertisement({
+  placement = 'opening',
+  blocking = false,
+  onFinish = null,
+}) {
+  const navigate = useNavigate()
+  const onFinishRef = useRef(onFinish)
+  onFinishRef.current = onFinish
+  const finishedRef = useRef(false)
+  const [state, setState] = useState({ status: 'loading', advertisement: null })
+
+  const finish = useCallback(() => {
+    if (finishedRef.current) return
+    finishedRef.current = true
+    setState({ status: 'none', advertisement: null })
+    onFinishRef.current?.()
+  }, [])
+
+  useEffect(() => {
+    if (placement !== 'opening' && placement !== 'me') {
+      finish()
+      return undefined
+    }
+
+    let cancelled = false
+    const controller = new AbortController()
+    finishedRef.current = false
+    setState({ status: 'loading', advertisement: null })
+    const timeout = setTimeout(() => {
+      controller.abort()
+      if (!cancelled) finish()
+    }, LOAD_TIMEOUT_MS)
+
+    async function load() {
+      try {
+        const rotation = await getPlacementMode(placement)
+        if (cancelled || finishedRef.current) return
+        if (!rotation) {
+          finish()
+          return
+        }
+        if (rotation.mode !== 'auto_system') {
+          setState({ status: 'legacy', advertisement: null })
+          return
+        }
+        if (!rotation.enabled || await hasPremiumAdFree()) {
+          if (!cancelled) finish()
+          return
+        }
+        if (cancelled || finishedRef.current) return
+        const advertisement = await takeSmartPlacementAdvertisement(placement, controller.signal)
+        if (cancelled || finishedRef.current) return
+        if (!advertisement) {
+          finish()
+          return
+        }
+        setState({ status: 'smart', advertisement })
+      } catch (error) {
+        if (cancelled || finishedRef.current) return
+        console.warn('SMART_PLACEMENT_SELECT_ERROR', placement, error?.message || error)
+        finish()
+      }
+    }
+
+    void load()
+    return () => {
+      cancelled = true
+      controller.abort()
+      clearTimeout(timeout)
+    }
+  }, [placement, finish])
+
+  const handleOpen = useCallback(async () => {
+    const advertisement = state.advertisement
+    if (!advertisement) return false
+    try {
+      const path = await openSmartPlacementEpisodeOne(advertisement)
+      finish()
+      navigate(path)
+      return true
+    } catch (error) {
+      console.warn('SMART_PLACEMENT_OPEN_ERROR', placement, error?.message || error)
+      if (error?.status === 410) finish()
+      return false
+    }
+  }, [state.advertisement, placement, finish, navigate])
+
+  if (state.status === 'loading' || state.status === 'none') return null
+  if (state.status === 'legacy') {
+    return <AdvertisementPopup placement={placement} blocking={blocking} onFinish={finish} />
   }
-  return path
+
+  const advertisement = state.advertisement
+  return (
+    <AdvertisementPopup
+      placement={placement}
+      blocking={blocking}
+      advertisementOverride={advertisement}
+      onFinish={finish}
+      onImpression={() => {
+        void recordSmartPlacementImpression(advertisement).catch((error) => {
+          console.warn('SMART_PLACEMENT_IMPRESSION_ERROR', placement, error?.message || error)
+        })
+      }}
+      onAdClick={handleOpen}
+    />
+  )
 }
