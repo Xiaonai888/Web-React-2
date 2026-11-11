@@ -9,6 +9,7 @@ import StudioChannelAudience from '../../components/author/studio/channel/Studio
 import StudioChannelTrends from '../../components/author/studio/channel/StudioChannelTrends'
 import useStudioChannelAnalyticsData from '../../components/author/studio/channel/useStudioChannelAnalyticsData'
 import useStudioChannelInsights from '../../components/author/studio/channel/useStudioChannelInsights'
+import useStudioChannelAdvancedMetrics from '../../components/author/studio/channel/useStudioChannelAdvancedMetrics'
 import '../../components/author/studio/channel/ShadowStudioChannelCopy'
 import '../../components/author/studio/channel/ShadowStudioChannelExtraCopy'
 
@@ -23,9 +24,19 @@ export default function AuthorStudioAnalyticsPage() {
   const [format, setFormat] = useState('all')
   const primary = useStudioChannelAnalyticsData(section, format)
   const insights = useStudioChannelInsights(section, 30)
+  const advanced = useStudioChannelAdvancedMetrics(section, format, 30)
   const isInsightTab = section === 'audience' || section === 'trends'
   const current = isInsightTab ? insights : primary
-  const { data, error, loading, retry, supported } = current
+  const { data: rawData, error, loading, retry, supported } = current
+  const data = !isInsightTab && rawData && advanced.data
+    ? section === 'overview'
+      ? { ...rawData, watch_time_hours: advanced.data.watch_time_hours ?? rawData.watch_time_hours }
+      : {
+          ...rawData,
+          impressions_30d: advanced.data.thumbnail_impressions ?? rawData.impressions_30d,
+          thumbnail_ctr_30d: advanced.data.thumbnail_ctr_percent ?? rawData.thumbnail_ctr_30d,
+        }
+    : rawData
 
   const openVideo = video => {
     if (!video?.id) return
