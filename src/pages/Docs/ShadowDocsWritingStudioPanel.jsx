@@ -9,7 +9,7 @@ import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsPar
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
 import { shadowDocsStyleCommand } from './ShadowDocsStyleCatalog'
 import { createShadowDocsRibbonState } from './ShadowDocsRibbonState'
-import { readShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
+import { applyShadowDocsReviewVisibility, readShadowDocsReviewPreferences, saveShadowDocsReviewPreferences } from './ShadowDocsReviewPreferences'
 import { createShadowDocsHomeAdvancedCommandEngine } from './ShadowDocsHomeAdvancedCommandEngine'
 import { insertShadowDocsTable } from './ShadowDocsTableEngine'
 import { createShadowDocsShapeImage } from './ShadowDocsShapesEngine'
@@ -302,6 +302,7 @@ export default function ShadowDocsWritingStudioPanel({
     inkCurrentRef.current = Array.isArray(chapter?.ink) ? chapter.ink : []
     setRibbonState(current => ({
       ...current,
+      showMarkup: readShadowDocsReviewPreferences(chapter?.id).showMarkup,
       drawEnabled: false,
       autoNumbering: false,
       paragraphLayout: false,
@@ -346,6 +347,13 @@ export default function ShadowDocsWritingStudioPanel({
     selectionRef.current = null
     setRibbonMessage('')
   }, [book?.id, chapter?.id])
+
+    useEffect(() => {
+    applyShadowDocsReviewVisibility(editorRef.current, {
+      ...readShadowDocsReviewPreferences(chapter?.id),
+      showMarkup: ribbonState.showMarkup,
+    })
+  }, [book?.id, chapter?.id, ribbonState.showMarkup])
 
   useEffect(() => {
     setRibbonState(state => ({
@@ -1251,7 +1259,15 @@ export default function ShadowDocsWritingStudioPanel({
     }
     if (command === 'previousComment' || command === 'nextComment') { setRibbonMessage(selectMarkedNode('[data-shadow-docs-comment-id]', command === 'nextComment' ? 1 : -1) ? 'Comment selected.' : 'No comments found.'); return }
     if (command === 'trackChanges') { setRibbonState(state => ({ ...state, trackChanges: Boolean(value) })); setRibbonMessage(`Track Changes ${value ? 'on' : 'off'}.`); return }
-    if (command === 'showMarkup') { setRibbonState(state => ({ ...state, showMarkup: !state.showMarkup })); return }
+    if (command === 'showMarkup') {
+  const next = value === false ? false : !ribbonState.showMarkup
+  saveShadowDocsReviewPreferences(chapter.id, {
+    ...readShadowDocsReviewPreferences(chapter.id),
+    showMarkup: next,
+  })
+  setRibbonState(state => ({ ...state, showMarkup: next }))
+  return
+}
     if (command === 'reviewPane') { const changes = listShadowDocsChanges(editor); setRibbonMessage(changes.length ? `${changes.length} tracked change(s). ${changes[0].type}: ${changes[0].text}` : 'No tracked changes.'); return }
     if (command === 'displayReview') { setRibbonMessage(`${listShadowDocsChanges(editor).length} tracked change(s) in this chapter.`); return }
     if (command === 'acceptChange' || command === 'rejectChange') {
