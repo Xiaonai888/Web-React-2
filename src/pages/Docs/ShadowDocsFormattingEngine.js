@@ -261,6 +261,16 @@ export function applyShadowDocsParagraphFormat(editor, snapshot, format) {
   return true
 }
 
+function createShadowDocsBlockElement(tag) {
+  switch (tag) {
+    case 'h1': return document.createElement('h1')
+    case 'h2': return document.createElement('h2')
+    case 'h3': return document.createElement('h3')
+    case 'blockquote': return document.createElement('blockquote')
+    default: return document.createElement('p')
+  }
+}
+
 export function setShadowDocsBlockType(editor, snapshot, tagName = 'p') {
   const allowed = new Set(['p', 'h1', 'h2', 'h3', 'blockquote'])
   const tag = allowed.has(String(tagName).toLowerCase()) ? String(tagName).toLowerCase() : 'p'
@@ -269,7 +279,7 @@ export function setShadowDocsBlockType(editor, snapshot, tagName = 'p') {
 
   blocks.forEach(block => {
     if (block.tagName === 'LI') return
-    const next = document.createElement(tag)
+    const next = createShadowDocsBlockElement(tag)
     if (block.hasAttribute('style')) next.setAttribute('style', block.getAttribute('style'))
     while (block.firstChild) next.appendChild(block.firstChild)
     block.replaceWith(next)
