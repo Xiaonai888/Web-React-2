@@ -2,34 +2,24 @@ import { restoreShadowDocsSelection } from './ShadowDocsSelectionEngine'
 
 const safeUrl = value => {
   const raw = String(value ?? '').trim()
-  if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return null
+  if (!raw || raw.length > 2048 || /[\u0000-\u001F\u007F]/.test(raw)) return ''
   try {
     const parsed = new URL(raw, globalThis.location?.href || 'https://shadow.local/')
-    const protocol = parsed.protocol
-    if (protocol === 'https:' || protocol === 'http:') {
-      if (!parsed.hostname || parsed.username || parsed.password) return null
-      return { protocol, suffix: `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}` }
-    }
-    if (protocol === 'mailto:' || protocol === 'tel:') {
-      return { protocol, suffix: `${parsed.pathname}${parsed.search}${parsed.hash}` }
-    }
-    return null
+    if (!['https:', 'http:', 'mailto:', 'tel:'].includes(parsed.protocol)) return ''
+    if (['https:', 'http:'].includes(parsed.protocol) && (!parsed.hostname || parsed.username || parsed.password)) return ''
+    return parsed.href.replace(/[<>"']/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
   } catch {
-    return null
+    return ''
   }
 }
 
 export function applyShadowDocsLink(editor, snapshot, href, { title = '' } = {}) {
   const range = restoreShadowDocsSelection(editor, snapshot)
-  const url = safeUrl(href)
-  if (!editor || !range || range.collapsed || !url || typeof document === 'undefined') return false
+  const safeHref = safeUrl(href)
+  if (!editor || !range || range.collapsed || !safeHref || typeof document === 'undefined') return false
   if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) return false
   const anchor = document.createElement('a')
-  if (url.protocol === 'https:') anchor.href = `https://${url.suffix}`
-  else if (url.protocol === 'http:') anchor.href = `http://${url.suffix}`
-  else if (url.protocol === 'mailto:') anchor.href = `mailto:${url.suffix}`
-  else if (url.protocol === 'tel:') anchor.href = `tel:${url.suffix}`
-  else return false
+  anchor.href = safeHref
   anchor.rel = 'noopener noreferrer'
   if (String(title ?? '').trim()) anchor.title = String(title).trim().slice(0, 160)
   try {
