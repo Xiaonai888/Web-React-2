@@ -1,5 +1,6 @@
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
+import { normalizeShadowDocsInkStrokes } from './ShadowDocsInkEngine'
 import { buildShadowDocsSectionPrintHTML, buildShadowDocsSectionPrintCSS } from './ShadowDocsSectionPrintEngine'
 import { isShadowDocsFont, shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
@@ -10,6 +11,30 @@ function escapeText(value) {
 
 function safeChapterHTML(source) {
   return sanitizeShadowDocsHTML(String(source || '').slice(0, 500_000))
+}
+
+function buildShadowDocsPrintInk(strokes) {
+  const ink = normalizeShadowDocsInkStrokes(strokes)
+  if (!ink.length) return ''
+
+  const total = ink.reduce((sum, stroke) => sum + stroke.points.length, 0)
+  const step = Math.max(1, Math.ceil(total / 80000))
+
+  const paths = ink.map(stroke => {
+    const points = stroke.points.filter((_, index) =>
+      index % step === 0 || index === stroke.points.length - 1
+    )
+    const commands = points.map(([x, y], index) =>
+      `${index ? 'L' : 'M'}${Math.round(x * 1000)} ${Math.round(y * 1000)}`
+    ).join(' ')
+    const path = points.length === 1 ? `${commands}l0.01 0` : commands
+    const width = stroke.width * (stroke.tool === 'highlighter' ? 2.5 : 1)
+    const opacity = stroke.tool === 'highlighter' ? 0.34 : stroke.tool === 'pencil' ? 0.78 : 1
+
+    return `<path d="${path}" fill="none" stroke="${stroke.color}" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`
+  }).join('')
+
+  return `<svg class="sd-print-ink" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${paths}</svg>`
 }
 
 function selectedFontCSS(chapterHTML, defaultFont) {
