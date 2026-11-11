@@ -2231,7 +2231,7 @@ const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
           <ShadowDocsRibbon
   bookId={book.id}
   chapterId={chapter.id}
-  commandState={{ ...ribbonState, inkCount: Math.max(chapter.ink?.length || 0, inkHistoryRef.current.length ? 1 : 0) }}
+  commandState={{ ...ribbonState, inkCount: chapter.ink?.length || 0, inkUndoCount: inkHistoryRef.current.length }}
   onCommand={runRibbonCommand}
   onAdvancedCommand={(command, value) => homeAdvancedRef.current?.run(command, value)}
   disabled={typeof onChangeHTML !== 'function'}
