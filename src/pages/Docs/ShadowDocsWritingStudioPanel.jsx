@@ -1770,18 +1770,53 @@ export default function ShadowDocsWritingStudioPanel({
   }
 
   function trackBeforeInput(event) {
-    if (!ribbonState.trackChanges || event.isComposing || !editorRef.current) return
-    const snapshot = captureShadowDocsSelection(editorRef.current)
-if (!snapshot) return
-const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
-    if (event.inputType === 'insertText' && event.data) {
-      event.preventDefault()
-      if (markShadowDocsInsertion(editorRef.current, snapshot, event.data, reviewerName)) finishRibbonChange(true)
-    } else if ((event.inputType === 'deleteContentBackward' || event.inputType === 'deleteContentForward') && !snapshot.collapsed) {
-      event.preventDefault()
-      if (markShadowDocsDeletion(editorRef.current, snapshot, reviewerName)) finishRibbonChange(true)
+  const editor = editorRef.current
+  if (!ribbonState.trackChanges || event.isComposing || !editor || !chapter) return
+  let snapshot = captureShadowDocsSelection(editor)
+  if (!snapshot) return
+  const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
+  if (event.inputType === 'insertText' && event.data) {
+    event.preventDefault()
+    if (markShadowDocsInsertion(editor, snapshot, event.data, reviewerName)) finishRibbonChange(true)
+    return
+  }
+  if (event.inputType !== 'deleteContentBackward' && event.inputType !== 'deleteContentForward') return
+  if (snapshot.collapsed) {
+    const target = event.nativeEvent?.getTargetRanges?.()[0]
+    if (target && editor.contains(target.startContainer) && editor.contains(target.endContainer)) {
+      const range = document.createRange()
+      range.setStart(target.startContainer, target.startOffset)
+      range.setEnd(target.endContainer, target.endOffset)
+      const selection = globalThis.getSelection?.()
+      if (!range.collapsed && selection) {
+        selection.removeAllRanges()
+        selection.addRange(range)
+        snapshot = captureShadowDocsSelection(editor) || snapshot
+      }
     }
   }
+  if (snapshot.collapsed) {
+    const selection = globalThis.getSelection?.()
+    const node = selection?.anchorNode
+    if (node?.nodeType !== 3) return
+    const offset = selection.anchorOffset
+    const value = node.nodeValue || ''
+    const boundaries = typeof Intl.Segmenter === 'function'
+      ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value), part => part.index)
+      : Array.from(value.matchAll(/[\s\S]/gu), match => match.index)
+    boundaries.push(value.length)
+    const boundary = event.inputType === 'deleteContentBackward'
+      ? boundaries.filter(point => point < offset).at(-1)
+      : boundaries.find(point => point > offset)
+    if (boundary === undefined) return
+    if (event.inputType === 'deleteContentBackward') snapshot.startOffset = boundary
+    else snapshot.endOffset = boundary
+    snapshot.collapsed = false
+  }
+  event.preventDefault()
+  if (markShadowDocsDeletion(editor, snapshot, reviewerName)) finishRibbonChange(true)
+}
+
 
   async function loadRecipients(event) {
     const file = event.target.files?.[0]
