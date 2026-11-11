@@ -1857,7 +1857,7 @@ function PostsEmpty({ title, text }) {
   )
 }
 
-export default function AuthorPostsSection({ author, onCountChange, onMessage }) {
+export default function AuthorPostsSection({ author, onCountChange, onMessage, openComposerOnMount = false, onComposerClose }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   function openAuthorPhoto(post, imageUrl) {
@@ -1900,6 +1900,12 @@ export default function AuthorPostsSection({ author, onCountChange, onMessage })
   const [filterOpen, setFilterOpen] = useState(false)
   const [postFilterDate, setPostFilterDate] = useState('')
   const [editingPost, setEditingPost] = useState(null)
+  useEffect(() => {
+  if (openComposerOnMount && author?.is_owner) {
+    setEditingPost(null)
+    setComposerOpen(true)
+  }
+}, [openComposerOnMount, author?.is_owner])
   const [selectedPost, setSelectedPost] = useState(null)
   const [reportPost, setReportPost] = useState(null)
   const [commentPost, setCommentPost] = useState(null)
@@ -2650,9 +2656,10 @@ function handleAuthorPostCommentChanged(nextComments = []) {
         saving={saving}
         editingPost={editingPost}
         onClose={() => {
-          setComposerOpen(false)
-          setEditingPost(null)
-        }}
+  setComposerOpen(false)
+  setEditingPost(null)
+  onComposerClose?.()
+}}
         onPublishText={handleCreatePost}
         onUpdatePost={handleUpdatePost}
         onMessage={onMessage}
