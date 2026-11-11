@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
-  AlignCenter, AlignLeft, AlignRight, Bookmark, CalendarClock, ChevronLeft,
-  FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, MessageSquarePlus,
+  AlignCenter, AlignLeft, AlignRight, BookOpen, Bookmark, CalendarClock, ChevronLeft,
+  FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, ListOrdered, MessageSquarePlus,
   Minus, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Type,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
@@ -26,6 +26,10 @@ const LINK_ACTIONS = [
   { id: 'link', label: 'Link', icon: Link2 },
   { id: 'bookmark', label: 'Bookmark', icon: Bookmark },
 ]
+const NOTE_ACTIONS = [
+  { id: 'insertFootnote', label: 'Footnote', icon: BookOpen },
+  { id: 'insertEndnote', label: 'Endnote', icon: ListOrdered },
+]
 const TEXT_ACTIONS = [
   { id: 'dateTime', label: 'Date & Time', icon: CalendarClock },
   { id: 'symbol', label: 'Symbol', icon: Type },
@@ -39,7 +43,7 @@ const DOCUMENT_ACTIONS = [
   { id: 'footer', label: 'Footer', icon: FileText },
   { id: 'pageNumber', label: 'Page Numbers', icon: FilePlus2 },
 ]
-const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer'])
+const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
 const WIDTHS = [50, 75, 100]
 const ALIGNMENTS = [
   { value: 'left', label: 'Left', icon: AlignLeft },
@@ -84,6 +88,8 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
   const [commentText, setCommentText] = useState('')
   const [headerText, setHeaderText] = useState('')
   const [footerText, setFooterText] = useState('')
+  const [footnoteText, setFootnoteText] = useState('')
+  const [endnoteText, setEndnoteText] = useState('')
 
   const canInsert = !disabled && typeof onCommand === 'function'
   const bookmarkToken = bookmarkName.trim().replace(/[^\p{L}\p{N}_-]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -138,6 +144,7 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       {actionGroup('Pages', PAGE_ACTIONS)}
       {actionGroup('Insert Objects', OBJECT_ACTIONS)}
       {actionGroup('Links', LINK_ACTIONS)}
+      {actionGroup('Notes', NOTE_ACTIONS)}
       {actionGroup('Text', TEXT_ACTIONS)}
       {actionGroup('Header & Footer', DOCUMENT_ACTIONS)}
       <p className="sd-insert-help">Select text before adding a comment, Word Art or Drop Cap. Put the cursor in the document before inserting other items.</p>
@@ -199,6 +206,20 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       <p className="sd-insert-help">Save a bookmark at the current cursor or selected paragraph. Link to it later using #sd-bookmark-{bookmarkToken || 'name'}.</p>
       {actionButton('Insert Bookmark', 'bookmark', bookmarkName.trim(), <Bookmark size={20} />, Boolean(bookmarkToken))}
     </>
+
+    if (view === 'insertFootnote' || view === 'insertEndnote') {
+      const isFootnote = view === 'insertFootnote'
+      const noteText = isFootnote ? footnoteText : endnoteText
+      const setNoteText = isFootnote ? setFootnoteText : setEndnoteText
+      return <>
+        <InsertTitle title={isFootnote ? 'Insert Footnote' : 'Insert Endnote'} onBack={() => setView('menu')} />
+        <div className="sd-insert-card">
+          {textField(isFootnote ? 'Footnote Text' : 'Endnote Text', noteText, setNoteText, 4000, 'Write your note...', true)}
+        </div>
+        <p className="sd-insert-help">{isFootnote ? 'The note appears after the paragraph containing its reference.' : 'The note appears at the end of the current chapter.'} Tap its reference number to jump to the note.</p>
+        {actionButton(isFootnote ? 'Insert Footnote' : 'Insert Endnote', view, noteText.trim(), isFootnote ? <BookOpen size={20} /> : <ListOrdered size={20} />, Boolean(noteText.trim()))}
+      </>
+    }
 
     if (view === 'symbol') return <>
       <InsertTitle title="Insert Symbol" onBack={() => setView('menu')} />
