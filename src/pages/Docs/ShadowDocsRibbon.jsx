@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { AlignLeft, CirclePlus, ImagePlus, Keyboard, Maximize2, Settings2, Type } from 'lucide-react'
 import { SHADOW_DOCS_RIBBON_TABS } from './ShadowDocsRibbonCatalog'
 import ShadowDocsRibbonFileTab from './ShadowDocsRibbonFileTab'
@@ -479,18 +480,17 @@ export default function ShadowDocsRibbon({
 
         return result
       }}
-      onAdvancedCommand={onAdvancedCommand}
-      onKeyboard={() => {
+            onKeyboard={() => {
         const editor = document.querySelector(
           '.sd-writing-area[contenteditable="true"]'
         )
 
         keyboardRestoreRef.current = true
 
-        editor?.removeAttribute('inputmode')
-
-        setHomeOpen(false)
-        setMobileViewOpen(false)
+        flushSync(() => {
+          setHomeOpen(false)
+          setMobileViewOpen(false)
+        })
 
         editor?.focus({ preventScroll: true })
       }}
