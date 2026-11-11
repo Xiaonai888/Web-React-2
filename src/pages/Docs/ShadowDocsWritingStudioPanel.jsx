@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, BookOpen, Check, CheckCircle2, Download, Eye, Image
 import { getManuscriptOverview } from './ShadowDocsManuscriptTools'
 import { loadShadowDocsFont, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 import ShadowDocsRibbon from './ShadowDocsRibbon'
+import ShadowDocsInkCanvas from './ShadowDocsInkCanvas'
 import { captureShadowDocsSelection, restoreShadowDocsSelection, selectShadowDocsNodeContents } from './ShadowDocsSelectionEngine'
 import { applyShadowDocsCommand, applyShadowDocsInlineFormat, applyShadowDocsParagraphFormat } from './ShadowDocsFormattingEngine'
 import { readShadowDocsFormatState } from './ShadowDocsFormatState'
@@ -186,6 +187,7 @@ export default function ShadowDocsWritingStudioPanel({
   onAddChapter,
   onRenameChapter,
   onChangeHTML,
+  onChangeInk,
   onMoveChapter,
   onDeleteChapter,
   onPreview,
@@ -236,6 +238,8 @@ export default function ShadowDocsWritingStudioPanel({
   const [docFolders, setDocFolders] = useState(() => readShadowDocsFolders())
   const [currentFolderId, setCurrentFolderId] = useState('my-books')
   const onEditorBlurRef = useRef(onEditorBlur)
+  const inkHistoryRef = useRef([])
+  const inkCurrentRef = useRef([])
   const chapter = book?.chapters?.find(item => item.id === chapterId) || book?.chapters?.[0]
   const chapterIndex = book?.chapters?.findIndex(item => item.id === chapter?.id) ?? -1
   const overview = useMemo(() => getManuscriptOverview(book), [book])
@@ -294,8 +298,11 @@ export default function ShadowDocsWritingStudioPanel({
     setShareOpen(false)
     setFindReplaceOpen(false)
     homeAdvancedRef.current?.reset()
+    inkHistoryRef.current = []
+    inkCurrentRef.current = Array.isArray(chapter?.ink) ? chapter.ink : []
     setRibbonState(current => ({
       ...current,
+      drawEnabled: false,
       autoNumbering: false,
       paragraphLayout: false,
       columnLayout: null,
@@ -372,6 +379,17 @@ export default function ShadowDocsWritingStudioPanel({
     }))
   }, [book?.id, chapter?.id, settings.fontSize])
   
+    function saveInk(next) {
+    if (!chapter || typeof onChangeInk !== 'function') return
+    const previous = inkCurrentRef.current
+    if (next === previous) return
+    inkHistoryRef.current = [...inkHistoryRef.current.slice(-29), previous]
+    inkCurrentRef.current = next
+    onChangeInk(chapter.id, next)
+    setLocalSaveDirty(true)
+    setLocalSaveSeconds(10)
+  }
+
   function emitChange() {
     if (editorRef.current && chapter && typeof onChangeHTML === 'function') onChangeHTML(chapter.id, editorRef.current.innerHTML)
     setLocalSaveDirty(true)
@@ -1268,10 +1286,46 @@ export default function ShadowDocsWritingStudioPanel({
     if (command === 'split') { setRibbonState(state => ({ ...state, splitView: !state.splitView })); return }
     if (['arrangeAll', 'sideBySide', 'switchWindows'].includes(command)) { setRibbonMessage('Window arrangement is handled by your browser/operating system.'); return }
 
-    if (['pen', 'pencil', 'highlighter', 'eraser', 'lasso'].includes(command)) { setRibbonState(state => ({ ...state, drawTool: command })); setRibbonMessage(`${command} selected. Ink overlay is session-only until a drawing canvas is added.`); return }
-    if (command === 'inkColor') { setRibbonState(state => ({ ...state, inkColor: value })); return }
-    if (command === 'inkThickness') { setRibbonState(state => ({ ...state, inkThickness: Number(value) || 2 })); return }
-    if (command === 'drawWithTouch') { setRibbonState(state => ({ ...state, drawWithTouch: Boolean(value) })); return }
+        if (command === 'drawEnabled') {
+      setRibbonState(state => ({ ...state, drawEnabled: Boolean(value) }))
+      return
+    }
+    if (command === 'drawTool' || ['pen', 'pencil', 'highlighter', 'eraser'].includes(command)) {
+      const drawTool = command === 'drawTool' ? value : command
+      if (!['pen', 'pencil', 'highlighter', 'eraser'].includes(drawTool)) return
+      setRibbonState(state => ({ ...state, drawTool, drawEnabled: true }))
+      return
+    }
+    if (command === 'lasso') {
+      setRibbonMessage('Lasso selection is not available.')
+      return
+    }
+    if (command === 'inkColor') {
+      setRibbonState(state => ({ ...state, inkColor: value }))
+      return
+    }
+    if (command === 'inkThickness') {
+      setRibbonState(state => ({ ...state, inkThickness: Math.max(1, Math.min(24, Number(value) || 2)) }))
+      return
+    }
+    if (command === 'drawWithTouch') {
+      setRibbonState(state => ({ ...state, drawWithTouch: Boolean(value) }))
+      return
+    }
+    if (command === 'inkUndo') {
+      const previous = inkHistoryRef.current.pop()
+      if (!previous || typeof onChangeInk !== 'function') return
+      inkCurrentRef.current = previous
+      onChangeInk(chapter.id, previous)
+      setLocalSaveDirty(true)
+      setLocalSaveSeconds(10)
+      return
+    }
+    if (command === 'inkClear') {
+      if (!inkCurrentRef.current.length || !window.confirm('Clear all drawings in this chapter?')) return
+      saveInk([])
+      return
+    }
     if (command === 'inkToShape' || command === 'inkToText' || command === 'inkToMath') { setRibbonMessage('Ink conversion needs a handwriting-recognition engine; no drawing data is uploaded.'); return }
 
     if (command === 'autoCorrect') { setRibbonState(state => ({ ...state, autoCorrect: Boolean(value) })); return }
@@ -2177,7 +2231,7 @@ const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
           <ShadowDocsRibbon
   bookId={book.id}
   chapterId={chapter.id}
-  commandState={ribbonState}
+  commandState={{ ...ribbonState, inkCount: Math.max(chapter.ink?.length || 0, inkHistoryRef.current.length ? 1 : 0) }}
   onCommand={runRibbonCommand}
   onAdvancedCommand={(command, value) => homeAdvancedRef.current?.run(command, value)}
   disabled={typeof onChangeHTML !== 'function'}
@@ -2198,9 +2252,10 @@ const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
         <input ref={mailingInputRef} type="file" accept=".csv,text/csv" hidden onChange={event => void loadRecipients(event)} />
         {imageError && <p role="alert" className="my-2 text-xs text-red-600 dark:text-red-300">{imageError}</p>}
 
-        <div
-          key={`${book.id}-${chapter.id}`}
-          ref={editorRef}
+                <div style={{ position: 'relative' }}>
+          <div
+            key={`${book.id}-${chapter.id}`}
+            ref={editorRef}
           data-chapter-id={chapter.id}
           className={`sd-writing-area sd-view-${ribbonState.viewMode || 'print'} ${ribbonState.gridlines ? 'sd-gridlines' : ''}`}
           contentEditable={typeof onChangeHTML === 'function' && !ribbonState.protectedEditing && ribbonState.viewMode !== 'read'}
@@ -2254,6 +2309,18 @@ const reviewerName = readShadowDocsReviewPreferences(chapter.id).userName
             zoom: `${ribbonState.zoom || 100}%`,
           }}
         />
+          <ShadowDocsInkCanvas
+            key={`ink-${book.id}-${chapter.id}`}
+            strokes={chapter.ink || []}
+            onChange={saveInk}
+            enabled={Boolean(ribbonState.drawEnabled)}
+            tool={ribbonState.drawTool || 'pen'}
+            color={ribbonState.inkColor || '#111111'}
+            thickness={ribbonState.inkThickness || 2}
+            drawWithTouch={Boolean(ribbonState.drawWithTouch)}
+            disabled={typeof onChangeInk !== 'function' || ribbonState.protectedEditing || ribbonState.viewMode === 'read'}
+          />
+        </div>
 
         <div className="sd-editor-footer">
           <span className="sd-desktop-word-count">{(chapterStats?.words || 0).toLocaleString()} words · {(chapterStats?.characters || 0).toLocaleString()} characters</span>
