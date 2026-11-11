@@ -1,5 +1,6 @@
 import { inspectShadowDocsProject } from './ShadowDocsQualityReport'
 import { sanitizeShadowDocsHTML } from './ShadowDocsBookModel'
+import { buildShadowDocsSectionPrintHTML, buildShadowDocsSectionPrintCSS } from './ShadowDocsSectionPrintEngine'
 import { isShadowDocsFont, shadowDocsFontCSS, shadowDocsFontFamily } from './ShadowDocsFontCatalog'
 
 const PAGE_SIZES = Object.freeze({ A5: [148, 210], A4: [210, 297], B5: [176, 250] })
@@ -9,7 +10,6 @@ function escapeText(value) {
 
 function safeChapterHTML(source) {
   return sanitizeShadowDocsHTML(String(source || '').slice(0, 500_000))
-    .replaceAll('<hr data-shadow-docs-page-break="1" contenteditable="false">', '<hr class="sd-page-break">')
 }
 
 function selectedFontCSS(chapterHTML, defaultFont) {
@@ -72,22 +72,26 @@ export function buildShadowDocsPrintHTML(book) {
   const [portraitWidth, portraitHeight] = PAGE_SIZES[settings.size]
   const width = settings.orientation === 'landscape' ? portraitHeight : portraitWidth
   const chapterHTML = book.chapters.slice(0, 500).map(chapter => safeChapterHTML(chapter?.html))
-  const chapters = chapterHTML.map(html => `<section class="chapter"><div class="chapter-body">${html}</div></section>`).join('\n')
+  const chapters = chapterHTML.map(html => `<section class="chapter"><div class="chapter-body">${buildShadowDocsSectionPrintHTML(html, settings)}</div></section>`).join('\n')
   const fontCSS = selectedFontCSS(chapterHTML, book.settings?.font)
   const pageFurnitureCss = [
     settings.printHeader ? `@top-center{content:${cssString(settings.printHeader)};font:9pt "Noto Sans Khmer","Khmer OS",sans-serif;color:#555}` : '',
     settings.printFooter ? `@bottom-left{content:${cssString(settings.printFooter)};font:9pt "Noto Sans Khmer","Khmer OS",sans-serif;color:#555}` : '',
     settings.pageNumbers ? '@bottom-center{content:counter(page);font:9pt Georgia,serif;color:#555}' : '',
   ].filter(Boolean).join('\n')
+  const sectionsCSS = buildShadowDocsSectionPrintCSS(settings)
+  const namedPageCSS = ['portrait', 'landscape'].map(orientation => `@page sd-docs-${orientation}{size:${settings.size} ${orientation};margin:${settings.margin}mm;${pageFurnitureCss}}\n@page sd-docs-${orientation}:left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}\n@page sd-docs-${orientation}:right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}`).join('\n')
   return `<!doctype html>
 <html lang="${settings.documentLanguage}" dir="${settings.textDirection}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(book.title || 'Untitled Book')}</title>
 <style>
 ${fontCSS}
+${sectionsCSS}
+${namedPageCSS}
 @page{size:${settings.size} ${settings.orientation};margin:${settings.margin}mm;${pageFurnitureCss}}
 @page :left{margin-left:${settings.margin}mm;margin-right:${settings.margin + settings.gutter}mm}
 @page :right{margin-left:${settings.margin + settings.gutter}mm;margin-right:${settings.margin}mm}
 *{box-sizing:border-box}html{background:#eee}body{position:relative;max-width:${width}mm;margin:18px auto;background:${settings.pageColor};color:${settings.textColor};font-family:${settings.font};font-size:${settings.fontSize}pt;line-height:${settings.lineSpacing};text-align:${settings.alignment};direction:${settings.textDirection};overflow-wrap:anywhere;border:${settings.borderWidth}px ${settings.borderStyle} ${settings.borderColor}}
-.chapter{position:relative;padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm;column-count:${settings.columns};column-gap:${settings.columnGap}mm;hyphens:${settings.hyphenation ? 'auto' : 'manual'}}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}.chapter-body table{width:100%;border-collapse:collapse;break-inside:avoid}.chapter-body td,.chapter-body th{border:1px solid #b9b4c7;padding:6px}.chapter-body ins{text-decoration:underline;text-decoration-color:#2d8a5b}.chapter-body del{text-decoration:line-through;color:#9f3d49}${settings.watermark ? `.chapter::before{content:${cssString(settings.watermark)};position:fixed;inset:40% 8% auto;z-index:0;text-align:center;font-size:42pt;font-weight:700;opacity:${settings.watermarkOpacity};transform:rotate(-35deg);pointer-events:none}` : ''}
+.chapter{position:relative;padding:0}.chapter-body{text-indent:${settings.firstLineIndent}mm;hyphens:${settings.hyphenation ? 'auto' : 'manual'}}.chapter-body p,.chapter-body div{margin:0 0 ${settings.paragraphSpacing}pt}.chapter-body h1,.chapter-body h2,.chapter-body h3,.chapter-body li,.chapter-body blockquote{text-indent:0}.chapter-body blockquote{margin:1em 0;padding-left:1em;border-left:2px solid #aaa}.chapter-body img{max-width:100%;height:auto;break-inside:avoid;page-break-inside:avoid}.chapter-body table{width:100%;border-collapse:collapse;break-inside:avoid}.chapter-body td,.chapter-body th{border:1px solid #b9b4c7;padding:6px}.chapter-body ins{text-decoration:underline;text-decoration-color:#2d8a5b}.chapter-body del{text-decoration:line-through;color:#9f3d49}${settings.watermark ? `.chapter::before{content:${cssString(settings.watermark)};position:fixed;inset:40% 8% auto;z-index:0;text-align:center;font-size:42pt;font-weight:700;opacity:${settings.watermarkOpacity};transform:rotate(-35deg);pointer-events:none}` : ''}
 @media screen{body{padding:${settings.margin}mm;box-shadow:0 10px 28px #0002}.chapter-body hr.sd-page-break{margin:1.5em 0;border:0;border-top:2px dashed #8d76be}}
 @media print{html,body{background:#fff;margin:0;max-width:none;padding:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.chapter-body p,.chapter-body li{orphans:2;widows:2}.chapter-body hr.sd-page-break{display:block;break-after:page;page-break-after:always;height:0;margin:0;border:0}}
 </style></head><body>${chapters}</body></html>`
