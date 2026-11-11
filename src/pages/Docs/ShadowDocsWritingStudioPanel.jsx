@@ -2106,6 +2106,8 @@ export default function ShadowDocsWritingStudioPanel({
 
         <div className="my-3">
           <ShadowDocsRibbon
+  bookId={book.id}
+  chapterId={chapter.id}
   commandState={ribbonState}
   onCommand={runRibbonCommand}
   onAdvancedCommand={(command, value) => homeAdvancedRef.current?.run(command, value)}
