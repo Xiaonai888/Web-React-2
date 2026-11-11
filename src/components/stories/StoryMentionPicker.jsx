@@ -36,16 +36,30 @@ async function readJson(path, token, signal) {
 }
 
 function asPerson(value) {
-  const username = String(value?.username || '').trim().replace(/^@+/, '')
+  const type = value?.result_type === 'author' ? 'author' : 'reader'
+  const username = String(value?.username || value?.page_username || '').trim().replace(/^@+/, '')
+  const id = String(type === 'author' ? value?.author_page_id || value?.id || '' : value?.user_id || value?.id || '')
   if (!username || !/^[\p{L}\p{N}._-]{1,80}$/u.test(username)) return null
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)) return null
   return {
-    id: String(value.user_id || value.id || username),
+    id,
     username,
-    name: String(value.name || username),
-    avatar: String(value.avatar_url || ''),
-    type: value.result_type === 'author' ? 'author' : 'reader',
-    mutual: Boolean(value.is_following || value.is_followed_by && value.is_following),
+    name: String(value?.name || value?.page_name || username),
+    avatar: String(value?.avatar_url || ''),
+    type,
+    mutual: Boolean(value?.is_following && (value?.is_followed_by || value?.followed_at)),
   }
+}
+
+function normalizeSelection(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return {
+      username: String(value.username || value.mention_username || '').trim().replace(/^@+/, ''),
+      type: ['reader', 'author'].includes(value.type) ? value.type : '',
+      id: String(value.id || ''),
+    }
+  }
+  return { username: String(value || '').trim().replace(/^@+/, ''), type: '', id: '' }
 }
 
 function Avatar({ person }) {
@@ -57,12 +71,12 @@ function Avatar({ person }) {
   )
 }
 
-export default function StoryMentionPicker({ mode = 'reader', value = '', onSave, onClose }) {
+export default function StoryMentionPicker({ mode = 'reader', value = '', onSave, onSaveTarget, onClose }) {
   const t = (key) => getDisplayText(`storyMentionPicker.${key}`)
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [results, setResults] = useState([])
-  const [selected, setSelected] = useState(String(value || '').replace(/^@+/, ''))
+  const [selected, setSelected] = useState(() => normalizeSelection(value))
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState('')
@@ -93,8 +107,8 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
       }
       const seen = new Set()
       const people = followers.map(asPerson).filter((person) => {
-        if (!person || seen.has(person.username.toLowerCase())) return false
-        seen.add(person.username.toLowerCase())
+        if (!person || seen.has(`${person.type}:${person.id}`)) return false
+        seen.add(`${person.type}:${person.id}`)
         return true
       })
       people.sort((a, b) => Number(b.mutual) - Number(a.mutual))
@@ -123,8 +137,8 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
         const data = await readJson(`/api/chat/users/search?q=${encodeURIComponent(term)}&limit=20`, getToken(), controller.signal)
         const seen = new Set()
         const people = (data.users || []).map(asPerson).filter((person) => {
-          if (!person || seen.has(person.username.toLowerCase())) return false
-          seen.add(person.username.toLowerCase())
+          if (!person || seen.has(`${person.type}:${person.id}`)) return false
+          seen.add(`${person.type}:${person.id}`)
           return true
         })
         if (!controller.signal.aborted) setResults(people)
@@ -142,7 +156,17 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
 
   const term = query.trim().replace(/^@+/, '').toLowerCase()
   const people = term.length >= 2 ? results : term ? suggestions.filter((person) => `${person.name} ${person.username}`.toLowerCase().includes(term)) : suggestions
-  const finish = (username) => onSave?.(String(username || '').replace(/^@+/, ''))
+  const finish = (choice) => {
+    const next = normalizeSelection(choice)
+    if (typeof onSaveTarget === 'function') {
+      onSaveTarget({ username: next.username, type: next.type || null, id: next.id || null })
+    } else {
+      onSave?.(next.username)
+    }
+  }
+  const isSelected = (person) => selected.id && selected.type
+    ? selected.id === person.id && selected.type === person.type
+    : selected.username.toLowerCase() === person.username.toLowerCase()
 
   return (
     <div className="fixed inset-0 z-[190] flex flex-col bg-[#18181c] text-white" role="dialog" aria-modal="true" aria-label={t('title')}>
@@ -161,20 +185,20 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
         <div className="mb-3 text-[12px] font-semibold text-white/60">{term.length >= 2 ? t('results') : t('suggested')}</div>
         {loading && !term || searching ? <p className="py-5 text-center text-[13px] text-white/65">{t('loading')}</p> : null}
         {people.map((person) => (
-          <button key={`${person.type}:${person.id}`} type="button" onClick={() => setSelected(person.username)} className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-white/10">
+          <button key={`${person.type}:${person.id}`} type="button" onClick={() => setSelected(person)} className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-white/10">
             <Avatar person={person} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-semibold">{person.name}</span>
               <span className="block truncate text-[12px] text-white/65">@{person.username}{person.mutual ? ` · ${t('following')}` : ''}</span>
             </span>
-            <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${selected.toLowerCase() === person.username.toLowerCase() ? 'border-[#1877f2] bg-[#1877f2]' : 'border-white/40'}`}>
-              {selected.toLowerCase() === person.username.toLowerCase() ? <i className="fa-solid fa-check text-[12px]" /> : null}
+            <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${isSelected(person) ? 'border-[#1877f2] bg-[#1877f2]' : 'border-white/40'}`}>
+              {isSelected(person) ? <i className="fa-solid fa-check text-[12px]" /> : null}
             </span>
           </button>
         ))}
         {!loading && !searching && !people.length && !error ? <p className="py-8 text-center text-[13px] text-white/60">{t('empty')}</p> : null}
         {error ? <p role="alert" className="py-4 text-center text-[12px] text-red-300">{error}</p> : null}
-        {selected ? <button type="button" onClick={() => finish('')} className="mt-4 w-full rounded-xl bg-white/10 px-4 py-3 text-[13px] font-semibold">{t('remove')}</button> : null}
+        {selected.username ? <button type="button" onClick={() => finish('')} className="mt-4 w-full rounded-xl bg-white/10 px-4 py-3 text-[13px] font-semibold">{t('remove')}</button> : null}
       </section>
     </div>
   )
