@@ -2,11 +2,12 @@ import { useState } from 'react'
 import {
   AlignCenter, AlignLeft, AlignRight, BookOpen, Bookmark, CalendarClock, ChevronLeft, ChevronRight,
   FilePlus2, FileText, Heading1, Heading2, ImagePlus, Link2, ListOrdered, MessageSquarePlus, Scissors,
-  Download, Minus, Paperclip, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Trash2, Type,
+  Download, Library, Minus, Paperclip, PenLine, Plus, ScanText, Shapes, Sigma, Table2, Trash2, Type,
 } from 'lucide-react'
 import ShadowDocsMobileShapePanel from './ShadowDocsMobileShapePanel'
 import ShadowDocsMobileScanTextPanel from './ShadowDocsMobileScanTextPanel'
 import ShadowDocsMobileSignaturePanel from './ShadowDocsMobileSignaturePanel'
+import ShadowDocsMobileResourcesPanel from './ShadowDocsMobileResourcesPanel'
 import { getShadowDocsBookmarks } from './ShadowDocsLinkEngine'
 import { downloadShadowDocsAttachment, listShadowDocsAttachments } from './ShadowDocsAttachmentEngine'
 
@@ -24,6 +25,7 @@ const OBJECT_ACTIONS = [
   { id: 'scanText', label: 'Scan Text', icon: ScanText },
   { id: 'signature', label: 'Signature', icon: PenLine },
   { id: 'attachment', label: 'Attachment', icon: Paperclip },
+  { id: 'resources', label: 'Resources', icon: Library },
 ]
 const LINK_ACTIONS = [
   { id: 'link', label: 'Link', icon: Link2 },
@@ -47,7 +49,7 @@ const DOCUMENT_ACTIONS = [
   { id: 'footer', label: 'Footer', icon: FileText },
   { id: 'pageNumber', label: 'Page Numbers', icon: FilePlus2 },
 ]
-const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'viewBookmarks', 'breaks', 'attachment', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
+const PANEL_VIEWS = new Set(['image', 'table', 'shape', 'textBox', 'scanText', 'signature', 'link', 'bookmark', 'viewBookmarks', 'breaks', 'attachment', 'resources', 'dateTime', 'symbol', 'equation', 'comment', 'header', 'footer', 'insertFootnote', 'insertEndnote'])
 const WIDTHS = [50, 75, 100]
 const ALIGNMENTS = [
   { value: 'left', label: 'Left', icon: AlignLeft },
@@ -296,6 +298,7 @@ export default function ShadowDocsMobileInsertPanel({ disabled = false, onComman
       {attachmentError ? <p role="alert" className="sd-insert-attachment-error">{attachmentError}</p> : null}
     </>
 
+    if (view === 'resources') return <ShadowDocsMobileResourcesPanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={resource => execute('insertResource', resource.id)} onOpenTemplates={() => execute('templates')} />
     if (view === 'shape') return <ShadowDocsMobileShapePanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={options => execute('shape', options)} />
     if (view === 'scanText') return <ShadowDocsMobileScanTextPanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={text => execute('scanTextInsert', text)} />
     if (view === 'signature') return <ShadowDocsMobileSignaturePanel disabled={!canInsert} onBack={() => setView('menu')} onInsert={options => execute('signature', options)} />
