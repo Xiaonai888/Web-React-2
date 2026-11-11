@@ -479,8 +479,9 @@ export default function ShadowDocsRibbon({
         })
 
         return result
-      }}
-            onKeyboard={() => {
+        }}
+      onAdvancedCommand={onAdvancedCommand}
+      onKeyboard={() => {
         const editor = document.querySelector(
           '.sd-writing-area[contenteditable="true"]'
         )
