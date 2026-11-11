@@ -15,6 +15,7 @@ import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
 import { recordFastReelViewV2 } from '../services/fastReelViewsApi'
+import useStudioPlaybackTracking from '../components/author/studio/channel/useStudioPlaybackTracking'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -196,6 +197,54 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   const [captionHasMore, setCaptionHasMore] = useState(false)
   const captionMeasureRef = useRef(null)
   const captionExpandedRef = useRef(false)
+  
+  const {
+    onPlay: studioPlay,
+    onPause: studioPause,
+    onEnded: studioEnd,
+  } = useStudioPlaybackTracking(video.id)
+
+  useEffect(() => {
+    if (!active || !id) {
+      studioEnd()
+      return undefined
+    }
+
+    const handleStudioPlayerMessage = event => {
+      if (event.source !== frameRef.current?.contentWindow) return
+      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
+
+      let data = event.data
+      try {
+        if (typeof data === 'string') data = JSON.parse(data)
+      } catch {
+        return
+      }
+
+      const state = data?.event === 'onStateChange'
+        ? data.info
+        : data?.event === 'infoDelivery'
+          ? data.info?.playerState
+          : null
+
+      if (state === 1) {
+        if (captionExpandedRef.current) studioPause()
+        else studioPlay()
+      } else if (state === 0) {
+        studioEnd()
+      } else if ([2, 3, 5].includes(state)) {
+        studioPause()
+      }
+    }
+
+    window.addEventListener('message', handleStudioPlayerMessage)
+
+    return () => {
+      window.removeEventListener('message', handleStudioPlayerMessage)
+      studioEnd()
+    }
+  }, [active, id, studioPlay, studioPause, studioEnd])
+
   const resumeAfterCaptionRef = useRef(false)
   const iframeUrl = id
     ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&playsinline=1&controls=0&enablejsapi=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`
