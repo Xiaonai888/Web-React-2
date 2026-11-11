@@ -1053,16 +1053,57 @@ export default function ShadowDocsWritingStudioPanel({
     }
     if (command === 'addTocText') { setRibbonMessage('Chapter titles are already used as level-1 Table of Contents entries.'); return }
     if (command === 'insertFootnote' || command === 'insertEndnote') {
-      const text = globalThis.prompt?.(command === 'insertFootnote' ? 'Footnote:' : 'Endnote:', '')
-      if (!text) return
-      const note = createShadowDocsFootnote(text, chapter.id)
-      const number = editor.querySelectorAll('sup[data-shadow-docs-note]').length + 1
-      insertHTMLAtSelection(`<sup data-shadow-docs-note="${note.id}">[${number}]</sup>`)
-      editor.insertAdjacentHTML('beforeend', `<p><sup>[${number}]</sup> ${String(note.text).replace(/[&<>"']/g, '')}</p>`)
-      emitChange()
+      const kind = command === 'insertFootnote' ? 'footnote' : 'endnote'
+      const input = typeof value === 'string' ? value : globalThis.prompt?.(kind === 'footnote' ? 'Footnote:' : 'Endnote:', '')
+      if (input == null) return
+      const note = createShadowDocsFootnote(input, chapter.id)
+      if (!note.text) return setRibbonMessage('Enter note text first.')
+      if (editor.innerHTML.length + note.text.length * 6 + 700 > 490000) return setRibbonMessage('Chapter is too large for this note.')
+      const range = restoreShadowDocsSelection(editor, snapshot)
+      if (!range) return setRibbonMessage('Place the cursor in the document first.')
+      const existing = editor.querySelectorAll(`[data-shadow-docs-bookmark^="note-${kind}-"]`).length
+      const legacy = editor.querySelectorAll('sup[data-shadow-docs-note]').length
+      const number = existing + legacy + 1
+      const targetToken = `note-${kind}-${note.id}`
+      const referenceToken = `note-ref-${note.id}`
+      const superscript = document.createElement('sup')
+      createShadowDocsBookmark(superscript, referenceToken)
+      const link = document.createElement('a')
+      link.href = `#sd-bookmark-${targetToken}`
+      link.rel = 'noopener noreferrer'
+      link.textContent = `[${number}]`
+      superscript.appendChild(link)
+      range.collapse(false)
+      range.insertNode(superscript)
+      const paragraph = document.createElement('p')
+      createShadowDocsBookmark(paragraph, targetToken)
+      const backLink = document.createElement('a')
+      backLink.href = `#sd-bookmark-${referenceToken}`
+      backLink.rel = 'noopener noreferrer'
+      backLink.textContent = `[${number}]`
+      paragraph.appendChild(backLink)
+      paragraph.appendChild(document.createTextNode(` ${note.text}`))
+      if (kind === 'footnote') {
+        const block = superscript.closest('p, div, li, blockquote, h1, h2, h3, td, th')
+        if (block && block !== editor && editor.contains(block)) block.after(paragraph)
+        else editor.appendChild(paragraph)
+      } else {
+        if (!editor.querySelector('[data-shadow-docs-bookmark="endnotes-section"]')) {
+          const heading = document.createElement('h3')
+          createShadowDocsBookmark(heading, 'endnotes-section')
+          heading.textContent = 'Endnotes'
+          editor.appendChild(heading)
+        }
+        editor.appendChild(paragraph)
+      }
+      finishRibbonChange(true, `${kind === 'footnote' ? 'Footnote' : 'Endnote'} ${number} added.`)
       return
     }
-    if (command === 'nextFootnote' || command === 'showNotes') { setRibbonMessage(selectMarkedNode('sup[data-shadow-docs-note]', 1) ? 'Moved to next note.' : 'No notes found.'); return }
+    if (command === 'nextFootnote' || command === 'showNotes') {
+      const selector = 'sup[data-shadow-docs-note], sup[data-shadow-docs-bookmark^="note-ref-"]'
+      setRibbonMessage(selectMarkedNode(selector, 1) ? 'Note reference selected.' : 'No notes found.')
+      return
+    }
     if (command === 'insertCitation') {
       const author = globalThis.prompt?.('Author:', '') || ''
       const title = globalThis.prompt?.('Title:', '') || ''
