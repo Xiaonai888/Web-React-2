@@ -124,6 +124,10 @@ export function restoreStudioArchivedVideo(id) {
   return mutate(`/videos/${validId(id)}/archive`, { method: 'PATCH', body: { archived: false } })
 }
 
+export function archiveStudioVideo(id) {
+  return mutate(`/videos/${validId(id)}/archive`, { method: 'PATCH', body: { archived: true } })
+}
+
 export function moveStudioArchivedVideoToTrash(id) {
   return mutate(`/videos/${validId(id)}`, { method: 'DELETE' })
 }
