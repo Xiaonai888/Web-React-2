@@ -121,7 +121,7 @@ export default function AuthorStudioCommunityPage() {
 
   const openReel = videoId => {
     if (!videoId) return
-    navigate(`/fast?reel=${encodeURIComponent(videoId)}`, {
+    navigate(`/fast?reel=${encodeURIComponent(videoId)}&comments=1`, {
       state: { fromAuthorReel: true, returnTo: `${location.pathname}${location.search}` },
     })
   }
