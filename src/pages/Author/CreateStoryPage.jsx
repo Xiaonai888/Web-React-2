@@ -254,23 +254,28 @@ function loadCropImage(url, useCors = true) {
   })
 }
 
-async function createImage(url) {
+async function createImage(url, sourceFile = null) {
   let initialError
   try {
     return await loadCropImage(url)
   } catch (error) {
     initialError = error
   }
-  if (!/^(blob:|data:)/i.test(url)) throw initialError
-  let blob
-  try {
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`IMAGE_BLOB_UNAVAILABLE: HTTP ${response.status}`)
-    blob = await response.blob()
-    if (!blob.size) throw new Error('IMAGE_BLOB_EMPTY: The original image is empty.')
-  } catch (error) {
-    throw new Error(`IMAGE_SOURCE_UNAVAILABLE: ${error?.message || initialError?.message || 'Could not reopen the original image.'}`)
+
+  if (!(sourceFile instanceof Blob) && !/^(blob:|data:)/i.test(url)) throw initialError
+
+  let blob = sourceFile instanceof Blob ? sourceFile : null
+  if (!blob) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`IMAGE_BLOB_UNAVAILABLE: HTTP ${response.status}`)
+      blob = await response.blob()
+    } catch (error) {
+      throw new Error(`IMAGE_SOURCE_UNAVAILABLE: ${error?.message || initialError?.message || 'Could not reopen the original image.'}`)
+    }
   }
+  if (!blob.size) throw new Error('IMAGE_BLOB_EMPTY: The original image is empty.')
+
   if (/image\/(heic|heif)/i.test(blob.type)) {
     try {
       const { heicTo } = await import('heic-to')
@@ -282,12 +287,13 @@ async function createImage(url) {
         return converted
       } catch (error) {
         URL.revokeObjectURL(jpegUrl)
-        throw error
+        blob = jpeg
       }
     } catch (error) {
       throw new Error(`HEIC_CONVERSION_FAILED: ${error?.message || 'This HEIC/HEIF image could not be converted.'}`)
     }
   }
+
   if (typeof createImageBitmap === 'function') {
     try {
       const bitmap = await createImageBitmap(blob)
@@ -295,24 +301,35 @@ async function createImage(url) {
       bitmap.close?.()
     } catch {}
   }
+
   const retryUrl = URL.createObjectURL(blob)
   try {
     const retried = await loadCropImage(retryUrl, false)
     retried.__shadowCropObjectUrl = retryUrl
     return retried
-  } catch (error) {
+  } catch (retryError) {
     URL.revokeObjectURL(retryUrl)
-    throw new Error(`IMAGE_RETRY_DECODE_FAILED: ${error?.message || initialError?.message || 'This image could not be decoded.'}`)
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ''))
+        reader.onerror = () => reject(reader.error || new Error('IMAGE_FILE_READER_FAILED'))
+        reader.readAsDataURL(blob)
+      })
+      return await loadCropImage(dataUrl, false)
+    } catch (fallbackError) {
+      throw new Error(`IMAGE_RETRY_DECODE_FAILED: ${fallbackError?.message || retryError?.message || initialError?.message || 'This image could not be decoded.'}`)
+    }
   }
 }
 
-async function getCroppedImage(imageSrc, pixelCrop) {
+async function getCroppedImage(imageSrc, pixelCrop, sourceFile = null) {
   let stage = 'image-decode'
   let image = null
   let canvas = null
   const sourceKind = /^blob:/i.test(imageSrc) ? 'local-file' : /^data:/i.test(imageSrc) ? 'data-url' : /^https?:/i.test(imageSrc) ? 'remote-image' : 'other'
   try {
-    image = await createImage(imageSrc)
+    image = await createImage(imageSrc, sourceFile)
     const imageWidth = image.naturalWidth || image.width || 0
     const imageHeight = image.naturalHeight || image.height || 0
     stage = 'crop-validation'
@@ -820,6 +837,14 @@ export default function CreateStoryPage() {
   const [cropMode, setCropMode] = useState('cover')
   const [editingSlideIndex, setEditingSlideIndex] = useState(null)
   const [tempImage, setTempImage] = useState('')
+  const cropSourceFilesRef = useRef(new Map())
+useEffect(() => {
+  const sources = cropSourceFilesRef.current
+  return () => {
+    sources.forEach((_, url) => URL.revokeObjectURL(url))
+    sources.clear()
+  }
+}, [])
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
@@ -1140,6 +1165,8 @@ const canSave = isEditMode
     if (!file) return
 
     const imageUrl = URL.createObjectURL(file)
+    cropSourceFilesRef.current.set(imageUrl, file)
+    cropSourceFilesRef.current.set(imageUrl, file)
     setCoverOriginal(imageUrl)
     setStoryMediaTouched(true)
     setCoverChanged(true)
@@ -1162,6 +1189,7 @@ const handleLandscapeChange = (file) => {
   if (!file) return
 
   const imageUrl = URL.createObjectURL(file)
+  cropSourceFilesRef.current.set(imageUrl, file)
 
   setLandscapeOriginal(imageUrl)
   setStoryMediaTouched(true)
@@ -1217,7 +1245,11 @@ const handleAddSlide = (file) => {
     }
 
     try {
-      const croppedImage = await getCroppedImage(tempImage, croppedAreaPixels)
+      const croppedImage = await getCroppedImage(
+  tempImage,
+  croppedAreaPixels,
+  cropSourceFilesRef.current.get(tempImage) || null
+)
       setStoryMediaTouched(true)
 
       if (cropMode === 'cover') {
