@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 
 registerTranslationNamespace('paymentProfileModal', {
   en: {
@@ -139,6 +140,7 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
   const [bankName, setBankName] = useState(initialValue)
   const [binanceName, setBinanceName] = useState('')
   const [binanceUid, setBinanceUid] = useState('')
+  const [binanceEnabled, setBinanceEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -148,14 +150,18 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
     let active = true
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/users/me`, {
-          method: 'GET',
-          headers: getHeaders(),
-          cache: 'no-store',
-        })
+        const [response, countrySettings] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/users/me`, {
+            method: 'GET',
+            headers: getHeaders(),
+            cache: 'no-store',
+          }),
+          showBinance ? loadCountrySettings({ force: true }) : Promise.resolve(null),
+        ])
         const data = await response.json().catch(() => ({}))
         if (!response.ok || !data.ok || !data.user) throw new Error('Unable to load payment profile')
         if (!active) return
+        setBinanceEnabled(showBinance && countrySettings?.countryVerified === true && getCountryFeature(countrySettings, 'binancePay', false) === true)
         setBankName(String(data.user.payment_account_name || initialValue))
         setBinanceName(String(data.user.binance_name || ''))
         setBinanceUid(String(data.user.binance_uid || ''))
@@ -168,7 +174,7 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
     }
     loadProfile()
     return () => { active = false }
-  }, [initialValue])
+  }, [initialValue, showBinance])
 
   useEffect(() => {
     const bodyOverflow = document.body.style.overflow
@@ -187,14 +193,14 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
     const normalizedBank = String(bankName || '').trim().toUpperCase()
     const normalizedBinanceName = String(binanceName || '').trim()
     const normalizedBinanceUid = String(binanceUid || '').trim()
-    const hasBinance = Boolean(normalizedBinanceName || normalizedBinanceUid)
+    const hasBinance = binanceEnabled && Boolean(normalizedBinanceName || normalizedBinanceUid)
 
     if (!normalizedBank && !hasBinance) {
       setMessage(t('paymentProfileModal.required'))
       return
     }
     if ((normalizedBank && (normalizedBank.length < 2 || normalizedBank.length > 80)) ||
-      (normalizedBinanceName && (normalizedBinanceName.length < 2 || normalizedBinanceName.length > 80))) {
+      (binanceEnabled && normalizedBinanceName && (normalizedBinanceName.length < 2 || normalizedBinanceName.length > 80))) {
       setMessage(t('paymentProfileModal.invalidName'))
       return
     }
@@ -215,8 +221,7 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
         headers: getHeaders(),
         body: JSON.stringify({
           payment_account_name: normalizedBank,
-          binance_name: normalizedBinanceName,
-          binance_uid: normalizedBinanceUid,
+          ...(binanceEnabled ? { binance_name: normalizedBinanceName, binance_uid: normalizedBinanceUid } : {}),
         }),
       })
       const data = await response.json().catch(() => ({}))
@@ -268,7 +273,7 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
           </section>
         ) : null}
 
-        {showBinance ? (
+        {showBinance && binanceEnabled ? (
           <section className={showBank ? 'mt-5 border-t border-[var(--shadow-border)] pt-5' : ''}>
             <h4 className="app-title mb-2 text-[13px] font-bold">{t('paymentProfileModal.binanceSection')}</h4>
             <p className="app-tertiary mb-3 text-[11px] leading-5">{t('paymentProfileModal.binanceHint')}</p>
