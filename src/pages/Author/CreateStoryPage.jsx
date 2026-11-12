@@ -197,11 +197,17 @@ function storyTokenUserId(token) {
   }
 }
 
-async function storyMediaFile(source, slot) {
+async function storyMediaFile(source, slot, sourceFile = null) {
   if (!source || /^https?:\/\//i.test(source)) return null
-  const response = await fetch(source)
-  if (!response.ok) throw new Error('Could not read a locally selected story image')
-  const blob = await response.blob()
+  let blob = sourceFile instanceof Blob ? sourceFile : null
+  if (!blob && /^data:image\//i.test(source)) {
+    blob = dataUrlToFile(source, `${slot}.jpg`)
+  }
+  if (!blob) {
+    const response = await fetch(source)
+    if (!response.ok) throw new Error('Could not read a locally selected story image')
+    blob = await response.blob()
+  }
   if (!blob.size || !blob.type.startsWith('image/')) throw new Error('Invalid story image in local media storage')
   const bytes = new Uint8Array(await blob.arrayBuffer())
   let signature = ''
@@ -276,7 +282,7 @@ async function createImage(url, sourceFile = null) {
   }
   if (!blob.size) throw new Error('IMAGE_BLOB_EMPTY: The original image is empty.')
 
-  if (/image\/(heic|heif)/i.test(blob.type)) {
+  if (/image\/(heic|heif)/i.test(blob.type) || /\.(heic|heif)$/i.test(sourceFile?.name || '')) {
     try {
       const { heicTo } = await import('heic-to')
       const jpeg = await heicTo({ blob, type: 'image/jpeg', quality: 0.88 })
@@ -838,13 +844,13 @@ export default function CreateStoryPage() {
   const [editingSlideIndex, setEditingSlideIndex] = useState(null)
   const [tempImage, setTempImage] = useState('')
   const cropSourceFilesRef = useRef(new Map())
-useEffect(() => {
-  const sources = cropSourceFilesRef.current
-  return () => {
-    sources.forEach((_, url) => URL.revokeObjectURL(url))
-    sources.clear()
-  }
-}, [])
+  useEffect(() => {
+    const sources = cropSourceFilesRef.current
+    return () => {
+      sources.forEach((_, url) => URL.revokeObjectURL(url))
+      sources.clear()
+    }
+  }, [])
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
@@ -1062,16 +1068,18 @@ useEffect(() => {
     }
   }, [storyFetchComplete, pageLoading, storyType, editStoryId])
 
+  const originalStoryImage = (source) => cropSourceFilesRef.current.get(source) || source
+
   const storyMediaSnapshot = () => ({
-    cover: { original: coverOriginal, preview: coverPreview },
-    landscape: { original: landscapeOriginal, preview: landscapePreview },
-    slides,
+    cover: { original: originalStoryImage(coverOriginal), preview: coverPreview },
+    landscape: { original: originalStoryImage(landscapeOriginal), preview: landscapePreview },
+    slides: slides.map((slide) => ({ ...slide, original: originalStoryImage(slide.original) })),
   })
 
   const queueStoryAsset = async ({ source, slot, imageId = '' }) => {
     const queue = storyQueueRef.current
     const draftKey = storyMediaKeyRef.current
-    const prepared = await storyMediaFile(source, slot)
+    const prepared = await storyMediaFile(source, slot, cropSourceFilesRef.current.get(source))
     if (!prepared || !queue || !draftKey) return null
     const identity = imageId ? `${imageId}:${prepared.imageId}` : prepared.imageId
     const tasks = await queue.listForDraft(draftKey)
@@ -1166,7 +1174,6 @@ const canSave = isEditMode
 
     const imageUrl = URL.createObjectURL(file)
     cropSourceFilesRef.current.set(imageUrl, file)
-    cropSourceFilesRef.current.set(imageUrl, file)
     setCoverOriginal(imageUrl)
     setStoryMediaTouched(true)
     setCoverChanged(true)
@@ -1220,6 +1227,7 @@ const handleAddSlide = (file) => {
     }
 
     const imageUrl = URL.createObjectURL(file)
+    cropSourceFilesRef.current.set(imageUrl, file)
     openCropper({
       mode: 'slide',
       image: imageUrl,
@@ -1246,10 +1254,10 @@ const handleAddSlide = (file) => {
 
     try {
       const croppedImage = await getCroppedImage(
-  tempImage,
-  croppedAreaPixels,
-  cropSourceFilesRef.current.get(tempImage) || null
-)
+        tempImage,
+        croppedAreaPixels,
+        cropSourceFilesRef.current.get(tempImage) || null
+      )
       setStoryMediaTouched(true)
 
       if (cropMode === 'cover') {
@@ -1480,7 +1488,7 @@ if (cropMode === 'slide') {
       if (!source) return null
       if (/^https?:\/\//i.test(source)) return source
       if (!queue || !draftKey) {
-        const local = await storyMediaFile(source, slot)
+        const local = await storyMediaFile(source, slot, cropSourceFilesRef.current.get(source))
         if (!local) throw new Error('Story image file is missing')
         const optimized = await optimizeImageForUpload(local.file, {
           preset: slot === 'cover' ? 'cover' : slot === 'landscape' ? 'thumbnail' : 'banner',
