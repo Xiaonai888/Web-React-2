@@ -38,8 +38,8 @@ export default function ShadowStudioFooter({
       <div className="mx-auto grid min-h-[64px] max-w-5xl grid-cols-5 items-stretch">
         {TABS.map(({ key, Icon }) => {
           const selected = activeTab === key
-          const enabled = key === 'me' || enabledTabs.includes(key) || (key === 'analytics' && analyticsEnabled)
-
+          const enabled = key === 'me' || key === 'community' || enabledTabs.includes(key) ||
+            (key === 'analytics' && analyticsEnabled)
           return (
             <button
               key={key}
@@ -49,27 +49,14 @@ export default function ShadowStudioFooter({
               aria-label={t(`shadowStudioFooter.${key}`)}
               onClick={() => {
                 if (key === 'analytics') navigate('/author/reel/studio/analytics')
+                else if (key === 'community') navigate('/author/reel/studio/community')
                 else if (key === 'me') navigate('/author/reel/studio/me')
                 else onTabChange?.(key)
               }}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 transition-colors active:opacity-70 disabled:cursor-not-allowed disabled:opacity-50 ${
-                selected
-                  ? 'text-[var(--shadow-accent)]'
-                  : 'text-[var(--shadow-text-secondary)]'
-              }`}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-2 transition-colors active:opacity-60 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? 'text-[var(--shadow-accent)]' : 'text-[var(--shadow-text-secondary)]'}`}
             >
-              <Icon
-                size={23}
-                strokeWidth={selected ? 2.5 : 1.9}
-                aria-hidden="true"
-              />
-              <span
-                className={`max-w-full truncate text-[10px] leading-tight ${
-                  selected ? 'font-semibold' : 'font-normal'
-                }`}
-              >
-                {t(`shadowStudioFooter.${key}`)}
-              </span>
+              <Icon size={23} strokeWidth={selected ? 2.5 : 1.9} aria-hidden="true" />
+              <span className={`max-w-full truncate text-[10px] leading-tight ${selected ? 'font-semibold' : 'font-normal'}`}>{t(`shadowStudioFooter.${key}`)}</span>
             </button>
           )
         })}
