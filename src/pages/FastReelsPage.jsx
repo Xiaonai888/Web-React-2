@@ -869,6 +869,7 @@ export default function FastReelsPage({ embedded = false }) {
   const location = useLocation()
   const requestedReelId =
   new URLSearchParams(location.search).get('reel') || ''
+  const openLinkedComments = new URLSearchParams(location.search).get('comments') === '1'
   const ownerReturnPath =
   location.state?.fromAuthorReel === true &&
   typeof location.state?.returnTo === 'string' &&
@@ -898,6 +899,7 @@ useEffect(() => {
   const [echoVideo, setEchoVideo] = useState(null)
   const [echoCounts, setEchoCounts] = useState({})
   const [commentVideo, setCommentVideo] = useState(null)
+  const openedLinkedCommentsRef = useRef('')
   const [commentCounts, setCommentCounts] = useState({})
   const [clearDisplay, setClearDisplay] = useState(false)
 
@@ -1113,6 +1115,14 @@ const visibleVideos = useMemo(() => {
 
   // Reuse existing Echo V2 source summary, only for the visible Reel.
   // Failed counts retain a stable '0' display; clicking Echo still shows API errors.
+  useEffect(() => {
+  if (!openLinkedComments || !requestedReelId) return
+  if (openedLinkedCommentsRef.current === requestedReelId) return
+  const video = visibleVideos.find(item => String(item.id) === requestedReelId)
+  if (!video) return
+  openedLinkedCommentsRef.current = requestedReelId
+  setCommentVideo(video)
+}, [openLinkedComments, requestedReelId, visibleVideos])
   const activeEchoReelId = visibleVideos[
     Math.min(activeIndex, Math.max(0, visibleVideos.length - 1))
   ]?.id || ''
