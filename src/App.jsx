@@ -316,6 +316,7 @@ const AuthorShadowStudioPage = lazy(() =>
 )
 const AuthorStudioDashboardPage = lazy(() => import('./pages/Author/AuthorStudioDashboardPage'))
 const AuthorStudioMePage = lazy(() => import('./pages/Author/AuthorStudioMePage'))
+const AuthorStudioCommunityPage = lazy(() => import('./pages/Author/AuthorStudioCommunityPage'))
 const AuthorStudioLibraryPage = lazy(() => import('./pages/Author/AuthorStudioLibraryPage'))
 const AuthorStudioPlaylistsPage = lazy(() => import('./pages/Author/AuthorStudioPlaylistsPage'))
 const AuthorStudioArchivePage = lazy(() => import('./pages/Author/AuthorStudioArchivePage'))
@@ -1642,6 +1643,7 @@ const shouldShowOpeningAds =
 />
 
 <Route path="/author/reel/studio/me" element={<LazyPage><AuthorStudioMePage /></LazyPage>} />
+<Route path="/author/reel/studio/community" element={<LazyPage><AuthorStudioCommunityPage /></LazyPage>} />
 <Route path="/author/reel/studio/library" element={<LazyPage><AuthorStudioLibraryPage /></LazyPage>} />
 <Route path="/author/reel/studio/playlists" element={<LazyPage><AuthorStudioPlaylistsPage /></LazyPage>} />
 <Route path="/author/reel/studio/archive" element={<LazyPage><AuthorStudioArchivePage /></LazyPage>} />
