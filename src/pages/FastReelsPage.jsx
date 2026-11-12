@@ -872,7 +872,7 @@ export default function FastReelsPage({ embedded = false }) {
   const ownerReturnPath =
   location.state?.fromAuthorReel === true &&
   typeof location.state?.returnTo === 'string' &&
-  /^\/author\/(?:reel\/studio|page(?:\/[^?#]*)?)(?:[?#].*)?$/.test(location.state.returnTo)
+  /^\/author\/(?:reel\/studio(?:\/[^?#]*)?|page(?:\/[^?#]*)?)(?:[?#].*)?$/.test(location.state.returnTo)
     ? location.state.returnTo
     : ''
   const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
