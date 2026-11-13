@@ -1,4 +1,4 @@
-import { BookOpen, Clock3, Gem, LockKeyhole, ShoppingBag, Tag } from 'lucide-react'
+import { BookOpen, Clock3, LockKeyhole, ShoppingBag, Tag } from 'lucide-react'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -122,7 +122,7 @@ export default function PromotionBookShelf({
                 ) : (
                   <>
                     <span className="inline-flex items-center gap-0.5 text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
-                      {isStory ? <Gem className="h-3.5 w-3.5 text-[#1baff0]" aria-hidden="true" /> : null}
+                      {isStory ? <img src="/assets/Icons/Diamond.svg" alt="" className="h-3.5 w-3.5 shrink-0 object-contain" aria-hidden="true" /> : null}
                       {formatPrice(discounted)}
                     </span>
                     {original > discounted ? <span className="text-[10px] text-[var(--shadow-text-secondary)] line-through">{formatPrice(original)}</span> : null}
