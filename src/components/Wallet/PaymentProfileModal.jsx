@@ -161,7 +161,7 @@ export default function PaymentProfileModal({ initialValue = '', showBank = true
         const data = await response.json().catch(() => ({}))
         if (!response.ok || !data.ok || !data.user) throw new Error('Unable to load payment profile')
         if (!active) return
-        setBinanceEnabled(showBinance && countrySettings?.countryVerified === true && getCountryFeature(countrySettings, 'binancePay', false) === true)
+        setBinanceEnabled(showBinance && countrySettings?.countryVerified === true && getCountryFeature(countrySettings, 'readerPaymentBinance', false) === true)
         setBankName(String(data.user.payment_account_name || initialValue))
         setBinanceName(String(data.user.binance_name || ''))
         setBinanceUid(String(data.user.binance_uid || ''))
