@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ShadowExclusiveSection from '../components/ShadowExclusiveSection'
 import DailyPicksSection from '../components/DailyPicksSection'
+import PromotionShelves from '../components/promotions/PromotionShelves'
 import ContinueReadingSection from '../components/ContinueReadingSection'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
@@ -1500,6 +1501,9 @@ onClick={async () => {
   slot={import.meta.env.VITE_ADSENSE_HOME_SLOT}
   placement="home"
 />
+</div>
+    <div className="my-6" data-home-section="promotion-shelves">
+  <PromotionShelves />
 </div>
 
             <div className="my-6" data-home-section="daily-picks">
