@@ -22,7 +22,7 @@ import {
   REACTIONS,
   getReactionMeta,
 } from '../social/reactions/reactionConfig'
-import { normalizeStoryTextSticker, getStoryStickerFont, getStoryStickerTextColor } from '../stories/StoryTextEditor'
+import { normalizeStoryTextSticker, getStoryStickerTypography, getStoryStickerTextColor } from '../stories/StoryTextEditor'
 
 const API_BASE_URL =
   window.location.hostname ===
