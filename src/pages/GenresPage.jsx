@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, X } from 'lucide-react'
+import { ArrowLeft, Clock3, Search, X } from 'lucide-react'
 import { getStoryLanguageId, getStoryLanguageLabel } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
@@ -350,6 +350,22 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com'
 const GENRES_PAGE_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
+const GENRES_WAIT_FREE_CACHE_MAX_AGE_MS = 2 * 60 * 1000
+const GENRES_FILTERED_CACHE_MAX_AGE_MS = 15 * 60 * 1000
+
+function getGenresCacheMaxAge(activeQuickFilter, access, progress) {
+  if (activeQuickFilter === 'wait_free' || access === 'wait_free') return GENRES_WAIT_FREE_CACHE_MAX_AGE_MS
+  if (activeQuickFilter === 'free' || activeQuickFilter === 'completed' || access === 'free' || progress === 'completed') return GENRES_FILTERED_CACHE_MAX_AGE_MS
+  return GENRES_PAGE_CACHE_MAX_AGE_MS
+}
+
+function getGenresAccessFilter(activeQuickFilter, access) {
+  if (activeQuickFilter === 'wait_free') return 'wait_free'
+  if (activeQuickFilter === 'free') return 'fully_free'
+  if (access === 'wait_free') return 'wait_free'
+  if (access === 'free') return 'fully_free'
+  return ''
+}
 
 const genres = [
   { label: 'All', slug: '' },
@@ -484,6 +500,9 @@ function getFirstDifferentTag(mainGenre, tags = []) {
 
 function normalizeBook(story, index = 0) {
   const genre = String(story.main_genre || story.genre || story.category || '').trim()
+  const totalEpisodes = Math.max(0, Number(story.total_episodes || 0))
+  const freeEpisodeCount = Math.max(0, Number(story.free_episode_count || 0))
+  const isCompleted = Boolean(story.is_completed) || String(story.story_status || '').trim().toLowerCase() === 'completed'
 
   return {
     id: story.id || story.story_id,
@@ -495,7 +514,12 @@ function normalizeBook(story, index = 0) {
     status: story.status || story.story_status || '',
     hasFreeEpisode: Boolean(story.has_free_episode),
     hasWaitFreeEpisode: Boolean(story.has_wait_free_episode),
-    isCompleted: Boolean(story.is_completed),
+    isCompleted,
+    isFullyFree: isCompleted && (story.is_fully_free === true || (totalEpisodes > 0 && freeEpisodeCount >= totalEpisodes)),
+    totalEpisodes,
+    freeEpisodeCount,
+    nextWaitFreeAt: story.next_wait_free_at || null,
+    completedAt: story.completed_at || null,
     isPremium: Boolean(story.is_subscription || story.subscription_only || story.requires_subscription || story.premium_early_access),
     type: story.story_type || story.type || story.work_type || '',
   }
@@ -517,7 +541,7 @@ function isSameGenre(book, selectedGenre) {
 function isBookMatchedQuickFilter(book, activeQuickFilter) {
   if (!activeQuickFilter) return true
   if (activeQuickFilter === 'completed') return book.isCompleted
-  if (activeQuickFilter === 'free') return book.hasFreeEpisode
+  if (activeQuickFilter === 'free') return book.isFullyFree
   if (activeQuickFilter === 'wait_free') return book.hasWaitFreeEpisode
 
   return true
@@ -525,7 +549,7 @@ function isBookMatchedQuickFilter(book, activeQuickFilter) {
 
 function isBookMatchedAdvancedFilters(book, access, type, progress) {
   if (access === 'wait_free' && !book.hasWaitFreeEpisode) return false
-  if (access === 'free' && !book.hasFreeEpisode) return false
+  if (access === 'free' && !book.isFullyFree) return false
   if (access === 'premium' && !book.isPremium) return false
   if (access === 'paid' && (book.hasFreeEpisode || book.hasWaitFreeEpisode)) return false
 
@@ -744,7 +768,7 @@ function setSafeGenresCover(node, value) {
   if (node.getAttribute('src') !== source) node.src = source
 }
 
-function BookCard({ book, onOpen }) {
+function BookCard({ book, onOpen, showWaitFreeBadge = false }) {
   const { t } = useDisplayTranslation()
   const title =
     book.title === 'Untitled Story'
@@ -762,11 +786,18 @@ function BookCard({ book, onOpen }) {
           <img
             ref={(node) => setSafeGenresCover(node, book.cover)}
             alt={title}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             onError={(event) => {
               event.currentTarget.src = '/assets/Update Today/Update Today 1.jpg'
             }}
           />
+          {showWaitFreeBadge ? (
+            <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white" aria-label={t('genresPage.waitFree')} title={t('genresPage.waitFree')}>
+              <Clock3 size={15} strokeWidth={2} aria-hidden="true" />
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -788,7 +819,7 @@ export default function GenresPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const isChatStoryMode = new URLSearchParams(location.search).get('story_type') === 'chat_story'
-  const genresStorageKey = isChatStoryMode ? 'shadow:genres-page:chat-story:v1' : 'shadow:genres-page:v1'
+  const genresStorageKey = isChatStoryMode ? 'shadow:genres-page:chat-story:v2' : 'shadow:genres-page:v2'
   const [savedState] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem(genresStorageKey) || '{}')
@@ -850,12 +881,10 @@ export default function GenresPage() {
   const [message, setMessage] = useState('')
   const [loadMoreError, setLoadMoreError] = useState('')
   const loadMoreControllerRef = useRef(null)
-    const serverStoryStatus = activeQuickFilter === 'completed' || progress === 'completed' ? 'Completed' : ''
+  const serverStoryStatus = activeQuickFilter === 'completed' || activeQuickFilter === 'free' || progress === 'completed' ? 'Completed' : ''
+  const serverAccessFilter = getGenresAccessFilter(activeQuickFilter, access)
+  const genreCacheMaxAge = getGenresCacheMaxAge(activeQuickFilter, access, progress)
 
-  useEffect(() => {
-    document.body.classList.add('genres-page-active')
-    return () => document.body.classList.remove('genres-page-active')
-  }, [])
   useEffect(() => {
     document.body.classList.add('genres-page-active')
     return () => document.body.classList.remove('genres-page-active')
@@ -947,6 +976,22 @@ export default function GenresPage() {
     }
   }, [filtersOpen])
 
+  const genreCacheKey = getHomeCacheKey({
+    section: 'stories',
+    language: getStoryLanguageId(),
+    params: {
+      page: isChatStoryMode ? 'genres-chat-story' : 'genres',
+      genre: activeGenre,
+      search: query.trim(),
+      story_setting: storySetting,
+      sort: 'updated',
+      limit: 9,
+      story_status: serverStoryStatus,
+      genre_filter: serverAccessFilter,
+      schema: 8,
+    },
+  })
+
   useEffect(() => {
     if (resumePendingRef.current) {
       resumePendingRef.current = false
@@ -957,20 +1002,7 @@ export default function GenresPage() {
     let ignore = false
 
     async function loadBooks() {
-      const cacheKey = getHomeCacheKey({
-        section: 'stories',
-        language: getStoryLanguageId(),
-        params: {
-          page: isChatStoryMode ? 'genres-chat-story' : 'genres',
-          genre: activeGenre,
-          search: query.trim(),
-          story_setting: storySetting,
-          sort: 'updated',
-          limit: 9,
-          story_status: serverStoryStatus,
-          schema: 7,
-        },
-      })
+      const cacheKey = genreCacheKey
 
       setLoading(true)
       setMessage('')
@@ -980,7 +1012,7 @@ export default function GenresPage() {
       setNextCursor(null)
 
       const cached = await loadHomeCache(cacheKey, {
-        maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+        maxAgeMs: genreCacheMaxAge,
         allowExpired: true,
       })
 
@@ -1004,6 +1036,7 @@ export default function GenresPage() {
           limit: '9',
           sort: 'updated',
           genre_pagination: '1',
+          genre_compact: '1',
         })
 
         if (activeGenre !== 'All') {
@@ -1018,6 +1051,7 @@ export default function GenresPage() {
         }
 
         if (serverStoryStatus) params.set('story_status', serverStoryStatus)
+        if (serverAccessFilter) params.set('genre_filter', serverAccessFilter)
         if (query.trim()) params.set('search', query.trim())
 
         const response = await fetch(
@@ -1057,7 +1091,7 @@ export default function GenresPage() {
             pagination,
           },
           {
-            maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS,
+            maxAgeMs: genreCacheMaxAge,
           }
         )
       } catch (error) {
@@ -1087,11 +1121,10 @@ export default function GenresPage() {
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre, storySetting, serverStoryStatus, query, isChatStoryMode])
+  }, [activeGenre, storySetting, serverStoryStatus, serverAccessFilter, genreCacheMaxAge, query, isChatStoryMode])
 
     const loadMoreBooks = async () => {
     if (
-      !hasAccount ||
       loading ||
       loadingMore ||
       !hasMore ||
@@ -1112,6 +1145,7 @@ export default function GenresPage() {
         limit: '9',
         sort: 'updated',
         genre_pagination: '1',
+        genre_compact: '1',
         cursor: nextCursor,
       })
 
@@ -1127,6 +1161,7 @@ export default function GenresPage() {
       }
 
       if (serverStoryStatus) params.set('story_status', serverStoryStatus)
+      if (serverAccessFilter) params.set('genre_filter', serverAccessFilter)
       if (query.trim()) params.set('search', query.trim())
 
       const response = await fetch(
@@ -1167,25 +1202,12 @@ export default function GenresPage() {
       setHasMore(pagination.has_more)
       setNextCursor(pagination.next_cursor)
 
-      const cacheKey = getHomeCacheKey({
-        section: 'stories',
-        language: getStoryLanguageId(),
-        params: {
-          page: isChatStoryMode ? 'genres-chat-story' : 'genres',
-          genre: activeGenre,
-          search: query.trim(),
-          story_setting: storySetting,
-          sort: 'updated',
-          limit: 9,
-          story_status: serverStoryStatus,
-          schema: 7,
-        },
-      })
+      const cacheKey = genreCacheKey
 
       await saveHomeCache(
         cacheKey,
         { books: mergedBooks, pagination },
-        { maxAgeMs: GENRES_PAGE_CACHE_MAX_AGE_MS }
+        { maxAgeMs: genreCacheMaxAge }
       ).catch(() => {})
 
       return true
@@ -1209,8 +1231,10 @@ export default function GenresPage() {
   }
 
 
-  const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
-    resetKey: [isChatStoryMode, activeGenre, storySetting, serverStoryStatus, query.trim(), activeQuickFilter, access, type, progress].join('|'),
+  const { sentinelRef, showManualLoad } = useGenreAutoLoad({
+    resetKey: [isChatStoryMode, activeGenre, storySetting, serverStoryStatus, serverAccessFilter, query.trim(), activeQuickFilter, access, type, progress].join('|'),
+    allowGuests: true,
+    autoOnVisible: true,
     hasMore,
     loading,
     loadingMore,
@@ -1238,10 +1262,10 @@ export default function GenresPage() {
   }, [activeGenre])
 
   const filteredBooks = useMemo(() => {
-    return (hasAccount ? books : books.slice(0, 9))
+    return books
       .filter((book) => isBookMatchedQuickFilter(book, activeQuickFilter))
       .filter((book) => isBookMatchedAdvancedFilters(book, access, type, progress))
-  }, [access, activeQuickFilter, books, hasAccount, progress, type])
+  }, [access, activeQuickFilter, books, progress, type])
 
   const openGenre = (genre) => {
     setActiveGenre(genre.label)
@@ -1447,12 +1471,12 @@ export default function GenresPage() {
           {!loading && !message && filteredBooks.length ? (
             <div className="grid grid-cols-3 gap-x-3 gap-y-6 md:grid-cols-6 md:gap-x-4 md:gap-y-8">
               {filteredBooks.map((book) => (
-                <BookCard key={book.id} book={book} onOpen={openBook} />
+                <BookCard key={book.id} book={book} onOpen={openBook} showWaitFreeBadge={activeQuickFilter === 'wait_free' || access === 'wait_free'} />
               ))}
             </div>
           ) : null}
 
-          {!loading && !message && !filteredBooks.length ? (
+          {!loading && !message && !filteredBooks.length && !hasMore ? (
             <div className="py-14 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f5f3fa] text-[#8d94a1] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-secondary)]">
                 <i className="fa-solid fa-book-open text-[22px]" />
@@ -1466,7 +1490,7 @@ export default function GenresPage() {
             </div>
           ) : null}
 
-          {!loading && !message && hasAccount && hasMore ? (
+          {!loading && !message && hasMore ? (
             <div className="mt-8 flex flex-col items-center gap-3">
               <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
               {loadMoreError ? (
