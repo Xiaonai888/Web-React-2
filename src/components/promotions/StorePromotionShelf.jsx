@@ -67,6 +67,7 @@ export default function StorePromotionShelf({ rotation, remainingSeconds = 0 }) 
         author_page_username: product.page_username,
         discover_promotion_rotation_key: rotation.rotationKey,
         discover_promotion_expires_at: rotation.expires_at,
+        promotion_entry_source: 'stories_manga',
       }
       const existing = current.find((entry) => String(entry.id) === productId)
       const next = existing
