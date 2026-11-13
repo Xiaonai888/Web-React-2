@@ -22,6 +22,7 @@ import {
 } from '../../utils/storyMediaDraftAssets'
 import { createStoryMediaUploadQueue } from '../../utils/storyMediaUploadQueue'
 import { getStoryCreationUserError } from '../../utils/storyCreationUserError'
+import { reportStoryCreationError } from '../../utils/reportStoryCreationError'
 import {
   clearCompletedStoryCreation,
   listStoryCreationJobs,
@@ -1015,6 +1016,12 @@ export default function CreateStoryPage() {
       getToken: getAuthToken,
       onChange: ({ task }) => {
         if (task?.context?.draftKey !== draftKey) return
+        if (task.status === 'failed') {
+          const reason = String(task.lastError || 'Story image upload failed')
+          const stage = /optimiz|compress|image processing|invalid image/i.test(reason)
+            ? 'IMAGE_PROCESS' : 'ONLINE_UPLOAD'
+          void reportStoryCreationError(new Error(reason), { stage, storyType })
+        }
         void queue.listForDraft(draftKey).then((tasks) => {
           const pending = tasks.filter((item) => !['uploaded', 'failed'].includes(item.status))
           if (pending.length) {
@@ -1054,6 +1061,7 @@ export default function CreateStoryPage() {
         setStoryMediaReady(true)
       } catch (error) {
         if (!canceled) {
+          void reportStoryCreationError(error, { stage: 'RESTORE_DRAFT', storyType })
           setStoryUploadState(getStoryCreationUserError(error, 'local').message)
           setStoryMediaReady(true)
         }
@@ -1071,6 +1079,15 @@ export default function CreateStoryPage() {
 
   const originalStoryImage = (source) => cropSourceFilesRef.current.get(source) || source
 
+  const saveMediaDraft = async (key, snapshot) => {
+    try {
+      return await saveStoryMediaSnapshot(key, snapshot)
+    } catch (error) {
+      void reportStoryCreationError(error, { stage: 'LOCAL_DRAFT', storyType })
+      throw error
+    }
+  }
+
   const storyMediaSnapshot = () => ({
     cover: { original: originalStoryImage(coverOriginal), preview: coverPreview },
     landscape: { original: originalStoryImage(landscapeOriginal), preview: landscapePreview },
@@ -1078,17 +1095,22 @@ export default function CreateStoryPage() {
   })
 
   const queueStoryAsset = async ({ source, slot, imageId = '' }) => {
-    const queue = storyQueueRef.current
-    const draftKey = storyMediaKeyRef.current
-    const prepared = await storyMediaFile(source, slot, cropSourceFilesRef.current.get(source))
-    if (!prepared || !queue || !draftKey) return null
-    const identity = imageId ? `${imageId}:${prepared.imageId}` : prepared.imageId
-    const tasks = await queue.listForDraft(draftKey)
-    const found = tasks.find((item) =>
-      item.context?.slot === slot && item.context?.imageId === identity
-    )
-    if (found) return found
-    return queue.enqueue({ file: prepared.file, draftKey, slot, imageId: identity })
+    try {
+      const queue = storyQueueRef.current
+      const draftKey = storyMediaKeyRef.current
+      const prepared = await storyMediaFile(source, slot, cropSourceFilesRef.current.get(source))
+      if (!prepared || !queue || !draftKey) return null
+      const identity = imageId ? `${imageId}:${prepared.imageId}` : prepared.imageId
+      const tasks = await queue.listForDraft(draftKey)
+      const found = tasks.find((item) =>
+        item.context?.slot === slot && item.context?.imageId === identity
+      )
+      if (found) return found
+      return await queue.enqueue({ file: prepared.file, draftKey, slot, imageId: identity })
+    } catch (error) {
+      void reportStoryCreationError(error, { stage: 'UPLOAD_QUEUE', storyType })
+      throw error
+    }
   }
 
   useEffect(() => {
@@ -1096,7 +1118,7 @@ export default function CreateStoryPage() {
     const draftKey = storyMediaKeyRef.current
     const snapshot = storyMediaSnapshot()
     const operation = storyMediaWriteRef.current.catch(() => {}).then(async () => {
-      await saveStoryMediaSnapshot(draftKey, snapshot)
+      await saveMediaDraft(draftKey, snapshot)
       const tasks = []
       if (coverChanged) tasks.push({ source: snapshot.cover.preview, slot: 'cover' })
       if (landscapeChanged) tasks.push({ source: snapshot.landscape.preview, slot: 'landscape' })
@@ -1120,6 +1142,7 @@ export default function CreateStoryPage() {
     try {
       localStorage.setItem('create_story_draft', JSON.stringify(draft))
     } catch (error) {
+      void reportStoryCreationError(error, { stage: 'LOCAL_DRAFT', storyType })
       setStoryUploadState(getStoryCreationUserError(error, 'local').message)
     }
   }, [isEditMode, storyMediaReady, storyType, title, language, genre, storyStatus, storySettings,
@@ -1305,6 +1328,7 @@ if (cropMode === 'slide') {
         setCropOpen(false)
       }
     } catch (error) {
+      void reportStoryCreationError(error, { stage: 'CROP', storyType })
       showToast(getStoryCreationUserError(error, 'crop').message)
     }
   }
@@ -1340,6 +1364,10 @@ if (cropMode === 'slide') {
         const job = jobs.find((item) => item.draftKey === draftKey)
         if (!job) return
         if (job.state !== 'created' || !job.storyId) {
+          if (job.error) {
+            const stage = job.state === 'waiting_upload' ? 'ONLINE_UPLOAD' : 'CREATE_STORY'
+            void reportStoryCreationError(new Error(String(job.error)), { stage, storyType })
+          }
           setPendingStoryCreation(job)
           if (['pending', 'waiting_upload'].includes(job.state)) {
             startStoryCreationSync({ userId, getToken: getAuthToken, apiBaseUrl: API_BASE_URL })
@@ -1376,11 +1404,15 @@ if (cropMode === 'slide') {
           completedStoryHandlingRef.current = ''
           if (!cancelled) {
             setPendingStoryCreation(job)
+            void reportStoryCreationError(error, { stage: 'CREATE_STORY', storyType })
             setMessage(getStoryCreationUserError(error, 'create').message)
           }
         }
       } catch (error) {
-        if (!cancelled) setMessage(getStoryCreationUserError(error, 'create').message)
+        if (!cancelled) {
+          void reportStoryCreationError(error, { stage: 'CREATE_STORY', storyType })
+          setMessage(getStoryCreationUserError(error, 'create').message)
+        }
       }
     }
 
@@ -1405,7 +1437,7 @@ if (cropMode === 'slide') {
     if (!userId) throw new Error('Please sign in to save this story')
     const draftKey = storyMediaKeyRef.current
     await storyMediaWriteRef.current
-    await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+    await saveMediaDraft(draftKey, storyMediaSnapshot())
     const mediaRef = async (source, slot, imageId = '') => {
       if (!source) return null
       if (/^https?:\/\//i.test(source)) return { url: source }
@@ -1444,6 +1476,9 @@ if (cropMode === 'slide') {
       media,
       getToken: getAuthToken,
       apiBaseUrl: API_BASE_URL,
+    }).catch((error) => {
+      void reportStoryCreationError(error, { stage: 'CREATE_STORY', storyType })
+      throw error
     })
     setPendingStoryCreation(job)
     setStoryUploadState(STORY_SYNC_LABELS[getDisplayLanguageId()]?.saved || STORY_SYNC_LABELS.en.saved)
@@ -1472,6 +1507,7 @@ if (cropMode === 'slide') {
       })
       void storyCreationRefreshRef.current?.()
     } catch (error) {
+      void reportStoryCreationError(error, { stage: 'UPLOAD_QUEUE', storyType })
       setMessage(getStoryCreationUserError(error, 'queue').message)
     }
   }
@@ -1482,7 +1518,7 @@ if (cropMode === 'slide') {
     const queue = storyQueueRef.current
     if (storyMediaTouched && draftKey) {
       await storyMediaWriteRef.current
-      await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+      await saveMediaDraft(draftKey, storyMediaSnapshot())
     }
 
     const resolveImage = async (source, slot, fileName, imageId = '') => {
@@ -1574,6 +1610,7 @@ if (cropMode === 'slide') {
       return
     }
 
+    let updateStage = 'LOCAL_DRAFT'
     try {
       setLoading(true)
 
@@ -1589,7 +1626,8 @@ if (cropMode === 'slide') {
       }
 
       await storyMediaWriteRef.current
-      await saveStoryMediaSnapshot(draftKey, storyMediaSnapshot())
+      await saveMediaDraft(draftKey, storyMediaSnapshot())
+      updateStage = 'UPLOAD_QUEUE'
 
       const mediaRef = async (source, slot, imageId = '') => {
         if (!source) return null
@@ -1627,6 +1665,7 @@ if (cropMode === 'slide') {
         storyPayload.story_settings = storySettings
       }
 
+      updateStage = 'UPDATE_STORY'
       await queueStoryUpdate({
         userId,
         storyId: editStoryId,
@@ -1644,6 +1683,7 @@ if (cropMode === 'slide') {
         navigate('/author/dashboard')
       }
     } catch (error) {
+      void reportStoryCreationError(error, { stage: updateStage, storyType })
       setMessage(getStoryCreationUserError(error, 'local').message)
     } finally {
       setLoading(false)
