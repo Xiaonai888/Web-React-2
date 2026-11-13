@@ -142,7 +142,7 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
         const profile = await readJson('/api/authors/me?include_works=0', token, controller.signal)
         const pageUsername = profile.author_page?.page_username
         if (pageUsername) {
-          const data = await readJson(`/api/authors/page/${encodeURIComponent(pageUsername)}/followers?section=all&limit=30&offset=0`, token, controller.signal)
+          const data = await readJson(`/api/authors/page/${encodeURIComponent(pageUsername)}/followers?section=all&limit=10&offset=0`, token, controller.signal)
           followers = data.followers || []
         }
       } else {
@@ -152,7 +152,7 @@ export default function StoryMentionPicker({ mode = 'reader', value = '', onSave
           username = String(profile.user?.username || '')
         }
         if (username) {
-          const data = await readJson(`/api/users/${encodeURIComponent(username)}/followers?page=1&limit=30`, token, controller.signal)
+          const data = await readJson(`/api/users/${encodeURIComponent(username)}/followers?page=1&limit=10`, token, controller.signal)
           followers = data.users || []
         }
       }
