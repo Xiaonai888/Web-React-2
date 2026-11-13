@@ -1726,22 +1726,22 @@ function StoryViewer({
         }}
       >
         <span
-  className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35] shadow-lg"
-  style={{
-    backgroundColor: textStyle.background,
-    color: getStoryStickerTextColor(textStyle.background),
-  }}
->
-  <span
-    className="block max-w-full whitespace-pre-wrap break-words"
-    style={{
-      textAlign: textStyle.align,
-      ...getStoryStickerTypography(textStyle.font),
-    }}
-  >
-    {textStyle.text}
-  </span>
-</span>
+          className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35]"
+          style={{ backgroundColor: textAppearance.backgroundColor, color: textAppearance.color }}
+        >
+          <span
+            className="block max-w-full whitespace-pre-wrap break-words"
+            style={{
+              ...getStoryStickerTypography(textStyle.font),
+              textAlign: 'center',
+              WebkitTextStroke: textAppearance.WebkitTextStroke,
+              paintOrder: 'stroke fill',
+              textShadow: 'none',
+            }}
+          >
+            {textStyle.text}
+          </span>
+        </span>
       </div>
     </div>
   ) : (
