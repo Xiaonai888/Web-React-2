@@ -31,6 +31,8 @@ export default function useGenreAutoLoad({
   loadMore,
   loadedCount = 0,
   maxAutoLoads = 2,
+  allowGuests = false,
+  autoOnVisible = false,
 }) {
   const sentinelRef = useRef(null)
   const loadMoreRef = useRef(loadMore)
@@ -40,6 +42,7 @@ export default function useGenreAutoLoad({
   const handledGestureRef = useRef(0)
   const touchYRef = useRef(null)
   const [autoLoads, setAutoLoads] = useState(0)
+  const [autoPaused, setAutoPaused] = useState(false)
   const [hasAccount, setHasAccount] = useState(hasReaderAccount)
 
   useEffect(() => {
@@ -58,16 +61,18 @@ export default function useGenreAutoLoad({
 
   loadMoreRef.current = loadMore
   resetKeyRef.current = resetKey
+  const canLoad = allowGuests || hasAccount
 
   useEffect(() => {
     gestureRef.current = 0
     handledGestureRef.current = 0
     pendingRef.current = false
     setAutoLoads(0)
+    setAutoPaused(false)
   }, [resetKey])
 
   useEffect(() => {
-    if (!hasAccount || !hasMore || loading || loadingMore || autoLoads >= maxAutoLoads || loadedCount >= 27) return undefined
+    if (autoOnVisible || !canLoad || !hasMore || loading || loadingMore || autoLoads >= maxAutoLoads || loadedCount >= 27) return undefined
 
     const expectedResetKey = resetKey
 
@@ -92,7 +97,7 @@ export default function useGenreAutoLoad({
           }
         })
         .finally(() => {
-          pendingRef.current = false
+          if (resetKeyRef.current === expectedResetKey) pendingRef.current = false
         })
     }
 
@@ -135,7 +140,44 @@ export default function useGenreAutoLoad({
       window.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('scroll', check, true)
     }
-  }, [hasAccount, hasMore, loading, loadingMore, autoLoads, maxAutoLoads, loadedCount, resetKey])
+  }, [autoOnVisible, canLoad, hasMore, loading, loadingMore, autoLoads, maxAutoLoads, loadedCount, resetKey])
 
-  return { sentinelRef, autoLoads, hasAccount, showManualLoad: hasAccount && (autoLoads >= maxAutoLoads || loadedCount >= 27) }
+  useEffect(() => {
+    if (!autoOnVisible || !canLoad || !hasMore || loading || loadingMore || autoPaused || autoLoads >= maxAutoLoads || loadedCount >= 27) return undefined
+    const target = sentinelRef.current
+    if (!target) return undefined
+    const expectedResetKey = resetKey
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      if (pendingRef.current || resetKeyRef.current !== expectedResetKey) return
+      pendingRef.current = true
+      observer.disconnect()
+      Promise.resolve()
+        .then(() => loadMoreRef.current?.())
+        .then((succeeded) => {
+          if (resetKeyRef.current !== expectedResetKey) return
+          pendingRef.current = false
+          if (succeeded === true) {
+            setAutoLoads((count) => Math.min(maxAutoLoads, count + 1))
+          } else {
+            setAutoPaused(true)
+          }
+        })
+        .catch(() => {
+          if (resetKeyRef.current === expectedResetKey) {
+            pendingRef.current = false
+            setAutoPaused(true)
+          }
+        })
+        .finally(() => {
+          if (resetKeyRef.current === expectedResetKey) pendingRef.current = false
+        })
+    }, { rootMargin: '0px 0px 80px 0px', threshold: 0 })
+    observer.observe(target)
+    return () => {
+      observer.disconnect()
+    }
+  }, [autoOnVisible, canLoad, hasMore, loading, loadingMore, autoPaused, autoLoads, maxAutoLoads, loadedCount, resetKey])
+
+  return { sentinelRef, autoLoads, hasAccount, showManualLoad: canLoad && (autoPaused || autoLoads >= maxAutoLoads || loadedCount >= 27) }
 }
