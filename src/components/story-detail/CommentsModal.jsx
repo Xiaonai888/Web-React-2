@@ -105,6 +105,42 @@ export default function CommentsModal({
   const [selectedEpisodeId, setSelectedEpisodeId] = useState('')
   const [episodeCommentTotals, setEpisodeCommentTotals] = useState({})
   const [storyCommentTotal, setStoryCommentTotal] = useState(0)
+    const [keyboardViewport, setKeyboardViewport] = useState(null)
+
+  useEffect(() => {
+    if (!open || !window.visualViewport) return undefined
+
+    const viewport = window.visualViewport
+    let frame = 0
+
+    const update = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const height = Math.round(viewport.height)
+        const top = Math.max(0, Math.round(viewport.offsetTop))
+        if (height < 120) return
+        setKeyboardViewport((previous) =>
+          previous?.height === height && previous?.top === top
+            ? previous
+            : { height, top }
+        )
+      })
+    }
+
+    update()
+    viewport.addEventListener('resize', update)
+    viewport.addEventListener('scroll', update)
+    window.addEventListener('resize', update)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      viewport.removeEventListener('resize', update)
+      viewport.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [open])
+
 
   const episodeList = useMemo(() => {
     const sourceEpisodes = Array.isArray(episodes)
@@ -513,7 +549,13 @@ export default function CommentsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-end justify-center sm:items-center sm:px-4">
+    <div
+  className="fixed inset-x-0 top-0 z-[400] flex items-end justify-center sm:items-center sm:px-4"
+  style={{
+    height: keyboardViewport ? `${keyboardViewport.height}px` : '100dvh',
+    top: keyboardViewport ? `${keyboardViewport.top}px` : 0,
+  }}
+>
       <button
         type="button"
         onClick={onClose}
@@ -523,7 +565,7 @@ export default function CommentsModal({
 
       <section
         ref={sheetRef}
-        className="relative flex h-[calc(100dvh-12px)] w-screen max-w-none shrink-0 flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100dvh-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px]"
+        className="relative flex h-[calc(100%-12px)] w-screen max-w-none shrink-0 flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-2xl sm:h-[calc(100%-24px)] sm:w-full sm:max-w-3xl sm:rounded-[28px]"
         style={{
           transform: `translateY(${dragOffset}px)`,
           transition: dragging
