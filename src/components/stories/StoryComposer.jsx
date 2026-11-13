@@ -441,6 +441,7 @@ async function saveStoryExtras({
   textSticker,
   altText,
   mentionUsername,
+  mentionTarget,
   linkUrl,
 }) {
   const response = await fetch(
@@ -863,6 +864,8 @@ const mentionUsername = mentionTarget?.username || ''
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/55 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
+      {sheet !== 'text' ? (
+        <>
       <header className="absolute inset-x-0 top-0 z-40">
         <div className="mx-auto flex max-w-[680px] items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))]">
           <button
@@ -955,7 +958,10 @@ const mentionUsername = mentionTarget?.username || ''
         </div>
       </footer>
 
-      {error ? (
+        </>
+      ) : null}
+
+      {error && sheet !== 'text' ? (
         <div className="fixed inset-x-4 bottom-[170px] z-[150] mx-auto max-w-[520px] rounded-[14px] bg-white px-4 py-3 text-center text-[12px] font-semibold text-[#111827] shadow-xl">
           {error}
         </div>
