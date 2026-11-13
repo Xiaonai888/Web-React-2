@@ -60,10 +60,13 @@ function bytesToHex(buffer) {
 
 export async function getReaderDeviceKey() {
   const existing = getExistingKey()
-  if (existing) return existing
-  const source = new TextEncoder().encode(getFingerprintSource())
-  const digest = await crypto.subtle.digest('SHA-256', source)
-  return saveEverywhere(bytesToHex(digest))
+  if (existing) {
+    const source = new TextEncoder().encode(getFingerprintSource())
+    const legacyDigest = await crypto.subtle.digest('SHA-256', source)
+    if (existing !== bytesToHex(legacyDigest)) return existing
+  }
+  const uniqueKey = bytesToHex(crypto.getRandomValues(new Uint8Array(32)))
+  return saveEverywhere(uniqueKey)
 }
 
 export function persistReaderDeviceKey(key) {
