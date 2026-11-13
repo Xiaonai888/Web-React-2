@@ -829,6 +829,10 @@ useEffect(() => {
         .catch(() => ({}))
 
       if (isReaderAuthFailure(response, data)) {
+        const localToken = localStorage.getItem('shadow_reader_token')
+        const sessionToken = sessionStorage.getItem('shadow_reader_token')
+        if ((localToken && localToken !== currentToken) ||
+            (sessionToken && sessionToken !== currentToken)) return
         clearReaderSession()
         navigate('/login', { replace: true })
         return
