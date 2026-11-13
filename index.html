@@ -5,7 +5,7 @@
   <meta id="shadow-viewport" name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script>
   const setShadowViewport = () => {
-    const phone = Math.min(screen.width, screen.height) <= 600
+    const phone = Math.min(screen.width, screen.height) <= 600 && (navigator.userAgentData?.mobile ?? /\bMobile\b/i.test(navigator.userAgent))
     const landscape = matchMedia('(orientation: landscape)').matches
     document.getElementById('shadow-viewport').content =
       phone && landscape ? 'width=1024, viewport-fit=cover' : 'width=device-width, initial-scale=1.0, viewport-fit=cover'
