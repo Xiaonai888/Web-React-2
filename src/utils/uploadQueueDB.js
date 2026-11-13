@@ -5,6 +5,7 @@ const FILE_STORE = 'files'
 const DEFAULT_LEASE_MS = 120000
 let databasePromise = null
 let activeDatabase = null
+let preferBinaryStorage = false
 
 function required(value, label) {
   const clean = String(value || '').trim()
@@ -94,6 +95,16 @@ async function transaction(storeNames, mode, operate, attempt = 0) {
   }
 }
 
+function isInvalidBlobError(error) {
+  return /InvalidBlob|failed to write blobs|DataCloneError/i.test(`${error?.name || ''} ${error?.message || ''}`)
+}
+
+function readableStorageError(error) {
+  return error?.name === 'QuotaExceededError'
+    ? new Error('This device has insufficient local storage for the selected media')
+    : error
+}
+
 function ownerRange(ownerId) {
   return IDBKeyRange.bound([ownerId, 0], [ownerId, Number.MAX_SAFE_INTEGER])
 }
@@ -141,16 +152,29 @@ export async function enqueueMediaUpload({ file, ownerId, category, kind = 'imag
     updatedAt: now,
   }
 
+  const write = (savedFile) => transaction([TASK_STORE, FILE_STORE], 'readwrite', (tx) => {
+    tx.objectStore(FILE_STORE).add(savedFile, task.id)
+    tx.objectStore(TASK_STORE).add(task)
+  })
+
+  const safeFile = async () => ({
+    __shadowStoredBytes: true,
+    bytes: new Uint8Array(await file.arrayBuffer()),
+    name: String(file.name || 'media'),
+    mimeType: String(file.type || 'application/octet-stream'),
+    lastModified: Number(file.lastModified) || now,
+  })
+
   try {
-    await transaction([TASK_STORE, FILE_STORE], 'readwrite', (tx) => {
-      tx.objectStore(FILE_STORE).add(file, task.id)
-      tx.objectStore(TASK_STORE).add(task)
-    })
+    await write(preferBinaryStorage ? await safeFile() : file)
   } catch (error) {
-    if (error?.name === 'QuotaExceededError') {
-      throw new Error('This device has insufficient local storage for the selected media')
+    if (!isInvalidBlobError(error)) throw readableStorageError(error)
+    preferBinaryStorage = true
+    try {
+      await write(await safeFile())
+    } catch (retryError) {
+      throw readableStorageError(retryError)
     }
-    throw error
   }
 
   return toSafeTask(task)
@@ -191,7 +215,21 @@ export async function readMediaUploadFile(id, ownerId) {
     request.onsuccess = () => {
       if (request.result?.ownerId !== owner) return
       const fileRequest = tx.objectStore(FILE_STORE).get(id)
-      fileRequest.onsuccess = () => setResult(fileRequest.result || null)
+      fileRequest.onsuccess = () => {
+        const saved = fileRequest.result
+        if (saved?.__shadowStoredBytes) {
+          if (!(saved.bytes instanceof Uint8Array) && !(saved.bytes instanceof ArrayBuffer)) {
+            setResult(null)
+            return
+          }
+          setResult(new File([saved.bytes], saved.name || 'media', {
+            type: saved.mimeType || 'application/octet-stream',
+            lastModified: saved.lastModified || Date.now(),
+          }))
+        } else {
+          setResult(saved || null)
+        }
+      }
     }
   })
 }
@@ -232,7 +270,7 @@ export async function claimNextMediaUpload(ownerId, workerId, leaseMs = DEFAULT_
 
 export async function renewMediaUploadLease(id, workerId, leaseMs = DEFAULT_LEASE_MS) {
   const worker = required(workerId, 'Worker ID')
-  return transaction([TASK_STORE], 'readwrite', (tx, setResult) => {
+  return transaction([TASK_STORE], 'readwrite', (tx) => {
     const store = tx.objectStore(TASK_STORE)
     const request = store.get(id)
     request.onsuccess = () => {
