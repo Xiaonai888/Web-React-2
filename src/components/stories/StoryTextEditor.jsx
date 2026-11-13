@@ -121,11 +121,12 @@ export function getStoryStickerTypography(font) {
 
 export function getStoryStickerAppearance(value) {
   const sticker = normalizeStoryTextSticker(value)
-  const color = sticker.background === 'transparent' ? DEFAULT_COLOR : sticker.background
+  const transparent = sticker.background === 'transparent'
+  const color = transparent ? DEFAULT_COLOR : sticker.background
   const opposite = getStoryStickerTextColor(color)
   const mode = sticker.styleMode
-  let backgroundColor = color
-  let textColor = opposite
+  let backgroundColor = transparent ? 'transparent' : color
+  let textColor = transparent ? '#FFFFFF' : opposite
   let outlineColor = ''
   if (mode === 'inverse') {
     backgroundColor = opposite
