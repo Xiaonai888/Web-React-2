@@ -10,20 +10,60 @@ registerTranslationNamespace('storyTextEditor', {
   ko: { done: '완료', color: '배경색', font: '글자 스타일', align: '文字揃え', placeholder: '텍스트 입력...', classic: '클래식', modern: '모던', typewriter: '타자기', edit: '텍스트 편집', poster: '포스터', handwriting: '손글씨', rounded: '둥근 글씨', elegant: '우아함', minimal: '미니멀', retro: '레트로', neon: '네온', suggestedColor: '추천 색상', moreColors: '다른 색상' },
 })
 
+registerTranslationNamespace('storyTextColorNames', {
+  en: { pink: 'Pink', white: 'White', black: 'Black', gray: 'Gray', red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', teal: 'Teal', blue: 'Blue', purple: 'Purple', brown: 'Brown', transparent: 'Transparent' },
+  km: { pink: 'ផ្កាឈូក', white: 'ស', black: 'ខ្មៅ', gray: 'ប្រផេះ', red: 'ក្រហម', orange: 'ទឹកក្រូច', yellow: 'លឿង', green: 'បៃតង', teal: 'បៃតងខៀវ', blue: 'ខៀវ', purple: 'ស្វាយ', brown: 'ត្នោត', transparent: 'គ្មានផ្ទៃពណ៌' },
+  zh: { pink: '粉色', white: '白色', black: '黑色', gray: '灰色', red: '红色', orange: '橙色', yellow: '黄色', green: '绿色', teal: '青绿色', blue: '蓝色', purple: '紫色', brown: '棕色', transparent: '透明' },
+  ja: { pink: 'ピンク', white: '白', black: '黒', gray: 'グレー', red: '赤', orange: 'オレンジ', yellow: '黄', green: '緑', teal: '青緑', blue: '青', purple: '紫', brown: '茶色', transparent: '透明' },
+  ko: { pink: '분홍색', white: '흰색', black: '검은색', gray: '회색', red: '빨간색', orange: '주황색', yellow: '노란색', green: '초록색', teal: '청록색', blue: '파란색', purple: '보라색', brown: '갈색', transparent: '투명' },
+})
+
 export const STORY_TEXT_COLORS = [
   '#162453', '#000000', '#393944', '#FFFFFF', '#E74159', '#F15D22', '#F6C843', '#23965E', '#009CBE', '#335CF1', '#7E3EDD', '#D742AD', 'transparent',
   '#1F2937', '#4B5563', '#6B7280', '#9CA3AF', '#D1D5DB', '#F9FAFB', '#7F1D1D', '#991B1B', '#DC2626', '#F97316', '#FB923C', '#FDE68A', '#A16207', '#3F6212', '#166534', '#047857', '#0F766E', '#115E59', '#155E75', '#0C4A6E', '#1D4ED8', '#1E40AF', '#3730A3', '#5B21B6', '#6D28D9', '#9333EA', '#A21CAF', '#BE185D', '#DB2777', '#F472B6', '#FBCFE8', '#E0E7FF', '#BAE6FD', '#A7F3D0', '#FEF3C7', '#FEE2E2', '#78350F', '#44403C', '#57534E',
 ]
 export const STORY_TEXT_FONTS = ['classic', 'modern', 'typewriter', 'poster', 'handwriting', 'rounded', 'elegant', 'minimal', 'retro', 'neon']
 export const STORY_TEXT_ALIGNMENTS = ['left', 'center', 'right']
-const DEFAULT_SUGGESTIONS = ['#162453', '#0F766E', '#7E3EDD', '#393944', '#F6C843']
+const DEFAULT_COLOR = '#FFFFFF'
+const DEFAULT_SUGGESTIONS = ['#162453', '#0F766E', '#7E3EDD', '#393944']
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
 const COLOR_ITEM_WIDTH = 54
 
 function normalizeBackground(value) {
   if (value === 'transparent') return value
   const color = String(value || '').toUpperCase()
-  return HEX_COLOR.test(color) ? color : '#162453'
+  return HEX_COLOR.test(color) ? color : DEFAULT_COLOR
+}
+
+function getStoryColorName(color) {
+  if (color === 'transparent') return getDisplayText('storyTextColorNames.transparent')
+  const value = String(color || DEFAULT_COLOR).toUpperCase()
+  if (!HEX_COLOR.test(value)) return getDisplayText('storyTextColorNames.blue')
+  if (value === '#FFFFFF') return getDisplayText('storyTextColorNames.white')
+  if (value === '#000000') return getDisplayText('storyTextColorNames.black')
+  const rgb = [1, 3, 5].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255)
+  const high = Math.max(...rgb)
+  const low = Math.min(...rgb)
+  const lightness = (high + low) / 2
+  const delta = high - low
+  const saturation = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
+  let key = 'gray'
+  if (lightness >= 0.95 && saturation < 0.16) key = 'white'
+  else if (lightness <= 0.13 && saturation < 0.20) key = 'black'
+  else if (saturation >= 0.16 && delta > 0) {
+    const [red, green, blue] = rgb
+    const hue = (high === red ? ((green - blue) / delta) % 6 : high === green ? (blue - red) / delta + 2 : (red - green) / delta + 4) * 60
+    const angle = (hue + 360) % 360
+    if (angle < 13 || angle >= 348) key = 'red'
+    else if (angle < 46) key = lightness < 0.38 ? 'brown' : 'orange'
+    else if (angle < 72) key = 'yellow'
+    else if (angle < 162) key = 'green'
+    else if (angle < 196) key = 'teal'
+    else if (angle < 255) key = 'blue'
+    else if (angle < 294) key = 'purple'
+    else key = 'pink'
+  }
+  return getDisplayText(`storyTextColorNames.${key}`)
 }
 
 export function normalizeStoryTextSticker(value) {
@@ -65,13 +105,13 @@ export function getStoryStickerFont(font) {
 
 export function getStoryStickerTypography(font) {
   const base = { fontFamily: getStoryStickerFont(font), fontWeight: 400, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
-  if (font === 'handwriting') return { ...base, fontWeight: 500, fontStyle: 'italic' }
-  if (font === 'poster') return { ...base, fontWeight: 900, letterSpacing: '0.02em' }
-  if (font === 'rounded') return { ...base, fontWeight: 800 }
-  if (font === 'elegant') return { ...base, fontWeight: 600, letterSpacing: '0.015em' }
-  if (font === 'minimal') return { ...base, fontWeight: 400, letterSpacing: '0.02em' }
-  if (font === 'retro') return { ...base, fontWeight: 800, letterSpacing: '0.04em', textShadow: '1px 1px 0 rgba(0,0,0,0.35)' }
-  if (font === 'neon') return { ...base, fontWeight: 700, letterSpacing: '0.03em', textShadow: '0 0 5px currentColor, 0 0 15px currentColor' }
+  if (font === 'handwriting') return { ...base, fontWeight: 400, fontStyle: 'italic' }
+  if (font === 'poster') return { ...base, fontWeight: 700 }
+  if (font === 'rounded') return { ...base, fontWeight: 600 }
+  if (font === 'elegant') return { ...base, fontWeight: 500 }
+  if (font === 'minimal') return { ...base, fontWeight: 400 }
+  if (font === 'retro') return { ...base, fontWeight: 500 }
+  if (font === 'neon') return { ...base, fontWeight: 600 }
   return base
 }
 
@@ -111,7 +151,7 @@ function extractImageSuggestions(imageUrl, onReady) {
           return Math.hypot(rgb[0] - other[0], rgb[1] - other[1], rgb[2] - other[2]) < 70
         })) continue
         choices.push(color)
-        if (choices.length === 5) break
+        if (choices.length === 4) break
       }
       if (active && choices.length) onReady(choices)
     } catch {
@@ -140,11 +180,13 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   }))
   const textRef = useRef(null)
   const carouselRef = useRef(null)
+  const fontCarouselRef = useRef(null)
+  const centeredFontRef = useRef(draft.font)
   const centeredColorRef = useRef(draft.background)
   const translate = (key) => getDisplayText(`storyTextEditor.${key}`)
-  const suggested = imageSuggestions.length ? imageSuggestions : DEFAULT_SUGGESTIONS
+  const suggested = useMemo(() => Array.from(new Set([...imageSuggestions, ...DEFAULT_SUGGESTIONS].filter((color) => color && color !== '#FFFFFF'))).slice(0, 4), [imageSuggestions])
   const originalBackground = useRef(normalizeStoryTextSticker(value).background).current
-  const palette = useMemo(() => Array.from(new Set([...suggested, originalBackground, ...STORY_TEXT_COLORS])), [imageSuggestions, originalBackground])
+  const palette = useMemo(() => Array.from(new Set([...suggested, '#FFFFFF', originalBackground, ...STORY_TEXT_COLORS])), [suggested, originalBackground])
 
   useEffect(() => {
     const visual = window.visualViewport
@@ -202,19 +244,19 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   useEffect(() => {
     const node = textRef.current
     if (!node) return
-    const typography = getStoryStickerTypography(draft.font)
+    const typography = draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontStyle: 'normal', fontWeight: 700 }
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
     let width = 174
     if (context) {
       context.font = `${typography.fontStyle} ${typography.fontWeight} 27px ${typography.fontFamily}`
-      const lines = (draft.text || translate('placeholder')).split('\n')
-      width = Math.max(100, ...lines.map((line) => context.measureText(line || ' ').width + 10))
+      const lines = (draft.text || 'Type or @Tag').split('\n')
+      width = Math.max(draft.text ? 100 : 230, ...lines.map((line) => context.measureText(line || ' ').width + 12))
     }
-    const maxWidth = Math.max(140, Math.min(420, viewport.width * 0.78))
+    const maxWidth = Math.max(140, Math.min(420, viewport.width * 0.86))
     node.style.width = `${Math.min(maxWidth, Math.max(104, Math.ceil(width)))}px`
     node.style.height = '36px'
-    node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, viewport.height * 0.34)))}px`
+    node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
   }, [draft.text, draft.font, viewport.width, viewport.height])
 
   useEffect(() => {
@@ -229,6 +271,17 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     })
     return () => window.cancelAnimationFrame(frame)
   }, [mode, palette])
+
+  useEffect(() => {
+    if (mode !== 'font') return undefined
+    const frame = window.requestAnimationFrame(() => {
+      const node = fontCarouselRef.current
+      const index = STORY_TEXT_FONTS.indexOf(draft.font)
+      const item = node?.children[index]
+      if (node && item) node.scrollLeft = item.offsetLeft - (node.clientWidth - item.clientWidth) / 2
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [mode])
 
   const update = (changes) => setDraft((current) => ({ ...current, ...changes }))
   const changeAlignment = () => {
@@ -255,8 +308,32 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       return distance < result.distance ? { distance, color } : result
     }, { distance: Infinity, color: '' })
     if (nearest.color && centeredColorRef.current !== nearest.color) {
-      centeredColorRef.current = nearest.color
+        centeredColorRef.current = nearest.color
       update({ background: nearest.color })
+    }
+  }
+
+  const selectFont = (font, index) => {
+    centeredFontRef.current = font
+    update({ font })
+    const node = fontCarouselRef.current
+    const item = node?.children[index]
+    if (node && item) node.scrollTo({ left: item.offsetLeft - (node.clientWidth - item.clientWidth) / 2, behavior: 'smooth' })
+  }
+
+  const handleFontScroll = () => {
+    const node = fontCarouselRef.current
+    if (!node) return
+    const center = node.scrollLeft + node.clientWidth / 2
+    const nearest = STORY_TEXT_FONTS.reduce((result, font, index) => {
+      const item = node.children[index]
+      if (!item) return result
+      const distance = Math.abs(item.offsetLeft + item.offsetWidth / 2 - center)
+      return distance < result.distance ? { distance, font } : result
+    }, { distance: Infinity, font: '' })
+    if (nearest.font && centeredFontRef.current !== nearest.font) {
+      centeredFontRef.current = nearest.font
+      update({ font: nearest.font })
     }
   }
 
@@ -270,71 +347,50 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       aria-modal="true"
       aria-label={translate('edit')}
     >
-      <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center justify-center gap-1.5 px-3 pb-1 pt-[max(5px,env(safe-area-inset-top))]">
-        <button
-          type="button"
-          onPointerDown={maintainTextFocus}
-          onClick={() => setMode('color')}
-          aria-label={translate('color')}
-          aria-pressed={mode === 'color'}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent"
-        >
-          <span className={`h-[23px] w-[23px] rounded-full border border-white/75 ${mode === 'color' ? 'ring-2 ring-white/90 ring-offset-1 ring-offset-transparent' : ''}`} style={{ background: 'conic-gradient(#e9435f, #e8b72a, #35ae74, #4384ea, #b154c3, #e9435f)' }} />
+      <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center justify-center gap-1.5 px-3 pb-1 pt-[max(12px,env(safe-area-inset-top))]">
+        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode('color')} aria-label={translate('color')} aria-pressed={mode === 'color'} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent">
+          <span className={`h-[23px] w-[23px] rounded-full border border-white/65 ${mode === 'color' ? 'ring-1 ring-white/80 ring-offset-1 ring-offset-transparent' : ''}`} style={{ background: 'conic-gradient(#e9435f, #e8b72a, #35ae74, #4384ea, #b154c3, #e9435f)' }} />
         </button>
-        <button
-          type="button"
-          onPointerDown={maintainTextFocus}
-          onClick={() => setMode('font')}
-          aria-label={translate('font')}
-          aria-pressed={mode === 'font'}
-          className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent"
->
-  <span className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] text-[13px] font-normal ${mode === 'font' ? 'bg-white text-[#101014]' : 'text-white'}`}>Aa</span>
+        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode('font')} aria-label={translate('font')} aria-pressed={mode === 'font'} className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent">
+          <span className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] text-[13px] font-normal ${mode === 'font' ? 'border border-white bg-white text-[#101014]' : 'border border-white/70 bg-transparent text-white'}`}>Aa</span>
         </button>
-        <button
-          type="button"
-          onPointerDown={maintainTextFocus}
-          onClick={changeAlignment}
-          aria-label={translate('align')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white"
-        >
-          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-  <path d={draft.align === 'left' ? 'M4 5h16M4 10h11M4 15h16M4 20h11' : draft.align === 'right' ? 'M4 5h16M9 10h11M4 15h16M9 20h11' : 'M4 5h16M7 10h10M4 15h16M7 20h10'} />
-</svg>
+        <button type="button" onPointerDown={maintainTextFocus} onClick={changeAlignment} aria-label={translate('align')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" aria-hidden="true">
+            <path d={draft.align === 'left' ? 'M4 5h16M4 10h11M4 15h16M4 20h11' : draft.align === 'right' ? 'M4 5h16M9 10h11M4 15h16M9 20h11' : 'M4 5h16M7 10h10M4 15h16M7 20h10'} />
+          </svg>
         </button>
-        <button
-  type="button"
-  onClick={() => onSave?.({ ...draft, text: draft.text.trim() })}
-  className="absolute right-3 top-[max(5px,env(safe-area-inset-top))] h-9 rounded-lg bg-[#303035] px-4 text-[13px] font-normal text-white"
->
-  {translate('done')}
-</button>
+        <button type="button" onClick={() => onSave?.({ ...draft, text: draft.text.trim() })} className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] h-9 rounded-lg bg-[#303035] px-4 text-[13px] font-normal text-white">
+          {translate('done')}
+        </button>
       </header>
 
-      <main className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-contain px-3 py-3">
-        <div className="flex w-full min-w-0 flex-col items-center justify-center gap-2.5">
+      <main className="relative min-h-0 flex-1 overflow-hidden px-3 py-3">
+        <div className="absolute inset-x-3 top-[42%] flex -translate-y-1/2 items-center justify-center">
           <div
-            className="inline-flex max-w-[90%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2 shadow-lg"
-            style={{ backgroundColor: draft.background, color: getStoryStickerTextColor(draft.background) }}
+            className="inline-flex max-w-[92%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2"
+            style={{ backgroundColor: draft.text.trim() ? draft.background : 'transparent', color: draft.text.trim() ? getStoryStickerTextColor(draft.background) : '#FFFFFF' }}
           >
             <textarea
               ref={textRef}
               autoFocus
               rows={1}
+              wrap={draft.text ? 'soft' : 'off'}
               maxLength={200}
               value={draft.text}
               onChange={(event) => update({ text: event.target.value })}
-              placeholder={translate('placeholder')}
+              placeholder="Type or @tag"
               aria-label={translate('edit')}
-              className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:text-current placeholder:opacity-60"
-              style={{ color: 'inherit', textAlign: draft.align, ...getStoryStickerTypography(draft.font), caretColor: 'currentColor' }}
+              className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
+              style={{ color: 'inherit', textAlign: draft.text ? draft.align : 'center', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), caretColor: 'currentColor' }}
             />
           </div>
+        </div>
 
+        <div className="absolute inset-x-3 flex flex-col items-center" style={{ top: 'min(calc(42% + 65px), calc(100% - 90px))' }}>
           {mode === 'color' ? (
             <div className="flex w-full flex-col items-center gap-1.5">
               <span className="rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-semibold text-white/90">
-                {suggested.includes(draft.background) ? translate('suggestedColor') : translate('moreColors')}
+                {getStoryColorName(draft.background)}
               </span>
               <div className="relative w-[min(92vw,360px)] max-w-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 9%, black 91%, transparent)' }}>
                 <div
@@ -350,7 +406,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
                       type="button"
                       onPointerDown={maintainTextFocus}
                       onClick={() => selectColor(color, index)}
-                      aria-label={color === 'transparent' ? 'Transparent' : color}
+                      aria-label={getStoryColorName(color)}
                       aria-pressed={draft.background === color}
                       className="flex h-[46px] w-[44px] shrink-0 snap-center items-center justify-center bg-transparent p-0"
                       style={{ touchAction: 'pan-x' }}
@@ -365,20 +421,17 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
               </div>
             </div>
           ) : (
-            <div className="flex w-full max-w-[440px] items-center gap-1.5 overflow-x-auto px-2 py-1.5" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-              {STORY_TEXT_FONTS.map((font) => (
-                <button
-                  key={font}
-                  type="button"
-                  onPointerDown={maintainTextFocus}
-                  onClick={() => update({ font })}
-                  aria-pressed={draft.font === font}
-                  className={`flex h-9 shrink-0 items-center justify-center rounded-full px-3 text-[12px] font-semibold ${draft.font === font ? 'bg-white text-[#101014]' : 'bg-black/50 text-white'}`}
-                  style={getStoryStickerTypography(font)}
-                >
-                  {translate(font)}
-                </button>
-              ))}
+            <div className="flex w-full flex-col items-center gap-1.5">
+              <span className="rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-normal text-white/90">{translate(draft.font)}</span>
+              <div className="relative w-[min(92vw,360px)] max-w-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 9%, black 91%, transparent)' }}>
+                <div ref={fontCarouselRef} onScroll={handleFontScroll} className="flex h-[48px] w-full items-center overflow-x-auto overscroll-x-contain snap-x snap-mandatory" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingInline: '50%' }} aria-label={translate('font')}>
+                  {STORY_TEXT_FONTS.map((font, index) => (
+                    <button key={font} type="button" onPointerDown={maintainTextFocus} onClick={() => selectFont(font, index)} aria-pressed={draft.font === font} className={`flex h-9 shrink-0 snap-center items-center justify-center rounded-full px-4 text-[12px] ${draft.font === font ? 'bg-white text-[#101014]' : 'bg-black/45 text-white'}`} style={getStoryStickerTypography(font)}>
+                      {translate(font)}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
