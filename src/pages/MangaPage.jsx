@@ -5,6 +5,7 @@ import MangaFeedSections from '../components/MangaFeedSections'
 import ShadowSpotlight from '../components/ShadowSpotlight'
 import ContinueReadingSection from '../components/ContinueReadingSection'
 import DailyPicksSection from '../components/DailyPicksSection'
+import PromotionShelves from '../components/promotions/PromotionShelves'
 import TrendingNowSection from '../components/TrendingNowSection'
 import UpdateTodaySection from '../components/UpdateTodaySection'
 import EditorWeeklyPicksSection from '../components/EditorWeeklyPicksSection'
@@ -795,6 +796,10 @@ export default function MangaPage() {
             <div className="my-6">
               <ContinueReadingSection storyType="manga" />
             </div>
+
+            <div className="my-6">
+  <PromotionShelves />
+</div>
 
             <div className="my-6">
               <DailyPicksSection storyType="manga" />
