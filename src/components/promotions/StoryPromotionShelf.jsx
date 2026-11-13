@@ -176,7 +176,7 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ expected_price_diamonds: quote.price }),
+          body: JSON.stringify({ expected_price_diamonds: quote.price, purchase_source: 'stories_manga' }),
         }
       )
       const result = await response.json().catch(() => ({}))
