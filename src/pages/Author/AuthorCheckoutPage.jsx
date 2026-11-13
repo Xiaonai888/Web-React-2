@@ -438,6 +438,28 @@ function getCartItems() {
   }
 }
 
+function getCheckoutReturnPath(items) {
+  const sources = new Set((items || []).map((item) =>
+    item.promotion_entry_source === 'manga' ? '/manga'
+      : item.promotion_entry_source === 'stories' ? '/'
+      : item.discover_promotion_rotation_key ? '/discover' : '/store'
+  ))
+  return sources.size === 1 ? [...sources][0] : '/store'
+}
+
+function safeCheckoutReturnPath(path) {
+  return ['/', '/manga', '/discover', '/store'].includes(path) ? path : '/store'
+}
+
+function checkoutReturnLabel(path) {
+  return {
+    '/': 'backToStories',
+    '/manga': 'backToManga',
+    '/discover': 'backToDiscover',
+    '/store': 'backToStore',
+  }[path] || 'backToStore'
+}
+
 function saveCartItems(items) {
   localStorage.setItem('shadow_author_cart_items', JSON.stringify(items))
   window.dispatchEvent(new Event('shadow-author-cart-updated'))
@@ -857,7 +879,7 @@ export default function AuthorCheckoutPage() {
         } else {
           setPaidBookOrder({
             orderId,
-            returnPath: saved.return_path === '/discover' ? '/discover' : '/store',
+            const title = paidPdfOrder.title
           })
         }
       } catch (error) {
@@ -908,7 +930,7 @@ export default function AuthorCheckoutPage() {
     if (readNow) {
       navigate(`/discover/pdf/${encodeURIComponent(productId)}`, { state: { title } })
     } else {
-      navigate('/discover')
+      navigate(returnPath)
     }
   }
 
@@ -1083,7 +1105,7 @@ export default function AuthorCheckoutPage() {
       JSON.stringify({
         order: nextOrder,
         created_at: new Date().toISOString(),
-        return_path: items.some((item) => item.discover_promotion_rotation_key) ? '/discover' : '/store',
+        return_path: getCheckoutReturnPath(items),
         checkout_items: items.map((item) => ({ id: item.id, quantity: item.quantity || 1 })),
       })
     )
@@ -1438,7 +1460,7 @@ export default function AuthorCheckoutPage() {
                 onClick={() => closeOrderSuccess(paidBookOrder.returnPath)}
                 className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
               >
-                {t(paidBookOrder.returnPath === '/discover' ? 'authorCheckout.backToDiscover' : 'authorCheckout.backToStore')}
+                {t(`authorCheckout.${checkoutReturnLabel(paidBookOrder.returnPath)}`)}
               </button>
             </div>
           </div>
@@ -1475,7 +1497,7 @@ export default function AuthorCheckoutPage() {
                 onClick={() => closePdfSuccess(false)}
                 className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
               >
-                {t('authorCheckout.backToDiscover')}
+                {t(`authorCheckout.${checkoutReturnLabel(paidPdfOrder.returnPath)}`)}
               </button>
             </div>
           </div>
