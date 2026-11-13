@@ -3,15 +3,15 @@ import { getDisplayText } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('storyTextEditor', {
-  en: { done: 'Done', color: 'Background color', font: 'Text style', align: 'Text alignment', placeholder: 'Type something...', classic: 'Classic', modern: 'Modern', typewriter: 'Typewriter', edit: 'Edit text' },
-  km: { done: 'រួចរាល់', color: 'ពណ៌ផ្ទៃអក្សរ', font: 'រចនាប័ទ្មអក្សរ', align: 'តម្រឹមអក្សរ', placeholder: 'សរសេរអ្វីមួយ...', classic: 'ធម្មតា', modern: 'ទំនើប', typewriter: 'ម៉ាស៊ីនអង្គុលីលេខ', edit: 'កែអក្សរ' },
-  zh: { done: '完成', color: '背景颜色', font: '文字样式', align: '文字对齐', placeholder: '输入文字...', classic: '经典', modern: '现代', typewriter: '打字机', edit: '编辑文字' },
-  ja: { done: '完了', color: '背景色', font: '文字スタイル', align: '文字揃え', placeholder: '文字を入力...', classic: 'クラシック', modern: 'モダン', typewriter: 'タイプライター', edit: 'テキストを編集' },
-  ko: { done: '완료', color: '배경색', font: '글자 스타일', align: '글자 정렬', placeholder: '텍스트 입력...', classic: '클래식', modern: '모던', typewriter: '타자기', edit: '텍스트 편집' },
+  en: { done: 'Done', color: 'Background color', font: 'Text style', align: 'Text alignment', placeholder: 'Type something...', classic: 'Classic', modern: 'Modern', typewriter: 'Typewriter', edit: 'Edit text', poster: 'Poster', handwriting: 'Handwriting', rounded: 'Rounded', elegant: 'Elegant', minimal: 'Minimal', retro: 'Retro', neon: 'Neon' },
+  km: { done: 'រួចរាល់', color: 'ពណ៌ផ្ទៃអក្សរ', font: 'រចនាប័ទ្មអក្សរ', align: 'តម្រឹមអក្សរ', placeholder: 'សរសេរអ្វីមួយ...', classic: 'ធម្មតា', modern: 'ទំនើប', typewriter: 'ម៉ាស៊ីនអង្គុលីលេខ', edit: 'កែអក្សរ', poster: 'ផ្ទាំងប្រកាស', handwriting: 'សរសេរដៃ', rounded: 'មូល', elegant: 'ប្រណីត', minimal: 'សាមញ្ញ', retro: 'បុរាណ', neon: 'ពន្លឺ' },
+  zh: { done: '完成', color: '背景颜色', font: '文字样式', align: '文字对齐', placeholder: '输入文字...', classic: '经典', modern: '现代', typewriter: '打字机', edit: '编辑文字', poster: '海报', handwriting: '手写', rounded: '圆润', elegant: '优雅', minimal: '简约', retro: '复古', neon: '霓虹' },
+  ja: { done: '完了', color: '背景色', font: '文字スタイル', align: '文字揃え', placeholder: '文字を入力...', classic: 'クラシック', modern: 'モダン', typewriter: 'タイプライター', edit: 'テキストを編集', poster: 'ポスター', handwriting: '手書き', rounded: '丸ゴシック', elegant: 'エレガント', minimal: 'ミニマル', retro: 'レトロ', neon: 'ネオン' },
+  ko: { done: '완료', color: '배경색', font: '글자 스타일', align: '글자 정렬', placeholder: '텍스트 입력...', classic: '클래식', modern: '모던', typewriter: '타자기', edit: '텍스트 편집', poster: '포스터', handwriting: '손글씨', rounded: '둥근 글씨', elegant: '우아함', minimal: '미니멀', retro: '레트로', neon: '네온' },
 })
 
 export const STORY_TEXT_COLORS = ['#162453', '#000000', '#393944', '#FFFFFF', '#E74159', '#F15D22', '#F6C843', '#23965E', '#009CBE', '#335CF1', '#7E3EDD', '#D742AD', 'transparent']
-export const STORY_TEXT_FONTS = ['classic', 'modern', 'typewriter']
+export const STORY_TEXT_FONTS = ['classic', 'modern', 'typewriter', 'poster', 'handwriting', 'rounded', 'elegant', 'minimal', 'retro', 'neon']
 export const STORY_TEXT_ALIGNMENTS = ['left', 'center', 'right']
 
 export function normalizeStoryTextSticker(value) {
@@ -37,7 +37,26 @@ export function getStoryStickerTextColor(background) {
 export function getStoryStickerFont(font) {
   if (font === 'typewriter') return 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
   if (font === 'modern') return 'Georgia, Times New Roman, serif'
+  if (font === 'poster') return '"Dangrek", Impact, sans-serif'
+  if (font === 'handwriting') return '"Khmer OS Fasthand", "Segoe Print", cursive'
+  if (font === 'rounded') return '"Kantumruy Pro", "Arial Rounded MT Bold", sans-serif'
+  if (font === 'elegant') return '"Moulpali", "Lora", Georgia, serif'
+  if (font === 'minimal') return '"Siemreap", "Roboto", sans-serif'
+  if (font === 'retro') return '"Metal", "Courier New", monospace'
+  if (font === 'neon') return '"Preahvihear", "Arial Black", sans-serif'
   return 'inherit'
+}
+
+export function getStoryStickerTypography(font) {
+  const base = { fontFamily: getStoryStickerFont(font), fontWeight: 700, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
+  if (font === 'handwriting') return { ...base, fontWeight: 500, fontStyle: 'italic' }
+  if (font === 'poster') return { ...base, fontWeight: 900, letterSpacing: '0.02em' }
+  if (font === 'rounded') return { ...base, fontWeight: 800 }
+  if (font === 'elegant') return { ...base, fontWeight: 600, letterSpacing: '0.015em' }
+  if (font === 'minimal') return { ...base, fontWeight: 400, letterSpacing: '0.02em' }
+  if (font === 'retro') return { ...base, fontWeight: 800, letterSpacing: '0.04em', textShadow: '1px 1px 0 rgba(0,0,0,0.35)' }
+  if (font === 'neon') return { ...base, fontWeight: 700, letterSpacing: '0.03em', textShadow: '0 0 5px currentColor, 0 0 15px currentColor' }
+  return base
 }
 
 export default function StoryTextEditor({ value, onSave, onClose }) {
@@ -50,7 +69,7 @@ export default function StoryTextEditor({ value, onSave, onClose }) {
     const node = textRef.current
     if (!node) return
     node.style.height = 'auto'
-    node.style.height = `${Math.max(70, node.scrollHeight)}px`
+    node.style.height = `${Math.max(40, node.scrollHeight)}px`
   }, [draft.text, draft.font])
 
   const update = (changes) => setDraft((current) => ({ ...current, ...changes }))
@@ -87,12 +106,12 @@ export default function StoryTextEditor({ value, onSave, onClose }) {
 
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8">
         <div className="w-full max-w-[500px] text-center">
-          <div className="inline-block max-w-full rounded-[12px] px-4 py-2.5 shadow-lg" style={{ backgroundColor: draft.background, color: getStoryStickerTextColor(draft.background) }}>
-            <textarea ref={textRef} autoFocus rows={2} maxLength={200} value={draft.text} onChange={(event) => update({ text: event.target.value })} placeholder={translate('placeholder')} aria-label={translate('edit')} className="block max-h-[42vh] min-h-[70px] w-[min(77vw,420px)] resize-none overflow-y-auto border-0 bg-transparent p-0 text-[29px] font-bold leading-tight outline-none placeholder:text-current placeholder:opacity-60" style={{ color: 'inherit', textAlign: draft.align, fontFamily: getStoryStickerFont(draft.font), caretColor: 'currentColor' }} />
+          <div className="inline-flex min-h-[70px] max-w-full items-center justify-center rounded-[12px] px-4 py-2.5 shadow-lg" style={{ backgroundColor: draft.background, color: getStoryStickerTextColor(draft.background) }}>
+            <textarea ref={textRef} autoFocus rows={1} maxLength={200} value={draft.text} onChange={(event) => update({ text: event.target.value })} placeholder={translate('placeholder')} aria-label={translate('edit')} className="block max-h-[42vh] min-h-[40px] w-[min(77vw,420px)] resize-none overflow-y-auto border-0 bg-transparent p-0 text-[29px] font-bold leading-tight outline-none placeholder:text-current placeholder:opacity-60" style={{ color: 'inherit', textAlign: draft.align, ...getStoryStickerTypography(draft.font), caretColor: 'currentColor' }} />
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[12px] font-semibold text-white/85">
+          <div className="mx-auto mt-4 flex max-w-full items-center gap-2 overflow-x-auto px-2 pb-2 text-[12px] font-semibold text-white/85">
             {STORY_TEXT_FONTS.map((font) => (
-              <button key={font} type="button" onClick={() => update({ font })} aria-pressed={draft.font === font} className={`rounded-full px-4 py-2 ${draft.font === font ? 'bg-white text-black' : 'bg-black/50 text-white'}`}>{translate(font)}</button>
+              <button key={font} type="button" onClick={() => update({ font })} aria-pressed={draft.font === font} className={`shrink-0 rounded-full px-4 py-2 ${draft.font === font ? 'bg-white text-black' : 'bg-black/50 text-white'}`} style={getStoryStickerTypography(font)}>{translate(font)}</button>
             ))}
           </div>
         </div>
