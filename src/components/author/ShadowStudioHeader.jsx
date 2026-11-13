@@ -4,17 +4,17 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 
 registerTranslationNamespace('shadowStudioHeader', {
-  en: { home: 'Shadow Studio', create: 'Create post', notifications: 'Video notifications', profile: 'Profile' },
-  km: { home: 'Shadow Studio', create: 'បង្កើត Post', notifications: 'ការជូនដំណឹងវីដេអូ', profile: 'ប្រវត្តិរូប' },
-  zh: { home: 'Shadow Studio', create: '创建帖子', notifications: '视频通知', profile: '个人资料' },
-  ja: { home: 'Shadow Studio', create: '投稿を作成', notifications: '動画の通知', profile: 'プロフィール' },
-  ko: { home: 'Shadow Studio', create: '게시물 만들기', notifications: '동영상 알림', profile: '프로필' },
+  en: { home: 'Shadow Studio', create: 'Add YouTube video', notifications: 'Video notifications', profile: 'Profile' },
+  km: { home: 'Shadow Studio', create: 'បន្ថែមវីដេអូ YouTube', notifications: 'ការជូនដំណឹងវីដេអូ', profile: 'ប្រវត្តិរូប' },
+  zh: { home: 'Shadow Studio', create: '添加 YouTube 视频', notifications: '视频通知', profile: '个人资料' },
+  ja: { home: 'Shadow Studio', create: 'YouTube動画を追加', notifications: '動画の通知', profile: 'プロフィール' },
+  ko: { home: 'Shadow Studio', create: 'YouTube 동영상 추가', notifications: '동영상 알림', profile: '프로필' },
 })
 
 export default function ShadowStudioHeader({
   avatarUrl = '',
   videoUnreadCount = 0,
-  onCreatePost,
+  onAddVideo,
   onOpenNotifications,
   onOpenProfile,
 }) {
@@ -41,8 +41,8 @@ export default function ShadowStudioHeader({
             type="button"
             aria-label={t('shadowStudioHeader.create')}
             title={t('shadowStudioHeader.create')}
-            disabled={typeof onCreatePost !== 'function'}
-            onClick={onCreatePost}
+            disabled={typeof onAddVideo !== 'function'}
+            onClick={onAddVideo}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)] disabled:cursor-default disabled:opacity-50"
           >
             <CirclePlus size={25} strokeWidth={1.9} aria-hidden="true" />
