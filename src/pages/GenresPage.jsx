@@ -359,11 +359,13 @@ function getGenresCacheMaxAge(activeQuickFilter, access, progress) {
   return GENRES_PAGE_CACHE_MAX_AGE_MS
 }
 
-function getGenresAccessFilter(activeQuickFilter, access) {
+function getGenresAccessFilter(activeQuickFilter, access, progress) {
   if (activeQuickFilter === 'wait_free') return 'wait_free'
   if (activeQuickFilter === 'free') return 'fully_free'
+  if (activeQuickFilter === 'completed') return 'completed'
   if (access === 'wait_free') return 'wait_free'
   if (access === 'free') return 'fully_free'
+  if (progress === 'completed') return 'completed'
   return ''
 }
 
@@ -882,7 +884,7 @@ export default function GenresPage() {
   const [loadMoreError, setLoadMoreError] = useState('')
   const loadMoreControllerRef = useRef(null)
   const serverStoryStatus = activeQuickFilter === 'completed' || activeQuickFilter === 'free' || progress === 'completed' ? 'Completed' : ''
-  const serverAccessFilter = getGenresAccessFilter(activeQuickFilter, access)
+  const serverAccessFilter = getGenresAccessFilter(activeQuickFilter, access, progress)
   const genreCacheMaxAge = getGenresCacheMaxAge(activeQuickFilter, access, progress)
 
   useEffect(() => {
@@ -988,7 +990,7 @@ export default function GenresPage() {
       limit: 9,
       story_status: serverStoryStatus,
       genre_filter: serverAccessFilter,
-      schema: 8,
+      schema: 9,
     },
   })
 
