@@ -3,9 +3,11 @@ import {
   loadStoryMediaDraftRecord,
   saveStoryMediaDraftRecord,
 } from './storyMediaDraftDB'
+import { optimizeImageForUpload } from './imageUploadOptimizer'
 
 const MAX_TOTAL_BYTES = 60 * 1024 * 1024
 const pendingOperations = new Map()
+const preparedOriginalFiles = new WeakMap()
 
 export function storyMediaDraftKey({ userId, storyType, storyId = '' }) {
   const user = String(userId || '').trim()
@@ -35,8 +37,39 @@ function validateBlob(value) {
   return { kind: 'blob', value }
 }
 
+async function prepareOriginalFile(file) {
+  let pending = preparedOriginalFiles.get(file)
+  if (!pending) {
+    pending = (async () => {
+      let source = file
+      try {
+        const result = await optimizeImageForUpload(file, {
+          preset: 'post',
+          maxSourceBytes: Math.max(20 * 1024 * 1024, file.size),
+        })
+        if (result?.file instanceof Blob && result.file.size) source = result.file
+      } catch {}
+      let bytes
+      try {
+        bytes = await source.arrayBuffer()
+      } catch {
+        throw new Error('Could not read the selected image on this device')
+      }
+      if (!bytes.byteLength) throw new Error('The selected image is empty')
+      const mimeType = source.type || file.type || 'image/jpeg'
+      return validateBlob(new Blob([bytes], { type: mimeType }))
+    })()
+    preparedOriginalFiles.set(file, pending)
+    void pending.catch(() => {
+      if (preparedOriginalFiles.get(file) === pending) preparedOriginalFiles.delete(file)
+    })
+  }
+  return pending
+}
+
 async function storeAsset(value, cache) {
   if (!value) return null
+  if (typeof File !== 'undefined' && value instanceof File) return prepareOriginalFile(value)
   if (typeof Blob !== 'undefined' && value instanceof Blob) return validateBlob(value)
   if (typeof value !== 'string') throw new Error('Unsupported story image data')
   const source = value.trim()
