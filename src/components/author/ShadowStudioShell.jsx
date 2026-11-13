@@ -37,8 +37,8 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
     }
   }, [refreshUnread])
 
-  const handleCreatePost = () => navigate('/author/page', {
-    state: { studioCreatePost: true, studioReturnTo: returnTo },
+  const handleAddVideo = () => navigate('/author/reel/add', {
+    state: { returnTo },
   })
 
   const handleNotifications = () => navigate(`${STUDIO_ROOT}/notifications`, {
@@ -53,7 +53,7 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
     <ShadowStudioHeader
       avatarUrl={avatarUrl || profileAvatar}
       videoUnreadCount={unread}
-      onCreatePost={handleCreatePost}
+      onAddVideo={location.pathname === '/author/reel/add' ? undefined : handleAddVideo}
       onOpenNotifications={handleNotifications}
       onOpenProfile={handleProfile}
     />
