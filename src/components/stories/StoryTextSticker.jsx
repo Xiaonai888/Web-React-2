@@ -1,6 +1,8 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { getDisplayText } from '../../utils/displayLanguage'
 import { getStoryStickerTypography, getStoryStickerTextColor, normalizeStoryTextSticker } from './StoryTextEditor'
+import StoryTrashDropZone, { isPointOverStoryTrashDropZone } from './StoryTrashDropZone'
 
 function measurePointers(pointers) {
   const points = Array.from(pointers.values())
@@ -15,19 +17,43 @@ function measurePointers(pointers) {
   }
 }
 
-export default function StoryTextSticker({ value, onChange, onEdit, disabled = false }) {
+export default function StoryTextSticker({ value, onChange, onEdit, onDelete, disabled = false }) {
   const layoutRef = useRef(null)
+  const trashZoneRef = useRef(null)
   const pointerRef = useRef(new Map())
   const gestureRef = useRef(null)
   const hadMultiRef = useRef(false)
   const latestRef = useRef(normalizeStoryTextSticker(value))
+  const [trashVisible, setTrashVisible] = useState(false)
+  const [trashOver, setTrashOver] = useState(false)
   const sticker = normalizeStoryTextSticker(value)
+  const canDelete = typeof onDelete === 'function'
 
   if (!pointerRef.current.size) latestRef.current = sticker
 
+  useEffect(() => {
+    if (!disabled) return
+    pointerRef.current.clear()
+    gestureRef.current = null
+    hadMultiRef.current = false
+    setTrashVisible(false)
+    setTrashOver(false)
+  }, [disabled])
+
+  const hideTrash = () => {
+    setTrashVisible(false)
+    setTrashOver(false)
+  }
+
   const resetGesture = () => {
     const start = measurePointers(pointerRef.current)
-    gestureRef.current = start ? { start, initial: { ...latestRef.current }, moved: false, multi: pointerRef.current.size > 1 } : null
+    gestureRef.current = start ? {
+      start,
+      initial: { ...latestRef.current },
+      moved: false,
+      lastAngle: start.angle,
+      accumulatedAngle: 0,
+    } : null
   }
 
   const onPointerDown = (event) => {
@@ -36,7 +62,10 @@ export default function StoryTextSticker({ value, onChange, onEdit, disabled = f
     event.stopPropagation()
     event.currentTarget.setPointerCapture?.(event.pointerId)
     pointerRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    if (pointerRef.current.size > 1) hadMultiRef.current = true
+    if (pointerRef.current.size > 1) {
+      hadMultiRef.current = true
+      hideTrash()
+    }
     resetGesture()
   }
 
@@ -50,7 +79,15 @@ export default function StoryTextSticker({ value, onChange, onEdit, disabled = f
 
     const dx = current.x - gesture.start.x
     const dy = current.y - gesture.start.y
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3 || (gesture.start.distance && Math.abs(current.distance - gesture.start.distance) > 3)) gesture.moved = true
+    const multi = pointerRef.current.size > 1
+    if (multi) {
+      const turn = ((current.angle - gesture.lastAngle + 540) % 360) - 180
+      gesture.accumulatedAngle += turn
+      gesture.lastAngle = current.angle
+    }
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4 || (multi && gesture.start.distance > 0 && (Math.abs(current.distance - gesture.start.distance) > 4 || Math.abs(gesture.accumulatedAngle) > 2))) {
+      gesture.moved = true
+    }
     if (!gesture.moved) return
 
     const next = {
@@ -58,59 +95,86 @@ export default function StoryTextSticker({ value, onChange, onEdit, disabled = f
       x: Math.max(5, Math.min(95, gesture.initial.x + (dx / bounds.width) * 100)),
       y: Math.max(8, Math.min(92, gesture.initial.y + (dy / bounds.height) * 100)),
     }
-    if (pointerRef.current.size >= 2 && gesture.start.distance > 0) {
+    if (multi && gesture.start.distance > 0) {
       next.scale = Math.max(0.45, Math.min(3, gesture.initial.scale * (current.distance / gesture.start.distance)))
-      const deltaAngle = ((current.angle - gesture.start.angle + 540) % 360) - 180
-      next.rotation = gesture.initial.rotation + deltaAngle
+      next.rotation = gesture.initial.rotation + gesture.accumulatedAngle
     }
+
     latestRef.current = next
     onChange?.(next)
+    if (canDelete && !multi && !hadMultiRef.current) {
+      setTrashVisible(true)
+      setTrashOver(isPointOverStoryTrashDropZone(event.clientX, event.clientY, trashZoneRef.current))
+    } else {
+      hideTrash()
+    }
   }
 
   const onPointerEnd = (event) => {
     if (!pointerRef.current.has(event.pointerId)) return
     const gesture = gestureRef.current
-    const wasTap = pointerRef.current.size === 1 && gesture && !gesture.moved && !hadMultiRef.current && event.type === 'pointerup'
+    const single = pointerRef.current.size === 1
+    const released = event.type === 'pointerup'
+    const wasTap = single && released && !gesture?.moved && !hadMultiRef.current
+    const shouldDelete = canDelete && single && released && Boolean(gesture?.moved) && !hadMultiRef.current &&
+      isPointOverStoryTrashDropZone(event.clientX, event.clientY, trashZoneRef.current)
+
     pointerRef.current.delete(event.pointerId)
-    if (pointerRef.current.size) resetGesture()
-    else { gestureRef.current = null; hadMultiRef.current = false }
-    if (wasTap && !disabled) onEdit?.()
+    if (pointerRef.current.size) {
+      resetGesture()
+    } else {
+      gestureRef.current = null
+      hadMultiRef.current = false
+    }
+    hideTrash()
+    if (shouldDelete) onDelete()
+    else if (wasTap && !disabled) onEdit?.()
   }
 
   if (!sticker.text.trim()) return null
 
   return (
-    <div ref={layoutRef} className="pointer-events-none absolute inset-0 z-20">
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label={getDisplayText('storyTextEditor.edit')}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerEnd}
-        onPointerCancel={onPointerEnd}
-        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit?.() } }}
-        className="pointer-events-auto absolute inline-flex max-w-[84%] select-none items-center justify-center border-0 bg-transparent p-0 text-white outline-none disabled:opacity-100"
-        style={{ left: `${sticker.x}%`, top: `${sticker.y}%`, touchAction: 'none', transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg) scale(${sticker.scale})` }}
-      >
-        <span
-  className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35] shadow-lg"
-  style={{
-    backgroundColor: sticker.background,
-    color: getStoryStickerTextColor(sticker.background),
-  }}
->
-  <span
-    className="block max-w-full whitespace-pre-wrap break-words"
-    style={{
-      textAlign: sticker.align,
-      ...getStoryStickerTypography(sticker.font),
-    }}
-  >
-    {sticker.text}
-  </span>
-</span>
-      </button>
-    </div>
+    <>
+      <div ref={layoutRef} className="pointer-events-none absolute inset-0 z-20">
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={getDisplayText('storyTextEditor.edit')}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerEnd}
+          onPointerCancel={onPointerEnd}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onEdit?.()
+            }
+          }}
+          className="pointer-events-auto absolute inline-flex max-w-[84%] select-none items-center justify-center border-0 bg-transparent p-0 text-white outline-none disabled:opacity-100"
+          style={{
+            left: `${sticker.x}%`,
+            top: `${sticker.y}%`,
+            touchAction: 'none',
+            transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg) scale(${sticker.scale})`,
+          }}
+        >
+          <span
+            className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35] shadow-lg"
+            style={{ backgroundColor: sticker.background, color: getStoryStickerTextColor(sticker.background) }}
+          >
+            <span
+              className="block max-w-full whitespace-pre-wrap break-words"
+              style={{ textAlign: sticker.align, ...getStoryStickerTypography(sticker.font) }}
+            >
+              {sticker.text}
+            </span>
+          </span>
+        </button>
+      </div>
+      {canDelete && typeof document !== 'undefined' ? createPortal(
+        <StoryTrashDropZone visible={trashVisible} isOver={trashOver} zoneRef={trashZoneRef} />,
+        document.body
+      ) : null}
+    </>
   )
 }
