@@ -1014,7 +1014,13 @@ export default function CreateStoryPage() {
     const queue = createStoryMediaUploadQueue({
       userId,
       getToken: getAuthToken,
-      onChange: ({ task }) => {
+      onChange: ({ type, task }) => {
+        if (type === 'storage-error') {
+          const error = new Error(task?.message || 'Local media storage failed')
+          void reportStoryCreationError(error, { stage: 'UPLOAD_QUEUE', storyType })
+          setStoryUploadState(getStoryCreationUserError(error, 'queue').message)
+          return
+        }
         if (task?.context?.draftKey !== draftKey) return
         if (task.status === 'failed') {
           const reason = String(task.lastError || 'Story image upload failed')
@@ -1028,11 +1034,16 @@ export default function CreateStoryPage() {
             const progress = Math.round(pending.reduce((total, item) => total + (item.progress || 0), 0) / pending.length)
             setStoryUploadState(`${getDisplayText('createStory.uploadingCreatingStory')} ${pending.length} · ${progress}%`)
           } else if (tasks.some((item) => item.status === 'failed')) {
-            setStoryUploadState(getDisplayText('createStory.failedUploadImage'))
+            const failed = tasks.find((item) => item.status === 'failed')
+            setStoryUploadState(getStoryCreationUserError(new Error(failed.lastError || 'Story image upload failed'), 'upload').message)
           } else {
             setStoryUploadState('')
           }
-        }).catch(() => {})
+        }).catch((error) => {
+          if (canceled) return
+          void reportStoryCreationError(error, { stage: 'UPLOAD_QUEUE', storyType })
+          setStoryUploadState(getStoryCreationUserError(error, 'queue').message)
+        })
       },
     })
     let canceled = false
