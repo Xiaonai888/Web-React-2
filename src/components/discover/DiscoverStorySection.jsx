@@ -22,7 +22,7 @@ import {
   REACTIONS,
   getReactionMeta,
 } from '../social/reactions/reactionConfig'
-import { normalizeStoryTextSticker, getStoryStickerTypography, getStoryStickerTextColor } from '../stories/StoryTextEditor'
+import { normalizeStoryTextSticker, getStoryStickerTypography, getStoryStickerAppearance } from '../stories/StoryTextEditor'
 
 const API_BASE_URL =
   window.location.hostname ===
@@ -1267,6 +1267,8 @@ function StoryViewer({
       text: story.text_overlay || story.caption || '',
     })
   : null
+
+  const textAppearance = textStyle ? getStoryStickerAppearance(textStyle) : null
 
   return (
     <>
