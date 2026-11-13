@@ -3,11 +3,11 @@ import { getDisplayText } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('storyTextEditor', {
-  en: { done: 'Done', color: 'Background color', font: 'Text style', align: 'Text alignment', placeholder: 'Type something...', classic: 'Classic', modern: 'Modern', typewriter: 'Typewriter', edit: 'Edit text', poster: 'Poster', handwriting: 'Handwriting', rounded: 'Rounded', elegant: 'Elegant', minimal: 'Minimal', retro: 'Retro', neon: 'Neon', suggestedColor: 'Suggested color', moreColors: 'More colors' },
-  km: { done: 'រួចរាល់', color: 'ពណ៌ផ្ទៃអក្សរ', font: 'រចនាប័ទ្មអក្សរ', align: 'តម្រឹមអក្សរ', placeholder: 'សរសេរអ្វីមួយ...', classic: 'ធម្មតា', modern: 'ទំនើប', typewriter: 'ម៉ាស៊ីនអង្គុលីលេខ', edit: 'កែអក្សរ', poster: 'ផ្ទាំងប្រកាស', handwriting: 'សរសេរដៃ', rounded: 'មូល', elegant: 'ប្រណីត', minimal: 'សាមញ្ញ', retro: 'បុរាណ', neon: 'ពន្លឺ', suggestedColor: 'ពណ៌ណែនាំ', moreColors: 'ពណ៌ផ្សេងទៀត' },
-  zh: { done: '完成', color: '背景颜色', font: '文字样式', align: '文字对齐', placeholder: '输入文字...', classic: '经典', modern: '现代', typewriter: '打字机', edit: '编辑文字', poster: '海报', handwriting: '手写', rounded: '圆润', elegant: '优雅', minimal: '简约', retro: '复古', neon: '霓虹', suggestedColor: '推荐颜色', moreColors: '更多颜色' },
-  ja: { done: '完了', color: '背景色', font: '文字スタイル', align: '文字揃え', placeholder: '文字を入力...', classic: 'クラシック', modern: 'モダン', typewriter: 'タイプライター', edit: 'テキストを編集', poster: 'ポスター', handwriting: '手書き', rounded: '丸ゴシック', elegant: 'エレガント', minimal: 'ミニマル', retro: 'レトロ', neon: 'ネオン', suggestedColor: 'おすすめの色', moreColors: '他の色' },
-  ko: { done: '완료', color: '배경색', font: '글자 스타일', align: '文字揃え', placeholder: '텍스트 입력...', classic: '클래식', modern: '모던', typewriter: '타자기', edit: '텍스트 편집', poster: '포스터', handwriting: '손글씨', rounded: '둥근 글씨', elegant: '우아함', minimal: '미니멀', retro: '레트로', neon: '네온', suggestedColor: '추천 색상', moreColors: '다른 색상' },
+  en: { done: 'Done', color: 'Background color', font: 'Text style', align: 'Text alignment', placeholder: 'Type something...', classic: 'Classic', modern: 'Modern', typewriter: 'Typewriter', edit: 'Edit text', poster: 'Poster', handwriting: 'Handwriting', rounded: 'Rounded', elegant: 'Elegant', minimal: 'Minimal', retro: 'Retro', neon: 'Neon', suggestedColor: 'Suggested color', moreColors: 'More colors', robotoBold: 'Roboto Bold', styleShape: 'Shape', styleInverse: 'Reverse', styleOutline: 'Outline', styleOutlineInverse: 'Reverse outline', stylePlain: 'Text only' },
+  km: { done: 'រួចរាល់', color: 'ពណ៌ផ្ទៃអក្សរ', font: 'រចនាប័ទ្មអក្សរ', align: 'តម្រឹមអក្សរ', placeholder: 'សរសេរអ្វីមួយ...', classic: 'ធម្មតា', modern: 'ទំនើប', typewriter: 'ម៉ាស៊ីនអង្គុលីលេខ', edit: 'កែអក្សរ', poster: 'ផ្ទាំងប្រកាស', handwriting: 'សរសេរដៃ', rounded: 'មូល', elegant: 'ប្រណីត', minimal: 'សាមញ្ញ', retro: 'បុរាណ', neon: 'ពន្លឺ', suggestedColor: 'ពណ៌ណែនាំ', moreColors: 'ពណ៌ផ្សេងទៀត', robotoBold: 'Roboto Bold', styleShape: 'មានផ្ទៃពណ៌', styleInverse: 'បញ្ច្រាស់ពណ៌', styleOutline: 'អក្សរមានគែម', styleOutlineInverse: 'គែមបញ្ច្រាស់ពណ៌', stylePlain: 'តែអក្សរ' },
+  zh: { done: '完成', color: '背景颜色', font: '文字样式', align: '文字对齐', placeholder: '输入文字...', classic: '经典', modern: '现代', typewriter: '打字机', edit: '编辑文字', poster: '海报', handwriting: '手写', rounded: '圆润', elegant: '优雅', minimal: '简约', retro: '复古', neon: '霓虹', suggestedColor: '推荐颜色', moreColors: '更多颜色', robotoBold: 'Roboto Bold', styleShape: '色块', styleInverse: '反转颜色', styleOutline: '描边', styleOutlineInverse: '反向描边', stylePlain: '纯文字' },
+  ja: { done: '完了', color: '背景色', font: '文字スタイル', align: '文字揃え', placeholder: '文字を入力...', classic: 'クラシック', modern: 'モダン', typewriter: 'タイプライター', edit: 'テキストを編集', poster: 'ポスター', handwriting: '手書き', rounded: '丸ゴシック', elegant: 'エレガント', minimal: 'ミニマル', retro: 'レトロ', neon: 'ネオン', suggestedColor: 'おすすめの色', moreColors: '他の色', robotoBold: 'Roboto Bold', styleShape: '背景あり', styleInverse: '色を反転', styleOutline: '縁取り', styleOutlineInverse: '反転縁取り', stylePlain: '文字のみ' },
+  ko: { done: '완료', color: '배경색', font: '글자 스타일', align: '文字揃え', placeholder: '텍스트 입력...', classic: '클래식', modern: '모던', typewriter: '타자기', edit: '텍스트 편집', poster: '포스터', handwriting: '손글씨', rounded: '둥근 글씨', elegant: '우아함', minimal: '미니멀', retro: '레트로', neon: '네온', suggestedColor: '추천 색상', moreColors: '다른 색상', robotoBold: 'Roboto Bold', styleShape: '배경', styleInverse: '색상 반전', styleOutline: '외곽선', styleOutlineInverse: '반전 외곽선', stylePlain: '글자만' },
 })
 
 registerTranslationNamespace('storyTextColorNames', {
@@ -22,8 +22,9 @@ export const STORY_TEXT_COLORS = [
   '#162453', '#000000', '#393944', '#FFFFFF', '#E74159', '#F15D22', '#F6C843', '#23965E', '#009CBE', '#335CF1', '#7E3EDD', '#D742AD', 'transparent',
   '#1F2937', '#4B5563', '#6B7280', '#9CA3AF', '#D1D5DB', '#F9FAFB', '#7F1D1D', '#991B1B', '#DC2626', '#F97316', '#FB923C', '#FDE68A', '#A16207', '#3F6212', '#166534', '#047857', '#0F766E', '#115E59', '#155E75', '#0C4A6E', '#1D4ED8', '#1E40AF', '#3730A3', '#5B21B6', '#6D28D9', '#9333EA', '#A21CAF', '#BE185D', '#DB2777', '#F472B6', '#FBCFE8', '#E0E7FF', '#BAE6FD', '#A7F3D0', '#FEF3C7', '#FEE2E2', '#78350F', '#44403C', '#57534E',
 ]
-export const STORY_TEXT_FONTS = ['classic', 'modern', 'typewriter', 'poster', 'handwriting', 'rounded', 'elegant', 'minimal', 'retro', 'neon']
+export const STORY_TEXT_FONTS = ['classic', 'robotoBold', 'modern', 'typewriter', 'poster', 'handwriting', 'rounded', 'elegant', 'minimal', 'retro', 'neon']
 export const STORY_TEXT_ALIGNMENTS = ['left', 'center', 'right']
+export const STORY_TEXT_STYLE_MODES = ['shape', 'inverse', 'outline', 'outlineInverse', 'plain']
 const DEFAULT_COLOR = '#FFFFFF'
 const DEFAULT_SUGGESTIONS = ['#162453', '#0F766E', '#7E3EDD', '#393944']
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
@@ -73,6 +74,7 @@ export function normalizeStoryTextSticker(value) {
     text: String(input.text || '').slice(0, 200),
     background: normalizeBackground(input.background),
     font: STORY_TEXT_FONTS.includes(input.font) ? input.font : 'classic',
+    styleMode: STORY_TEXT_STYLE_MODES.includes(input.styleMode) ? input.styleMode : 'shape',
     align: STORY_TEXT_ALIGNMENTS.includes(input.align) ? input.align : 'center',
     x: Math.min(95, Math.max(5, number('x', 50))),
     y: Math.min(92, Math.max(8, number('y', 50))),
@@ -91,6 +93,7 @@ export function getStoryStickerTextColor(background) {
 }
 
 export function getStoryStickerFont(font) {
+  if (font === 'robotoBold') return '"Roboto", Arial, sans-serif'
   if (font === 'typewriter') return 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
   if (font === 'modern') return 'Georgia, Times New Roman, serif'
   if (font === 'poster') return '"Dangrek", Impact, sans-serif'
@@ -105,6 +108,7 @@ export function getStoryStickerFont(font) {
 
 export function getStoryStickerTypography(font) {
   const base = { fontFamily: getStoryStickerFont(font), fontWeight: 400, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
+  if (font === 'robotoBold') return { ...base, fontWeight: 700 }
   if (font === 'handwriting') return { ...base, fontWeight: 400, fontStyle: 'italic' }
   if (font === 'poster') return { ...base, fontWeight: 700 }
   if (font === 'rounded') return { ...base, fontWeight: 600 }
@@ -113,6 +117,38 @@ export function getStoryStickerTypography(font) {
   if (font === 'retro') return { ...base, fontWeight: 500 }
   if (font === 'neon') return { ...base, fontWeight: 600 }
   return base
+}
+
+export function getStoryStickerAppearance(value) {
+  const sticker = normalizeStoryTextSticker(value)
+  const color = sticker.background === 'transparent' ? DEFAULT_COLOR : sticker.background
+  const opposite = getStoryStickerTextColor(color)
+  const mode = sticker.styleMode
+  let backgroundColor = color
+  let textColor = opposite
+  let outlineColor = ''
+  if (mode === 'inverse') {
+    backgroundColor = opposite
+    textColor = color
+  } else if (mode === 'outline') {
+    backgroundColor = 'transparent'
+    textColor = color
+    outlineColor = opposite
+  } else if (mode === 'outlineInverse') {
+    backgroundColor = 'transparent'
+    textColor = opposite
+    outlineColor = color
+  } else if (mode === 'plain') {
+    backgroundColor = 'transparent'
+    textColor = color
+  }
+  return {
+    backgroundColor,
+    color: textColor,
+    WebkitTextStroke: outlineColor ? `1.3px ${outlineColor}` : '0 transparent',
+    paintOrder: 'stroke fill',
+    textShadow: 'none',
+  }
 }
 
 function extractImageSuggestions(imageUrl, onReady) {
@@ -172,6 +208,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const [draft, setDraft] = useState(() => normalizeStoryTextSticker(value))
   const [mode, setMode] = useState('color')
   const [imageSuggestions, setImageSuggestions] = useState([])
+  const [textBoxWidth, setTextBoxWidth] = useState(0)
   const [viewport, setViewport] = useState(() => ({
     top: 0,
     left: 0,
@@ -187,6 +224,11 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const suggested = useMemo(() => Array.from(new Set([...imageSuggestions, ...DEFAULT_SUGGESTIONS].filter((color) => color && color !== '#FFFFFF'))).slice(0, 4), [imageSuggestions])
   const originalBackground = useRef(normalizeStoryTextSticker(value).background).current
   const palette = useMemo(() => Array.from(new Set([...suggested, '#FFFFFF', originalBackground, ...STORY_TEXT_COLORS])), [suggested, originalBackground])
+  const appearance = getStoryStickerAppearance(draft)
+  const halfTextWidth = Math.min(viewport.width * 0.45, Math.max(56, textBoxWidth / 2))
+  const minimumX = Math.min(viewport.width / 2, halfTextWidth + 12)
+  const maximumX = Math.max(viewport.width / 2, viewport.width - halfTextWidth - 12)
+  const editorX = Math.min(maximumX, Math.max(minimumX, viewport.width * draft.x / 100))
 
   useEffect(() => {
     const visual = window.visualViewport
@@ -257,6 +299,8 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     node.style.width = `${Math.min(maxWidth, Math.max(104, Math.ceil(width)))}px`
     node.style.height = '36px'
     node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
+    const nextWidth = node.parentElement?.getBoundingClientRect().width || 0
+    setTextBoxWidth((previous) => Math.abs(previous - nextWidth) > 1 ? nextWidth : previous)
   }, [draft.text, draft.font, viewport.width, viewport.height])
 
   useEffect(() => {
@@ -285,8 +329,18 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
 
   const update = (changes) => setDraft((current) => ({ ...current, ...changes }))
   const changeAlignment = () => {
-    const index = STORY_TEXT_ALIGNMENTS.indexOf(draft.align)
-    update({ align: STORY_TEXT_ALIGNMENTS[(index + 1) % STORY_TEXT_ALIGNMENTS.length] })
+    setDraft((current) => {
+      const index = STORY_TEXT_ALIGNMENTS.indexOf(current.align)
+      const align = STORY_TEXT_ALIGNMENTS[(index + 1) % STORY_TEXT_ALIGNMENTS.length]
+      return { ...current, align, x: align === 'left' ? 20 : align === 'right' ? 80 : 50 }
+    })
+  }
+
+  const cycleStyle = () => {
+    setDraft((current) => {
+      const index = STORY_TEXT_STYLE_MODES.indexOf(current.styleMode)
+      return { ...current, styleMode: STORY_TEXT_STYLE_MODES[(index + 1) % STORY_TEXT_STYLE_MODES.length] }
+    })
   }
 
   const selectColor = (color, index) => {
@@ -348,10 +402,10 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       aria-label={translate('edit')}
     >
       <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center justify-center gap-1.5 px-3 pb-1 pt-[max(12px,env(safe-area-inset-top))]">
-        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode('color')} aria-label={translate('color')} aria-pressed={mode === 'color'} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent">
+        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode((current) => current === 'color' ? null : 'color')} aria-label={translate('color')} aria-pressed={mode === 'color'} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent">
           <span className={`h-[23px] w-[23px] rounded-full border border-white/65 ${mode === 'color' ? 'ring-1 ring-white/80 ring-offset-1 ring-offset-transparent' : ''}`} style={{ background: 'conic-gradient(#e9435f, #e8b72a, #35ae74, #4384ea, #b154c3, #e9435f)' }} />
         </button>
-        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode('font')} aria-label={translate('font')} aria-pressed={mode === 'font'} className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent">
+        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode((current) => current === 'font' ? null : 'font')} aria-label={translate('font')} aria-pressed={mode === 'font'} className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent">
           <span className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] text-[13px] font-normal ${mode === 'font' ? 'border border-white bg-white text-[#101014]' : 'border border-white/70 bg-transparent text-white'}`}>Aa</span>
         </button>
         <button type="button" onPointerDown={maintainTextFocus} onClick={changeAlignment} aria-label={translate('align')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white">
@@ -365,10 +419,10 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       </header>
 
       <main className="relative min-h-0 flex-1 overflow-hidden px-3 py-3">
-        <div className="absolute inset-x-3 top-[42%] flex -translate-y-1/2 items-center justify-center">
+        <div className="absolute top-[42%] flex max-w-[92%] -translate-x-1/2 -translate-y-1/2 items-center justify-center" style={{ left: editorX }}>
           <div
             className="inline-flex max-w-[92%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2"
-            style={{ backgroundColor: draft.text.trim() ? draft.background : 'transparent', color: draft.text.trim() ? getStoryStickerTextColor(draft.background) : '#FFFFFF' }}
+            style={{ backgroundColor: draft.text.trim() ? appearance.backgroundColor : 'transparent', color: draft.text.trim() ? appearance.color : '#FFFFFF' }}
           >
             <textarea
               ref={textRef}
@@ -378,10 +432,11 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
               maxLength={200}
               value={draft.text}
               onChange={(event) => update({ text: event.target.value })}
-              placeholder="Type or @tag"
+              onClick={() => setMode('font')}
+              placeholder="Type or @Tag"
               aria-label={translate('edit')}
               className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
-              style={{ color: 'inherit', textAlign: draft.text ? draft.align : 'center', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), caretColor: 'currentColor' }}
+              style={{ color: 'inherit', textAlign: 'center', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), WebkitTextStroke: draft.text ? appearance.WebkitTextStroke : '0 transparent', paintOrder: 'stroke fill', caretColor: 'currentColor' }}
             />
           </div>
         </div>
@@ -420,9 +475,9 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
                 </div>
               </div>
             </div>
-          ) : (
+          ) : mode === 'font' ? (
             <div className="flex w-full flex-col items-center gap-1.5">
-              <span className="rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-normal text-white/90">{translate(draft.font)}</span>
+              <button type="button" onPointerDown={maintainTextFocus} onClick={cycleStyle} aria-label={translate(`style${draft.styleMode.charAt(0).toUpperCase()}${draft.styleMode.slice(1)}`)} className="flex h-[24px] min-w-[95px] items-center justify-center rounded-full border border-white/45 bg-black/55 px-3 text-[11px] font-medium text-white">{translate(`style${draft.styleMode.charAt(0).toUpperCase()}${draft.styleMode.slice(1)}`)}</button>
               <div className="relative w-[min(92vw,360px)] max-w-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 9%, black 91%, transparent)' }}>
                 <div ref={fontCarouselRef} onScroll={handleFontScroll} className="flex h-[48px] w-full items-center overflow-x-auto overscroll-x-contain snap-x snap-mandatory" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingInline: '50%' }} aria-label={translate('font')}>
                   {STORY_TEXT_FONTS.map((font, index) => (
@@ -433,7 +488,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
     </div>
