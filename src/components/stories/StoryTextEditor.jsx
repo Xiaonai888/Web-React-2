@@ -64,7 +64,7 @@ export function getStoryStickerFont(font) {
 }
 
 export function getStoryStickerTypography(font) {
-  const base = { fontFamily: getStoryStickerFont(font), fontWeight: 700, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
+  const base = { fontFamily: getStoryStickerFont(font), fontWeight: 400, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
   if (font === 'handwriting') return { ...base, fontWeight: 500, fontStyle: 'italic' }
   if (font === 'poster') return { ...base, fontWeight: 900, letterSpacing: '0.02em' }
   if (font === 'rounded') return { ...base, fontWeight: 800 }
@@ -270,7 +270,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       aria-modal="true"
       aria-label={translate('edit')}
     >
-      <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center gap-1.5 px-3 pb-1 pt-[max(5px,env(safe-area-inset-top))]">
+      <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center justify-center gap-1.5 px-3 pb-1 pt-[max(5px,env(safe-area-inset-top))]">
         <button
           type="button"
           onPointerDown={maintainTextFocus}
@@ -287,7 +287,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
           onClick={() => setMode('font')}
           aria-label={translate('font')}
           aria-pressed={mode === 'font'}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[17px] font-bold ${mode === 'font' ? 'bg-white text-[#101014]' : 'bg-transparent text-white'}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[17px] font-normal ${mode === 'font' ? 'bg-white text-[#101014]' : 'bg-transparent text-white'}`}
         >
           Aa
         </button>
@@ -300,14 +300,13 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
         >
           <i className={`fa-solid fa-align-${draft.align} text-[17px]`} />
         </button>
-        <div className="flex-1" />
         <button
-          type="button"
-          onClick={() => onSave?.({ ...draft, text: draft.text.trim() })}
-          className="h-9 shrink-0 rounded-lg bg-[#303035] px-4 text-[13px] font-semibold text-white"
-        >
-          {translate('done')}
-        </button>
+  type="button"
+  onClick={() => onSave?.({ ...draft, text: draft.text.trim() })}
+  className="absolute right-3 top-[max(5px,env(safe-area-inset-top))] h-9 rounded-lg bg-[#303035] px-4 text-[13px] font-normal text-white"
+>
+  {translate('done')}
+</button>
       </header>
 
       <main className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-contain px-3 py-3">
