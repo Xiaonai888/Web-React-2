@@ -434,11 +434,7 @@ const API_BASE_URL =
 const PROFILE_AVATAR_MAX_BYTES = 5 * 1024 * 1024
 
 function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
+  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
 }
 
 function getStoredUser() {
@@ -466,15 +462,9 @@ function saveStoredUser(user) {
 
 function saveAuthToken(token) {
   if (!token) return
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_token', token)
-    return
-  }
-
-  sessionStorage.setItem('shadow_reader_token', token)
+  const storage = sessionStorage.getItem('shadow_reader_token') ? sessionStorage : localStorage
+  storage.setItem('shadow_reader_token', token)
 }
-
 
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
