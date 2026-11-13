@@ -287,9 +287,9 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
           onClick={() => setMode('font')}
           aria-label={translate('font')}
           aria-pressed={mode === 'font'}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[17px] font-normal ${mode === 'font' ? 'bg-white text-[#101014]' : 'bg-transparent text-white'}`}
-        >
-          Aa
+          className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent"
+>
+  <span className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] text-[13px] font-normal ${mode === 'font' ? 'bg-white text-[#101014]' : 'text-white'}`}>Aa</span>
         </button>
         <button
           type="button"
@@ -298,7 +298,9 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
           aria-label={translate('align')}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white"
         >
-          <i className={`fa-solid fa-align-${draft.align} text-[17px]`} />
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+  <path d={draft.align === 'left' ? 'M4 5h16M4 10h11M4 15h16M4 20h11' : draft.align === 'right' ? 'M4 5h16M9 10h11M4 15h16M9 20h11' : 'M4 5h16M7 10h10M4 15h16M7 20h10'} />
+</svg>
         </button>
         <button
   type="button"
