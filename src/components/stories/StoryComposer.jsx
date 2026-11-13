@@ -994,7 +994,8 @@ const mentionUsername = mentionTarget?.username || ''
 
       {sheet === 'text' ? (
   <StoryTextEditor
-    value={textSticker}
+  value={textSticker}
+  imageUrl={mediaFile?.type?.startsWith('image/') ? previewUrl : ''}
     onSave={(value) => {
       setTextSticker(value)
       setTextOverlay(value.text)
