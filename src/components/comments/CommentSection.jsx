@@ -2363,96 +2363,111 @@ function CommentComposer({
   sending,
 }) {
   const { t } = useDisplayTranslation()
-  const [focused, setFocused] =
-    useState(false)
+  const [focused, setFocused] = useState(false)
   const textareaRef = useRef(null)
-  const showSend =
-    focused || Boolean(value.trim())
-  const replyTargetName = String(
-  replyTarget?.name || ''
-).trim()
+  const showSend = focused || Boolean(value.trim())
+  const replyTargetName = String(replyTarget?.name || '').trim()
 
   const composerMaxLength = replyTarget
-  ? Math.max(
-      1,
-      COMMENT_LIMIT -
-        (replyTargetName
-          ? replyTargetName.length + 2
-          : 0)
-    )
-  : COMMENT_LIMIT
+    ? Math.max(1, COMMENT_LIMIT - (replyTargetName ? replyTargetName.length + 2 : 0))
+    : COMMENT_LIMIT
 
   useEffect(() => {
-    const textarea =
-      textareaRef.current
-
+    const textarea = textareaRef.current
     if (!textarea) return
 
     textarea.style.height = 'auto'
-    textarea.style.height = `${Math.min(
-      textarea.scrollHeight,
-      118
-    )}px`
-    textarea.scrollTop =
-      textarea.scrollHeight
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 118)}px`
+    textarea.scrollTop = textarea.scrollHeight
   }, [value])
+
+  useEffect(() => {
+    if (!isModal || !focused || !window.visualViewport) return undefined
+
+    const viewport = window.visualViewport
+    let frame = 0
+    const ensureVisible = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const textarea = textareaRef.current
+        if (!textarea || document.activeElement !== textarea) return
+
+        const rect = textarea.getBoundingClientRect()
+        const visibleTop = viewport.offsetTop
+        const visibleBottom = viewport.offsetTop + viewport.height
+        if (rect.top < visibleTop + 12 || rect.bottom > visibleBottom - 12) {
+          textarea.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        }
+      })
+    }
+
+    ensureVisible()
+    viewport.addEventListener('resize', ensureVisible)
+    viewport.addEventListener('scroll', ensureVisible)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      viewport.removeEventListener('resize', ensureVisible)
+      viewport.removeEventListener('scroll', ensureVisible)
+    }
+  }, [focused, isModal])
 
   return (
     <div
       className={`${
-        isModal
-          ? 'shrink-0'
-          : 'fixed bottom-0 left-0 right-0'
+        isModal ? 'shrink-0' : 'fixed bottom-0 left-0 right-0'
       } z-50 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 py-3`}
     >
-
       {replyTarget ? (
-  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[var(--shadow-text-secondary)]">
-    <span>{t('commentSection.replyingTo', { name: replyTargetName || getDisplayText('commentSection.reader') })}</span>
-    <span>·</span>
-    <button
-      type="button"
-      onClick={onCancelReply}
-      className="font-medium text-[#1877f2]"
-    >
-      {t('commentSection.cancel')}
-    </button>
-  </div>
-) : null}
-      <div className="mx-auto flex max-w-3xl items-end gap-2">
+        <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1 px-1 text-[12px] text-[var(--shadow-text-secondary)]">
+          <span>
+            {t('commentSection.replyingTo', {
+              name: replyTargetName || getDisplayText('commentSection.reader'),
+            })}
+          </span>
+          <span>·</span>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="font-medium text-[#1877f2]"
+          >
+            {t('commentSection.cancel')}
+          </button>
+        </div>
+      ) : null}
+
+      <div
+        className="mx-auto flex max-w-3xl items-end gap-2"
+        onClick={(event) => {
+          if (isBanned || sending || event.target.closest('button')) return
+          if (document.activeElement !== textareaRef.current) {
+            textareaRef.current?.focus({ preventScroll: true })
+          }
+        }}
+      >
         <div className="flex min-w-0 flex-1 items-center rounded-[22px] bg-[var(--shadow-bg-soft)] px-4 py-2">
           <textarea
             ref={textareaRef}
             id="shadow-comment-input"
             value={value}
             maxLength={composerMaxLength}
-            onChange={(event) =>
-              onChange(event.target.value)
-            }
+            onChange={(event) => onChange(event.target.value)}
             onInput={(event) => {
               const textarea = event.currentTarget
               textarea.style.height = 'auto'
-              textarea.style.height = `${Math.min(
-                textarea.scrollHeight,
-                118
-              )}px`
+              textarea.style.height = `${Math.min(textarea.scrollHeight, 118)}px`
             }}
-            onFocus={() =>
-              setFocused(true)
-            }
-            onBlur={() =>
-              setFocused(false)
-            }
-            disabled={
-              isBanned || sending
-            }
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            disabled={isBanned || sending}
             rows={1}
             placeholder={
               isBanned
                 ? t('commentSection.cannotComment')
                 : replyTarget
-  ? t('commentSection.writeReply')
-   : t('commentSection.writeComment')
+                  ? t('commentSection.writeReply')
+                  : t('commentSection.writeComment')
             }
             className="max-h-[118px] min-h-[24px] w-full resize-none overflow-y-auto bg-transparent text-[14px] font-normal leading-6 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-text-tertiary)] disabled:cursor-not-allowed"
           />
@@ -2461,27 +2476,19 @@ function CommentComposer({
         {showSend ? (
           <button
             type="button"
-            onMouseDown={(event) =>
-              event.preventDefault()
-            }
+            onMouseDown={(event) => event.preventDefault()}
             onClick={onSend}
-            disabled={
-              !value.trim() ||
-              isBanned ||
-              sending
-            }
+            disabled={!value.trim() || isBanned || sending}
             className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-disabled)]"
             aria-label={
-  replyTarget
-    ? t('commentSection.sendReply')
-    : t('commentSection.sendComment')
-}
+              replyTarget
+                ? t('commentSection.sendReply')
+                : t('commentSection.sendComment')
+            }
           >
             <i
               className={`fa-solid ${
-                sending
-                  ? 'fa-spinner animate-spin'
-                  : 'fa-paper-plane'
+                sending ? 'fa-spinner animate-spin' : 'fa-paper-plane'
               } text-[13px]`}
             />
           </button>
@@ -3550,23 +3557,22 @@ async function fetchComments(
     targetId,
   ])
 
-  const handleStartReply = (
-  commentId,
-  name
-) => {
-  setReplyText('')
-setReplyTarget({
-  parentId: commentId,
-  name: String(name || getDisplayText('commentSection.reader')).trim(),
-})
-
-  requestAnimationFrame(() => {
-    document
-      .getElementById('shadow-comment-input')
-      ?.focus()
-  })
-}
-
+  const handleStartReply = (commentId, name) => {
+    setReplyText('')
+    setReplyTarget({
+      parentId: commentId,
+      name: String(name || getDisplayText('commentSection.reader')).trim(),
+    })
+    const textarea = document.getElementById('shadow-comment-input')
+    if (textarea) {
+      textarea.focus({ preventScroll: true })
+    } else {
+      requestAnimationFrame(() => {
+        document.getElementById('shadow-comment-input')?.focus()
+      })
+    }
+  }
+  
   const handleSend = async () => {
     const activeText =
       replyTarget
