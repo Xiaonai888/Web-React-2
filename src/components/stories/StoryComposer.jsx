@@ -454,7 +454,7 @@ async function saveStoryExtras({
       },
       body: JSON.stringify({
         text_overlay: textOverlay.trim(),
-        text_overlay_style: textOverlay.trim() ? textSticker : null,
+        textLayers,text_overlay_style: textLayers.length ? { layers: textLayers } : null,
         alt_text: altText.trim(),
         mention_username: mentionUsername.trim(),
         mention_target_type: mentionTarget?.type || null,
@@ -569,11 +569,12 @@ export default function StoryComposer({ mode }) {
   const [step, setStep] = useState('choose')
   const [mediaFile, setMediaFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
-  const [textOverlay, setTextOverlay] = useState('')
-  const [textSticker, setTextSticker] = useState(() => normalizeStoryTextSticker(''))
+  const [textLayers, setTextLayers] = useState([])
+  const [editingTextId, setEditingTextId] = useState(null)
+  const textOverlay = textLayers.find((layer) => layer.text?.trim())?.text || ''
   const [altText, setAltText] = useState('')
   const [mentionTarget, setMentionTarget] = useState(null)
-const mentionUsername = mentionTarget?.username || ''
+  const mentionUsername = mentionTarget?.username || ''
   const [linkUrl, setLinkUrl] = useState('')
   const [sheet, setSheet] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
@@ -636,8 +637,8 @@ const mentionUsername = mentionTarget?.username || ''
 
     setMediaFile(file)
     setPreviewUrl(URL.createObjectURL(file))
-    setTextOverlay('')
-    setTextSticker(normalizeStoryTextSticker(''))
+    setTextLayers([])
+    setEditingTextId(null)
     setAltText('')
     setMentionTarget(null)
     setLinkUrl('')
@@ -732,7 +733,7 @@ const mentionUsername = mentionTarget?.username || ''
           storyId: createdStory.id,
           token,
           textOverlay,
-          textSticker,
+          textLayers,
           altText,
           mentionUsername,
   mentionTarget,
