@@ -138,7 +138,7 @@ export default function AuthorReelAddPage() {
   const location = useLocation()
   const requestedReturnTo = location.state?.returnTo
   const returnTo = typeof requestedReturnTo === 'string' &&
-  (requestedReturnTo === '/author/reel/studio' || /^\/author\/page(?:\/|$)/.test(requestedReturnTo))
+  (/^\/author\/reel\/studio(?:\/|[?#]|$)/.test(requestedReturnTo) || /^\/author\/page(?:\/|[?#]|$)/.test(requestedReturnTo))
   ? requestedReturnTo : '/author/page'
   const [link, setLink] = useState('')
   const [title, setTitle] = useState('')
@@ -259,7 +259,7 @@ export default function AuthorReelAddPage() {
 
   return <PageShell className="pb-24 text-[var(--shadow-text-primary)]">
     <PageHeader title={t('authorReelAdd.heading')} subtitle={t('authorReelAdd.subtitle')}
-      onBack={() => navigate(returnTo, { state: { activeTab: 'Reel' } })} backLabel={t('authorReelAdd.back')} />
+      onBack={() => navigate(returnTo, { replace: true, state: { activeTab: 'Reel' } })} backLabel={t('authorReelAdd.back')} />
     <main className="mx-auto w-full max-w-[760px] space-y-5 px-3 py-5 sm:px-5">
       <ReelVideoPreview
         videoUrl={link} title={title} videoType={videoType} onVideoTypeChange={setManualType}
