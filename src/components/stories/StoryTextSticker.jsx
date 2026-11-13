@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getDisplayText } from '../../utils/displayLanguage'
-import { getStoryStickerTypography, getStoryStickerTextColor, normalizeStoryTextSticker } from './StoryTextEditor'
+import { getStoryStickerTypography, getStoryStickerAppearance, normalizeStoryTextSticker } from './StoryTextEditor'
 import StoryTrashDropZone, { isPointOverStoryTrashDropZone } from './StoryTrashDropZone'
 
 function measurePointers(pointers) {
@@ -27,6 +27,7 @@ export default function StoryTextSticker({ value, onChange, onEdit, onDelete, di
   const [trashVisible, setTrashVisible] = useState(false)
   const [trashOver, setTrashOver] = useState(false)
   const sticker = normalizeStoryTextSticker(value)
+  const appearance = getStoryStickerAppearance(sticker)
   const canDelete = typeof onDelete === 'function'
 
   if (!pointerRef.current.size) latestRef.current = sticker
@@ -159,12 +160,12 @@ export default function StoryTextSticker({ value, onChange, onEdit, onDelete, di
           }}
         >
           <span
-            className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35] shadow-lg"
-            style={{ backgroundColor: sticker.background, color: getStoryStickerTextColor(sticker.background) }}
+            className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35]"
+            style={{ backgroundColor: appearance.backgroundColor, color: appearance.color }}
           >
             <span
               className="block max-w-full whitespace-pre-wrap break-words"
-              style={{ textAlign: sticker.align, ...getStoryStickerTypography(sticker.font) }}
+              style={{ ...getStoryStickerTypography(sticker.font), textAlign: 'center', WebkitTextStroke: appearance.WebkitTextStroke, paintOrder: 'stroke fill', textShadow: 'none' }}
             >
               {sticker.text}
             </span>
