@@ -146,7 +146,7 @@ export function getStoryStickerAppearance(value) {
   return {
     backgroundColor,
     color: textColor,
-    WebkitTextStroke: outlineColor ? `1.3px ${outlineColor}` : '0 transparent',
+    WebkitTextStroke: outlineColor ? `2.65px ${outlineColor}` : '0 transparent',
     paintOrder: 'stroke fill',
     textShadow: 'none',
   }
@@ -208,7 +208,9 @@ function extractImageSuggestions(imageUrl, onReady) {
 export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose }) {
   const [draft, setDraft] = useState(() => normalizeStoryTextSticker(value))
   const [mode, setMode] = useState('color')
+  const [colorIconPulse, setColorIconPulse] = useState(0)
   const [imageSuggestions, setImageSuggestions] = useState([])
+  const [previewAlign, setPreviewAlign] = useState('center')
   const [viewport, setViewport] = useState(() => ({
     top: 0,
     left: 0,
@@ -220,6 +222,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const fontCarouselRef = useRef(null)
   const centeredFontRef = useRef(draft.font)
   const centeredColorRef = useRef(draft.background)
+  const carouselInteractionRef = useRef({ color: false, font: false })
   const translate = (key) => getDisplayText(`storyTextEditor.${key}`)
   const suggested = useMemo(() => Array.from(new Set([...imageSuggestions, ...DEFAULT_SUGGESTIONS].filter((color) => color && color !== '#FFFFFF'))).slice(0, 4), [imageSuggestions])
   const originalBackground = useRef(normalizeStoryTextSticker(value).background).current
@@ -283,11 +286,12 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     const node = textRef.current
     if (!node) return
     const typography = draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontStyle: 'normal', fontWeight: 700 }
+    const weight = ['outline', 'outlineInverse'].includes(draft.styleMode) ? Math.max(700, Number(typography.fontWeight) || 400) : typography.fontWeight
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
     let width = 174
     if (context) {
-      context.font = `${typography.fontStyle} ${typography.fontWeight} 27px ${typography.fontFamily}`
+      context.font = `${typography.fontStyle} ${weight} 27px ${typography.fontFamily}`
       const lines = (draft.text || 'Type or @Tag').split('\n')
       width = Math.max(draft.text ? 100 : 230, ...lines.map((line) => context.measureText(line || ' ').width + 12))
     }
@@ -295,7 +299,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     node.style.width = `${Math.min(maxWidth, Math.max(104, Math.ceil(width)))}px`
     node.style.height = '36px'
     node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
-  }, [draft.text, draft.font, viewport.width, viewport.height])
+  }, [draft.text, draft.font, draft.styleMode, viewport.width, viewport.height])
 
   useEffect(() => {
     if (mode !== 'color') return undefined
@@ -323,12 +327,17 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
 
   const update = (changes) => setDraft((current) => ({ ...current, ...changes }))
   const changeAlignment = () => {
-    setDraft((current) => {
-      const index = STORY_TEXT_ALIGNMENTS.indexOf(current.align)
-      const align = STORY_TEXT_ALIGNMENTS[(index + 1) % STORY_TEXT_ALIGNMENTS.length]
-      return { ...current, align, x: align === 'left' ? 20 : align === 'right' ? 80 : 50 }
-    })
-  }
+  const positions = ['center', 'left', 'right']
+  const align = positions[(positions.indexOf(previewAlign) + 1) % positions.length]
+  const width = textRef.current?.parentElement?.getBoundingClientRect().width || 112
+  const edge = Math.max(5, Math.min(45, ((width / 2 + 12) / viewport.width) * 100))
+  setPreviewAlign(align)
+  setDraft((current) => ({
+    ...current,
+    align,
+    x: align === 'left' ? edge : align === 'right' ? 100 - edge : 50,
+  }))
+}
 
   const cycleStyle = () => {
     setDraft((current) => {
@@ -339,6 +348,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
 
   const selectColor = (color, index) => {
     centeredColorRef.current = color
+    carouselInteractionRef.current.color = false
     update({ background: color })
     const node = carouselRef.current
     const item = node?.children[index]
@@ -346,6 +356,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   }
 
   const handleColorScroll = () => {
+    if (!carouselInteractionRef.current.color) return
     const node = carouselRef.current
     if (!node) return
     const center = node.scrollLeft + node.clientWidth / 2
@@ -363,6 +374,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
 
   const selectFont = (font, index) => {
     centeredFontRef.current = font
+    carouselInteractionRef.current.font = false
     update({ font })
     const node = fontCarouselRef.current
     const item = node?.children[index]
@@ -370,6 +382,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   }
 
   const handleFontScroll = () => {
+    if (!carouselInteractionRef.current.font) return
     const node = fontCarouselRef.current
     if (!node) return
     const center = node.scrollLeft + node.clientWidth / 2
@@ -387,6 +400,13 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
 
   const maintainTextFocus = (event) => event.preventDefault()
 
+  const togglePicker = () => {
+    carouselInteractionRef.current.color = false
+    carouselInteractionRef.current.font = false
+    setMode((current) => current === 'color' ? 'font' : 'color')
+    setColorIconPulse((current) => current + 1)
+  }
+
   return (
     <div
       className="fixed z-[200] flex flex-col overflow-hidden bg-black/60 text-white"
@@ -395,12 +415,24 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       aria-modal="true"
       aria-label={translate('edit')}
     >
+      <style>{`
+        @keyframes storyTextEditorColorPulse {
+          0%, 100% { transform: scale(1); }
+          42% { transform: scale(0.85); }
+          75% { transform: scale(1.04); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .story-text-editor-color-pulse { animation: none !important; }
+        }
+      `}</style>
       <header className="relative z-10 mx-auto flex w-full max-w-[680px] shrink-0 items-center justify-center gap-1.5 px-3 pb-1 pt-[max(12px,env(safe-area-inset-top))]">
-        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode((current) => current === 'color' ? null : 'color')} aria-label={translate('color')} aria-pressed={mode === 'color'} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent">
-          <span className={`h-[23px] w-[23px] rounded-full border border-white/65 ${mode === 'color' ? 'ring-1 ring-white/80 ring-offset-1 ring-offset-transparent' : ''}`} style={{ background: 'conic-gradient(#e9435f, #e8b72a, #35ae74, #4384ea, #b154c3, #e9435f)' }} />
+        <button type="button" onPointerDown={maintainTextFocus} onClick={togglePicker} aria-label={mode === 'color' ? translate('font') : translate('color')} aria-pressed={mode === 'color'} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent">
+          <span key={colorIconPulse} className={`h-[23px] w-[23px] rounded-full ${colorIconPulse ? 'story-text-editor-color-pulse' : ''}`} style={{ background: 'conic-gradient(#e9435f, #e8b72a, #35ae74, #4384ea, #b154c3, #e9435f)', animation: colorIconPulse ? 'storyTextEditorColorPulse 250ms ease-out' : 'none' }} />
         </button>
-        <button type="button" onPointerDown={maintainTextFocus} onClick={() => setMode((current) => current === 'font' ? null : 'font')} aria-label={translate('font')} aria-pressed={mode === 'font'} className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent">
-          <span className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] text-[13px] font-normal ${mode === 'font' ? 'border border-white bg-white text-[#101014]' : 'border border-white/70 bg-transparent text-white'}`}>Aa</span>
+        <button type="button" onPointerDown={maintainTextFocus} onClick={cycleStyle} aria-label={translate(`style${draft.styleMode.charAt(0).toUpperCase()}${draft.styleMode.slice(1)}`)} className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent">
+          <span
+            className={`flex h-[23px] w-[23px] items-center justify-center rounded-[5px] border border-white text-[13px] font-normal ${['shape', 'inverse'].includes(draft.styleMode) ? 'bg-white text-[#101014]' : 'bg-transparent text-white'}`}
+          >Aa</span>
         </button>
         <button type="button" onPointerDown={maintainTextFocus} onClick={changeAlignment} aria-label={translate('align')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" aria-hidden="true">
@@ -413,7 +445,15 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       </header>
 
       <main className="relative min-h-0 flex-1 overflow-hidden px-3 py-3">
-        <div className="absolute left-1/2 top-[42%] flex w-max max-w-[92%] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div
+  className={`absolute inset-x-3 top-[42%] flex -translate-y-1/2 items-center ${
+    previewAlign === 'left'
+      ? 'justify-start'
+      : previewAlign === 'right'
+        ? 'justify-end'
+        : 'justify-center'
+  }`}
+>
           <div
             className="inline-flex max-w-[92%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2"
             style={{ backgroundColor: draft.text.trim() ? appearance.backgroundColor : 'transparent', color: draft.text.trim() ? appearance.color : '#FFFFFF' }}
@@ -430,7 +470,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
               placeholder="Type or @Tag"
               aria-label={translate('edit')}
               className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
-              style={{ color: 'inherit', textAlign: 'center', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), WebkitTextStroke: draft.text ? appearance.WebkitTextStroke : '0 transparent', paintOrder: 'stroke fill', caretColor: 'currentColor' }}
+              style={{ color: 'inherit', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), textAlign: draft.align, fontWeight: draft.text && ['outline', 'outlineInverse'].includes(draft.styleMode) ? 800 : (draft.text ? getStoryStickerTypography(draft.font).fontWeight : 700), WebkitTextStroke: draft.text ? appearance.WebkitTextStroke : '0 transparent', paintOrder: 'stroke fill', caretColor: 'currentColor' }}
             />
           </div>
         </div>
@@ -438,13 +478,15 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
         <div className="absolute inset-x-3 flex flex-col items-center" style={{ top: 'min(calc(42% + 65px), calc(100% - 90px))' }}>
           {mode === 'color' ? (
             <div className="flex w-full flex-col items-center gap-1.5">
-              <span className="rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-semibold text-white/90">
+              <span className="flex h-[24px] shrink-0 items-center justify-center rounded-full bg-black/55 px-2.5 text-[10px] font-semibold text-white/90">
                 {getStoryColorName(draft.background)}
               </span>
               <div className="relative w-[min(92vw,360px)] max-w-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 9%, black 91%, transparent)' }}>
                 <div
                   ref={carouselRef}
                   onScroll={handleColorScroll}
+                  onPointerDown={() => { carouselInteractionRef.current.color = true }}
+                  onWheel={() => { carouselInteractionRef.current.color = true }}
                   className="flex h-[48px] w-full items-center overflow-x-auto overscroll-x-contain snap-x snap-mandatory"
                   style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingInline: 'calc(50% - 22px)' }}
                   aria-label={translate('color')}
@@ -471,9 +513,9 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
             </div>
           ) : mode === 'font' ? (
             <div className="flex w-full flex-col items-center gap-1.5">
-              <button type="button" onPointerDown={maintainTextFocus} onClick={cycleStyle} aria-label={translate(`style${draft.styleMode.charAt(0).toUpperCase()}${draft.styleMode.slice(1)}`)} className="flex h-[24px] min-w-[95px] items-center justify-center rounded-full border border-white/45 bg-black/55 px-3 text-[11px] font-medium text-white">{translate(`style${draft.styleMode.charAt(0).toUpperCase()}${draft.styleMode.slice(1)}`)}</button>
+              <span className="block h-[24px] shrink-0" aria-hidden="true" />
               <div className="relative w-[min(92vw,360px)] max-w-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 9%, black 91%, transparent)' }}>
-                <div ref={fontCarouselRef} onScroll={handleFontScroll} className="flex h-[48px] w-full items-center overflow-x-auto overscroll-x-contain snap-x snap-mandatory" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingInline: '50%' }} aria-label={translate('font')}>
+                <div ref={fontCarouselRef} onScroll={handleFontScroll} onPointerDown={() => { carouselInteractionRef.current.font = true }} onWheel={() => { carouselInteractionRef.current.font = true }} className="flex h-[48px] w-full items-center overflow-x-auto overscroll-x-contain snap-x snap-mandatory" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', paddingInline: '50%' }} aria-label={translate('font')}>
                   {STORY_TEXT_FONTS.map((font, index) => (
                     <button key={font} type="button" onPointerDown={maintainTextFocus} onClick={() => selectFont(font, index)} aria-pressed={draft.font === font} className={`flex h-9 shrink-0 snap-center items-center justify-center rounded-full px-4 text-[12px] ${draft.font === font ? 'bg-white text-[#101014]' : 'bg-black/45 text-white'}`} style={getStoryStickerTypography(font)}>
                       {translate(font)}
