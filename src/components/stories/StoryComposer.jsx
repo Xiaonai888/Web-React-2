@@ -21,6 +21,7 @@ registerTranslationNamespace('storyComposer', {
     more: "More",
     writeAlt: "Write alt text",
     text: "Text",
+    textLayerLimit: "A story can contain up to 100 text layers.",
     mention: "Mention",
     link: "Link",
     public: "Public",
@@ -57,6 +58,7 @@ registerTranslationNamespace('storyComposer', {
     more: "បន្ថែម",
     writeAlt: "សរសេរ Alt text",
     text: "អក្សរ",
+    textLayerLimit: "Story មួយអាចមានអក្សរបានអតិបរមា ១០០ Layer។",
     mention: "Mention",
     link: "Link",
     public: "សាធារណៈ",
@@ -93,6 +95,7 @@ registerTranslationNamespace('storyComposer', {
     more: "更多",
     writeAlt: "填写替代文字",
     text: "文字",
+    textLayerLimit: "每个 Story 最多可添加 100 个文字图层。",
     mention: "提及",
     link: "链接",
     public: "公开",
@@ -129,6 +132,7 @@ registerTranslationNamespace('storyComposer', {
     more: "その他",
     writeAlt: "代替テキストを書く",
     text: "テキスト",
+    textLayerLimit: "Story にはテキストを最大 100 レイヤー追加できます。",
     mention: "メンション",
     link: "リンク",
     public: "公開",
@@ -165,6 +169,7 @@ registerTranslationNamespace('storyComposer', {
     more: "더 보기",
     writeAlt: "대체 텍스트 작성",
     text: "텍스트",
+    textLayerLimit: "Story에는 텍스트 레이어를 최대 100개까지 추가할 수 있습니다.",
     mention: "멘션",
     link: "링크",
     public: "공개",
@@ -438,7 +443,7 @@ async function saveStoryExtras({
   storyId,
   token,
   textOverlay,
-  textSticker,
+  textLayers,
   altText,
   mentionUsername,
   mentionTarget,
@@ -454,7 +459,7 @@ async function saveStoryExtras({
       },
       body: JSON.stringify({
         text_overlay: textOverlay.trim(),
-        textLayers,text_overlay_style: textLayers.length ? { layers: textLayers } : null,
+        text_overlay_style: textLayers.length ? { layers: textLayers } : null,
         alt_text: altText.trim(),
         mention_username: mentionUsername.trim(),
         mention_target_type: mentionTarget?.type || null,
@@ -766,7 +771,7 @@ export default function StoryComposer({ mode }) {
   }
 
   const isVideo = mediaFile?.type?.startsWith('video/')
-  const hasText = Boolean(textOverlay.trim())
+  const hasText = textLayers.length > 0
   const hasMention = Boolean(mentionUsername.trim())
   const hasLink = Boolean(linkUrl.trim())
 
@@ -909,16 +914,25 @@ export default function StoryComposer({ mode }) {
         </div>
       </header>
 
-      <StoryTextSticker
-  value={textSticker}
-  onChange={setTextSticker}
-  onEdit={() => setSheet('text')}
-  onDelete={() => {
-    setTextOverlay('')
-    setTextSticker(normalizeStoryTextSticker(''))
-  }}
-  disabled={sharing}
-/>
+      {textLayers.map((layer) => (
+        <StoryTextSticker
+          key={layer.id}
+          value={layer}
+          onChange={(next) => {
+            setTextLayers((current) => current.map((item) =>
+              item.id === layer.id ? { ...next, id: layer.id } : item
+            ))
+          }}
+          onEdit={() => {
+            setEditingTextId(layer.id)
+            setSheet('text')
+          }}
+          onDelete={() => {
+            setTextLayers((current) => current.filter((item) => item.id !== layer.id))
+          }}
+          disabled={sharing}
+        />
+      ))}
 
       {hasMention ? (
         <button type="button" onClick={() => setSheet('mention')} className="absolute inset-x-0 bottom-[225px] z-20 flex justify-center px-5">
@@ -939,7 +953,19 @@ export default function StoryComposer({ mode }) {
 
       <div className="absolute inset-x-0 bottom-[80px] z-30">
         <div className="mx-auto flex max-w-[680px] items-center justify-center gap-9 px-4">
-          <ToolButton icon="fa-solid fa-font" label={t('storyComposer.text')} active={hasText} onClick={() => setSheet('text')} />
+          <ToolButton
+            icon="fa-solid fa-font"
+            label={t('storyComposer.text')}
+            active={hasText}
+            onClick={() => {
+              if (textLayers.length >= 100) {
+                setError(t('storyComposer.textLayerLimit'))
+                return
+              }
+              setEditingTextId(null)
+              setSheet('text')
+            }}
+          />
           <ToolButton icon="fa-solid fa-at" label={t('storyComposer.mention')} active={hasMention} onClick={() => setSheet('mention')} />
           <ToolButton icon="fa-solid fa-link" label={t('storyComposer.link')} active={hasLink} onClick={() => setSheet('link')} />
         </div>
@@ -1004,17 +1030,32 @@ export default function StoryComposer({ mode }) {
       ) : null}
 
       {sheet === 'text' ? (
-  <StoryTextEditor
-  value={textSticker}
-  imageUrl={mediaFile?.type?.startsWith('image/') ? previewUrl : ''}
-    onSave={(value) => {
-      setTextSticker(value)
-      setTextOverlay(value.text)
-      setSheet('')
-    }}
-    onClose={() => setSheet('')}
-  />
-) : null}
+        <StoryTextEditor
+          value={editingTextId
+            ? textLayers.find((layer) => layer.id === editingTextId)
+            : normalizeStoryTextSticker('')}
+          imageUrl={mediaFile?.type?.startsWith('image/') ? previewUrl : ''}
+          onSave={(value) => {
+            const text = String(value.text || '').trim()
+            if (text) {
+              const id = editingTextId || `text-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+              const next = { ...normalizeStoryTextSticker(value), id, text }
+              setTextLayers((current) => editingTextId
+                ? current.map((layer) => layer.id === editingTextId ? next : layer)
+                : [...current, { ...next, y: Math.min(88, next.y + (current.length % 6) * 8) }]
+              )
+            } else if (editingTextId) {
+              setTextLayers((current) => current.filter((layer) => layer.id !== editingTextId))
+            }
+            setEditingTextId(null)
+            setSheet('')
+          }}
+          onClose={() => {
+            setEditingTextId(null)
+            setSheet('')
+          }}
+        />
+      ) : null}
 
       {sheet === 'mention' ? (
   <StoryMentionPicker
