@@ -875,11 +875,12 @@ export default function AuthorCheckoutPage() {
             orderId,
             productId: pdfProductId,
             title: String(pdfItem.product_title || pdfItem.title || '').trim() || 'PDF',
+            returnPath: safeCheckoutReturnPath(saved.return_path),
           })
         } else {
           setPaidBookOrder({
             orderId,
-            const title = paidPdfOrder.title
+            returnPath: safeCheckoutReturnPath(saved.return_path),
           })
         }
       } catch (error) {
@@ -926,6 +927,7 @@ export default function AuthorCheckoutPage() {
     localStorage.setItem(PAYMENT_SUCCESS_SEEN_KEY, paidPdfOrder.orderId)
     const productId = paidPdfOrder.productId
     const title = paidPdfOrder.title
+    const returnPath = safeCheckoutReturnPath(paidPdfOrder.returnPath)
     setPaidPdfOrder(null)
     if (readNow) {
       navigate(`/discover/pdf/${encodeURIComponent(productId)}`, { state: { title } })
