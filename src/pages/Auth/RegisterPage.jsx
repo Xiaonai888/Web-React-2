@@ -781,6 +781,8 @@ export default function RegisterPage() {
   }
 
   const saveLogin = (token, user) => {
+    sessionStorage.removeItem('shadow_reader_token')
+    sessionStorage.removeItem('shadow_reader_user')
     localStorage.setItem('shadow_reader_token', token)
     localStorage.setItem('shadow_reader_user', JSON.stringify(user))
   }
