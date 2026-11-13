@@ -166,7 +166,7 @@ function inspectAuthResponse(response, requestToken, path) {
   if (response.status !== 401 && response.status !== 403) return
   response.clone().json().then((data) => {
     const code = String(data?.code || '')
-    const authCodes = [
+    if (![
       'TOKEN_REQUIRED',
       'TOKEN_INVALID',
       'TOKEN_EXPIRED',
@@ -174,56 +174,26 @@ function inspectAuthResponse(response, requestToken, path) {
       'READER_SESSION_REQUIRED',
       'READER_SESSION_REVOKED',
       'READER_SESSION_EXPIRED',
-    ]
-    if (!authCodes.includes(code)) return
+    ].includes(code)) return
 
     const local = localStorage.getItem('shadow_reader_token') || ''
     const session = sessionStorage.getItem('shadow_reader_token') || ''
-    const matchesLocal = Boolean(requestToken && requestToken === local)
-    const matchesSession = Boolean(requestToken && requestToken === session)
-
     reportAuthFailure('API_AUTH_REJECTED', {
       path,
       http: response.status,
       code,
       requestToken: tokenStatus(requestToken),
-      requestMatchesLocal: matchesLocal,
-      requestMatchesSession: matchesSession,
+      requestMatchesLocal: Boolean(requestToken && requestToken === local),
+      requestMatchesSession: Boolean(requestToken && requestToken === session),
       requestMatchesLatestLogin: Boolean(requestToken && requestToken === lastLoginToken),
       localToken: tokenStatus(local),
       sessionToken: tokenStatus(session),
       lastLogin: readDiagnostic(AUTH_LOGIN_KEY),
       tokenChange: readDiagnostic(AUTH_CHANGE_KEY),
     })
-
-    const unusable = [
-      'TOKEN_INVALID',
-      'TOKEN_EXPIRED',
-      'WRONG_TOKEN_TYPE',
-      'READER_SESSION_REQUIRED',
-      'READER_SESSION_REVOKED',
-      'READER_SESSION_EXPIRED',
-    ]
-    if (!unusable.includes(code) || (!matchesLocal && !matchesSession)) return
-
-    if (matchesLocal) {
-      localStorage.removeItem('shadow_reader_token')
-      localStorage.removeItem('shadow_reader_user')
-    }
-    if (matchesSession) {
-      sessionStorage.removeItem('shadow_reader_token')
-      sessionStorage.removeItem('shadow_reader_user')
-    }
-
-    const remainingToken = sessionStorage.getItem('shadow_reader_token') ||
-      localStorage.getItem('shadow_reader_token') || ''
-    if (remainingToken || window.__shadowReaderAuthRedirecting) return
-    if (window.location.pathname === '/login' || window.location.pathname === '/register') return
-
-    window.__shadowReaderAuthRedirecting = true
-    window.location.replace('/login')
   }).catch(() => {})
 }
+
 
 function handleReaderSessionResponse(fetchPromise, requestToken, path) {
   return fetchPromise.then((response) => {
