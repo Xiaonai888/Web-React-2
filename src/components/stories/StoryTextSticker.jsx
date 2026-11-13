@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { getDisplayText } from '../../utils/displayLanguage'
-import { getStoryStickerFont, getStoryStickerTextColor, normalizeStoryTextSticker } from './StoryTextEditor'
+import { getStoryStickerTypography, getStoryStickerTextColor, normalizeStoryTextSticker } from './StoryTextEditor'
 
 function measurePointers(pointers) {
   const points = Array.from(pointers.values())
@@ -93,9 +93,23 @@ export default function StoryTextSticker({ value, onChange, onEdit, disabled = f
         className="pointer-events-auto absolute inline-flex max-w-[84%] select-none items-center justify-center border-0 bg-transparent p-0 text-white outline-none disabled:opacity-100"
         style={{ left: `${sticker.x}%`, top: `${sticker.y}%`, touchAction: 'none', transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg) scale(${sticker.scale})` }}
       >
-        <span className="inline-block max-w-full whitespace-pre-wrap break-words rounded-[12px] px-4 py-2.5 text-[29px] font-bold leading-tight shadow-lg" style={{ backgroundColor: sticker.background, color: getStoryStickerTextColor(sticker.background), textAlign: sticker.align, fontFamily: getStoryStickerFont(sticker.font) }}>
-          {sticker.text}
-        </span>
+        <span
+  className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35] shadow-lg"
+  style={{
+    backgroundColor: sticker.background,
+    color: getStoryStickerTextColor(sticker.background),
+  }}
+>
+  <span
+    className="block max-w-full whitespace-pre-wrap break-words"
+    style={{
+      textAlign: sticker.align,
+      ...getStoryStickerTypography(sticker.font),
+    }}
+  >
+    {sticker.text}
+  </span>
+</span>
       </button>
     </div>
   )
