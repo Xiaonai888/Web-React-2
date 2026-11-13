@@ -107,15 +107,21 @@ export function getStoryStickerFont(font) {
 }
 
 export function getStoryStickerTypography(font) {
-  const base = { fontFamily: getStoryStickerFont(font), fontWeight: 400, fontStyle: 'normal', letterSpacing: 'normal', textShadow: 'none' }
-  if (font === 'robotoBold') return { ...base, fontWeight: 700 }
-  if (font === 'handwriting') return { ...base, fontWeight: 400, fontStyle: 'italic' }
-  if (font === 'poster') return { ...base, fontWeight: 700 }
-  if (font === 'rounded') return { ...base, fontWeight: 600 }
-  if (font === 'elegant') return { ...base, fontWeight: 500 }
-  if (font === 'minimal') return { ...base, fontWeight: 400 }
-  if (font === 'retro') return { ...base, fontWeight: 500 }
-  if (font === 'neon') return { ...base, fontWeight: 600 }
+  const base = {
+    fontFamily: getStoryStickerFont(font),
+    fontWeight: 600,
+    fontStyle: 'normal',
+    letterSpacing: 'normal',
+    textShadow: 'none',
+  }
+  if (font === 'robotoBold') return { ...base, fontWeight: 800 }
+  if (font === 'handwriting') return { ...base, fontWeight: 600, fontStyle: 'italic' }
+  if (font === 'poster') return { ...base, fontWeight: 800 }
+  if (font === 'rounded') return { ...base, fontWeight: 700 }
+  if (font === 'elegant') return { ...base, fontWeight: 600 }
+  if (font === 'minimal') return { ...base, fontWeight: 600 }
+  if (font === 'retro') return { ...base, fontWeight: 600 }
+  if (font === 'neon') return { ...base, fontWeight: 700 }
   return base
 }
 
@@ -293,10 +299,13 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     if (context) {
       context.font = `${typography.fontStyle} ${weight} 27px ${typography.fontFamily}`
       const lines = (draft.text || 'Type or @Tag').split('\n')
-      width = Math.max(draft.text ? 100 : 230, ...lines.map((line) => context.measureText(line || ' ').width + 12))
+width = Math.max(
+  draft.text ? 42 : 180,
+  ...lines.map((line) => context.measureText(line || ' ').width + 8)
+)
     }
-    const maxWidth = Math.max(140, Math.min(420, viewport.width * 0.86))
-    node.style.width = `${Math.min(maxWidth, Math.max(104, Math.ceil(width)))}px`
+    const maxWidth = Math.max(120, Math.min(420, viewport.width * 0.8))
+‌    node.style.width = `${Math.min(maxWidth, Math.max(42, Math.ceil(width)))}px`
     node.style.height = '36px'
     node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
   }, [draft.text, draft.font, draft.styleMode, viewport.width, viewport.height])
@@ -329,8 +338,12 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const changeAlignment = () => {
   const positions = ['center', 'left', 'right']
   const align = positions[(positions.indexOf(previewAlign) + 1) % positions.length]
-  const width = textRef.current?.parentElement?.getBoundingClientRect().width || 112
-  const edge = Math.max(5, Math.min(45, ((width / 2 + 12) / viewport.width) * 100))
+  const shapeWidth = textRef.current?.parentElement?.getBoundingClientRect().width || 80
+  const edge = Math.min(
+    50,
+    Math.max(5, ((shapeWidth / 2 + 12) / Math.max(1, viewport.width)) * 100)
+  )
+
   setPreviewAlign(align)
   setDraft((current) => ({
     ...current,
@@ -455,7 +468,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   }`}
 >
           <div
-            className="inline-flex max-w-[92%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2"
+            className="inline-flex max-w-[92%] items-center justify-center rounded-[10px] px-2 py-1.5"
             style={{ backgroundColor: draft.text.trim() ? appearance.backgroundColor : 'transparent', color: draft.text.trim() ? appearance.color : '#FFFFFF' }}
           >
             <textarea
@@ -470,7 +483,19 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
               placeholder="Type or @Tag"
               aria-label={translate('edit')}
               className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
-              style={{ color: 'inherit', ...(draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontWeight: 700, textShadow: 'none' }), textAlign: draft.align, fontWeight: draft.text && ['outline', 'outlineInverse'].includes(draft.styleMode) ? 800 : (draft.text ? getStoryStickerTypography(draft.font).fontWeight : 700), WebkitTextStroke: draft.text ? appearance.WebkitTextStroke : '0 transparent', paintOrder: 'stroke fill', caretColor: 'currentColor' }}
+              style={{
+  color: 'inherit',
+  ...(draft.text
+    ? getStoryStickerTypography(draft.font)
+    : { fontFamily: 'system-ui, sans-serif', fontWeight: 700 }),
+  textAlign: 'center',
+  fontWeight: draft.text && ['outline', 'outlineInverse'].includes(draft.styleMode)
+    ? 800
+    : (draft.text ? getStoryStickerTypography(draft.font).fontWeight : 700),
+  WebkitTextStroke: draft.text ? appearance.WebkitTextStroke : '0 transparent',
+  paintOrder: 'stroke fill',
+  caretColor: 'currentColor',
+}}
             />
           </div>
         </div>
