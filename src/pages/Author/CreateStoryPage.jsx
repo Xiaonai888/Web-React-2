@@ -1277,11 +1277,21 @@ const handleAddSlide = (file) => {
     }
 
     try {
-      const croppedImage = await getCroppedImage(
+      const croppedDataUrl = await getCroppedImage(
         tempImage,
         croppedAreaPixels,
         cropSourceFilesRef.current.get(tempImage) || null
       )
+      const cropFile = dataUrlToFile(croppedDataUrl, `${cropMode}-crop.jpg`)
+      const cropPreset = cropMode === 'cover' ? 'cover' : cropMode === 'landscape' ? 'thumbnail' : 'banner'
+      let croppedFile = cropFile
+      try {
+        const optimizedCrop = await optimizeImageForUpload(cropFile, { preset: cropPreset })
+        if (optimizedCrop?.file instanceof Blob && optimizedCrop.file.size) croppedFile = optimizedCrop.file
+      } catch {}
+      if (!(croppedFile instanceof Blob) || !croppedFile.size) throw new Error('The selected image could not be prepared')
+      const croppedImage = URL.createObjectURL(croppedFile)
+      cropSourceFilesRef.current.set(croppedImage, croppedFile)
       setStoryMediaTouched(true)
 
       if (cropMode === 'cover') {
