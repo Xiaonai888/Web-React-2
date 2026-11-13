@@ -912,6 +912,10 @@ const mentionUsername = mentionTarget?.username || ''
   value={textSticker}
   onChange={setTextSticker}
   onEdit={() => setSheet('text')}
+  onDelete={() => {
+    setTextOverlay('')
+    setTextSticker(normalizeStoryTextSticker(''))
+  }}
   disabled={sharing}
 />
 
