@@ -21,6 +21,7 @@ import {
   storyMediaDraftKey,
 } from '../../utils/storyMediaDraftAssets'
 import { createStoryMediaUploadQueue } from '../../utils/storyMediaUploadQueue'
+import { getStoryCreationUserError } from '../../utils/storyCreationUserError'
 import {
   clearCompletedStoryCreation,
   listStoryCreationJobs,
@@ -1053,7 +1054,7 @@ export default function CreateStoryPage() {
         setStoryMediaReady(true)
       } catch (error) {
         if (!canceled) {
-          setStoryUploadState(error?.message || 'Local story media restore failed')
+          setStoryUploadState(getStoryCreationUserError(error, 'local').message)
           setStoryMediaReady(true)
         }
       }
@@ -1105,7 +1106,7 @@ export default function CreateStoryPage() {
       for (const asset of tasks) await queueStoryAsset(asset)
     })
     storyMediaWriteRef.current = operation
-    operation.catch((error) => setStoryUploadState(error?.message || 'Could not save story media on this device'))
+    operation.catch((error) => setStoryUploadState(getStoryCreationUserError(error, 'local').message))
   }, [storyMediaReady, storyMediaTouched, coverOriginal, coverPreview, coverChanged, landscapeOriginal, landscapePreview, landscapeChanged, slides])
 
   useEffect(() => {
@@ -1118,8 +1119,8 @@ export default function CreateStoryPage() {
     }
     try {
       localStorage.setItem('create_story_draft', JSON.stringify(draft))
-    } catch {
-      setStoryUploadState('This device could not save the story details locally')
+    } catch (error) {
+      setStoryUploadState(getStoryCreationUserError(error, 'local').message)
     }
   }, [isEditMode, storyMediaReady, storyType, title, language, genre, storyStatus, storySettings,
     tags, updateDays, description, isAdult, originalAccepted, agreementAccepted])
@@ -1303,8 +1304,8 @@ if (cropMode === 'slide') {
 
         setCropOpen(false)
       }
-    } catch {
-      showToast(t('createStory.cropFailed'))
+    } catch (error) {
+      showToast(getStoryCreationUserError(error, 'crop').message)
     }
   }
 
@@ -1375,11 +1376,11 @@ if (cropMode === 'slide') {
           completedStoryHandlingRef.current = ''
           if (!cancelled) {
             setPendingStoryCreation(job)
-            setMessage(error?.message || 'Could not complete story sync')
+            setMessage(getStoryCreationUserError(error, 'create').message)
           }
         }
       } catch (error) {
-        if (!cancelled) setMessage(error?.message || 'Could not restore story creation sync')
+        if (!cancelled) setMessage(getStoryCreationUserError(error, 'create').message)
       }
     }
 
@@ -1471,7 +1472,7 @@ if (cropMode === 'slide') {
       })
       void storyCreationRefreshRef.current?.()
     } catch (error) {
-      setMessage(error?.message || 'Failed to retry local story uploads')
+      setMessage(getStoryCreationUserError(error, 'queue').message)
     }
   }
 
@@ -1565,7 +1566,7 @@ if (cropMode === 'slide') {
         setLoading(true)
         await handleLocalFirstCreate(token)
       } catch (error) {
-        setMessage(error?.message || t('createStory.createFailed'))
+        setMessage(getStoryCreationUserError(error, 'local').message)
       } finally {
         storyCreationSavingRef.current = false
         setLoading(false)
@@ -1643,11 +1644,7 @@ if (cropMode === 'slide') {
         navigate('/author/dashboard')
       }
     } catch (error) {
-      setMessage(
-        error.message === 'Failed to fetch'
-          ? t('createStory.cannotConnect')
-          : error.message || t('createStory.updateFailed')
-      )
+      setMessage(getStoryCreationUserError(error, 'local').message)
     } finally {
       setLoading(false)
     }
@@ -1688,7 +1685,7 @@ if (!isEditMode && pendingStoryCreation) {
           : pending.state === 'submitting'
             ? labels.submitting
             : pending.error
-              ? `${labels.error} ${pending.error}`
+              ? `${labels.error} ${getStoryCreationUserError(pending.error, pending.state === 'waiting_upload' ? 'upload' : 'create').message}`
               : labels.waiting}
       </p>
       {message ? <p className="max-w-md text-xs text-red-600" role="alert">{message}</p> : null}
