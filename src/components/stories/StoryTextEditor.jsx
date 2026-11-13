@@ -209,7 +209,6 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const [draft, setDraft] = useState(() => normalizeStoryTextSticker(value))
   const [mode, setMode] = useState('color')
   const [imageSuggestions, setImageSuggestions] = useState([])
-  const [textBoxWidth, setTextBoxWidth] = useState(0)
   const [viewport, setViewport] = useState(() => ({
     top: 0,
     left: 0,
@@ -226,10 +225,6 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
   const originalBackground = useRef(normalizeStoryTextSticker(value).background).current
   const palette = useMemo(() => Array.from(new Set([...suggested, '#FFFFFF', originalBackground, ...STORY_TEXT_COLORS])), [suggested, originalBackground])
   const appearance = getStoryStickerAppearance(draft)
-  const halfTextWidth = Math.min(viewport.width * 0.45, Math.max(56, textBoxWidth / 2))
-  const minimumX = Math.min(viewport.width / 2, halfTextWidth + 12)
-  const maximumX = Math.max(viewport.width / 2, viewport.width - halfTextWidth - 12)
-  const editorX = Math.min(maximumX, Math.max(minimumX, viewport.width * draft.x / 100))
 
   useEffect(() => {
     const visual = window.visualViewport
@@ -300,8 +295,6 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     node.style.width = `${Math.min(maxWidth, Math.max(104, Math.ceil(width)))}px`
     node.style.height = '36px'
     node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
-    const nextWidth = node.parentElement?.getBoundingClientRect().width || 0
-    setTextBoxWidth((previous) => Math.abs(previous - nextWidth) > 1 ? nextWidth : previous)
   }, [draft.text, draft.font, viewport.width, viewport.height])
 
   useEffect(() => {
@@ -420,7 +413,7 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
       </header>
 
       <main className="relative min-h-0 flex-1 overflow-hidden px-3 py-3">
-        <div className="absolute top-[42%] flex max-w-[92%] -translate-x-1/2 -translate-y-1/2 items-center justify-center" style={{ left: editorX }}>
+        <div className="absolute left-1/2 top-[42%] flex w-max max-w-[92%] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <div
             className="inline-flex max-w-[92%] min-w-[112px] items-center justify-center rounded-[10px] px-3 py-2"
             style={{ backgroundColor: draft.text.trim() ? appearance.backgroundColor : 'transparent', color: draft.text.trim() ? appearance.color : '#FFFFFF' }}
