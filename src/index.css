@@ -239,7 +239,7 @@ body::-webkit-scrollbar,
   }
 }
 
-@media (orientation: landscape) and (max-height: 600px) {
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 767px) {
   html,
   body,
   #root {
