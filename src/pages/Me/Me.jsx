@@ -360,7 +360,7 @@ function ProfileSwitcherSheet({ open, onClose, displayName, avatarUrl, avatarLet
 </span>
           </button>
 
-          <button type="button" onClick={onAuthorPage} className="flex w-full items-center justify-between gap-3 border-t border-[#f0eef6] px-4 py-4 text-left active:scale-[0.99] dark:border-white/10">
+          <button type="button" onClick={onAuthorPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[#111827] ring-1 ring-black/10 dark:bg-white/10 dark:text-white dark:ring-white/10">
                 {pageLogo ? (
