@@ -594,10 +594,12 @@ function ToolButton({ icon, label, active, onClick }) {
     <button type="button" onClick={onClick} className="flex flex-col items-center gap-1.5 text-white">
       <span
         className={`flex h-12 w-12 items-center justify-center rounded-full ${
-          active ? 'bg-white text-black' : 'bg-black/55 text-white'
+          active && icon !== 'Aa' ? 'bg-white text-black' : 'bg-black/55 text-white'
         }`}
       >
-        <i className={`${icon} text-[19px]`} />
+        {icon === 'Aa'
+  ? <span className="text-[18px] font-bold leading-none">Aa</span>
+  : <i className={`${icon} text-[19px]`} />}
       </span>
       <span className="text-[11px] font-semibold">{label}</span>
     </button>
@@ -999,7 +1001,7 @@ export default function StoryComposer({ mode }) {
       <div className="absolute inset-x-0 bottom-[80px] z-30">
         <div className="mx-auto flex max-w-[680px] items-center justify-center gap-9 px-4">
           <ToolButton
-            icon="fa-solid fa-font"
+            icon="Aa"
             label={t('storyComposer.text')}
             active={hasText}
             onClick={() => {
