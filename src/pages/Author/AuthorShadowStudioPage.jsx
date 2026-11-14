@@ -19,10 +19,10 @@ export default function AuthorShadowStudioPage() {
     /^\/author\/page(?:\/[^?#]*)?(?:[?#].*)?$/.test(requestedReturnTo)
     ? requestedReturnTo : '/author/page'
 
-  
 const addVideo = () => navigate('/author/reel/add', {
   state: { returnTo: `${location.pathname}${location.search}${location.hash}` },
 })
+
 
   const viewAnalytics = video => {
     if (!video?.id) return
