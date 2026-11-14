@@ -1217,7 +1217,7 @@ function SearchHeaderIcon() {
 }
 
 function ChatHeaderIcon() {
-  const { count: unreadSenders } = useUnreadSenderCount()
+  const { count: unreadSenders } = useUnreadSenderCount({ enabled: false })
 
   return (
     <span className="relative inline-flex h-6 w-6 items-center justify-center">
