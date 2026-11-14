@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -163,6 +163,7 @@ function PasswordField({
 
 export default function ReaderChangePasswordPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -259,7 +260,7 @@ export default function ReaderChangePasswordPage() {
           <button
             type="button"
             onClick={() =>
-              navigate('/profile/settings/account-security')
+              navigate(`/profile/settings/account-security${location.search}`)
             }
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label={t(
