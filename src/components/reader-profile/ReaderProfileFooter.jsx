@@ -14,15 +14,6 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-import {
-  getChatConversations,
-  hasReaderSession,
-  getReaderToken,
-} from '../../services/chatApi'
-import {
-  playChatNotificationTone,
-  primeChatNotificationSound,
-} from '../../services/chatNotificationSound'
 import { useUnreadSenderCount } from '../../services/chatUnreadSenderCount'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -174,62 +165,6 @@ const NAV_ITEMS = [
   { key: 'me', labelKey: 'me' },
 ]
 
-const CHAT_SETTINGS_URL = `${
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
-}/api/users/me/messages-replies`
-
-const CHAT_BADGE_REFRESH_MS = 10000
-const CHAT_BADGE_RATE_LIMIT_BACKOFF_MS = 30000
-
-let chatBadgeRequestPromise = null
-let chatBadgeLastRequestAt = 0
-let chatBadgeBlockedUntil = 0
-let chatBadgeCachedData = null
-
-async function getChatBadgeData() {
-  const now = Date.now()
-
-  if (now < chatBadgeBlockedUntil) {
-    return chatBadgeCachedData
-  }
-
-  if (chatBadgeRequestPromise) {
-    return chatBadgeRequestPromise
-  }
-
-  if (
-    now - chatBadgeLastRequestAt <
-    CHAT_BADGE_REFRESH_MS
-  ) {
-    return chatBadgeCachedData
-  }
-
-  chatBadgeLastRequestAt = now
-  chatBadgeRequestPromise =
-    getChatConversations('all')
-      .then((data) => {
-        chatBadgeCachedData = data
-        return data
-      })
-      .catch((error) => {
-        if (Number(error?.status || 0) === 429) {
-          chatBadgeBlockedUntil =
-            Date.now() +
-            CHAT_BADGE_RATE_LIMIT_BACKOFF_MS
-        }
-        throw error
-      })
-      .finally(() => {
-        chatBadgeRequestPromise = null
-      })
-
-  return chatBadgeRequestPromise
-}
-
 export default function ReaderProfileFooter({
   avatarUrl = '',
   profileName = '',
@@ -238,15 +173,12 @@ export default function ReaderProfileFooter({
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const messageTimerRef = useRef(null)
-  const chatSnapshotRef = useRef(new Map())
-  const chatSnapshotReadyRef = useRef(false)
-  const mountedRef = useRef(true)
   const [storedUser, setStoredUser] = useState(
     () => getStoredUser()
   )
   const [message, setMessage] = useState('')
   const { count: chatBadgeCount } =
-  useUnreadSenderCount()
+  useUnreadSenderCount({ enabled: false })
 
   const finalAvatarUrl =
     avatarUrl ||
@@ -283,207 +215,33 @@ const activeKey =
     setStoredUser(getStoredUser())
   }, [])
 
-  const loadChatBadge = useCallback(async () => {
-  if (!hasReaderSession()) {
-    chatSnapshotRef.current = new Map()
-    chatSnapshotReadyRef.current = false
-    return
-  }
-
-  try {
-    const data = await getChatBadgeData()
-    if (!data || !mountedRef.current) return
-
-    const conversations = Array.isArray(data.conversations)
-      ? data.conversations
-      : []
-
-    const nextSnapshot = new Map()
-    let toneToPlay = ''
-
-    conversations.forEach((item) => {
-      if (
-        item.request_status === 'declined' ||
-        item.request_status === 'blocked'
-      ) return
-
-      const unread = Math.max(
-        0,
-        Number(item.unread_count || 0)
-      )
-
-      const incomingRequest =
-        item.can_decide === true &&
-        item.request_status === 'pending'
-
-      const effectiveUnread = incomingRequest
-        ? Math.max(1, unread)
-        : unread
-
-      const conversationId = String(item.id || '')
-      const latestKey = String(
-        item.latest_message?.id ||
-        item.latest_message?.created_at ||
-        item.last_message_at ||
-        ''
-      )
-
-      const previous =
-        chatSnapshotRef.current.get(conversationId)
-
-      nextSnapshot.set(conversationId, {
-        latestKey,
-        unread: effectiveUnread,
-      })
-
-      if (
-        chatSnapshotReadyRef.current &&
-        !toneToPlay &&
-        latestKey &&
-        effectiveUnread > 0 &&
-        (
-          !previous ||
-          (
-            latestKey !== previous.latestKey &&
-            effectiveUnread > previous.unread
-          )
-        ) &&
-        !item.is_muted &&
-        item.notification_sound_enabled !== false
-      ) {
-        toneToPlay = item.notification_tone || 'default'
-      }
-    })
-
-    chatSnapshotRef.current = nextSnapshot
-
-    if (!chatSnapshotReadyRef.current) {
-      chatSnapshotReadyRef.current = true
-    } else if (toneToPlay) {
-      const token = getReaderToken()
-
-      if (token) {
-        const response = await fetch(CHAT_SETTINGS_URL, {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store',
-        })
-
-        if (response.ok) {
-          const result = await response.json().catch(() => ({}))
-
-          if (
-            mountedRef.current &&
-            getReaderToken() === token &&
-            result.ok === true &&
-            result.settings?.messageNotifications === true
-          ) {
-            void playChatNotificationTone(toneToPlay)
-          }
-        }
-      }
-    }
-  } catch {
-    return
-  }
-}, [])
-
   useEffect(() => {
-    const primeSound = () => {
-      primeChatNotificationSound()
-    }
-
-    window.addEventListener(
-      'pointerdown',
-      primeSound,
-      { once: true }
-    )
-    window.addEventListener(
-      'keydown',
-      primeSound,
-      { once: true }
-    )
-
-    return () => {
-      window.removeEventListener(
-        'pointerdown',
-        primeSound
-      )
-      window.removeEventListener(
-        'keydown',
-        primeSound
-      )
-    }
-  }, [])
-
-  useEffect(() => {
-    mountedRef.current = true
-    loadChatBadge()
     refreshStoredUser()
 
-    const intervalId = window.setInterval(
-      () => {
-        if (
-          document.visibilityState === 'visible'
-        ) {
-          loadChatBadge()
-        }
-      },
-      CHAT_BADGE_REFRESH_MS
-    )
-
-    const handleChatUpdated = () => {
-      loadChatBadge()
-    }
-
-    const handleStorage = (event) => {
-      const key = event?.key || ''
-
-      if (
-        !key ||
-        key === 'shadow_reader_user'
-      ) {
-        refreshStoredUser()
-      }
-
-      if (
-        !key ||
-        key === 'shadow_reader_token' ||
-        key === 'shadow_reader_user'
-      ) {
-        loadChatBadge()
-      }
-    }
-
-    window.addEventListener(
-      'shadow-chat-updated',
-      handleChatUpdated
-    )
     window.addEventListener(
       'shadow-profile-updated',
       refreshStoredUser
     )
-    window.addEventListener(
-      'storage',
-      handleStorage
-    )
+
+    const handleStorage = (event) => {
+      if (
+        !event?.key ||
+        event.key === 'shadow_reader_user'
+      ) {
+        refreshStoredUser()
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
 
     return () => {
-      mountedRef.current = false
-      window.clearInterval(intervalId)
-      window.removeEventListener(
-        'shadow-chat-updated',
-        handleChatUpdated
-      )
       window.removeEventListener(
         'shadow-profile-updated',
         refreshStoredUser
       )
-      window.removeEventListener(
-        'storage',
-        handleStorage
-      )
+      window.removeEventListener('storage', handleStorage)
     }
-  }, [loadChatBadge, refreshStoredUser])
+  }, [refreshStoredUser])
 
   useEffect(() => {
     return () => {
