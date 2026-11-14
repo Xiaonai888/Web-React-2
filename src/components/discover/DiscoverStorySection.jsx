@@ -1261,14 +1261,31 @@ function StoryViewer({
   }
 
   if (!story) return null
-  const textStyle = story.text_overlay_style
-  ? normalizeStoryTextSticker({
-      ...story.text_overlay_style,
-      text: story.text_overlay || story.caption || '',
-    })
-  : null
 
-  const textAppearance = textStyle ? getStoryStickerAppearance(textStyle) : null
+const rawTextStyle = story.text_overlay_style
+
+const storyTextLayers = Array.isArray(rawTextStyle?.layers)
+  ? rawTextStyle.layers
+      .filter((layer) =>
+        layer &&
+        typeof layer === 'object' &&
+        String(layer.text || '').trim()
+      )
+      .map((layer, index) => ({
+        ...normalizeStoryTextSticker(layer),
+        id: String(layer.id || `text-${index}`),
+      }))
+  : rawTextStyle &&
+      typeof rawTextStyle === 'object' &&
+      (story.text_overlay || story.caption)
+    ? [{
+        ...normalizeStoryTextSticker({
+          ...rawTextStyle,
+          text: story.text_overlay || story.caption || '',
+        }),
+        id: 'legacy',
+      }]
+    : []
 
   return (
     <>
@@ -1714,45 +1731,52 @@ function StoryViewer({
             </>
           ) : null}
 
-{story.text_overlay || story.caption ? (
-  textStyle ? (
-    <div className="pointer-events-none absolute inset-0 z-20">
-      <div
-        className="absolute inline-flex max-w-[84%] items-center justify-center"
-        style={{
-          left: `${textStyle.x}%`,
-          top: `${textStyle.y}%`,
-          transform: `translate(-50%, -50%) rotate(${textStyle.rotation}deg) scale(${textStyle.scale})`,
-        }}
-      >
-        <span
-          className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35]"
-          style={{ backgroundColor: textAppearance.backgroundColor, color: textAppearance.color }}
+{storyTextLayers.length ? (
+  <div className="pointer-events-none absolute inset-0 z-20">
+    {storyTextLayers.map((layer, index) => {
+      const appearance = getStoryStickerAppearance(layer)
+
+      return (
+        <div
+          key={`${layer.id}-${index}`}
+          className="absolute inline-flex max-w-[84%] items-center justify-center"
+          style={{
+            left: `${layer.x}%`,
+            top: `${layer.y}%`,
+            transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
+          }}
         >
           <span
-            className="block max-w-full whitespace-pre-wrap break-words"
+            className="inline-flex min-h-[64px] max-w-full items-center justify-center rounded-[12px] px-4 py-3 text-[29px] leading-[1.35]"
             style={{
-              ...getStoryStickerTypography(textStyle.font),
-              textAlign: 'center',
-              WebkitTextStroke: textAppearance.WebkitTextStroke,
-              paintOrder: 'stroke fill',
-              textShadow: 'none',
+              backgroundColor: appearance.backgroundColor,
+              color: appearance.color,
             }}
           >
-            {textStyle.text}
+            <span
+              className="block max-w-full whitespace-pre-wrap break-words"
+              style={{
+                ...getStoryStickerTypography(layer.font),
+                textAlign: 'center',
+                WebkitTextStroke: appearance.WebkitTextStroke,
+                paintOrder: 'stroke fill',
+                textShadow: 'none',
+              }}
+            >
+              {layer.text}
+            </span>
           </span>
-        </span>
-      </div>
-    </div>
-  ) : (
-    <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
-      <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
-        {story.text_overlay || story.caption}
-      </span>
-    </div>
-  )
+        </div>
+      )
+    })}
+  </div>
+) : story.text_overlay || story.caption ? (
+  <div className="pointer-events-none absolute inset-x-6 top-[40%] z-20 text-center">
+    <span className="inline-block max-w-full break-words rounded-[14px] bg-black/35 px-4 py-2 text-[28px] font-black leading-tight text-white shadow-lg backdrop-blur-sm">
+      {story.text_overlay || story.caption}
+    </span>
+  </div>
 ) : null}
-
 
 {story.mention_username ? (
   <div
