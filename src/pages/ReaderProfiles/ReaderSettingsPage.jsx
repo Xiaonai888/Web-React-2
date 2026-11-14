@@ -1008,18 +1008,7 @@ export default function ReaderSettingsPage() {
       : fromAuthorPageHeader || fromAuthorPageMenu
         ? authorPageSettingsPath
         : '/profile/settings'
-    const withSettingsOrigin = (route) => {
-    const url = new URL(route, window.location.origin)
-    if (fromMeSettings) url.searchParams.set('from', 'me-settings')
-    else if (fromMeSwitcher) url.searchParams.set('from', 'me-switcher')
-    else if (fromAuthorSwitcher) url.searchParams.set('from', 'author-switcher')
-    else if (fromAuthorPageHeader || fromAuthorPageMenu) {
-      url.searchParams.set('from', fromAuthorPageMenu ? 'author-page-menu' : 'author-page-header')
-      url.searchParams.set('returnTo', authorPageReturnTo)
-    }
-    if (shadowAccountOpen) url.searchParams.set('account', 'shadow')
-    return `${url.pathname}${url.search}${url.hash}`
-  }
+
       useLayoutEffect(() => {
     if (shadowAccountOpen) return
     const saved = sessionStorage.getItem('readerSettingsScroll')
@@ -1069,21 +1058,32 @@ const filteredGroups = groups.map((group, index) => ({
     }
 
     if (!shadowAccountOpen) sessionStorage.setItem('readerSettingsScroll', String(window.scrollY))
-    const settingsRoutes = {
-      'messages-replies': '/profile/settings/messages-replies',
-      'comment-settings': '/profile/settings/comment-settings',
-      'privacy': '/profile/settings/privacy',
-      'tags-mentions': '/profile/settings/tags-mentions',
-      'hidden-words': '/profile/settings/hidden-words',
-      'restricted-readers': '/profile/settings/restricted-readers',
-    }
+  if (item.key === 'messages-replies') {
+    navigate(`/profile/settings/messages-replies${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
 
-    if (Object.prototype.hasOwnProperty.call(settingsRoutes, item.key)) {
-      navigate(withSettingsOrigin(settingsRoutes[item.key]))
-      return
-    }
+  if (item.key === 'comment-settings') {
+    navigate(`/profile/settings/comment-settings${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
 
-      if (item.key === 'restricted-readers') {
+  if (item.key === 'privacy') {
+    navigate(`/profile/settings/privacy${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
+
+  if (item.key === 'tags-mentions') {
+    navigate(`/profile/settings/tags-mentions${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
+
+  if (item.key === 'hidden-words') {
+    navigate(`/profile/settings/hidden-words${fromMeSettings ? '?from=me-settings' : ''}`)
+    return
+  }
+
+  if (item.key === 'restricted-readers') {
     navigate(`/profile/settings/restricted-readers${fromMeSettings ? '?from=me-settings' : ''}`)
     return
   }
@@ -1098,11 +1098,9 @@ const filteredGroups = groups.map((group, index) => ({
   return
 }
 
-        if (item.route) {
+    if (item.route) {
       if (item.key === 'edit-profile' && fromMeSettings) {
         navigate(`${item.route}&settingsFrom=me-settings`)
-      } else if (item.route.startsWith('/profile/settings/')) {
-        navigate(withSettingsOrigin(item.route))
       } else {
         navigate(item.route)
       }
