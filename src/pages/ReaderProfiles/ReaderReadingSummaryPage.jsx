@@ -127,8 +127,7 @@ export default function ReaderReadingSummaryPage() {
   const { t } = useDisplayTranslation()
   const language = getDisplayLanguageId()
   const tr = (key, values) => t(`readerReadingSummary.${key}`, values)
-  const backPath = new URLSearchParams(location.search).get('from') === 'me-settings'
-    ? '/profile/settings?from=me-settings' : '/profile/settings'
+  const backPath = `/profile/settings${location.search}`
   const pending = useRef(null)
   const [page, setPage] = useState({
     items: [], totals: null, nextCursor: null, loading: false, loaded: false, error: false,
