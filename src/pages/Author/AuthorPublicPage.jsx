@@ -18,6 +18,7 @@ import { createUploadQueueManager } from '../../utils/uploadQueueManager'
 import { requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
 import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
+import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
@@ -1553,106 +1554,22 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
   )
 }
 
-
-function AuthorPageSwitcherSheet({ open, onClose, author, readerUser, readerNotificationCount, onPage, onOwnAccount, onManageAccount }) {
-  const { t } = useDisplayTranslation()
-
-  if (!open) return null
-
-  const pageName = author?.page_name || t('authorPublicPage.authorPage')
-  const pageLogo = author?.avatar_url || ''
-  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-  const readerName = readerUser?.name || t('authorPublicPage.reader')
-  const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
-  const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
-  const showReaderBadge = Number(readerNotificationCount || 0) > 0
-
-  return (
-    <div className="fixed inset-0 z-[230]">
-      <button type="button" aria-label={t('authorPublicPage.closeSwitcher')} onClick={onClose} className="absolute inset-0 bg-black/35" />
-
-      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-elevated)]" />
-
-        <div className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
-          <button type="button" onClick={onPage} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
-                {pageLogo ? (
-                  <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{pageName}</div>
-              </div>
-            </div>
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
-              <i className="fa-solid fa-check text-[10px]" />
-            </span>
-          </button>
-
-          <button type="button" onClick={onOwnAccount} className="flex w-full items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-4 text-left active:scale-[0.99]">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-                {readerAvatar ? (
-                  <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{readerLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{readerName}</div>
-                {showReaderBadge ? (
-  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
-    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-    <span>{t(Number(readerNotificationCount) === 1 ? 'authorPublicPage.notification' : 'authorPublicPage.notifications', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(Number(readerNotificationCount)) })}</span>
-  </div>
-) : null}
-              </div>
-            </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-disabled)]" />
-          </button>
-        </div>
-
-        <button type="button" onClick={onManageAccount} className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99]">
-          {t('authorPublicPage.manageAccount')}
-        </button>
-
-        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
-          <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function AuthorOwnerMenuSheet({
   open,
   onClose,
   author,
-  readerUser,
-  readerNotificationCount,
-  onPage,
-  onOwnAccount,
-  onManageAccount,
+  onSwitchProfile,
   onOpenFinance,
   onOpenStoreSetting,
 }) {
-  
   const { t } = useDisplayTranslation()
-  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
 
   if (!open) return null
 
   const pageName = author?.page_name || t('authorPublicPage.authorPage')
   const pageLogo = author?.avatar_url || ''
   const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-  const readerName = readerUser?.name || t('authorPublicPage.reader')
-  const readerAvatar = readerUser?.avatar_url || readerUser?.avatarUrl || ''
-  const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
-  const showReaderBadge = Number(readerNotificationCount || 0) > 0
+
 
   return (
     <div className="fixed inset-0 z-[235]">
@@ -1671,7 +1588,7 @@ function AuthorOwnerMenuSheet({
         <div className="bg-[var(--shadow-bg-surface)] px-0 py-3">
           <button
             type="button"
-            onClick={() => setProfileSwitcherOpen(true)}
+            onClick={onSwitchProfile}
             className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
           >
             <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
@@ -1728,72 +1645,7 @@ function AuthorOwnerMenuSheet({
         </div>
       </aside>
 
-      {profileSwitcherOpen ? (
-        <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/35 px-0 pb-0 md:items-center md:px-4 md:pb-0">
-          <button
-            type="button"
-            aria-label={t('authorPublicPage.closeProfileSwitcher')}
-            onClick={() => setProfileSwitcherOpen(false)}
-            className="absolute inset-0"
-          />
-
-          <div className="relative w-full overflow-hidden rounded-t-[26px] bg-[var(--shadow-bg-surface)] px-4 pb-6 pt-3 shadow-2xl md:max-w-[390px] md:rounded-[26px]">
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#d1d5db]" />
-
-            <div className="overflow-hidden rounded-[22px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileSwitcherOpen(false)
-                  onPage?.()
-                }}
-                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
-                    {pageLogo ? (
-                      <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-[18px] font-extrabold">{pageLetter}</span>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="line-clamp-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{pageName}</div>
-                    <div className="mt-0.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">{t('authorPublicPage.authorPageLabel')}</div>
-                  </div>
-                </div>
-
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-white">
-                  <i className="fa-solid fa-check text-[10px]" />
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileSwitcherOpen(false)
-                  onOwnAccount?.()
-                }}
-                className="flex w-full items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
-                    {readerAvatar ? (
-                      <img src={readerAvatar} alt={readerName} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-[18px] font-extrabold">{readerLetter}</span>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="line-clamp-1 text-[15px] font-black text-[var(--shadow-text-primary)]">{readerName}</div>
-                    {showReaderBadge ? (
-  <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
-    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-    <span>{t(Number(readerNotificationCount) === 1 ? 'authorPublicPage.notification' : 'authorPublicPage.notifications', { count: new Intl.NumberFormat(getDisplayLanguageId()).format(Number(readerNotificationCount)) })}</span>
-  </div>
-) : null}
+      
                   </div>
                 </div>
 
@@ -1974,8 +1826,28 @@ export default function AuthorPublicPage() {
   const [followLoading, setFollowLoading] = useState(false)
   const [followSettingsOpen, setFollowSettingsOpen] = useState(false)
   const [authorPostsCount, setAuthorPostsCount] = useState(0)
-  const [pageSwitcherOpen, setPageSwitcherOpen] = useState(false)
-  const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
+  const [pageSwitcherOpen, setPageSwitcherOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('switch-account') === 'header'
+)
+const [authorMenuOpen, setAuthorMenuOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('switch-account') === 'menu'
+)
+const [menuSwitcherOpen, setMenuSwitcherOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('switch-account') === 'menu'
+)
+      const handleCloseSharedSwitcher = () => {
+  setPageSwitcherOpen(false)
+  setMenuSwitcherOpen(false)
+
+  const query = new URLSearchParams(location.search)
+  if (!query.has('switch-account')) return
+
+  query.delete('switch-account')
+  navigate({
+    pathname: location.pathname,
+    search: query.toString() ? `?${query.toString()}` : '',
+  }, { replace: true, state: location.state })
+}
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [socialMediaOpen, setSocialMediaOpen] = useState(false)
   const [pageAboutOpen, setPageAboutOpen] = useState(false)
@@ -3131,20 +3003,54 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   onUnfollow={handleUnfollowFromSettings}
 />
 
-      <AuthorPageSwitcherSheet
-        readerNotificationCount={readerNotificationCount}
-  open={pageSwitcherOpen}
+      <div className="relative z-[260]">
+  <ProfileSwitcherSheet
+    open={Boolean(displayAuthor?.is_owner) && (pageSwitcherOpen || menuSwitcherOpen)}
+    activeProfile="author"
+    displayName={readerName}
+    avatarUrl={readerAvatar}
+    avatarLetter={readerLetter}
+    authorPage={displayAuthor}
+    authorNotificationCount={Number(displayAuthor?.notification_count || displayAuthor?.unread_count || 0)}
+    onClose={handleCloseSharedSwitcher}
+    onAuthorPage={() => {
+      handleCloseSharedSwitcher()
+      if (menuSwitcherOpen) setAuthorMenuOpen(false)
+    }}
+    onOwnAccount={() => {
+      handleCloseSharedSwitcher()
+      setAuthorMenuOpen(false)
+      handleSwitchToReaderAccount()
+    }}
+    onManageAccount={() => {
+      const query = new URLSearchParams(location.search)
+      query.delete('switch-account')
+      const returnTo = location.pathname + (query.toString() ? `?${query.toString()}` : '')
+      const source = menuSwitcherOpen ? 'author-page-menu' : 'author-page-header'
+
+      setPageSwitcherOpen(false)
+      setMenuSwitcherOpen(false)
+      setAuthorMenuOpen(false)
+
+      navigate(`/profile/settings?from=${source}&returnTo=${encodeURIComponent(returnTo)}`)
+    }}
+  />
+</div>
+
+<AuthorOwnerMenuSheet
+  open={Boolean(displayAuthor?.is_owner) && authorMenuOpen}
   author={displayAuthor}
-  readerUser={readerUser}
-  onClose={() => setPageSwitcherOpen(false)}
-  onPage={() => setPageSwitcherOpen(false)}
-  onOwnAccount={handleSwitchToReaderAccount}
-  onManageAccount={() => {
-    setPageSwitcherOpen(false)
-    navigate('/settings')
+  onClose={() => setAuthorMenuOpen(false)}
+  onSwitchProfile={() => setMenuSwitcherOpen(true)}
+  onOpenFinance={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page/finance')
+  }}
+  onOpenStoreSetting={() => {
+    setAuthorMenuOpen(false)
+    navigate('/author/page-settings')
   }}
 />
-
       <AuthorOwnerMenuSheet
         readerNotificationCount={readerNotificationCount}
   open={authorMenuOpen}
