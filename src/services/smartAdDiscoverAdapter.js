@@ -66,6 +66,7 @@ export async function requestDiscoverSmartAdBatch({
       ? cooldownStoryIds.slice(0, MAX_EXCLUSIONS) : [],
   })
   if (!validateDiscoverSmartAdVersion(result, { expectedSlot: slotKey, expectedVersion: catalogVersion })) {
+    await getSmartAdVersion({ force: true }).catch(() => null)
     throw staleVersionError()
   }
   const batch = filterDiscoverSmartAds(result.ads, { catalogVersion, excludeStoryIds: excluded })
