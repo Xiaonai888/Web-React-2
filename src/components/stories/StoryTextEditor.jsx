@@ -288,27 +288,34 @@ export default function StoryTextEditor({ value, imageUrl = '', onSave, onClose 
     return extractImageSuggestions(imageUrl, setImageSuggestions)
   }, [imageUrl])
 
-  useEffect(() => {
-    const node = textRef.current
-    if (!node) return
-    const typography = draft.text ? getStoryStickerTypography(draft.font) : { fontFamily: 'system-ui, sans-serif', fontStyle: 'normal', fontWeight: 700 }
-    const weight = ['outline', 'outlineInverse'].includes(draft.styleMode) ? Math.max(700, Number(typography.fontWeight) || 400) : typography.fontWeight
-    const canvas = document.createElement('canvas')
-    const context = canvas.getContext('2d')
-    let width = 174
-    if (context) {
-      context.font = `${typography.fontStyle} ${weight} 27px ${typography.fontFamily}`
-      const lines = (draft.text || 'Type or @Tag').split('\n')
-width = Math.max(
-  draft.text ? 42 : 180,
-  ...lines.map((line) => context.measureText(line || ' ').width + 8)
-)
-    }
-    const maxWidth = Math.max(120, Math.min(420, viewport.width * 0.8))
-‌    node.style.width = `${Math.min(maxWidth, Math.max(42, Math.ceil(width)))}px`
-    node.style.height = '36px'
-    node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(100, viewport.height * 0.27))))}px`
-  }, [draft.text, draft.font, draft.styleMode, viewport.width, viewport.height])
+  
+useEffect(() => {
+  const node = textRef.current
+  if (!node) return
+
+  const computed = window.getComputedStyle(node)
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return
+
+  context.font = `${computed.fontStyle} ${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`
+
+  const lines = (draft.text || 'Type or @Tag').split('\n')
+  const textWidth = Math.max(
+    ...lines.map((line) => context.measureText(line || ' ').width)
+  )
+
+  const maxWidth = Math.max(120, Math.min(420, viewport.width * 0.84 - 32))
+  const width = Math.min(
+    maxWidth,
+    Math.max(draft.text ? 72 : 220, Math.ceil(textWidth + 24))
+  )
+
+  node.style.width = `${width}px`
+  node.style.height = 'auto'
+  node.style.height = `${Math.max(36, Math.min(node.scrollHeight, Math.max(58, Math.min(140, viewport.height * 0.3))))}px`
+}, [draft.text, draft.font, draft.styleMode, viewport.width, viewport.height])
+
 
   useEffect(() => {
     if (mode !== 'color') return undefined
