@@ -9,9 +9,9 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const CACHE_TTL_MS = 20000
-const REFRESH_INTERVAL_MS = 30000
 const REQUEST_SPACING_MS = 2000
 const snapshots = new Map()
+const listeners = new Set()
 
 function getSnapshot(token) {
   if (!snapshots.has(token)) {
@@ -23,6 +23,10 @@ function getSnapshot(token) {
     })
   }
   return snapshots.get(token)
+}
+
+function notifyCachedCount() {
+  listeners.forEach((listener) => listener())
 }
 
 export function getCachedUnreadSenderCount() {
@@ -62,7 +66,10 @@ export async function getUnreadSenderCount({ force = false } = {}) {
   snapshot.requestedAt = now
   const request = fetch(
     `${API_BASE_URL}/api/chat/conversations/unread-sender-count?role=reader`,
-    { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    }
   )
     .then(async (response) => {
       const data = await response.json().catch(() => ({}))
@@ -75,6 +82,7 @@ export async function getUnreadSenderCount({ force = false } = {}) {
       }
       snapshot.count = count
       snapshot.updatedAt = Date.now()
+      if (getReaderToken() === token) notifyCachedCount()
       return count
     })
     .finally(() => {
@@ -85,15 +93,18 @@ export async function getUnreadSenderCount({ force = false } = {}) {
   return request
 }
 
-export function useUnreadSenderCount() {
+export function useUnreadSenderCount({ enabled = false } = {}) {
   const [count, setCount] = useState(getCachedUnreadSenderCount)
 
   const refresh = useCallback(async (force = false) => {
+    if (!enabled) return getCachedUnreadSenderCount()
+
     const token = getReaderToken()
     if (!token) {
       setCount(0)
       return 0
     }
+
     try {
       const nextCount = await getUnreadSenderCount({ force })
       if (getReaderToken() === token) setCount(nextCount)
@@ -101,36 +112,41 @@ export function useUnreadSenderCount() {
     } catch {
       return getCachedUnreadSenderCount()
     }
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
-    let active = true
-    const check = async (force = false) => {
-      const token = getReaderToken()
-      try {
-        const nextCount = await getUnreadSenderCount({ force })
-        if (active && token === getReaderToken()) setCount(nextCount)
-      } catch {
-        if (active && !getReaderToken()) setCount(0)
-      }
-    }
+    const syncCached = () => setCount(getCachedUnreadSenderCount())
     const onChatUpdate = () => {
       invalidateUnreadSenderCount()
-      void check(true)
+      if (enabled && document.visibilityState === 'visible') {
+        void refresh(true)
+      }
     }
-    const onFocus = () => void check()
+    const onFocus = () => {
+      if (enabled) void refresh()
+    }
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void check()
+      if (enabled && document.visibilityState === 'visible') {
+        void refresh()
+      }
     }
-    const onAuthChange = () => {
-      setCount(getCachedUnreadSenderCount())
-      void check(true)
+    const onAuthChange = (event) => {
+      if (
+        event?.type === 'storage' &&
+        event.key &&
+        event.key !== 'shadow_reader_token' &&
+        event.key !== 'shadow_reader_user'
+      ) {
+        return
+      }
+      syncCached()
+      if (enabled) void refresh(true)
     }
 
-    void check()
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') void check()
-    }, REFRESH_INTERVAL_MS)
+    listeners.add(syncCached)
+    syncCached()
+    if (enabled) void refresh(true)
+
     window.addEventListener('shadow-chat-updated', onChatUpdate)
     window.addEventListener('focus', onFocus)
     window.addEventListener('storage', onAuthChange)
@@ -138,15 +154,14 @@ export function useUnreadSenderCount() {
     document.addEventListener('visibilitychange', onVisible)
 
     return () => {
-      active = false
-      window.clearInterval(interval)
+      listeners.delete(syncCached)
       window.removeEventListener('shadow-chat-updated', onChatUpdate)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('storage', onAuthChange)
       window.removeEventListener('shadow:auth-changed', onAuthChange)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [])
+  }, [enabled, refresh])
 
   return { count, refresh }
 }
