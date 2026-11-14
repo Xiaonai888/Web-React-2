@@ -70,7 +70,7 @@ function AnimationSwitch({ checked, onChange, label }) {
 }
 
 export default function ReaderAccessibilityPage() {
-  coconst navigate = useNavigate()
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [skipAnimation, setSkipAnimation] = useState(getSavedPreference)
   const tr = (key) => t(`readerAccessibility.${key}`)
