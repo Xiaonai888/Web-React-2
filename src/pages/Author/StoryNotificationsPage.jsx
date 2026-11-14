@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav' { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
 import AuthorCommentThreadSheet from '../../components/AuthorCommentThreadSheet'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -1537,7 +1536,7 @@ export default function StoryNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
+    <div className="min-h-screen bg-[var(--shadow-bg-page)]">
       <div
         className={`sticky top-0 z-40 bg-[var(--shadow-bg-surface)] ${
           selectedNotification
@@ -1574,7 +1573,7 @@ export default function StoryNotificationsPage() {
         </div>
       </div>
 
-      <main className="mx-auto min-h-[calc(100vh-148px)] max-w-[980px] bg-[var(--shadow-bg-surface)]">
+      <main className="mx-auto min-h-[calc(100vh-56px)] max-w-[980px] bg-[var(--shadow-bg-surface)]">
         <section className="sticky top-14 z-30 bg-[var(--shadow-bg-surface)]">
           <div className="flex gap-2 overflow-x-auto px-4 py-2">
             {filters.map((filter) => {
@@ -1652,16 +1651,6 @@ export default function StoryNotificationsPage() {
           />
         )}
       </main>
-
-      <div
-        className={
-          selectedNotification
-            ? 'invisible'
-            : ''
-        }
-      >
-        <AuthorStudioBottomNav />
-      </div>
 
       <AuthorCommentThreadSheet
         item={selectedStoryComment}
