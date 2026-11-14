@@ -988,13 +988,26 @@ export default function ReaderSettingsPage() {
   const fromMeSettings = query.get('from') === 'me-settings'
   const fromMeSwitcher = query.get('from') === 'me-switcher'
   const fromAuthorSwitcher = query.get('from') === 'author-switcher'
+  const fromAuthorPageHeader = query.get('from') === 'author-page-header'
+  const fromAuthorPageMenu = query.get('from') === 'author-page-menu'
+  const requestedReturnTo = query.get('returnTo') || '/author/page'
+  const authorPageReturnTo = /^\/author\/page(?:\/[^/?#]+)?(?:\?[^#]*)?$/.test(requestedReturnTo)
+    ? requestedReturnTo
+    : '/author/page'
+  const authorPageBackPath = `${authorPageReturnTo}${authorPageReturnTo.includes('?') ? '&' : '?'}switch-account=${fromAuthorPageMenu ? 'menu' : 'header'}`
+  const authorPageSettingsPath = `/profile/settings?${new URLSearchParams({
+    from: fromAuthorPageMenu ? 'author-page-menu' : 'author-page-header',
+    returnTo: authorPageReturnTo,
+  })}`
   const settingsPath = fromMeSettings
   ? '/profile/settings?from=me-settings'
   : fromMeSwitcher
     ? '/profile/settings?from=me-switcher'
     : fromAuthorSwitcher
       ? '/profile/settings?from=author-switcher'
-      : '/profile/settings'
+      : fromAuthorPageHeader || fromAuthorPageMenu
+        ? authorPageSettingsPath
+        : '/profile/settings'
       useLayoutEffect(() => {
     if (shadowAccountOpen) return
     const saved = sessionStorage.getItem('readerSettingsScroll')
@@ -1172,13 +1185,15 @@ async function confirmResetFast() {
             onClick={() => navigate(
   shadowAccountOpen
     ? settingsPath
-    : fromAuthorSwitcher
-      ? '/author/profile?switch-account=1'
-      : fromMeSwitcher
-        ? '/me?switch-account=1'
-        : fromMeSettings
-          ? '/me?settings=1'
-          : '/profile',
+    : fromAuthorPageHeader || fromAuthorPageMenu
+      ? authorPageBackPath
+      : fromAuthorSwitcher
+        ? '/author/profile?switch-account=1'
+        : fromMeSwitcher
+          ? '/me?switch-account=1'
+          : fromMeSettings
+            ? '/me?settings=1'
+            : '/profile',
   { replace: true }
 )}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
