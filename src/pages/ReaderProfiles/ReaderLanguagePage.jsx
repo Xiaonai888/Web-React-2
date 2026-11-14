@@ -118,13 +118,21 @@ export default function ReaderLanguagePage() {
   }, [])
 
   const handleBack = () => {
-    if (selectedSection) {
-      setSearchParams({}, { replace: true })
-      return
-    }
-    navigate('/profile/settings')
+  const params = new URLSearchParams(searchParams)
+  params.delete('view')
+  if (selectedSection) {
+    setSearchParams(params, { replace: true })
+    return
   }
+  navigate(`/profile/settings${params.toString() ? `?${params.toString()}` : ''}`)
+}
 
+  const openSection = (view) => {
+  const params = new URLSearchParams(searchParams)
+  params.set('view', view)
+  setSearchParams(params)
+}
+  
   const handleSelect = (id) => {
     if (selectedSection === 'app') {
       changeLanguage(id)
@@ -166,7 +174,7 @@ export default function ReaderLanguagePage() {
               title={tr('app')}
               value={languageName(displayLanguage)}
               description={tr('appDescription')}
-              onClick={() => setSearchParams({ view: 'app' })}
+              onClick={() => openSection('app')}
             />
             <div className="mx-4 border-t border-[var(--shadow-border)]" />
             <LanguageRow
@@ -174,7 +182,7 @@ export default function ReaderLanguagePage() {
               title={tr('story')}
               value={languageName(storyLanguage)}
               description={tr('storyDescription')}
-              onClick={() => setSearchParams({ view: 'story' })}
+              onClick={() => openSection('story')}
             />
           </div>
         ) : (
