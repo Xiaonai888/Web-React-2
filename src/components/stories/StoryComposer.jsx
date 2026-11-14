@@ -485,15 +485,60 @@ async function deleteCreatedStory({ apiPath, storyId, token }) {
   }).catch(() => null)
 }
 
-function BottomSheet({ children, onClose }) {
+function BottomSheet({ children, onClose, swipeToClose = false }) {
+  const sheetRef = useRef(null)
+  const startYRef = useRef(null)
+  const distanceRef = useRef(0)
+
+  const resetSwipe = () => {
+    startYRef.current = null
+    distanceRef.current = 0
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'transform 180ms ease-out'
+      sheetRef.current.style.transform = 'translateY(0px)'
+    }
+  }
+
+  const startSwipe = (event) => {
+    if (!swipeToClose) return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    startYRef.current = event.clientY
+    distanceRef.current = 0
+    event.currentTarget.setPointerCapture(event.pointerId)
+    if (sheetRef.current) sheetRef.current.style.transition = 'none'
+  }
+
+  const moveSwipe = (event) => {
+    if (startYRef.current === null) return
+    distanceRef.current = Math.max(0, event.clientY - startYRef.current)
+    if (sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${distanceRef.current}px)`
+    }
+  }
+
+  const endSwipe = () => {
+    const shouldClose = startYRef.current !== null && distanceRef.current >= 80
+    resetSwipe()
+    if (shouldClose) onClose?.()
+  }
+
   return (
     <div className="fixed inset-0 z-[140] flex items-end justify-center bg-black/45">
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label={getDisplayText('storyComposer.close')} />
       <section
+        ref={sheetRef}
         className="relative z-10 w-full max-w-[680px] rounded-t-[24px] bg-[var(--shadow-bg-elevated)] px-4 pb-[max(22px,env(safe-area-inset-bottom))] pt-3 text-[var(--shadow-text-primary)] shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
+        <div
+          className={`flex h-5 w-full items-center justify-center ${swipeToClose ? 'cursor-grab touch-none active:cursor-grabbing' : ''}`}
+          onPointerDown={startSwipe}
+          onPointerMove={moveSwipe}
+          onPointerUp={endSwipe}
+          onPointerCancel={resetSwipe}
+        >
+          <span className="h-1 w-10 rounded-full bg-[var(--shadow-border-strong)]" />
+        </div>
         {children}
       </section>
     </div>
