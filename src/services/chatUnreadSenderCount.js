@@ -10,6 +10,7 @@ const API_BASE_URL =
 
 const CACHE_TTL_MS = 20000
 const REQUEST_SPACING_MS = 2000
+const FAILURE_RETRY_MS = 30000
 const snapshots = new Map()
 const listeners = new Set()
 
@@ -20,6 +21,7 @@ function getSnapshot(token) {
       updatedAt: 0,
       requestedAt: 0,
       pending: null,
+      retryAfter: 0,
     })
   }
   return snapshots.get(token)
@@ -49,6 +51,7 @@ export async function getUnreadSenderCount({ force = false } = {}) {
   const now = Date.now()
 
   if (snapshot.pending) return snapshot.pending
+  if (now < snapshot.retryAfter) return snapshot.count ?? 0
   if (
     snapshot.count !== null &&
     now - snapshot.updatedAt < CACHE_TTL_MS &&
@@ -80,10 +83,15 @@ export async function getUnreadSenderCount({ force = false } = {}) {
       if (!Number.isSafeInteger(count) || count < 0) {
         throw new Error('Invalid unread sender count')
       }
+      snapshot.retryAfter = 0
       snapshot.count = count
       snapshot.updatedAt = Date.now()
       if (getReaderToken() === token) notifyCachedCount()
       return count
+    })
+    .catch((error) => {
+      snapshot.retryAfter = Date.now() + FAILURE_RETRY_MS
+      throw error
     })
     .finally(() => {
       if (snapshot.pending === request) snapshot.pending = null
@@ -145,7 +153,7 @@ export function useUnreadSenderCount({ enabled = false } = {}) {
 
     listeners.add(syncCached)
     syncCached()
-    if (enabled) void refresh(true)
+    if (enabled) void refresh()
 
     window.addEventListener('shadow-chat-updated', onChatUpdate)
     window.addEventListener('focus', onFocus)
