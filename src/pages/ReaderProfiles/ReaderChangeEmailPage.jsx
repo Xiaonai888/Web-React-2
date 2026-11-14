@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -205,6 +205,7 @@ function getCooldownInfo(updatedAt) {
 
 export default function ReaderChangeEmailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [user, setUser] = useState(null)
   const [newEmail, setNewEmail] = useState('')
@@ -415,7 +416,7 @@ export default function ReaderChangeEmailPage() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate('/profile/settings/account-security')}
+            onClick={() => navigate(`/profile/settings/account-security${location.search}`)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerChangeEmailPage.backToSecurity')}
           >
@@ -581,7 +582,7 @@ export default function ReaderChangeEmailPage() {
           <button
             type="button"
             onClick={() =>
-              navigate('/profile/settings/account-security')
+              navigate(`/profile/settings/account-security${location.search}`)
             }
             className="mt-4 h-12 w-full rounded-[12px] bg-[#111827] text-[13px] font-bold text-white dark:bg-white dark:text-[#111827]"
           >
