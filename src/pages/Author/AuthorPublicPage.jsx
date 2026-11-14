@@ -19,6 +19,7 @@ import { requestUploadStoragePersistence } from '../../utils/uploadQueueDB'
 import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparencyPopup'
 import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
 import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
+import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
@@ -1722,6 +1723,7 @@ export default function AuthorPublicPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
+  const { authorUnreadCount } = useAuthorPageNotifications()
   const { pageUsername } = useParams()
   const studioReturnTo = location.state?.studioCreatePost === true &&
   /^\/author\/reel\/studio(?:\/|$|[?#])/.test(String(location.state?.studioReturnTo || ''))
@@ -2985,7 +2987,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
     avatarUrl={readerAvatar}
     avatarLetter={readerLetter}
     authorPage={displayAuthor}
-    authorNotificationCount={Number(displayAuthor?.notification_count || displayAuthor?.unread_count || 0)}
+    authorNotificationCount={authorUnreadCount}
     onClose={handleCloseSharedSwitcher}
     onAuthorPage={() => {
       handleCloseSharedSwitcher()
