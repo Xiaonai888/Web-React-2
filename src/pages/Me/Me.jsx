@@ -11,6 +11,11 @@ import { getCountryFeature, loadCountrySettings } from '../../utils/countrySetti
 import MenuRow from '../../components/Me/MeMenuRow'
 import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
 import { applyTheme, getStoredTheme } from '../../utils/meTheme'
+import { getActiveReaderToken, getActiveReaderUser, getReaderSessionIdentity, saveActiveReaderUser } from '../../utils/readerActiveAccount'
+import { isReaderAccountResponseCurrent, subscribeReaderAccountChanges } from '../../utils/readerAccountSessionManager'
+import { listRememberedReaderAccounts, forgetRememberedReaderAccount, rememberReaderAccount } from '../../utils/readerRememberedAccounts'
+import { beginReaderAccountSwitch, clearReaderAccountSwitchIntent } from '../../utils/readerAccountSwitchIntent'
+import ReaderAccountChooser from '../../components/reader-account/ReaderAccountChooser'
 
 const SettingsSheet = lazy(() => import('../../components/Me/MeSettingsSheet'))
 
@@ -29,6 +34,9 @@ registerTranslationNamespace('mePage', {
     notification: '{{count}} notification',
     notifications: '{{count}} notifications',
     manageAccount: 'Manage Account',
+    chooseReaderAccount: 'Change reader account',
+    closeAccountChooser: 'Close account chooser',
+    accountLoginNote: 'Switching reader accounts requires signing in to the selected account.',
     reader: 'Reader',
     switchingTo: 'Switching to',
     inbox: 'Inbox',
@@ -58,6 +66,9 @@ registerTranslationNamespace('mePage', {
     notification: '{{count}} ការជូនដំណឹង',
     notifications: '{{count}} ការជូនដំណឹង',
     manageAccount: 'គ្រប់គ្រងគណនី',
+    chooseReaderAccount: 'ប្ដូរគណនីអ្នកអាន',
+    closeAccountChooser: 'បិទបញ្ជីគណនី',
+    accountLoginNote: 'ដើម្បីប្ដូរគណនីអ្នកអាន សូមចូលគណនីដែលបានជ្រើសម្ដងទៀត។',
     reader: 'អ្នកអាន',
     switchingTo: 'កំពុងប្តូរទៅ',
     inbox: 'ប្រអប់សារ',
@@ -87,6 +98,9 @@ registerTranslationNamespace('mePage', {
     notification: '{{count}} 条通知',
     notifications: '{{count}} 条通知',
     manageAccount: '管理账号',
+    chooseReaderAccount: '切换读者账号',
+    closeAccountChooser: '关闭账号列表',
+    accountLoginNote: '切换读者账号需要重新登录所选账号。',
     reader: '读者',
     switchingTo: '正在切换到',
     inbox: '收件箱',
@@ -116,6 +130,9 @@ registerTranslationNamespace('mePage', {
     notification: '{{count}} 件の通知',
     notifications: '{{count}} 件の通知',
     manageAccount: 'アカウント管理',
+    chooseReaderAccount: '読者アカウントを切り替え',
+    closeAccountChooser: 'アカウント一覧を閉じる',
+    accountLoginNote: 'アカウントの切り替えには、選択したアカウントで再ログインしてください。',
     reader: '読者',
     switchingTo: '切り替え先',
     inbox: '受信箱',
@@ -145,6 +162,9 @@ registerTranslationNamespace('mePage', {
     notification: '알림 {{count}}개',
     notifications: '알림 {{count}}개',
     manageAccount: '계정 관리',
+    chooseReaderAccount: '독자 계정 전환',
+    closeAccountChooser: '계정 목록 닫기',
+    accountLoginNote: '독자 계정을 바꾸려면 선택한 계정으로 다시 로그인하세요.',
     reader: '독자',
     switchingTo: '전환 중',
     inbox: '받은편지함',
@@ -180,19 +200,11 @@ function formatDisplayNumber(value) {
 }
 
 function getReaderToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function getStoredReaderUser() {
-  try {
-    return JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-        sessionStorage.getItem('shadow_reader_user') ||
-        'null'
-    )
-  } catch {
-    return null
-  }
+  return getActiveReaderUser()
 }
 
 function getPendingStoryOnboardingId() {
@@ -212,19 +224,8 @@ function getPendingStoryOnboardingId() {
   }
 }
 
-function saveReaderUser(user) {
-  if (!user) return
-
-  const userText = JSON.stringify(user)
-  sessionStorage.setItem('shadow_reader_user', userText)
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_user', userText)
-  }
-}
-
-function syncReaderToken() {
-  return getReaderToken()
+function saveReaderUser(user, requestToken) {
+  return saveActiveReaderUser(user, requestToken)
 }
 
 function clearReaderSession() {
@@ -375,11 +376,50 @@ const finishStoryOnboarding = () => {
     vouchers: 0,
   })
 
+  const [, setAccountVersion] = useState(0)
   const token = getReaderToken()
+  const activeTokenRef = useRef(token)
+  const [accountChooserOpen, setAccountChooserOpen] = useState(false)
+  const [rememberedAccounts, setRememberedAccounts] = useState(listRememberedReaderAccounts)
   const [libraryUnreadCount, setLibraryUnreadCount] = useState(0)
   const [diamondCreditNotice, setDiamondCreditNotice] = useState(null)
   const diamondCreditNoticeAckRef = useRef(null)
   const [activeProfileFrame, setActiveProfileFrame] = useState(null)
+
+  useEffect(() => {
+    const currentUser = getStoredReaderUser()
+    if (currentUser && localStorage.getItem('shadow_reader_token') === token &&
+        isReaderAccountResponseCurrent(token, currentUser.id)) {
+      rememberReaderAccount(currentUser)
+      setRememberedAccounts(listRememberedReaderAccounts())
+    }
+  }, [token])
+
+  useEffect(() => subscribeReaderAccountChanges(() => {
+    const nextToken = getReaderToken()
+    const nextUser = getStoredReaderUser()
+    const isChanged = activeTokenRef.current !== nextToken
+    activeTokenRef.current = nextToken
+    setStoredUser(nextUser)
+    setRememberedAccounts(listRememberedReaderAccounts())
+    if (!isChanged) return
+    setAccountVersion((version) => version + 1)
+    setAuthorPage(null)
+    setInboxUnreadCount(0)
+    setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
+    setCheckingUser(Boolean(nextToken && !nextUser))
+    setCheckingAuthorPage(Boolean(nextToken))
+    setMeSummaryLoaded(!nextToken)
+    setLibraryUnreadCount(0)
+    setAuthorCommentUnreadCount(0)
+    setDiamondCreditNotice(null)
+    setActiveProfileFrame(null)
+    setStoryOnboardingId(getPendingStoryOnboardingId())
+    setAccountChooserOpen(false)
+    setProfileSwitcherOpen(false)
+    setSwitchingProfile(false)
+    setSettingsOpen(false)
+  }), [])
 const [appAllowed, setAppAllowed] = useState(true)
 const [gameAllowed, setGameAllowed] = useState(true)
 useEffect(() => {
@@ -400,9 +440,9 @@ useEffect(() => {
       cache: 'no-store',
       signal: controller.signal,
     }).then(response => response.ok ? response.json() : null).then(data => {
-      if (!controller.signal.aborted) setActiveProfileFrame(data?.ok === true ? data.frame || null : null)
+      if (!controller.signal.aborted && isReaderAccountResponseCurrent(token)) setActiveProfileFrame(data?.ok === true ? data.frame || null : null)
     }).catch(() => {
-      if (!controller.signal.aborted) setActiveProfileFrame(null)
+      if (!controller.signal.aborted && isReaderAccountResponseCurrent(token)) setActiveProfileFrame(null)
     })
     return () => controller.abort()
   }, [token])
@@ -430,7 +470,7 @@ useEffect(() => {
         if (!response.ok) return
         const data = await response.json()
 
-        if (active && data.ok !== false) {
+        if (active && isReaderAccountResponseCurrent(token) && data.ok !== false) {
           setLibraryUnreadCount(
             Math.max(0, Math.floor(Number(data.unread_count) || 0))
           )
@@ -470,6 +510,7 @@ useEffect(() => {
         const data = await response.json().catch(() => ({}))
         if (
           active &&
+          isReaderAccountResponseCurrent(token) &&
           data.ok === true &&
           data.notice?.id &&
           Number(data.notice.diamonds) > 0
@@ -507,13 +548,13 @@ useEffect(() => {
   useEffect(() => {
     document.body.classList.toggle(
       'settings-popup-open',
-      settingsOpen || profileSwitcherOpen || switchingProfile
+      settingsOpen || profileSwitcherOpen || switchingProfile || accountChooserOpen
     )
 
     return () => {
       document.body.classList.remove('settings-popup-open')
     }
-  }, [settingsOpen, profileSwitcherOpen, switchingProfile])
+  }, [settingsOpen, profileSwitcherOpen, switchingProfile, accountChooserOpen])
 
   useEffect(() => {
     applyTheme(getStoredTheme())
@@ -521,9 +562,10 @@ useEffect(() => {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadMeSummary() {
-      const currentToken = syncReaderToken()
+      const currentToken = token
       const currentUser = getStoredReaderUser()
 
       if (!currentToken) {
@@ -531,11 +573,7 @@ useEffect(() => {
           setStoredUser(null)
           setAuthorPage(null)
           setInboxUnreadCount(0)
-          setWalletBalance({
-            diamonds: 0,
-            gems: 0,
-            vouchers: 0,
-          })
+          setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
           setCheckingUser(false)
           setCheckingAuthorPage(false)
           setMeSummaryLoaded(true)
@@ -543,96 +581,57 @@ useEffect(() => {
         return
       }
 
-      if (!currentUser) {
-        setCheckingUser(true)
-      }
-
+      if (!currentUser) setCheckingUser(true)
       setCheckingAuthorPage(true)
       setMeSummaryLoaded(false)
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/users/me/summary`,
-          {
-            headers: {
-              Authorization: `Bearer ${currentToken}`,
-            },
-            cache: 'no-store',
-          }
-        )
+        const response = await fetch(`${API_BASE_URL}/api/users/me/summary`, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        const data = await response.json().catch(() => ({}))
 
-        const data = await response
-          .json()
-          .catch(() => ({}))
+        if (ignore || !isReaderAccountResponseCurrent(currentToken)) return
 
         if (isReaderAuthFailure(response, data)) {
-          const localToken = localStorage.getItem('shadow_reader_token')
-          const sessionToken = sessionStorage.getItem('shadow_reader_token')
-          if ((localToken && localToken !== currentToken) ||
-              (sessionToken && sessionToken !== currentToken)) return
+          if (getReaderToken() !== currentToken) return
           clearReaderSession()
-
-          if (!ignore) {
-            setStoredUser(null)
-            setAuthorPage(null)
-            setInboxUnreadCount(0)
-            setWalletBalance({
-              diamonds: 0,
-              gems: 0,
-              vouchers: 0,
-            })
-            setMeSummaryLoaded(true)
-          }
-          return
-        }
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          return
-        }
-
-        if (data.user) {
-          saveReaderUser(data.user)
-        }
-
-        if (!ignore) {
-          setStoredUser(
-            data.user || currentUser || null
-          )
-          setAuthorPage(
-            data.has_author_page &&
-              data.author_page
-              ? data.author_page
-              : null
-          )
-          setInboxUnreadCount(
-            Number(
-              data.inbox_unread_count || 0
-            )
-          )
-          setWalletBalance({
-            diamonds: Number(
-              data.wallet?.diamond_balance || 0
-            ),
-            gems: Number(
-              data.wallet?.gem_balance ||
-                data.wallet?.coin_balance ||
-                0
-            ),
-            vouchers: Number(
-              data.wallet?.voucher_balance || 0
-            ),
-          })
+          activeTokenRef.current = ''
+          setAccountVersion((version) => version + 1)
+          setStoredUser(null)
+          setAuthorPage(null)
+          setInboxUnreadCount(0)
+          setWalletBalance({ diamonds: 0, gems: 0, vouchers: 0 })
           setMeSummaryLoaded(true)
+          return
         }
+
+        if (!response.ok || data.ok === false || !data.user ||
+            !isReaderAccountResponseCurrent(currentToken, data.user.id)) return
+
+        saveReaderUser(data.user, currentToken)
+        if (localStorage.getItem('shadow_reader_token') === getReaderToken()) {
+          rememberReaderAccount(data.user)
+          setRememberedAccounts(listRememberedReaderAccounts())
+        }
+        setStoredUser(data.user)
+        setStoryOnboardingId(getPendingStoryOnboardingId())
+        setAuthorPage(data.has_author_page && data.author_page ? data.author_page : null)
+        setInboxUnreadCount(Number(data.inbox_unread_count || 0))
+        setWalletBalance({
+          diamonds: Number(data.wallet?.diamond_balance || 0),
+          gems: Number(data.wallet?.gem_balance || data.wallet?.coin_balance || 0),
+          vouchers: Number(data.wallet?.voucher_balance || 0),
+        })
+        setMeSummaryLoaded(true)
       } catch {
-        if (!ignore && !currentUser) {
+        if (!ignore && isReaderAccountResponseCurrent(currentToken) && !currentUser) {
           setStoredUser(null)
         }
       } finally {
-        if (!ignore) {
+        if (!ignore && (!currentToken || isReaderAccountResponseCurrent(currentToken))) {
           setCheckingUser(false)
           setCheckingAuthorPage(false)
         }
@@ -640,11 +639,11 @@ useEffect(() => {
     }
 
     loadMeSummary()
-
     return () => {
       ignore = true
+      controller.abort()
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
   if (!token || !hasAuthorPage) {
@@ -668,7 +667,7 @@ useEffect(() => {
 
       const data = await response.json().catch(() => ({}))
 
-      if (!ignore && response.ok && data.ok !== false) {
+      if (!ignore && isReaderAccountResponseCurrent(token) && response.ok && data.ok !== false) {
         setAuthorCommentUnreadCount(
           Math.max(0, Number(data.unread_count || 0))
         )
@@ -755,6 +754,8 @@ useEffect(() => {
         .json()
         .catch(() => ({}))
 
+      if (!isReaderAccountResponseCurrent(currentToken)) return
+
       if (isReaderAuthFailure(response, data)) {
         const localToken = localStorage.getItem('shadow_reader_token')
         const sessionToken = sessionStorage.getItem('shadow_reader_token')
@@ -778,7 +779,7 @@ useEffect(() => {
 
       navigate('/event')
     } catch {
-      navigate('/event')
+      if (isReaderAccountResponseCurrent(currentToken)) navigate('/event')
     } finally {
       setAuthorLoading(false)
     }
@@ -825,6 +826,28 @@ const handleOpenProfileSwitcher = (event) => {
   const handleManageAccount = () => {
     setProfileSwitcherOpen(false)
     navigate('/profile/settings?from=me-switcher')
+  }
+
+  const openReaderAccountChooser = () => {
+    setRememberedAccounts(listRememberedReaderAccounts())
+    setAccountChooserOpen(true)
+  }
+
+  const chooseReaderAccount = (account) => {
+    if (!beginReaderAccountSwitch(account, '/me')) return
+    setAccountChooserOpen(false)
+    navigate('/login', { state: { returnTo: '/me' } })
+  }
+
+  const addReaderAccount = () => {
+    clearReaderAccountSwitchIntent()
+    setAccountChooserOpen(false)
+    navigate('/login', { state: { returnTo: '/me' } })
+  }
+
+  const removeRememberedAccount = (account) => {
+    forgetRememberedReaderAccount(account.id)
+    setRememberedAccounts(listRememberedReaderAccounts())
   }
 
   return (
@@ -878,6 +901,26 @@ const handleOpenProfileSwitcher = (event) => {
 />
   </div>
 ) : null}
+      {accountChooserOpen ? (
+        <div className="fixed inset-0 z-[150] flex items-end justify-center sm:items-center">
+          <button type="button" className="absolute inset-0 bg-black/40" aria-label={tx('mePage.closeAccountChooser')} onClick={() => setAccountChooserOpen(false)} />
+          <div className="relative max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-[24px] bg-white p-4 pb-8 shadow-2xl sm:rounded-[24px] dark:bg-[#12141d]">
+            <div className="mb-3 flex items-center justify-end">
+              <button type="button" onClick={() => setAccountChooserOpen(false)} aria-label={tx('mePage.closeAccountChooser')} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f1f2f5] text-[#111827] dark:bg-white/10 dark:text-white">
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+            <ReaderAccountChooser
+              accounts={rememberedAccounts}
+              activeUserId={getReaderSessionIdentity(token)?.userId || ''}
+              onChoose={chooseReaderAccount}
+              onRemove={removeRememberedAccount}
+              onAdd={addReaderAccount}
+            />
+            <p className="px-2 pt-3 text-[12px] text-[#7b8190] dark:text-white/60">{tx('mePage.accountLoginNote')}</p>
+          </div>
+        </div>
+      ) : null}
       <ProfileSwitcherSheet
         open={profileSwitcherOpen}
         activeProfile="reader"
@@ -1139,6 +1182,12 @@ const handleOpenProfileSwitcher = (event) => {
 
         {isLoggedIn ? (
           <section className="mt-3 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
+            <MenuRow
+              onClick={openReaderAccountChooser}
+              icon="fa-solid fa-users"
+              title={tx('mePage.chooseReaderAccount')}
+              divider
+            />
             <MenuRow
               onClick={handleLogout}
               icon="fa-solid fa-right-from-bracket"
