@@ -5,7 +5,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import {
-  StudioBackHeader, StudioCard, StudioFrame, StudioMetric, StudioMissing,
+  StudioCard, StudioFrame, StudioMetric, StudioMissing,
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
 } from '../../components/author/studio/ShadowStudioAnalyticsShared'
 
@@ -49,7 +49,7 @@ export default function AuthorStudioDashboardPage() {
   }
 
   return <StudioFrame>
-    <StudioBackHeader title={t('shadowStudioStats.dashboard')} onBack={() => navigate('/author/reel/studio')} />
+    
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <h2 className="text-lg font-bold">{t('shadowStudioStats.channel')}</h2>
