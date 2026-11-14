@@ -50,6 +50,10 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
     <ShadowStudioContentHeader
       onExitStudio={onExitStudio}
       onAddVideo={onAddVideo}
+      onRefresh={() => {
+  if (!Object.values(collections.loading).some(Boolean) && !actions.busyId) void refresh()
+}}
+refreshing={Object.values(collections.loading).some(Boolean)}
       busy={Boolean(actions.busyId)}
     />
     <ShadowStudioContentFeedback
