@@ -987,7 +987,14 @@ export default function ReaderSettingsPage() {
   const shadowAccountOpen = query.get('account') === 'shadow'
   const fromMeSettings = query.get('from') === 'me-settings'
   const fromMeSwitcher = query.get('from') === 'me-switcher'
-const settingsPath = fromMeSettings ? '/profile/settings?from=me-settings' : fromMeSwitcher ? '/profile/settings?from=me-switcher' : '/profile/settings'
+  const fromAuthorSwitcher = query.get('from') === 'author-switcher'
+  const settingsPath = fromMeSettings
+  ? '/profile/settings?from=me-settings'
+  : fromMeSwitcher
+    ? '/profile/settings?from=me-switcher'
+    : fromAuthorSwitcher
+      ? '/profile/settings?from=author-switcher'
+      : '/profile/settings'
       useLayoutEffect(() => {
     if (shadowAccountOpen) return
     const saved = sessionStorage.getItem('readerSettingsScroll')
@@ -1162,7 +1169,18 @@ async function confirmResetFast() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate(shadowAccountOpen ? settingsPath : fromMeSwitcher ? '/me?switch-account=1' : fromMeSettings ? '/me?settings=1' : '/profile', { replace: true })}
+            onClick={() => navigate(
+  shadowAccountOpen
+    ? settingsPath
+    : fromAuthorSwitcher
+      ? '/author/profile?switch-account=1'
+      : fromMeSwitcher
+        ? '/me?switch-account=1'
+        : fromMeSettings
+          ? '/me?settings=1'
+          : '/profile',
+  { replace: true }
+)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerSettings.backToProfile')}
           >
