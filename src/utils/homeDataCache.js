@@ -2,7 +2,8 @@ const DB_NAME = 'shadow_home_cache'
 const DB_VERSION = 1
 const STORE_NAME = 'home_data'
 const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1000
-const CONTENT_VERSION_TTL_MS = 60 * 1000
+const CONTENT_VERSION_TTL_MS = 5 * 60 * 1000
+const CONTENT_VERSION_RETRY_DELAY_MS = 2 * 60 * 1000
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -30,6 +31,7 @@ const memoryFallback = new Map()
 let contentVersions = null
 let contentVersionsCheckedAt = 0
 let contentVersionsRequest = null
+let contentVersionsRetryAt = 0
 
 function openHomeCacheDatabase() {
   return new Promise((resolve, reject) => {
@@ -172,6 +174,10 @@ async function fetchContentVersions() {
     return contentVersionsRequest
   }
 
+  if (now < contentVersionsRetryAt) {
+    return contentVersions
+  }
+
   contentVersionsRequest = (async () => {
     try {
       const response = await fetch(
@@ -201,9 +207,11 @@ async function fetchContentVersions() {
 
       contentVersions = nextVersions
       contentVersionsCheckedAt = Date.now()
+      contentVersionsRetryAt = 0
 
       return nextVersions
     } catch {
+      contentVersionsRetryAt = Date.now() + CONTENT_VERSION_RETRY_DELAY_MS
       return contentVersions
     } finally {
       contentVersionsRequest = null
