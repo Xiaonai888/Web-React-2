@@ -1644,32 +1644,6 @@ function AuthorOwnerMenuSheet({
           <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
         </div>
       </aside>
-
-      
-                  </div>
-                </div>
-
-                <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-disabled)]" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setProfileSwitcherOpen(false)
-                onManageAccount?.()
-              }}
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99]"
-            >
-              {t('authorPublicPage.manageAccount')}
-            </button>
-
-            <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
-              <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -3051,31 +3025,6 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
     navigate('/author/page-settings')
   }}
 />
-      <AuthorOwnerMenuSheet
-        readerNotificationCount={readerNotificationCount}
-  open={authorMenuOpen}
-  author={displayAuthor}
-  readerUser={readerUser}
-  onClose={() => setAuthorMenuOpen(false)}
-  onPage={() => setAuthorMenuOpen(false)}
-  onOwnAccount={() => {
-    setAuthorMenuOpen(false)
-    handleSwitchToReaderAccount()
-  }}
-  onManageAccount={() => {
-    setAuthorMenuOpen(false)
-    navigate('/settings')
-  }}
- onOpenFinance={() => {
-  setAuthorMenuOpen(false)
-  navigate('/author/page/finance')
-}}
-onOpenStoreSetting={() => {
-  setAuthorMenuOpen(false)
-  navigate('/author/page-settings')
-}}
-/>
-
       <SwitchingAccountScreen
   open={switchingToReader}
   name={readerName}
