@@ -147,6 +147,7 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
       title: String(offer.story_title || offer.title || ''),
       count: Number(offer.locked_episode_count || 0),
       originalPrice: Number(offer.original_price_diamonds || 0),
+      storyLanguage: String(offer.story_language || '').trim(),
       price,
     })
   }
@@ -176,7 +177,11 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ expected_price_diamonds: quote.price, purchase_source: window.location.pathname === '/manga' ? 'manga' : 'stories' }),
+          body: JSON.stringify({
+  expected_price_diamonds: quote.price,
+  purchase_source: window.location.pathname === '/manga' ? 'manga' : 'stories',
+  ...(quote.storyLanguage ? { story_language: quote.storyLanguage } : {}),
+}),
         }
       )
       const result = await response.json().catch(() => ({}))
