@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Bookmark,
@@ -272,7 +272,6 @@ function groupItems(items, t, language) {
 
 export default function ReaderActivityHistoryPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { t } = useDisplayTranslation()
   const language = getDisplayLanguageId()
   const [category, setCategory] = useState('all')
@@ -363,7 +362,7 @@ export default function ReaderActivityHistoryPage() {
     <main className="app-page min-h-screen pb-[100px] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate(`/profile/settings${location.search}`)}
+          <button type="button" onClick={() => navigate('/profile/settings')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerActivityHistory.back')}>
             <ArrowLeft className="h-5 w-5" strokeWidth={1.8} />
