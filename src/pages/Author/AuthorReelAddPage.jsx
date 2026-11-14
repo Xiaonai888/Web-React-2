@@ -205,7 +205,6 @@ export default function AuthorReelAddPage() {
     setSelectedIds(previous => previous.includes(playlist.id) ? previous : [...previous, playlist.id])
     invalidateStudioContentCache(['playlists'])
     return playlist
-    return playlist
   }
 
   const save = async status => {
@@ -272,6 +271,7 @@ export default function AuthorReelAddPage() {
       }
       setError(cause.message || t('authorReelAdd.saveFailed'))
     } finally { setBusy(false) }
+      }
   const fieldClass = 'app-input mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-[13px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]'
 
   return <PageShell className="pb-24 text-[var(--shadow-text-primary)]">
