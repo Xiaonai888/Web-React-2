@@ -1480,7 +1480,7 @@ const [soundSettings, setSoundSettings] =
   }, [navigate, normalizedQuery, t])
 
   const { count: unreadTotal, refresh: refreshUnreadSenderCount } =
-    useUnreadSenderCount()
+    useUnreadSenderCount({ enabled: true })
 
   const pendingConversations = useMemo(
     () =>
