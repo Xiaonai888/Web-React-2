@@ -3677,7 +3677,7 @@ useEffect(() => {
     const accept = (data) => {
       if (alive && data?.ok === true) setSharedSmartAdVersion(data)
     }
-    void getSmartAdVersion({ force: true }).then(accept).catch(() => {
+    void getSmartAdVersion().then(accept).catch(() => {
       if (alive) setSharedSmartAdVersion(null)
     })
     const stop = watchSmartAdVersion((next) => accept(next), { intervalMs: 60000 })
