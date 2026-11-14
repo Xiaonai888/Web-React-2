@@ -74,15 +74,16 @@ export async function getStudioVideoNotificationUnreadCount({ signal, force = fa
   return count
 }
 
-export async function listStudioVideoNotifications({ before = '', limit = 10, unreadOnly = false, signal, force = false } = {}) {
+export async function listStudioVideoNotifications({ before = '', limit = 10, unreadOnly = false, filter = 'all', signal, force = false } = {}) {
   prepareCache()
   const size = Math.max(1, Math.min(30, Math.floor(Number(limit) || 10)))
   const params = new URLSearchParams({
-  limit: String(size),
-  source: 'fast_reel',
-  include_meta: 'false',
-})
+    limit: String(size),
+    source: 'fast_reel',
+    include_meta: 'false',
+  })
   if (before) params.set('before', before)
+  if (filter === 'comments') params.set('type', 'comments')
   if (unreadOnly) params.set('unread', 'true')
   const key = `list:${params.toString()}`
   if (!force) {
