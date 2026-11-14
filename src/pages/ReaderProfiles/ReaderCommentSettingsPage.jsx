@@ -211,8 +211,8 @@ export default function ReaderCommentSettingsPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const tr = (key) => t(`readerCommentSettings.${key}`)
-  const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
-  const backPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
+  const backPath = `/profile/settings${location.search}`
+  const managePath = `/profile/settings/comment-settings/manage${location.search}`
   const [settings, setSettings] = useState(() => ({ ...DEFAULT_SETTINGS }))
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
@@ -379,7 +379,7 @@ export default function ReaderCommentSettingsPage() {
 
         <button
           type="button"
-          onClick={() => navigate(`/profile/settings/comment-settings/manage${fromMeSettings ? '?from=me-settings' : ''}`)}
+          onClick={() => navigate(managePath)}
           className="flex w-full items-center gap-3 rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-4 text-left active:bg-[var(--shadow-bg-hover)]"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--shadow-bg-soft)]">
