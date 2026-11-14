@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -258,11 +258,6 @@ function getCooldownInfo(updatedAt) {
 
 export default function ReaderAccountSecurityPage() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const backQuery = new URLSearchParams(location.search)
-  backQuery.set('account', 'shadow')
-  const backPath = `/profile/settings?${backQuery.toString()}`
-  const withOrigin = (path) => `${path}${location.search}`
   const { language, t } = useDisplayTranslation()
   const [user, setUser] = useState(null)
   const [dateOfBirth, setDateOfBirth] = useState('')
@@ -400,7 +395,7 @@ export default function ReaderAccountSecurityPage() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate(backPath)}
+            onClick={() => navigate('/profile/settings?account=shadow')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerAccountSecurityPage.backToSettings')}
           >
@@ -540,7 +535,11 @@ export default function ReaderAccountSecurityPage() {
           <div className="overflow-hidden rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
             <button
               type="button"
-              onClick={() => navigate(withOrigin('/profile/settings/account-security/change-password'))}
+              onClick={() =>
+  navigate(
+    '/profile/settings/account-security/change-password'
+  )
+}
               className="flex w-full items-center gap-4 px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
@@ -561,7 +560,9 @@ export default function ReaderAccountSecurityPage() {
 
             <button
               type="button"
-              onClick={() => navigate(withOrigin('/profile/settings/account-security/change-email'))}
+              onClick={() =>
+  navigate('/profile/settings/account-security/change-email')
+}
               className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
@@ -583,7 +584,7 @@ export default function ReaderAccountSecurityPage() {
 
             <button
               type="button"
-              onClick={() => navigate(withOrigin('/profile/settings/account-security/devices'))}
+              onClick={() => navigate('/profile/settings/account-security/devices')}
               className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
@@ -602,7 +603,7 @@ export default function ReaderAccountSecurityPage() {
 
             <button
               type="button"
-              onClick={() => navigate(withOrigin('/profile/settings/account-security/login-security'))}
+              onClick={() => navigate('/profile/settings/account-security/login-security')}
               className="flex w-full items-center gap-4 border-t border-[var(--shadow-border)] px-4 py-4 text-left transition active:bg-[var(--shadow-bg-hover)]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[#7c3aed] dark:text-[#a78bfa]">
