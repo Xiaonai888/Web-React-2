@@ -4,27 +4,27 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('promotionBookShelf', {
   en: {
-    storyTitle: 'Special Promotion', storeTitle: 'Book & PDF Promotion', ends: 'Ends in',
+    storyTitle: 'Special Promotion', storeTitle: 'PDF Promotion', ends: 'Ends in',
     episodes: '{{count}} locked episodes', book: 'Book', pdf: 'PDF', read: 'Read',
     buy: 'Buy now',
   },
   km: {
-    storyTitle: 'ប្រូម៉ូសិនពិសេស', storeTitle: 'ប្រូម៉ូសិនសៀវភៅ និង PDF', ends: 'នៅសល់',
+    storyTitle: 'ប្រូម៉ូសិនពិសេស', storeTitle: 'ប្រូម៉ូសិន PDF', ends: 'នៅសល់',
     episodes: '{{count}} ភាគចាក់សោ', book: 'សៀវភៅ', pdf: 'PDF', read: 'អាន',
     buy: 'ទិញឥឡូវនេះ',
   },
   zh: {
-    storyTitle: '特别优惠', storeTitle: '图书与 PDF 优惠', ends: '剩余时间',
+    storyTitle: '特别优惠', storeTitle: 'PDF 优惠', ends: '剩余时间',
     episodes: '{{count}} 章待解锁', book: '图书', pdf: 'PDF', read: '阅读',
     buy: '立即购买',
   },
   ja: {
-    storyTitle: '特別セール', storeTitle: '書籍・PDF セール', ends: '残り時間',
+    storyTitle: '特別セール', storeTitle: 'PDF セール', ends: '残り時間',
     episodes: 'ロック中の{{count}}話', book: '書籍', pdf: 'PDF', read: '読む',
     buy: '今すぐ購入',
   },
   ko: {
-    storyTitle: '특별 프로모션', storeTitle: '도서 및 PDF 프로모션', ends: '남은 시간',
+    storyTitle: '특별 프로모션', storeTitle: 'PDF 프로모션', ends: '남은 시간',
     episodes: '잠긴 에피소드 {{count}}개', book: '도서', pdf: 'PDF', read: '읽기',
     buy: '지금 구매',
   },
