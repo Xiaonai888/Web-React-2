@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
-import { StudioBackHeader, StudioCard, StudioFrame, StudioRetry } from '../../components/author/studio/ShadowStudioAnalyticsShared'
+import { StudioCard, StudioFrame, StudioRetry } from '../../components/author/studio/ShadowStudioAnalyticsShared'
 import StudioChannelOverview from '../../components/author/studio/channel/StudioChannelOverview'
 import StudioChannelContent from '../../components/author/studio/channel/StudioChannelContent'
 import StudioChannelAudience from '../../components/author/studio/channel/StudioChannelAudience'
@@ -51,8 +51,8 @@ export default function AuthorStudioAnalyticsPage() {
 
   return <>
     <StudioFrame>
-      <StudioBackHeader title={l('title')} onBack={() => navigate('/author/reel/studio/dashboard')} />
-      <nav aria-label={extra('selectSection')} className="-mx-4 flex gap-5 overflow-x-auto border-b border-[var(--shadow-border)] px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      
+      <nav aria-label={extra('selectSection')} className="-mx-4 -mt-2 flex gap-5 overflow-x-auto border-b border-[var(--shadow-border)] px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
         {SECTIONS.map(item => <button key={item} type="button" onClick={() => setSection(item)}
           aria-current={section === item ? 'page' : undefined}
           className={`shrink-0 border-b-2 pb-3 text-sm ${section === item ? 'border-[var(--shadow-text-primary)] font-semibold' : 'border-transparent text-[var(--shadow-text-secondary)]'}`}>
