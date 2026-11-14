@@ -12,6 +12,9 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
 import ReaderProfileBlockAction from '../components/reader-profile/ReaderProfileBlockAction'
+import { getActiveReaderToken, getActiveReaderUser, saveActiveReaderUser, isSameReaderSession } from '../utils/readerActiveAccount'
+import { isReaderAccountResponseCurrent, subscribeReaderAccountChanges } from '../utils/readerAccountSessionManager'
+import { rememberReaderAccount } from '../utils/readerRememberedAccounts'
 
 registerTranslationNamespace('profilePage', {
   en: {
@@ -434,36 +437,23 @@ const API_BASE_URL =
 const PROFILE_AVATAR_MAX_BYTES = 5 * 1024 * 1024
 
 function getAuthToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function getStoredUser() {
-  try {
-    return JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-        sessionStorage.getItem('shadow_reader_user') ||
-        'null'
-    )
-  } catch {
-    return null
-  }
+  return getActiveReaderUser()
 }
 
-function saveStoredUser(user) {
-  if (!user) return
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_user', JSON.stringify(user))
-    return
-  }
-
-  sessionStorage.setItem('shadow_reader_user', JSON.stringify(user))
+function saveStoredUser(user, requestToken = getAuthToken()) {
+  return saveActiveReaderUser(user, requestToken)
 }
 
-function saveAuthToken(token) {
-  if (!token) return
-  const storage = sessionStorage.getItem('shadow_reader_token') ? sessionStorage : localStorage
+function saveAuthToken(token, requestToken = getAuthToken()) {
+  if (!token || !isReaderAccountResponseCurrent(requestToken) || !isSameReaderSession(requestToken, token)) return false
+  const active = getAuthToken()
+  const storage = sessionStorage.getItem('shadow_reader_token') === active ? sessionStorage : localStorage
   storage.setItem('shadow_reader_token', token)
+  return true
 }
 
 function dataUrlToFile(dataUrl, fileName) {
@@ -527,8 +517,7 @@ async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
   return data.image_url || data.imageUrl
 }
 
-async function fetchPublicUserProfile(username) {
-  const token = getAuthToken()
+async function fetchPublicUserProfile(username, token = getAuthToken()) {
 
   if (!token || !username) return null
 
@@ -1038,7 +1027,12 @@ export default function ProfilePage() {
   const { t, language } = useDisplayTranslation()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const storedUser = useMemo(() => getStoredUser(), [])
+  const [storedUser, setStoredUser] = useState(getStoredUser)
+  const [activeToken, setActiveToken] = useState(getAuthToken)
+  useEffect(() => subscribeReaderAccountChanges(() => {
+    setActiveToken(getAuthToken())
+    setStoredUser(getStoredUser())
+  }), [])
   const requestedUsername = String(searchParams.get('username') || '').replace(/^@+/, '')
   const isOwnProfile =
     !requestedUsername ||
@@ -1130,17 +1124,18 @@ export default function ProfilePage() {
   }
 
   function handleSuggestionFollowed() {
-    setUser((current) => {
-      if (!current) return current
-
-      const nextUser = {
-        ...current,
-        following_count: Number(current.following_count || 0) + 1,
-      }
-
-      saveStoredUser(nextUser)
-      return nextUser
-    })
+    if (!isReaderAccountResponseCurrent(activeToken)) return
+    setUser((current) => current ? {
+      ...current,
+      following_count: Number(current.following_count || 0) + 1,
+    } : current)
+    if (isOwnProfile) {
+      const currentUser = getStoredUser()
+      if (currentUser && saveStoredUser({
+        ...currentUser,
+        following_count: Number(currentUser.following_count || 0) + 1,
+      }, activeToken)) setStoredUser(getStoredUser())
+    }
   }
 
   useEffect(() => {
@@ -1170,9 +1165,9 @@ export default function ProfilePage() {
       if (!targetUsername) return
 
       try {
-        const freshUser = await fetchPublicUserProfile(targetUsername)
+        const freshUser = await fetchPublicUserProfile(targetUsername, activeToken)
 
-        if (ignore || !freshUser) return
+        if (ignore || !isReaderAccountResponseCurrent(activeToken) || !freshUser) return
 
         const returnedUsername = String(freshUser.username || '')
           .trim()
@@ -1184,12 +1179,13 @@ export default function ProfilePage() {
         }
 
         if (isOwnProfile) {
-          saveStoredUser(freshUser)
+          if (!saveStoredUser(freshUser, activeToken)) return
+          setStoredUser(getStoredUser())
         }
 
         setUser(freshUser)
       } catch (error) {
-        if (ignore) return
+        if (ignore || !isReaderAccountResponseCurrent(activeToken)) return
 
         console.error('Fetch reader profile stats error:', error)
 
@@ -1205,6 +1201,7 @@ export default function ProfilePage() {
       ignore = true
     }
   }, [
+    activeToken,
     isOwnProfile,
     navigationPreview,
     requestedUsername,
@@ -1255,7 +1252,7 @@ export default function ProfilePage() {
 
 
 async function handleProfileFollow() {
-  if (isOwnProfile || !profile.username || followLoading) return
+  if (isOwnProfile || !profile.username || followLoading || !isReaderAccountResponseCurrent(activeToken)) return
 
   const token = getAuthToken()
 
@@ -1286,6 +1283,8 @@ async function handleProfileFollow() {
       throw new Error(data.message || t('profilePage.updateFollowFailed'))
     }
 
+    if (!isReaderAccountResponseCurrent(token)) return
+
     setUser((current) => {
       if (!current) return current
 
@@ -1302,15 +1301,16 @@ async function handleProfileFollow() {
       const changed = Boolean(data.is_following) !== wasFollowing
       const difference = changed ? (data.is_following ? 1 : -1) : 0
 
-      saveStoredUser({
+      if (saveStoredUser({
         ...currentUser,
         following_count: Math.max(
           0,
           Number(currentUser.following_count || 0) + difference
         ),
-      })
+      }, token)) setStoredUser(getStoredUser())
     }
   } catch (error) {
+    if (!isReaderAccountResponseCurrent(token)) return
     setProfileTabMessage(error.message || t('profilePage.updateFollowFailed'))
     window.setTimeout(() => setProfileTabMessage(''), 2200)
   } finally {
@@ -1467,6 +1467,7 @@ async function handleOtherProfileOption(action) {
     const reader = new FileReader()
 
     reader.onload = () => {
+      if (!isReaderAccountResponseCurrent(activeToken)) return
       setRawAvatarImage(String(reader.result || ''))
       setAvatarPreview('')
       setCrop({ x: 0, y: 0 })
@@ -1488,6 +1489,7 @@ async function handleOtherProfileOption(action) {
 
     try {
       const cropped = await getCroppedImage(rawAvatarImage, pixels)
+      if (!isReaderAccountResponseCurrent(activeToken)) return
       setAvatarPreview(cropped)
       setRawAvatarImage('')
       setAvatarMessage('')
@@ -1497,7 +1499,7 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleSaveProfileAvatar = async () => {
-    if (!isOwnProfile) return
+    if (!isOwnProfile || !isReaderAccountResponseCurrent(activeToken)) return
 
     const token = getAuthToken()
 
@@ -1522,6 +1524,8 @@ async function handleOtherProfileOption(action) {
         fileName: `reader-profile-${Date.now()}.jpg`,
       })
 
+      if (!isReaderAccountResponseCurrent(token)) return
+
       const response = await fetch(`${API_BASE_URL}/api/users/avatar`, {
         method: 'PUT',
         headers: {
@@ -1539,12 +1543,16 @@ async function handleOtherProfileOption(action) {
         throw new Error(data.message || t('profilePage.updatePhotoFailed'))
       }
 
-      saveStoredUser(data.user)
+      if (!isReaderAccountResponseCurrent(token, data.user?.id)) return
+      if (!saveStoredUser(data.user, token)) return
+      setStoredUser(getStoredUser())
+      if (localStorage.getItem('shadow_reader_token') === getAuthToken()) rememberReaderAccount(data.user)
       setUser(data.user)
       setAvatarPreview('')
       setRawAvatarImage('')
       setAvatarModalOpen(false)
     } catch (error) {
+      if (!isReaderAccountResponseCurrent(token)) return
       setAvatarMessage(error.message || t('profilePage.updatePhotoFailed'))
     } finally {
       setSavingAvatar(false)
@@ -1552,7 +1560,7 @@ async function handleOtherProfileOption(action) {
   }
 
   const handleSaveProfileInfo = async () => {
-    if (!isOwnProfile) return
+    if (!isOwnProfile || !isReaderAccountResponseCurrent(activeToken)) return
 
     const token = getAuthToken()
 
@@ -1595,11 +1603,16 @@ async function handleOtherProfileOption(action) {
         throw new Error(data.message || t('profilePage.updateProfileFailed'))
       }
 
-      saveStoredUser(data.user)
-      if (data.token) saveAuthToken(data.token)
+      if (!isReaderAccountResponseCurrent(token, data.user?.id)) return
+      if (data.token && !saveAuthToken(data.token, token)) return
+      if (!saveStoredUser(data.user, token)) return
+      setStoredUser(getStoredUser())
+      if (localStorage.getItem('shadow_reader_token') === getAuthToken()) rememberReaderAccount(data.user)
+      setActiveToken(getAuthToken())
       setUser(data.user)
       setEditProfileOpen(false)
     } catch (error) {
+      if (!isReaderAccountResponseCurrent(token)) return
       setProfileMessage(error.message || t('profilePage.updateProfileFailed'))
     } finally {
       setSavingProfile(false)
@@ -1907,7 +1920,7 @@ async function handleOtherProfileOption(action) {
 
         {isOwnProfile ? (
           <div className="mt-2 md:mt-3">
-            <ReaderPostComposer />
+            <ReaderPostComposer key={storedUser?.id || 'reader'} />
           </div>
         ) : null}
 
@@ -1917,7 +1930,9 @@ async function handleOtherProfileOption(action) {
   isOwnProfile={isOwnProfile}
   profileUser={user}
   onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
-  onCountChange={setReaderPostCount}
+  onCountChange={(count) => {
+    if (isReaderAccountResponseCurrent(activeToken)) setReaderPostCount(count)
+  }}
 />
 
         <ReaderProfileBlockAction
