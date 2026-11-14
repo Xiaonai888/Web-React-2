@@ -67,6 +67,7 @@ export default function StorePromotionShelf({ rotation, remainingSeconds = 0 }) 
         author_page_username: product.page_username,
         discover_promotion_rotation_key: rotation.rotationKey,
         discover_promotion_expires_at: rotation.expires_at,
+        ...(product.product_type === 'pdf' && product.story_language === 'km' ? { discover_promotion_story_language: 'km' } : {}),
         promotion_entry_source: location.pathname === '/manga' ? 'manga' : 'stories',
       }
       const existing = current.find((entry) => String(entry.id) === productId)
