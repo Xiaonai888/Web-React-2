@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, FastForward } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -71,6 +71,7 @@ function AnimationSwitch({ checked, onChange, label }) {
 
 export default function ReaderAccessibilityPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [skipAnimation, setSkipAnimation] = useState(getSavedPreference)
   const tr = (key) => t(`readerAccessibility.${key}`)
@@ -104,7 +105,7 @@ export default function ReaderAccessibilityPage() {
     <main className="app-page min-h-screen bg-[var(--shadow-bg-page)] pb-[calc(28px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate('/profile/settings')} aria-label={tr('back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
+          <button type="button" onClick={() => navigate(`/profile/settings${location.search}`)} aria-label={tr('back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
             <ArrowLeft size={20} strokeWidth={1.8} />
           </button>
           <h1 className="text-[18px] font-semibold">{tr('title')}</h1>
