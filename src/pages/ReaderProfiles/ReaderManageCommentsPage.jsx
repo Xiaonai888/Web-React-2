@@ -129,8 +129,10 @@ export default function ReaderManageCommentsPage() {
   const tr = (key, params) => t(`readerManageComments.${key}`, params)
   const search = new URLSearchParams(location.search)
   const initialPostId = search.get('postId') || ''
-  const fromMeSettings = search.get('from') === 'me-settings'
-  const backPath = `/profile/settings/comment-settings${fromMeSettings ? '?from=me-settings' : ''}`
+  const backParams = new URLSearchParams(location.search)
+  backParams.delete('postId')
+  const backSearch = backParams.toString()
+  const backPath = `/profile/settings/comment-settings${backSearch ? `?${backSearch}` : ''}`
   const [posts, setPosts] = useState([])
   const [selectedPostId, setSelectedPostId] = useState(() => UUID_PATTERN.test(initialPostId) ? initialPostId : '')
   const [loadingPosts, setLoadingPosts] = useState(true)
