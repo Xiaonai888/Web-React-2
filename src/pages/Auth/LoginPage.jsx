@@ -4,9 +4,8 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
 import { activateReaderAccount } from '../../utils/readerAccountSessionManager'
+import { getReaderAccountSwitchIntent, clearReaderAccountSwitchIntent } from '../../utils/readerAccountSwitchIntent'
 import DisplayLanguageMenu from '../../components/common/DisplayLanguageMenu'
-
-
 
 registerTranslationNamespace('loginPage', {
   en: {
@@ -36,6 +35,9 @@ registerTranslationNamespace('loginPage', {
     emailCodeRequired: 'Please enter the 6-digit email code.',
     pinRequired: 'Please enter your 6-digit PIN.',
     verificationFailed: 'Login verification failed.',
+    selectedAccount: 'Selected account',
+    useDifferentAccount: 'Use a different account',
+    switchAccountMismatch: 'This login does not match the selected account. Choose the correct account or use a different account.',
   },
   km: {
     loginFailed: 'ចូលគណនីមិនបានទេ',
@@ -64,6 +66,9 @@ registerTranslationNamespace('loginPage', {
     emailCodeRequired: 'សូមបញ្ចូលលេខកូដអ៊ីមែល ៦ ខ្ទង់។',
     pinRequired: 'សូមបញ្ចូល PIN ៦ ខ្ទង់។',
     verificationFailed: 'ផ្ទៀងផ្ទាត់ការចូលគណនីមិនបានទេ។',
+    selectedAccount: 'គណនីដែលបានជ្រើស',
+    useDifferentAccount: 'ប្រើគណនីផ្សេង',
+    switchAccountMismatch: 'ព័ត៌មាន Login មិនត្រូវនឹងគណនីដែលបានជ្រើសទេ។ សូមប្រើគណនីត្រឹមត្រូវ ឬជ្រើសប្រើគណនីផ្សេង។',
   },
   zh: {
     loginFailed: '登录失败',
@@ -92,6 +97,9 @@ registerTranslationNamespace('loginPage', {
     emailCodeRequired: '请输入6位邮箱验证码。',
     pinRequired: '请输入6位 PIN。',
     verificationFailed: '登录验证失败。',
+    selectedAccount: '已选账号',
+    useDifferentAccount: '使用其他账号',
+    switchAccountMismatch: '登录信息与所选账号不符。请使用正确的账号或选择其他账号。',
   },
   ja: {
     loginFailed: 'ログインできませんでした',
@@ -120,6 +128,9 @@ registerTranslationNamespace('loginPage', {
     emailCodeRequired: '6桁の認証コードを入力してください。',
     pinRequired: '6桁のPINを入力してください。',
     verificationFailed: 'ログイン認証に失敗しました。',
+    selectedAccount: '選択されたアカウント',
+    useDifferentAccount: '別のアカウントを使用',
+    switchAccountMismatch: 'ログインしたアカウントが選択したアカウントと一致しません。正しいアカウントか別のアカウントを選択してください。',
   },
   ko: {
     loginFailed: '로그인하지 못했습니다',
@@ -141,13 +152,16 @@ registerTranslationNamespace('loginPage', {
     verificationTitle: '로그인 인증',
     verificationSubtitle: '로그인을 위해 보안 인증을 완료해 주세요.',
     emailCode: '이메일 인증번호 6자리',
-    pin: 'PIN 6자리',
+    pin: '6자리 PIN',
     verify: '인증 후 로그인',
     verifying: '인증 중...',
     cancelVerification: '로그인으로 돌아가기',
     emailCodeRequired: '이메일 인증번호 6자리를 입력해 주세요.',
-    pinRequired: 'PIN 6자리를 입력해 주세요.',
+    pinRequired: '6자리 PIN을 입력해 주세요.',
     verificationFailed: '로그인 인증에 실패했습니다.',
+    selectedAccount: '선택한 계정',
+    useDifferentAccount: '다른 계정 사용',
+    switchAccountMismatch: '로그인한 계정이 선택한 계정과 일치하지 않습니다. 올바른 계정이나 다른 계정을 선택하세요.',
   },
 })
 
@@ -157,7 +171,8 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
-  const [identifier, setIdentifier] = useState('')
+  const [switchIntent, setSwitchIntent] = useState(getReaderAccountSwitchIntent)
+  const [identifier, setIdentifier] = useState(() => getReaderAccountSwitchIntent()?.username || '')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
@@ -167,15 +182,29 @@ export default function LoginPage() {
   const [emailCode, setEmailCode] = useState('')
   const [pin, setPin] = useState('')
 
+  const cancelAccountSelection = () => {
+    clearReaderAccountSwitchIntent()
+    setSwitchIntent(null)
+    setIdentifier('')
+    setPassword('')
+    setMessage('')
+    setChallenge(null)
+    setEmailCode('')
+    setPin('')
+  }
+
   const finishLogin = (data) => {
     if (!data?.token || !data?.user) throw new Error(t('loginPage.loginFailed'))
-    if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)  
+    if (switchIntent && String(data.user.id || '') !== switchIntent.userId) {
+      throw new Error(t('loginPage.switchAccountMismatch'))
+    }
+    if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)
     activateReaderAccount({
       token: data.token,
       user: data.user,
       remember: rememberMe,
     })
-    navigate(location.state?.returnTo || '/me', {
+    navigate(switchIntent?.returnTo || location.state?.returnTo || '/me', {
       replace: true,
       state: location.state?.returnState,
     })
@@ -186,6 +215,9 @@ export default function LoginPage() {
     setMessage('')
     try {
       setLoading(true)
+      if (switchIntent?.username && identifier.trim().replace(/^@+/, '').toLowerCase() !== switchIntent.username.toLowerCase()) {
+        throw new Error(t('loginPage.switchAccountMismatch'))
+      }
       const deviceKey = await getReaderDeviceKey()
       const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
@@ -265,7 +297,7 @@ export default function LoginPage() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <button
             type="button"
-            onClick={() => challenge ? (setChallenge(null), setMessage(''), setPin(''), setEmailCode('')) : navigate(-1)}
+            onClick={() => challenge ? (setChallenge(null), setMessage(''), setPin(''), setEmailCode('')) : (clearReaderAccountSwitchIntent(), navigate(-1))}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] shadow-sm ring-1 ring-black/5 transition hover:-translate-x-0.5 hover:bg-[#f7f7fb] active:scale-95 dark:bg-[var(--shadow-bg-surface)] dark:text-[var(--shadow-text-primary)] dark:ring-white/10 dark:hover:bg-[var(--shadow-bg-hover)]"
             aria-label={t('loginPage.goBack')}
           >
@@ -286,6 +318,19 @@ export default function LoginPage() {
               {t(challenge ? 'loginPage.verificationSubtitle' : 'loginPage.subtitle')}
             </p>
           </div>
+
+          {switchIntent && !challenge ? (
+            <div className="mb-5 flex items-center justify-between gap-3 rounded-[14px] bg-[#f5f3fa] p-3 dark:bg-[var(--shadow-bg-soft)]">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold text-[#7c8190] dark:text-[var(--shadow-text-secondary)]">{t('loginPage.selectedAccount')}</div>
+                <div className="mt-0.5 truncate text-[14px] font-bold text-[#111827] dark:text-[var(--shadow-text-primary)]">{switchIntent.username ? `@${switchIntent.username}` : switchIntent.userId}</div>
+              </div>
+              <button type="button" disabled={loading} onClick={cancelAccountSelection}
+                className="shrink-0 text-[11px] font-bold text-[#4f46e5] disabled:opacity-60 dark:text-[#c4b5fd]">
+                {t('loginPage.useDifferentAccount')}
+              </button>
+            </div>
+          ) : null}
 
           {message ? (
             <div className="mb-4 rounded-[14px] bg-[#fff1f1] px-4 py-3 text-[12px] font-bold text-[#e5484d] dark:bg-red-500/10 dark:text-red-300" role="alert">
