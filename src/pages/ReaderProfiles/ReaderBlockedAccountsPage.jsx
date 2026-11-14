@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Ban, RefreshCw, Search, X } from 'lucide-react'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -118,6 +118,7 @@ function AccountRow({ account, action, onAction }) {
 
 export default function ReaderBlockedAccountsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [type, setType] = useState('reader')
   const [query, setQuery] = useState('')
@@ -310,7 +311,7 @@ export default function ReaderBlockedAccountsPage() {
     <main className="app-page min-h-screen bg-[var(--shadow-bg-surface)] pb-[calc(32px+env(safe-area-inset-bottom))] text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)]">
         <div className="mx-auto flex h-16 max-w-[560px] items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate('/profile/settings')} aria-label={t('readerBlockedAccounts.back')} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
+          <button type="button" onClick={() => navigate(`/profile/settings${location.search}`)} aria-label={t('readerBlockedAccounts.back')} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]">
             <ArrowLeft size={21} strokeWidth={1.8} />
           </button>
           <h1 className="flex-1 text-[18px] font-semibold">{t('readerBlockedAccounts.title')}</h1>
