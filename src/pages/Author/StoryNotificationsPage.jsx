@@ -1,4 +1,4 @@
-import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav' { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorCommentThreadSheet from '../../components/AuthorCommentThreadSheet'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
