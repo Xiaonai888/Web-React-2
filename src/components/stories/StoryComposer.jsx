@@ -545,11 +545,11 @@ function BottomSheet({ children, onClose, swipeToClose = false }) {
   )
 }
 
-function EditorSheet({ title, value, placeholder, maxLength, multiline = false, onSave, onClose }) {
+function EditorSheet({ title, value, placeholder, maxLength, multiline = false, onSave, onClose, swipeToClose = false }) {
   const [draft, setDraft] = useState(value)
 
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} swipeToClose={swipeToClose}>
       <div className="mt-4 flex items-center justify-between gap-4">
         <h2 className="text-[18px] font-bold">{title}</h2>
         <button
@@ -1112,8 +1112,9 @@ export default function StoryComposer({ mode }) {
 ) : null}
 
       {sheet === 'link' ? (
-        <EditorSheet
-          title={t('storyComposer.link')}
+  <EditorSheet
+    swipeToClose
+    title={t('storyComposer.link')}
           value={linkUrl}
           placeholder="https://example.com"
           maxLength={2048}
