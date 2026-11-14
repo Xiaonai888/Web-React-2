@@ -106,24 +106,23 @@ export function getStoryStickerFont(font) {
   return 'inherit'
 }
 
+
 export function getStoryStickerTypography(font) {
   const base = {
     fontFamily: getStoryStickerFont(font),
-    fontWeight: 600,
+    fontWeight: 900,
     fontStyle: 'normal',
+    fontSynthesis: 'weight style',
     letterSpacing: 'normal',
     textShadow: 'none',
   }
-  if (font === 'robotoBold') return { ...base, fontWeight: 800 }
-  if (font === 'handwriting') return { ...base, fontWeight: 600, fontStyle: 'italic' }
-  if (font === 'poster') return { ...base, fontWeight: 800 }
-  if (font === 'rounded') return { ...base, fontWeight: 700 }
-  if (font === 'elegant') return { ...base, fontWeight: 600 }
-  if (font === 'minimal') return { ...base, fontWeight: 600 }
-  if (font === 'retro') return { ...base, fontWeight: 600 }
-  if (font === 'neon') return { ...base, fontWeight: 700 }
+  if (font === 'handwriting') {
+    return { ...base, fontWeight: 800, fontStyle: 'italic' }
+  }
+  if (font === 'elegant') return { ...base, fontWeight: 800 }
   return base
 }
+
 
 export function getStoryStickerAppearance(value) {
   const sticker = normalizeStoryTextSticker(value)
@@ -152,7 +151,7 @@ export function getStoryStickerAppearance(value) {
   return {
     backgroundColor,
     color: textColor,
-    WebkitTextStroke: outlineColor ? `2.65px ${outlineColor}` : '0 transparent',
+    WebkitTextStroke: outlineColor ? `2.65px ${outlineColor}` : '0.65px currentColor',
     paintOrder: 'stroke fill',
     textShadow: 'none',
   }
@@ -307,9 +306,9 @@ useEffect(() => {
 
   const maxWidth = Math.max(120, Math.min(420, viewport.width * 0.84 - 32))
   const width = Math.min(
-    maxWidth,
-    Math.max(draft.text ? 72 : 220, Math.ceil(textWidth + 24))
-  )
+  maxWidth,
+  Math.max(draft.text ? 60 : 220, Math.ceil(textWidth + 14))
+)
 
   node.style.width = `${width}px`
   node.style.height = 'auto'
@@ -475,7 +474,7 @@ useEffect(() => {
   }`}
 >
           <div
-            className="inline-flex max-w-[92%] items-center justify-center rounded-[10px] px-2 py-1.5"
+            className="inline-flex max-w-[92%] items-center justify-center rounded-[10px] px-1.5 py-1.5"
             style={{ backgroundColor: draft.text.trim() ? appearance.backgroundColor : 'transparent', color: draft.text.trim() ? appearance.color : '#FFFFFF' }}
           >
             <textarea
@@ -489,13 +488,17 @@ useEffect(() => {
               onClick={() => setMode('font')}
               placeholder="Type or @Tag"
               aria-label={translate('edit')}
-              className="block min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
+              className="block mx-auto min-h-[36px] max-w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-[27px] leading-[1.35] outline-none placeholder:font-bold placeholder:text-white placeholder:opacity-100"
               style={{
   color: 'inherit',
   ...(draft.text
     ? getStoryStickerTypography(draft.font)
     : { fontFamily: 'system-ui, sans-serif', fontWeight: 700 }),
   textAlign: 'center',
+textAlignLast: 'center',
+textIndent: 0,
+marginInline: 'auto',
+fontSynthesis: 'weight style',
   fontWeight: draft.text && ['outline', 'outlineInverse'].includes(draft.styleMode)
     ? 800
     : (draft.text ? getStoryStickerTypography(draft.font).fontWeight : 700),
