@@ -23,13 +23,13 @@ function scopedKey(kind, language) {
 }
 
 function storageKey(kind, language) {
-  return `${CONFIG[kind].storageKey}:language_v1:${language}`
+  return `${CONFIG[kind].storageKey}:language_v2:${language}`
 }
 
 function normalize(kind, data, language) {
   if (!CONFIG[kind] || !VALID_LANGUAGES.has(language) || !data || data.ok === false) return null
   if (kind === 'store' && language !== 'km') return null
-  if (data.language && String(data.language).toLowerCase() !== language) return null
+  if (String(data.language || '').trim().toLowerCase() !== language) return null
   const expiresAt = new Date(data.expires_at || 0).getTime()
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
   const source = Array.isArray(data.promotions)
@@ -55,6 +55,7 @@ function normalize(kind, data, language) {
     seen.add(id)
     return true
   }).slice(0, 3)
+  if (source.length !== offers.length) return null
   return {
     promotions: offers,
     rotationKey: String(data.rotation_key || data.slot_start_at || data.expires_at),
