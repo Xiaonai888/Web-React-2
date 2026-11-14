@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, ThumbsUp } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, RefreshCw, ThumbsUp } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import {
@@ -9,9 +10,18 @@ import {
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
 } from '../../components/author/studio/ShadowStudioAnalyticsShared'
 
+registerTranslationNamespace('shadowStudioDashboardRefresh', {
+  en: { refresh: 'Refresh dashboard' },
+  km: { refresh: 'ទាញទិន្នន័យ Dashboard ថ្មី' },
+  zh: { refresh: '刷新数据概览' },
+  ja: { refresh: 'ダッシュボードを更新' },
+  ko: { refresh: '대시보드 새로고침' },
+})
+
 export default function AuthorStudioDashboardPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [videos, setVideos] = useState([])
   const [channel, setChannel] = useState(null)
   const [coverage, setCoverage] = useState(null)
@@ -19,14 +29,13 @@ export default function AuthorStudioDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
+  const refreshAfterSave = location.state?.reelSaved === true
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    setChannel(null)
-    setCoverage(null)
-    getStudioDashboard({ signal: controller.signal })
+    getStudioDashboard({ signal: controller.signal, force: refreshAfterSave || reload > 0 })
       .then(data => {
         if (controller.signal.aborted) return
         const items = Array.isArray(data.latest_long_videos) ? data.latest_long_videos : []
@@ -42,33 +51,44 @@ export default function AuthorStudioDashboardPage() {
         setLoading(false)
       })
     return () => controller.abort()
-  }, [reload, t])
+  }, [reload, t, refreshAfterSave])
 
   const goAnalytics = (video, section = 'overview') => {
     navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics?section=${section}`)
   }
 
   return <StudioFrame>
-    
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <h2 className="text-lg font-bold">{t('shadowStudioStats.channel')}</h2>
-        <span className="shrink-0 text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
+          <button
+            type="button"
+            onClick={() => setReload(value => value + 1)}
+            disabled={loading}
+            aria-label={t('shadowStudioDashboardRefresh.refresh')}
+            title={t('shadowStudioDashboardRefresh.refresh')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--shadow-border)] text-[var(--shadow-text-primary)] hover:bg-[var(--shadow-bg-soft)] disabled:opacity-50"
+          >
+            <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <StudioMetric label={t('shadowStudioStats.views')} value={channel?.views ?? null} icon={Eye} />
         <StudioMetric label={t('shadowStudioStats.watchTime')} value={channel?.watch_seconds?.available && channel.watch_seconds.value != null && Number.isFinite(Number(channel.watch_seconds.value)) ? Number(channel.watch_seconds.value) / 3600 : null} icon={BarChart3} />
       </div>
       {!loading && !error && !coverage?.complete ? <StudioMissing>{t('shadowStudioStats.insufficient')}</StudioMissing> : null}
-{!loading && !error && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
+      {!loading && !error && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
     </section>
 
     <section className="space-y-3">
       <h2 className="text-lg font-bold">{t('shadowStudioStats.latest')}</h2>
-      {loading ? <StudioCard><p className="text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.loading')}</p></StudioCard> : null}
+      {loading && !videos.length ? <StudioCard><p className="text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.loading')}</p></StudioCard> : null}
       {!loading && error ? <StudioRetry message={error} label={t('shadowStudioStats.retry')} onRetry={() => setReload(value => value + 1)} /> : null}
       {!loading && !error && !videos.length ? <StudioCard><p className="text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.noVideos')}</p></StudioCard> : null}
-      {!loading && !error ? videos.map(video => {
+      {videos.map(video => {
         const isOpen = Boolean(expanded[video.id])
         return <StudioCard key={video.id} className="space-y-3">
           <button type="button" className="flex w-full items-center gap-3 text-left" onClick={() => goAnalytics(video)} aria-label={t('shadowStudioStats.viewDetails')}>
@@ -102,13 +122,12 @@ export default function AuthorStudioDashboardPage() {
             </button>)}
           </div> : null}
         </StudioCard>
-      }) : null}
-      
+      })}
     </section>
     <ShadowStudioFooter
-  activeTab="dashboard"
-  enabledTabs={['dashboard', 'content']}
-  onTabChange={tab => navigate(tab === 'content' ? '/author/reel/studio' : '/author/reel/studio/dashboard')}
-/>
+      activeTab="dashboard"
+      enabledTabs={['dashboard', 'content']}
+      onTabChange={tab => navigate(tab === 'content' ? '/author/reel/studio' : '/author/reel/studio/dashboard')}
+    />
   </StudioFrame>
 }
