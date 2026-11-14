@@ -5,12 +5,13 @@ import ReelEditManager from './ReelEditManager'
 import useStudioThumbnailTracking from './studio/channel/useStudioThumbnailTracking'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-
 import {
   getFastReaderToken,
   listMyFastNotInterested,
   setMyFastNotInterested,
 } from '../../services/fastNotInterestedApi'
+import { markStudioContentCacheStale } from './studio/content/ShadowStudioContentCache'
+import { invalidateStudioAnalyticsCache } from '../../services/shadowStudioAnalyticsApi'
 
 
 registerTranslationNamespace('authorReelGrid', {
@@ -487,7 +488,9 @@ const response = await fetch(
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok || data.ok === false) throw new Error(data.message || t('authorReelManager.failed'))
-    return data
+markStudioContentCacheStale()
+invalidateStudioAnalyticsCache()
+return data
   }
 
   const save = async status => {
@@ -785,6 +788,8 @@ const response = await fetch(
           onClose={() => setManagingVideo(null)}
           onSaved={(updated) => {
             setVideos(items => items.map(item => item.id === updated.id ? updated : item))
+            markStudioContentCacheStale()
+            invalidateStudioAnalyticsCache()
             setManagingVideo(null)
             setNotice(t('authorReelManager.saved'))
           }}
