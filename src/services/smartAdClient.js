@@ -68,8 +68,10 @@ function validatePlacement(placement) {
 async function requestSmartAd(path, { body, signal, keepalive = false } = {}) {
   const token = getSmartAdAuthToken()
   const headers = { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }
-  if (token) headers.Authorization = `Bearer ${token}`
-  else headers['X-Shadow-Visitor-Id'] = getSmartAdVisitorId()
+  if (path !== '/version') {
+    if (token) headers.Authorization = `Bearer ${token}`
+    else headers['X-Shadow-Visitor-Id'] = getSmartAdVisitorId()
+  }
   const response = await fetch(`${API_BASE_URL}/api/smart-ads${path}`, {
     method: body === undefined ? 'GET' : 'POST',
     headers,
@@ -140,10 +142,15 @@ export function watchSmartAdVersion(onChange, { intervalMs = 60_000 } = {}) {
   async function check(force = false) {
     if (stopped || document.hidden) return
     const now = Date.now()
-    if (!force && now - lastCheckAt < minimumCheckGap && nextRotationAt > now) return
+    const rotationDue = nextRotationAt > 0 && nextRotationAt <= now
+    if (!force && !rotationDue && versionCache && versionExpiresAt > now) {
+      if (!nextRotationAt) scheduleRotation(versionCache)
+      return
+    }
+    if (!force && !rotationDue && now - lastCheckAt < minimumCheckGap) return
     lastCheckAt = now
     try {
-      const version = await getSmartAdVersion({ force: true })
+      const version = await getSmartAdVersion({ force: force || rotationDue })
       if (!stopped) scheduleRotation(version)
     } catch {}
   }
