@@ -10,6 +10,8 @@ import {
 } from '../../services/reelPlaylistsApi'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { markStudioContentCacheStale, invalidateStudioPlaylistCache } from './studio/content/ShadowStudioContentCache'
+import { invalidateStudioAnalyticsCache } from '../../services/shadowStudioAnalyticsApi'
 
 registerTranslationNamespace('reelEditManager', {
   en: {
@@ -117,6 +119,7 @@ export default function ReelEditManager({ video, onClose, onSaved }) {
     if (!playlist?.id) throw new Error(translate('failed'))
     setPlaylists(old => [playlist, ...old.filter(item => item.id !== playlist.id)])
     setSelectedIds(old => old.includes(playlist.id) ? old : [...old, playlist.id])
+    markStudioContentCacheStale(['playlists'])
   }
   const rename = async playlist => {
     const name = window.prompt(translate('renamePrompt'), playlist.name)
@@ -125,6 +128,8 @@ export default function ReelEditManager({ video, onClose, onSaved }) {
     try {
       const response = await renameReelPlaylist(playlist.id, name.trim())
       setPlaylists(old => old.map(item => item.id === playlist.id ? response.playlist : item))
+      markStudioContentCacheStale(['playlists'])
+      invalidateStudioPlaylistCache(playlist.id)
       setError('')
     } catch (err) { setError(err.message || translate('failed')) }
     finally { setBusy(false) }
@@ -136,6 +141,8 @@ export default function ReelEditManager({ video, onClose, onSaved }) {
       await deleteReelPlaylist(playlist.id)
       setPlaylists(old => old.filter(item => item.id !== playlist.id))
       setSelectedIds(old => old.filter(id => id !== playlist.id))
+      markStudioContentCacheStale()
+      invalidateStudioPlaylistCache(playlist.id)
       setError('')
     } catch (err) { setError(err.message || translate('failed')) }
     finally { setBusy(false) }
@@ -164,9 +171,12 @@ export default function ReelEditManager({ video, onClose, onSaved }) {
       const result = await response.json().catch(() => ({}))
       if (!response.ok || result.ok !== true || !result.video) throw new Error(result.message || translate('failed'))
       videoSaved = true
-      // PUT also accepts [] and removes all assignments atomically.
-      await setReelPlaylistAssignments(video.id, selectedIds)
-      onSaved?.(result.video)
+markStudioContentCacheStale()
+invalidateStudioAnalyticsCache()
+await setReelPlaylistAssignments(video.id, selectedIds)
+markStudioContentCacheStale()
+invalidateStudioPlaylistCache()
+onSaved?.(result.video)
     } catch (err) {
       setError(videoSaved ? `${translate('assignFailed')} ${err.message || ''}` : (err.message || translate('failed')))
     } finally { setBusy(false) }
