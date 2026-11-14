@@ -1000,7 +1000,7 @@ export default function StoryComposer({ mode }) {
 
       {discardOpen ? (
         <BottomSheet onClose={() => setDiscardOpen(false)}>
-          <h2 className="mt-4 text-[19px] font-bold">{t('storyComposer.discardTitle')}</h2>
+          <h2 className="mt-4 text-[19px] font-normal">{t('storyComposer.discardTitle')}</h2>
           <p className="mt-1 text-[14px] leading-5 text-[var(--shadow-text-secondary)]">
             {t('storyComposer.discardBody')}
           </p>
@@ -1013,7 +1013,7 @@ export default function StoryComposer({ mode }) {
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]">
               <i className="fa-solid fa-pen" />
             </span>
-            <span className="text-[16px] font-semibold">{t('storyComposer.keepEditing')}</span>
+            <span className="text-[16px] font-normal">{t('storyComposer.keepEditing')}</span>
           </button>
 
           <button
@@ -1024,7 +1024,7 @@ export default function StoryComposer({ mode }) {
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)]">
               <i className="fa-solid fa-trash" />
             </span>
-            <span className="text-[16px] font-semibold">{t('storyComposer.discardStory')}</span>
+            <span className="text-[16px] font-normal">{t('storyComposer.discardStory')}</span>
           </button>
         </BottomSheet>
       ) : null}
