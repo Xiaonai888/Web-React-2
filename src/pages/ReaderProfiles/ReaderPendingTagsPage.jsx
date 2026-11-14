@@ -134,7 +134,8 @@ export default function ReaderPendingTagsPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const tr = (key) => t(`readerPendingTags.${key}`)
-  const settingsPath = `/profile/settings/tags-mentions${location.search}`
+  const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
+  const settingsPath = `/profile/settings/tags-mentions${fromMeSettings ? '?from=me-settings' : ''}`
   const requestRef = useRef(null)
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
