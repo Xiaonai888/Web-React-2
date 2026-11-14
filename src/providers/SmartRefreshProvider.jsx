@@ -18,8 +18,7 @@ const API_URL =
       : 'https://shadow-backend-kucw.onrender.com'
   )
 
-const MIN_CHECK_INTERVAL_MS = 2 * 60 * 1000
-const PERIODIC_CHECK_INTERVAL_MS = 60 * 60 * 1000
+const MIN_CHECK_INTERVAL_MS = 5 * 60 * 1000
 const STORAGE_KEY =
   'shadow_content_versions'
 
@@ -123,7 +122,7 @@ function getRouteRefreshKeys(pathname) {
     return ['stories']
   }
 
-  return ['global']
+  return []
 }
 
 function loadStoredVersions() {
@@ -163,7 +162,7 @@ export function SmartRefreshProvider({
   const versionsRef = useRef(
     loadStoredVersions()
   )
-  const lastCheckAtRef = useRef(0)
+  const lastCheckAtRef = useRef(new Map())
   const checkingRef = useRef(false)
   const pathnameRef = useRef(
     location.pathname
@@ -189,24 +188,20 @@ export function SmartRefreshProvider({
     if (document.visibilityState !== 'visible' || !navigator.onLine) return
 
     const now = Date.now()
-
-    if (
-      !force &&
-      now - lastCheckAtRef.current <
-        MIN_CHECK_INTERVAL_MS
-    ) {
-      return
-    }
-
-    const pathname =
-      pathnameRef.current
-    const keys =
-      getRouteRefreshKeys(pathname)
+    const pathname = pathnameRef.current
+    const keys = getRouteRefreshKeys(pathname)
 
     if (!keys.length) return
 
+    const refreshKey = keys.join(',')
+    if (
+      !force &&
+      now - (lastCheckAtRef.current.get(refreshKey) || 0) <
+        MIN_CHECK_INTERVAL_MS
+    ) return
+
     checkingRef.current = true
-    lastCheckAtRef.current = now
+    lastCheckAtRef.current.set(refreshKey, now)
 
     try {
       const url = new URL(
@@ -322,6 +317,9 @@ export function SmartRefreshProvider({
       return
     } finally {
       checkingRef.current = false
+      if (pathnameRef.current !== pathname) {
+        void checkCurrentPageVersion()
+      }
     }
   }
 
@@ -349,10 +347,6 @@ export function SmartRefreshProvider({
       void checkCurrentPageVersion()
     }
 
-    const periodicTimer = window.setInterval(() => {
-      void checkCurrentPageVersion()
-    }, PERIODIC_CHECK_INTERVAL_MS)
-
     document.addEventListener(
       'visibilitychange',
       handleVisibleAgain
@@ -367,7 +361,6 @@ export function SmartRefreshProvider({
     )
 
     return () => {
-      window.clearInterval(periodicTimer)
       document.removeEventListener(
         'visibilitychange',
         handleVisibleAgain
