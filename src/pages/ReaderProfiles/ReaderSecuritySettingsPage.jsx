@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -94,7 +94,6 @@ function authToken() {
 
 export default function ReaderSecuritySettingsPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [settings, setSettings] = useState(null)
   const [pending, setPending] = useState(null)
@@ -223,7 +222,7 @@ export default function ReaderSecuritySettingsPage() {
     <main className="app-page min-h-screen pb-10 text-[var(--shadow-text-primary)]">
       <header className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
-          <button type="button" onClick={() => navigate(`/profile/settings/account-security${location.search}`)}
+          <button type="button" onClick={() => navigate('/profile/settings/account-security')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerSecuritySettingsPage.back')}>
             <i className="fa-solid fa-chevron-left text-[18px]" />
