@@ -11,7 +11,7 @@ import {
   listMyReelPlaylists, createReelPlaylist, setReelPlaylistAssignments,
   createReelVideo, updateReelStatus,
 } from '../../services/reelPlaylistsApi'
-import { invalidateStudioContentCache } from '../../components/author/studio/content/ShadowStudioContentCache'
+import { markStudioContentCacheStale } from '../../components/author/studio/content/ShadowStudioContentCache'
 import { invalidateStudioAnalyticsCache } from '../../services/shadowStudioAnalyticsApi'
 
 registerTranslationNamespace('authorReelAdd', {
@@ -203,7 +203,7 @@ export default function AuthorReelAddPage() {
     const playlist = result.playlist
     setPlaylists(previous => [playlist, ...previous.filter(item => item.id !== playlist.id)])
     setSelectedIds(previous => previous.includes(playlist.id) ? previous : [...previous, playlist.id])
-    invalidateStudioContentCache(['playlists'])
+    markStudioContentCacheStale(['playlists'])
     return playlist
   }
 
@@ -251,27 +251,28 @@ export default function AuthorReelAddPage() {
         }
         setPendingVideo({ id: savedId, status: savedStatus, videoType })
       }
-         if (selectedIds.length) {
+      if (selectedIds.length) {
         try {
           await setReelPlaylistAssignments(savedId, selectedIds)
         } catch (cause) {
-          invalidateStudioContentCache()
+          markStudioContentCacheStale()
           invalidateStudioAnalyticsCache()
           setError(`${t('authorReelAdd.savedWithoutPlaylists')} ${cause.message || ''}`.trim())
           return
         }
       }
-      invalidateStudioContentCache()
+      markStudioContentCacheStale()
       invalidateStudioAnalyticsCache()
-      navigate(returnTo, { replace: true, state: { reelSaved: true, activeTab: 'Reel' } })
+      navigate(returnTo, { replace: true, state: { activeTab: 'Reel' } })
     } catch (cause) {
       if (savedId) {
-        invalidateStudioContentCache()
+        markStudioContentCacheStale()
         invalidateStudioAnalyticsCache()
       }
       setError(cause.message || t('authorReelAdd.saveFailed'))
     } finally { setBusy(false) }
-      }
+  }
+
   const fieldClass = 'app-input mt-1.5 w-full rounded-lg border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] px-3 py-2.5 text-[13px] text-[var(--shadow-text-primary)] outline-none focus:border-[var(--shadow-border-strong)]'
 
   return <PageShell className="pb-24 text-[var(--shadow-text-primary)]">
