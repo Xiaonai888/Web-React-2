@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -126,7 +126,6 @@ function formatTime(value) {
 
 export default function ReaderLoginDevicesPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { t } = useDisplayTranslation()
   const [sessions, setSessions] = useState([])
   const [maxSessions, setMaxSessions] = useState(5)
@@ -209,7 +208,7 @@ export default function ReaderLoginDevicesPage() {
         <div className="mx-auto flex h-16 w-full max-w-[560px] items-center gap-3 px-4">
           <button
             type="button"
-            onClick={() => navigate(`/profile/settings/account-security${location.search}`)}
+            onClick={() => navigate('/profile/settings/account-security')}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition active:bg-[var(--shadow-bg-hover)]"
             aria-label={t('readerLoginDevicesPage.back')}
           >
