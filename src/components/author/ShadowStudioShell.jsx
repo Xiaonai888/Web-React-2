@@ -12,8 +12,8 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
   const [unread, setUnread] = useState(0)
   const returnTo = `${location.pathname}${location.search}${location.hash}`
   const token = localStorage.getItem('shadow_reader_token') ||
-  sessionStorage.getItem('shadow_reader_token') || ''
-    const [profileAvatar, setProfileAvatar] = useState('')
+    sessionStorage.getItem('shadow_reader_token') || ''
+  const [profileAvatar, setProfileAvatar] = useState('')
 
   useEffect(() => {
     const page = getMyAuthorPageCachedSnapshot(token)
@@ -75,13 +75,13 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
   })
 
   return <>
-    <ShadowStudioHeader
+    {location.pathname !== `${STUDIO_ROOT}/notifications` ? <ShadowStudioHeader
       avatarUrl={avatarUrl || profileAvatar}
       videoUnreadCount={unread}
       onAddVideo={location.pathname === '/author/reel/add' ? undefined : handleAddVideo}
       onOpenNotifications={handleNotifications}
       onOpenProfile={handleProfile}
-    />
+    /> : null}
     {children ?? <Outlet />}
   </>
 }
