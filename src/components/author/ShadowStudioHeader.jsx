@@ -64,9 +64,9 @@ export default function ShadowStudioHeader({
             title={t('shadowStudioHeader.profile')}
             disabled={typeof onOpenProfile !== 'function'}
             onClick={onOpenProfile}
-            className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] disabled:cursor-default"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)] disabled:cursor-default"
           >
-            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <UserRound size={22} strokeWidth={1.75} aria-hidden="true" />}
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-[26px] w-[26px] rounded-full border border-[var(--shadow-border)] object-cover" referrerPolicy="no-referrer" /> : <UserRound size={24} strokeWidth={1.75} aria-hidden="true" />}
           </button>
         </div>
       </div>
