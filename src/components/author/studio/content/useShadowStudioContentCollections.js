@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { listStudioContentSection } from './ShadowStudioContentApi'
 import {
-  invalidateStudioContentCache,
   readStudioSectionCache,
   studioContentSession,
   writeStudioSectionCache,
 } from './ShadowStudioContentCache'
 
 const KEYS = ['videos', 'shorts', 'playlists']
-const REVALIDATE_AFTER_MS = 60 * 1000
+const REVALIDATE_AFTER_MS = 5 * 60 * 1000
+const REFRESH_PAGE_SIZE = 24
 
 function blank() {
   return {
@@ -44,10 +44,6 @@ export default function useShadowStudioContentCollections({ pageSize = 12, overv
 
   const load = useCallback(async (key, { reset = false, minimum = 0 } = {}) => {
     if (!KEYS.includes(key)) return
-    if (reset) {
-      pendingRef.current[key] = 0
-      invalidateStudioContentCache([key])
-    }
 
     const ongoing = runningRef.current[key]
     if (ongoing && !reset) {
@@ -55,41 +51,80 @@ export default function useShadowStudioContentCollections({ pageSize = 12, overv
       return
     }
     if (ongoing) ongoing.abort()
+    if (reset) pendingRef.current[key] = 0
 
     const previous = pagesRef.current[key]
     if (!reset && previous.initialized && (!previous.hasMore || (minimum > 0 && previous.items.length >= minimum))) return
 
-    const limit = minimum > 0
-      ? Math.min(batchSize, minimum - (reset ? 0 : previous.items.length))
-      : batchSize
-    if (limit <= 0) return
+    const limit = minimum > 0 ? Math.min(batchSize, minimum - previous.items.length) : batchSize
+    if (!reset && limit <= 0) return
 
     const controller = new AbortController()
     const ownerAtStart = studioContentSession()
+    const isCurrent = () => !controller.signal.aborted && runningRef.current[key] === controller && studioContentSession() === ownerAtStart
     runningRef.current[key] = controller
-    const offset = reset ? 0 : previous.nextOffset
     commit(key, { ...previous, loading: true, error: '' })
 
     try {
-      const result = await listStudioContentSection(key, { limit, offset, signal: controller.signal })
-      if (controller.signal.aborted || runningRef.current[key] !== controller || studioContentSession() !== ownerAtStart) return
+      let next
+      if (reset) {
+        const target = Math.max(previewSize, minimum, previous.items.length)
+        const items = []
+        const seen = new Set()
+        let offset = 0
+        let hasMore = true
+        let attempts = 0
+        const maxAttempts = Math.max(1, Math.ceil(target / REFRESH_PAGE_SIZE) + 2)
 
-      const oldItems = reset ? [] : pagesRef.current[key].items
-      const seen = new Set(oldItems.map(item => item.id))
-      const additions = result.items.filter(item => item?.id && !seen.has(item.id))
-      const next = {
-        items: [...oldItems, ...additions],
-        nextOffset: result.nextOffset,
-        hasMore: result.hasMore && result.nextOffset > offset,
-        initialized: true,
-        loading: false,
-        error: '',
-        validatedAt: offset === 0 ? Date.now() : (previous.validatedAt || 0),
+        while (items.length < target && hasMore && attempts < maxAttempts) {
+          const page = await listStudioContentSection(key, {
+            limit: Math.min(REFRESH_PAGE_SIZE, target - items.length),
+            offset,
+            signal: controller.signal,
+          })
+          if (!isCurrent()) return
+          for (const item of page.items) {
+            if (item?.id && !seen.has(item.id)) {
+              seen.add(item.id)
+              items.push(item)
+            }
+          }
+          const nextOffset = page.nextOffset
+          hasMore = page.hasMore && nextOffset > offset
+          offset = nextOffset
+          attempts += 1
+        }
+        next = {
+          items,
+          nextOffset: offset,
+          hasMore,
+          initialized: true,
+          loading: false,
+          error: '',
+          validatedAt: Date.now(),
+        }
+      } else {
+        const offset = previous.nextOffset
+        const page = await listStudioContentSection(key, { limit, offset, signal: controller.signal })
+        if (!isCurrent()) return
+        const seen = new Set(previous.items.map(item => item.id))
+        const additions = page.items.filter(item => item?.id && !seen.has(item.id))
+        next = {
+          items: [...previous.items, ...additions],
+          nextOffset: page.nextOffset,
+          hasMore: page.hasMore && page.nextOffset > offset,
+          initialized: true,
+          loading: false,
+          error: '',
+          validatedAt: offset === 0 ? Date.now() : (previous.validatedAt || 0),
+        }
       }
+
+      if (!isCurrent()) return
       commit(key, next)
       writeStudioSectionCache(key, next)
     } catch (error) {
-      if (controller.signal.aborted || runningRef.current[key] !== controller) return
+      if (!isCurrent()) return
       commit(key, { ...pagesRef.current[key], loading: false, error: error?.message || 'Unable to load content.' })
     } finally {
       if (runningRef.current[key] === controller) {
@@ -102,7 +137,7 @@ export default function useShadowStudioContentCollections({ pageSize = 12, overv
         }
       }
     }
-  }, [batchSize, commit])
+  }, [batchSize, commit, previewSize])
 
   useEffect(() => {
     for (const key of KEYS) {
