@@ -8,7 +8,7 @@ import ShadowStudioVideoDetailSheet from './ShadowStudioVideoDetailSheet'
 import useShadowStudioContentActions from './useShadowStudioContentActions'
 import useShadowStudioContentCollections from './useShadowStudioContentCollections'
 import useShadowStudioContentSelection from './useShadowStudioContentSelection'
-import { invalidateStudioContentCache, invalidateStudioPlaylistCache } from './ShadowStudioContentCache'
+import { markStudioContentCacheStale, invalidateStudioPlaylistCache } from './ShadowStudioContentCache'
 import { invalidateStudioAnalyticsCache } from '../../../../services/shadowStudioAnalyticsApi'
 
 export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo, onViewAnalytics, freshOnMount = false }) {
@@ -39,7 +39,7 @@ export default function ShadowStudioContentWorkspace({ onExitStudio, onAddVideo,
   const handleSaved = useCallback(() => {
     selection.closeEditor()
     invalidateStudioPlaylistCache(selection.playlist?.id)
-    invalidateStudioContentCache()
+    markStudioContentCacheStale()
     invalidateStudioAnalyticsCache()
     setPlaylistRevision(value => value + 1)
     actions.clearFeedback()
