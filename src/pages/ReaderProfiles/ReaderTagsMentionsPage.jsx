@@ -176,8 +176,8 @@ export default function ReaderTagsMentionsPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const tr = (key) => t(`readerTagsMentions.${key}`)
-  const backPath = `/profile/settings${location.search}`
-  const pendingPath = `/profile/settings/tags-mentions/pending${location.search}`
+  const fromMeSettings = new URLSearchParams(location.search).get('from') === 'me-settings'
+  const backPath = fromMeSettings ? '/profile/settings?from=me-settings' : '/profile/settings'
   const token = getReaderToken()
   const [preferences, setPreferences] = useState(DEFAULT_SETTINGS)
   const [ready, setReady] = useState(false)
@@ -291,7 +291,7 @@ export default function ReaderTagsMentionsPage() {
                </section>
         <button
           type="button"
-          onClick={() => navigate(pendingPath)}
+          onClick={() => navigate(`/profile/settings/tags-mentions/pending${fromMeSettings ? '?from=me-settings' : ''}`)}
           className="flex min-h-[52px] w-full items-center justify-between rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left text-[14px] font-medium active:bg-[var(--shadow-bg-hover)]"
         >
           <span>{t('readerTagReviewButton.label')}</span>
