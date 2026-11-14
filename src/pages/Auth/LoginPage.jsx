@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
+import { activateReaderAccount } from '../../utils/readerAccountSessionManager'
 import DisplayLanguageMenu from '../../components/common/DisplayLanguageMenu'
 
 
@@ -169,12 +170,11 @@ export default function LoginPage() {
   const finishLogin = (data) => {
     if (!data?.token || !data?.user) throw new Error(t('loginPage.loginFailed'))
     if (data.deviceKey) persistReaderDeviceKey(data.deviceKey)  
-    const storage = rememberMe ? localStorage : sessionStorage
-    storage.setItem('shadow_reader_token', data.token)
-    storage.setItem('shadow_reader_user', JSON.stringify(data.user))
-    const otherStorage = rememberMe ? sessionStorage : localStorage
-    otherStorage.removeItem('shadow_reader_token')
-    otherStorage.removeItem('shadow_reader_user')
+    activateReaderAccount({
+      token: data.token,
+      user: data.user,
+      remember: rememberMe,
+    })
     navigate(location.state?.returnTo || '/me', {
       replace: true,
       state: location.state?.returnState,
