@@ -4355,6 +4355,13 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
       if (cancelled) return
       const allowed = canSellPrintedBooks(settings)
       setBookAllowed(allowed)
+      setNovelType((current) => {
+        if (current) return current
+        if (settings?.countryVerified !== true || settings?.countrySource !== 'reader_classification') return ''
+        if (settings.region === 'kh') return 'Khmer'
+        if (settings.region === 'international') return 'English'
+        return ''
+      })
       if (!allowed && !productToEdit) setType('PDF')
     }).catch(() => {
       if (cancelled) return
@@ -4368,7 +4375,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [category, setCategory] = useState(productToEdit?.category || '')
   const [authorName, setAuthorName] = useState(productToEdit?.authorName || '')
   const [publisher, setPublisher] = useState(productToEdit?.publisher || '')
-  const [novelType, setNovelType] = useState(productToEdit?.novelType || 'Khmer')
+  const [novelType, setNovelType] = useState(productToEdit?.novelType || '')
   const [storyLanguageOpen, setStoryLanguageOpen] = useState(false)
   const [storySettings, setStorySettings] = useState(Array.isArray(productToEdit?.storySettings) ? productToEdit.storySettings.slice(0, 6) : [])
   const [storySettingOpen, setStorySettingOpen] = useState(false)
@@ -4788,6 +4795,10 @@ const stockNumber = Number(stock || 0)
       onNotify?.(bookCountryMessage, 'error')
       return
     }
+        if (!novelType.trim()) {
+      onNotify?.(storeText('storyLanguageHelp'), 'error')
+      return
+    }
     if (!productToEdit && storySettings.length === 0) {
       onNotify?.(storeText('storySettingRequired'), 'error')
       return
@@ -5083,13 +5094,13 @@ accessRule,
 
 <div className="grid gap-3 sm:grid-cols-2">
   <div>
-    <FieldLabel>{storeText('storyLanguage')}</FieldLabel>
+    <FieldLabel>{`${storeText('storyLanguage')} *`}</FieldLabel>
     <button
       type="button"
       onClick={() => setStoryLanguageOpen(true)}
       className="flex min-h-11 w-full items-center justify-between rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-3 text-left text-[13px] text-[var(--shadow-text-primary)]"
     >
-      <span>{novelType || 'Khmer'}</span>
+      <span>{novelType || storeText('choose')}</span>
       <i className="fa-solid fa-chevron-right text-[11px] text-[var(--shadow-text-tertiary)]" />
     </button>
     <p className="mt-1.5 text-[11px] leading-5 text-[var(--shadow-text-tertiary)]">{storeText('storyLanguageHelp')}</p>
