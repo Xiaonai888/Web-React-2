@@ -78,6 +78,16 @@ export function writeStudioSectionCache(section, value) {
   if (value?.initialized === true) write(`section:${section}`, value, CONTENT_TTL)
 }
 
+export function markStudioContentCacheStale(sections) {
+  if (!sessionReady()) return
+  const selected = Array.isArray(sections) ? sections : ['videos', 'shorts', 'playlists']
+  for (const section of selected) {
+    const entry = entries.get(`section:${section}`)
+    if (entry) entry.value = { ...entry.value, validatedAt: 0 }
+  }
+  if (!Array.isArray(sections)) invalidateStudioPlaylistCache()
+}
+
 export function readStudioPlaylistCache(playlistId) {
   return read(`playlist:${playlistId}`, PLAYLIST_TTL)
 }
