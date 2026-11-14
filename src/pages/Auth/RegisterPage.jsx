@@ -5,6 +5,8 @@ import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
+import { activateReaderAccount, isReaderAccountResponseCurrent } from '../../utils/readerAccountSessionManager'
+import { getActiveReaderToken, saveActiveReaderUser } from '../../utils/readerActiveAccount'
 import DisplayLanguageMenu from '../../components/common/DisplayLanguageMenu'
 
 
@@ -781,10 +783,7 @@ export default function RegisterPage() {
   }
 
   const saveLogin = (token, user) => {
-    sessionStorage.removeItem('shadow_reader_token')
-    sessionStorage.removeItem('shadow_reader_user')
-    localStorage.setItem('shadow_reader_token', token)
-    localStorage.setItem('shadow_reader_user', JSON.stringify(user))
+    activateReaderAccount({ token, user, remember: true })
   }
 
   const handleSubmit = async (event) => {
@@ -864,8 +863,7 @@ navigate('/me', { replace: true })
   }
 
   const handleSavePhoto = async () => {
-    const token =
-      createdToken || localStorage.getItem('shadow_reader_token')
+    const token = createdToken || getActiveReaderToken()
     const user = createdUser
 
     if (!token) {
@@ -909,7 +907,8 @@ navigate('/me', { replace: true })
         )
       }
 
-      saveLogin(token, data.user)
+      if (!isReaderAccountResponseCurrent(token, data.user?.id)) return
+      saveActiveReaderUser(data.user, token)
       navigate('/me')
     } catch (error) {
       setAvatarMessage(
