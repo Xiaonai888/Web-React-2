@@ -1660,7 +1660,14 @@ const shouldShowOpeningAds =
   element={<LazyPage><AuthorStudioRankingPage /></LazyPage>}
 />
 
-          <Route
+
+<Route
+  path="/author/reel/studio/notifications"
+  element={<LazyPage><AuthorStudioNotificationsPage /></LazyPage>}
+/>
+</Route>
+
+<Route
   path="/author/reel/add"
   element={
     <LazyPage>
@@ -1669,11 +1676,6 @@ const shouldShowOpeningAds =
   }
 />
 
-<Route
-  path="/author/reel/studio/notifications"
-  element={<LazyPage><AuthorStudioNotificationsPage /></LazyPage>}
-/>
-</Route>
 
 <Route
   path="/fast/studio/create"
