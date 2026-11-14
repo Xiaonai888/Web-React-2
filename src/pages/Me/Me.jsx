@@ -432,7 +432,9 @@ const finishStoryOnboarding = () => {
 
   setStoryOnboardingId('')
 }
-  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('switch-account') === '1'
+)
   const [authorLoading, setAuthorLoading] = useState(false)
   const [authorPage, setAuthorPage] = useState(null)
   const [checkingAuthorPage, setCheckingAuthorPage] = useState(Boolean(getReaderToken()))
@@ -897,7 +899,7 @@ const handleOpenProfileSwitcher = (event) => {
 
   const handleManageAccount = () => {
     setProfileSwitcherOpen(false)
-    navigate('/settings')
+    navigate('/profile/settings?from=me-switcher')
   }
 
   return (
@@ -953,7 +955,12 @@ const handleOpenProfileSwitcher = (event) => {
 ) : null}
       <ProfileSwitcherSheet
         open={profileSwitcherOpen}
-        onClose={() => setProfileSwitcherOpen(false)}
+        onClose={() => {
+  setProfileSwitcherOpen(false)
+  if (new URLSearchParams(window.location.search).get('switch-account') === '1') {
+    navigate('/me', { replace: true })
+  }
+}}
         displayName={displayName}
         avatarUrl={avatarUrl}
         avatarLetter={avatarLetter}
