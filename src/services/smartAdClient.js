@@ -5,7 +5,7 @@ const API_BASE_URL = (
     : 'https://shadow-backend-kucw.onrender.com')
 ).replace(/\/$/, '')
 
-const VERSION_CACHE_MS = 20_000
+const VERSION_CACHE_MS = 5 * 60_000
 const PLACEMENTS = new Set(['discover', 'opening', 'freeUnlock', 'me'])
 const VISITOR_KEY = 'shadow_smart_ad_visitor_v1'
 const versionListeners = new Set()
@@ -113,20 +113,59 @@ export function subscribeSmartAdVersion(listener) {
 }
 
 export function watchSmartAdVersion(onChange, { intervalMs = 60_000 } = {}) {
-  const unsubscribe = subscribeSmartAdVersion(onChange)
-  if (typeof window === 'undefined' || typeof document === 'undefined') return unsubscribe
-  const poll = () => {
-    if (!document.hidden) void getSmartAdVersion({ force: true }).catch(() => {})
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return subscribeSmartAdVersion(onChange)
   }
-  document.addEventListener('visibilitychange', poll)
-  window.addEventListener('focus', poll)
-  const intervalId = window.setInterval(poll, Math.max(30_000, Number(intervalMs) || 60_000))
-  poll()
+
+  const minimumCheckGap = Math.max(30_000, Number(intervalMs) || 60_000)
+  let stopped = false
+  let lastCheckAt = 0
+  let nextRotationAt = 0
+  let rotationTimer = null
+
+  const scheduleRotation = (version) => {
+    if (rotationTimer !== null) window.clearTimeout(rotationTimer)
+    rotationTimer = null
+    const timestamp = Date.parse(version?.next_rotation_at || '')
+    nextRotationAt = Number.isFinite(timestamp) ? timestamp : 0
+    if (!nextRotationAt || stopped) return
+    const remaining = nextRotationAt - Date.now()
+    const delay = remaining > 0 ? remaining + 1500 : 5 * 60_000
+    rotationTimer = window.setTimeout(() => {
+      rotationTimer = null
+      void check(true)
+    }, Math.min(delay, 2147483647))
+  }
+
+  async function check(force = false) {
+    if (stopped || document.hidden) return
+    const now = Date.now()
+    if (!force && now - lastCheckAt < minimumCheckGap && nextRotationAt > now) return
+    lastCheckAt = now
+    try {
+      const version = await getSmartAdVersion({ force: true })
+      if (!stopped) scheduleRotation(version)
+    } catch {}
+  }
+
+  const unsubscribe = subscribeSmartAdVersion((next, previous) => {
+    if (stopped) return
+    scheduleRotation(next)
+    if (typeof onChange === 'function') onChange(next, previous)
+  })
+  const resume = () => { void check() }
+  window.addEventListener('focus', resume)
+  window.addEventListener('online', resume)
+  document.addEventListener('visibilitychange', resume)
+  void check()
+
   return () => {
+    stopped = true
     unsubscribe()
-    document.removeEventListener('visibilitychange', poll)
-    window.removeEventListener('focus', poll)
-    window.clearInterval(intervalId)
+    window.removeEventListener('focus', resume)
+    window.removeEventListener('online', resume)
+    document.removeEventListener('visibilitychange', resume)
+    if (rotationTimer !== null) window.clearTimeout(rotationTimer)
   }
 }
 
