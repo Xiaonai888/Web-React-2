@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthorStudioBottomNav from '../../components/AuthorStudioBottomNav'
+import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
 import './AuthorProfileTheme.css'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -204,116 +205,6 @@ function safeProfileImageUrl(value) {
   } catch { return '' }
 }
 
-function ProfileSwitcherSheet({
-  open,
-  onClose,
-  displayName,
-  avatarUrl,
-  avatarLetter,
-  authorPage,
-  authorNotificationCount,
-  onOwnAccount,
-  onAuthorPage,
-  onManageAccount,
-}) {
-  const { t } = useDisplayTranslation()
-
-  if (!open) return null
-
-  const pageName = authorPage?.page_name || authorPage?.name || t('authorProfile.authorPage')
-  const pageLogo = authorPage?.avatar_url || authorPage?.profile_image_url || ''
-  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-
-  return (
-    <div className="fixed inset-0 z-[130]">
-      <button
-        type="button"
-        aria-label={t('authorProfile.closeProfileSwitcher')}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/35"
-      />
-
-      <div className="absolute bottom-0 left-0 right-0 max-h-[86vh] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-4 pb-8 pt-4 shadow-2xl md:bottom-auto md:left-1/2 md:right-auto md:top-20 md:w-[380px] md:-translate-x-1/2 md:rounded-[24px]">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--shadow-bg-soft)] md:hidden" />
-
-        <div className="overflow-hidden rounded-[24px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] shadow-sm">
-          <button
-            type="button"
-            onClick={onOwnAccount}
-            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:scale-[0.99]"
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#202638] text-white">
-                {avatarUrl ? (
-                  <img ref={(node) => {
-  if (!node) return
-  const src = safeProfileImageUrl(avatarUrl)
-  if (src) node.src = src
-  else node.removeAttribute('src')
-}} alt={displayName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{avatarLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{displayName}</div>
-              </div>
-            </div>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[var(--shadow-text-disabled)]" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onAuthorPage}
-            className="flex w-full items-center justify-between gap-3 border-t border-[var(--shadow-border)] px-4 py-4 text-left active:scale-[0.99]"
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
-                {pageLogo ? (
-                  <img ref={(node) => {
-  if (!node) return
-  const src = safeProfileImageUrl(pageLogo)
-  if (src) node.src = src
-  else node.removeAttribute('src')
-}} alt={pageName} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-[18px] font-extrabold">{pageLetter}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="line-clamp-1 text-[16px] font-extrabold text-[var(--shadow-text-primary)]">{pageName}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--shadow-text-tertiary)]">
-                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                  <span>{t(Number(authorNotificationCount) === 1 ? 'authorProfile.notification' : 'authorProfile.notifications', { count: authorNotificationCount })}</span>
-                </div>
-              </div>
-            </div>
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
-              <i className="fa-solid fa-check text-[10px]" />
-            </span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={onManageAccount}
-          className="mt-4 flex h-12 w-full items-center justify-center rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-normal text-[var(--shadow-text-primary)] active:scale-[0.99]"
-        >
-          {t('authorProfile.manageAccount')}
-        </button>
-
-        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
-          <img
-            src="/assets/Icons/Logo Shadow 2.svg"
-            alt=""
-            className="h-10 w-auto object-contain opacity-90"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function AuthorProfilePage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
@@ -333,7 +224,9 @@ export default function AuthorProfilePage() {
   )
   const [loading, setLoading] = useState(!AUTHOR_PREVIEW_ENABLED)
   const [error, setError] = useState('')
-  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(false)
+  const [profileSwitcherOpen, setProfileSwitcherOpen] = useState(
+  () => new URLSearchParams(window.location.search).get('switch-account') === '1'
+)
 
   useEffect(() => {
     document.body.classList.toggle('settings-popup-open', profileSwitcherOpen)
@@ -447,7 +340,13 @@ export default function AuthorProfilePage() {
     <div className="author-profile-theme min-h-screen bg-[var(--shadow-bg-page)] pb-[100px]">
       <ProfileSwitcherSheet
         open={profileSwitcherOpen}
-        onClose={() => setProfileSwitcherOpen(false)}
+        activeProfile="author"
+        onClose={() => {
+  setProfileSwitcherOpen(false)
+  if (new URLSearchParams(window.location.search).get('switch-account') === '1') {
+    navigate('/author/profile', { replace: true })
+  }
+}}
         displayName={readerName}
         avatarUrl={readerAvatarUrl}
         avatarLetter={readerAvatarLetter}
@@ -460,7 +359,7 @@ export default function AuthorProfilePage() {
         onAuthorPage={() => setProfileSwitcherOpen(false)}
         onManageAccount={() => {
           setProfileSwitcherOpen(false)
-          navigate('/settings')
+          navigate('/profile/settings?from=author-switcher')
         }}
       />
 
