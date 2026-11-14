@@ -34,10 +34,9 @@ function normalize(kind, data) {
       if (!Number.isSafeInteger(Number(item?.discounted_price_diamonds)) || Number(item.discounted_price_diamonds) < 1) return false
     } else {
       const type = String(item?.product_type || '').toLowerCase()
-      if (!['book', 'pdf'].includes(type) || !String(item?.title || '').trim()) return false
-      if (!String(item?.author_page_id || '').trim() || !String(item?.page_username || '').trim()) return false
-      if (!Number.isFinite(Number(item?.promotion_price_usd)) || Number(item.promotion_price_usd) <= 0) return false
-      if (type === 'book' && Number(item.stock_quantity) < 1) return false
+if (type !== 'pdf' || !String(item?.title || '').trim()) return false
+if (!String(item?.author_page_id || '').trim() || !String(item?.page_username || '').trim()) return false
+if (!Number.isFinite(Number(item?.promotion_price_usd)) || Number(item.promotion_price_usd) <= 0) return false
     }
     seen.add(id)
     return true
