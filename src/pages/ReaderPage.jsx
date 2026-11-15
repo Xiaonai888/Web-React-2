@@ -12,6 +12,10 @@ import SmartFreeUnlockAdvertisement from '../components/advertisements/SmartFree
 import GiftPopup from '../components/reader/GiftPopup'
 import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
+import {
+  registerReaderEpisode,
+  finishReaderEpisodeAd,
+} from '../services/advertisements/readerAdFrequency'
 import ChatStoryReader from '../components/chat-story/ChatStoryReader'
 import ChatAppearanceSettings from '../components/chat/ChatAppearanceSettings'
 import ChatStoryThemePage from './ChatStoryThemePage'
@@ -6786,6 +6790,24 @@ async function loadReaderAdStatus(targetEpisodeId = episodeId) {
   }
 }
 
+  function flushPendingReaderView(targetEpisodeId) {
+  const cacheKey = `${storyId}:${targetEpisodeId}`
+  const viewed = pendingViewedEpisodeRef.current.get(cacheKey)
+  if (!viewed) return
+
+  pendingViewedEpisodeRef.current.delete(cacheKey)
+
+  rememberViewedEpisode({
+    storyId,
+    episodeId: targetEpisodeId,
+    storyType: String(
+      viewed.story?.story_type ||
+      viewed.episode?.story_type ||
+      'novel'
+    ).toLowerCase(),
+    response: viewed,
+  }).catch(() => {})
+}
 
 async function loadContinuousEpisode(targetEpisode) {
   if (offlineMode) return null
@@ -6880,6 +6902,16 @@ const continuousReader = useContinuousEpisodeReader({
     const episodeChanged =
       String(episodeId || '') !== nextEpisodeId
 
+    const readerAdEligible =
+      !entry.locked &&
+      Boolean(entry.gate?.ad_policy?.show_read_ad)
+
+    const { showAd: showReaderAd } = registerReaderEpisode({
+      storyId,
+      episodeId: nextEpisodeId,
+      eligible: readerAdEligible,
+    })
+
     setActiveEpisodeId(nextEpisodeId)
     setEpisode(entry.episode)
     setLockedEpisode(Boolean(entry.locked))
@@ -6894,9 +6926,16 @@ const continuousReader = useContinuousEpisodeReader({
 
     setReaderAdPolicy(entry.gate?.ad_policy || null)
     setReaderAdvertisement(entry.gate?.advertisement || null)
-    setReaderAdFinished(Boolean(entry.adFinished))
+    setReaderAdFinished(!showReaderAd)
     setReaderGateReady(true)
     setReaderMoreOpen(false)
+
+    if (!showReaderAd && !entry.locked) {
+      flushPendingReaderView(nextEpisodeId)
+      if (!entry.adFinished) {
+        continuousReader.markAdFinished(nextEpisodeId)
+      }
+    }
 
     if (
       entry.locked &&
@@ -8917,18 +8956,10 @@ autoScrollEnabled ? (
   legacyAdvertisement={readerAdvertisement}
   key={`freeUnlock-${storyId}-${episodeId}`}
   onFinish={() => {
+    finishReaderEpisodeAd({ storyId, episodeId })
     setReaderAdFinished(true)
     continuousReader.markAdFinished(episodeId)
-    const cacheKey = `${storyId}:${episodeId}`
-    const viewed = pendingViewedEpisodeRef.current.get(cacheKey)
-    if (viewed) {
-      pendingViewedEpisodeRef.current.delete(cacheKey)
-      rememberViewedEpisode({
-        storyId, episodeId,
-        storyType: String(viewed.story?.story_type || viewed.episode?.story_type || 'novel').toLowerCase(),
-        response: viewed,
-      }).catch(() => {})
-    }
+    flushPendingReaderView(episodeId)
   }}
 />
 ) : null}
