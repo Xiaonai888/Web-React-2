@@ -419,6 +419,79 @@ function StoryReactionIcon({
   )
 }
 
+function useStoryMenuDrag(open, onClose) {
+  const startRef = useRef(null)
+  const distanceRef = useRef(0)
+  const blockClickRef = useRef(false)
+  const [dragY, setDragY] = useState(0)
+
+  useEffect(() => {
+    if (!open) {
+      startRef.current = null
+      distanceRef.current = 0
+      blockClickRef.current = false
+      setDragY(0)
+    }
+  }, [open])
+
+  function onTouchStart(event) {
+    if (event.touches.length !== 1) return
+    startRef.current = {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    }
+    distanceRef.current = 0
+    blockClickRef.current = false
+  }
+
+  function onTouchMove(event) {
+    if (!startRef.current || event.touches.length !== 1) return
+    const deltaY = event.touches[0].clientY - startRef.current.y
+    const deltaX = event.touches[0].clientX - startRef.current.x
+    if (deltaY <= 0 || deltaY <= Math.abs(deltaX) * 1.2 || event.currentTarget.scrollTop > 0) return
+    distanceRef.current = Math.min(260, deltaY)
+    if (distanceRef.current > 12) {
+      blockClickRef.current = true
+      if (event.cancelable) event.preventDefault()
+    }
+    setDragY(distanceRef.current)
+  }
+
+  function onTouchEnd() {
+    const shouldClose = distanceRef.current >= 90
+    startRef.current = null
+    distanceRef.current = 0
+    setDragY(0)
+    if (shouldClose) onClose()
+  }
+
+  function onTouchCancel() {
+    startRef.current = null
+    distanceRef.current = 0
+    blockClickRef.current = false
+    setDragY(0)
+  }
+
+  function onClickCapture(event) {
+    if (!blockClickRef.current) return
+    blockClickRef.current = false
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  return {
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
+    onTouchCancel,
+    onClickCapture,
+    style: {
+      transform: `translateY(${dragY}px)`,
+      transition: startRef.current ? 'none' : 'transform 180ms ease-out',
+    },
+  }
+}
+
 function OwnerStoryMenu({
   open,
   isAuthor,
@@ -426,6 +499,7 @@ function OwnerStoryMenu({
   onCopyLink,
   onDelete,
 }) {
+  const dragHandlers = useStoryMenuDrag(open, onClose)
   if (!open) return null
 
   return (
@@ -437,7 +511,13 @@ function OwnerStoryMenu({
         aria-label="Close story options"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[520px] rounded-t-[24px] bg-white px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+      <section
+        {...dragHandlers}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Your story options"
+        className="absolute bottom-0 left-0 right-0 mx-auto max-h-[88dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-white px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl"
+      >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#9ca3af]" />
 
         {isAuthor ? (
@@ -522,12 +602,7 @@ function ViewerStoryMenu({
   onCopyLink,
   onCreate,
 }) {
-  const touchStartRef = useRef(null)
-  const [dragY, setDragY] = useState(0)
-
-  useEffect(() => {
-    if (open) setDragY(0)
-  }, [open])
+  const dragHandlers = useStoryMenuDrag(open, onClose)
 
   if (!open) return null
 
@@ -598,45 +673,7 @@ function ViewerStoryMenu({
         aria-modal="true"
         aria-label="Story options"
         className="absolute inset-x-0 bottom-0 mx-auto max-h-[88dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-[#f3f4f7] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 text-[#14161d] shadow-2xl dark:bg-[#202128] dark:text-white"
-        style={{
-          transform: `translateY(${dragY}px)`,
-          transition: touchStartRef.current === null
-            ? 'transform 180ms ease-out'
-            : 'none',
-        }}
-        onTouchStart={(event) => {
-          if (
-            event.touches.length !== 1 ||
-            event.target.closest('button')
-          ) return
-
-          touchStartRef.current = event.touches[0].clientY
-        }}
-        onTouchMove={(event) => {
-          if (
-            touchStartRef.current === null ||
-            event.touches.length !== 1
-          ) return
-
-          const distance =
-            event.touches[0].clientY - touchStartRef.current
-
-          if (
-            distance > 0 &&
-            event.currentTarget.scrollTop <= 0
-          ) {
-            setDragY(Math.min(260, distance))
-          }
-        }}
-        onTouchEnd={() => {
-          touchStartRef.current = null
-          if (dragY >= 90) onClose()
-          setDragY(0)
-        }}
-        onTouchCancel={() => {
-          touchStartRef.current = null
-          setDragY(0)
-        }}
+        {...dragHandlers}
       >
         <div className="mx-auto mb-3 h-[5px] w-12 rounded-full bg-[#a0a4ad]" />
 
@@ -875,6 +912,27 @@ function StoryViewer({
     storyIndex,
     stories.length,
     onClose,
+    ownerMenuOpen,
+    viewerMenuOpen,
+    deleteSheetOpen,
+  ])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || story?.media_type !== 'video') return
+
+    if (ownerMenuOpen || viewerMenuOpen || deleteSheetOpen || messageFocused) {
+      video.pause()
+    } else {
+      video.play().catch(() => {})
+    }
+  }, [
+    story?.id,
+    story?.media_type,
+    ownerMenuOpen,
+    viewerMenuOpen,
+    deleteSheetOpen,
+    messageFocused,
   ])
 
   useEffect(() => {
@@ -1520,7 +1578,9 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
                   )
                 }
               }}
-              onEnded={goNext}
+              onEnded={() => {
+                if (!viewerMenuOpen && !ownerMenuOpen && !deleteSheetOpen) goNext()
+              }}
               className="h-full w-full object-contain"
             />
           ) : (
@@ -1871,9 +1931,9 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
                         }}
                         onBlur={() => {
                           setMessageFocused(false)
-                          videoRef.current
-                            ?.play?.()
-                            ?.catch?.(() => {})
+                          if (!viewerMenuOpen && !ownerMenuOpen && !deleteSheetOpen) {
+                            videoRef.current?.play?.()?.catch?.(() => {})
+                          }
                         }}
                         maxLength={2000}
                         placeholder="Send message..."
@@ -2045,7 +2105,9 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
             state: {
               targetTitle: `Story from ${creator.name || 'Shadow'}`,
               sourceUrl: window.location.href,
-              returnTo: '/discover',
+              returnTo: `/discover?story=${encodeURIComponent(story.id)}&source=${encodeURIComponent(story.source_type || '')}`,
+              reportContext: 'discover_story',
+              sourceType: story.source_type,
             },
           })
         }}
@@ -2098,6 +2160,51 @@ export default function DiscoverStorySection() {
     useRef(false)
 
   const [token, setToken] = useState(() => getAuthToken())
+  const [choices, setChoices] = useState(() => readStoryChoices(getAuthToken()))
+
+  useEffect(() => {
+    setChoices(readStoryChoices(token))
+  }, [token])
+
+  const handleStoryChoice = useCallback((type, key) => {
+    if (!token || !key || !['interested', 'hidden', 'muted'].includes(type)) return
+    const current = readStoryChoices(token)
+    const previous = current[type]
+    const updated = {
+      ...current,
+      [type]: type === 'interested' && previous.includes(key)
+        ? previous.filter((item) => item !== key)
+        : [...new Set([...previous, key])].slice(-500),
+    }
+    try {
+      const storageKey = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
+      localStorage.setItem(storageKey, JSON.stringify(updated))
+    } catch {}
+    setChoices(updated)
+  }, [token])
+
+  const visibleGroups = useMemo(() => {
+    return groups
+      .filter((group) => group.is_owner || !choices.muted.includes(group.key))
+      .map((group) => {
+        if (group.is_owner) return group
+        const stories = (group.stories || []).filter(
+          (story) => !choices.hidden.includes(`${story.source_type}:${story.id}`)
+        )
+        return {
+          ...group,
+          stories,
+          has_unseen: stories.some((story) => !story.has_viewed),
+        }
+      })
+      .filter((group) => group.stories?.length)
+      .sort((left, right) =>
+        Number(right.is_owner) - Number(left.is_owner) ||
+        Number(choices.interested.includes(right.key)) -
+        Number(choices.interested.includes(left.key))
+      )
+  }, [groups, choices])
+
   useEffect(() => {
     const updateToken = () => setToken(getAuthToken())
     window.addEventListener('focus', updateToken)
@@ -2146,7 +2253,7 @@ export default function DiscoverStorySection() {
       return
     }
 
-    const matchedGroup = groups.find(
+    const matchedGroup = visibleGroups.find(
       (group) =>
         (group.stories || []).some(
           (item) =>
@@ -2163,7 +2270,7 @@ export default function DiscoverStorySection() {
     }
 
     deepLinkHandledRef.current = true
-  }, [groups])
+  }, [visibleGroups])
 
   useEffect(() => {
     let alive = true
@@ -2441,7 +2548,7 @@ export default function DiscoverStorySection() {
             }
           />
 
-          {groups.map((group) => (
+          {visibleGroups.map((group) => (
             <StoryCard
               key={group.key}
               group={group}
@@ -2460,7 +2567,9 @@ export default function DiscoverStorySection() {
       {activeGroup ? (
         <StoryViewer
           group={activeGroup}
-          allGroups={groups}
+          allGroups={visibleGroups}
+          choices={choices}
+          onChoice={handleStoryChoice}
           onSelectGroup={(nextGroup) =>
             setActiveGroup(nextGroup)
           }
