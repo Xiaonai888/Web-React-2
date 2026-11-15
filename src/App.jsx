@@ -659,6 +659,7 @@ const readerToken =
 const shouldShowOpeningAds =
   Boolean(readerToken) &&
   !skipOnboardingAdsRef.current &&
+  !/^\/story\/[^/]+\/episode\/[^/]+\/?$/.test(location.pathname) &&
   location.pathname !== '/login' &&
   location.pathname !== '/register' &&
   location.pathname !== '/forgot-password' &&
