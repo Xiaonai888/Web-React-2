@@ -167,7 +167,7 @@ function getAuthToken() {
 
 
 function readStoryChoices(token) {
-  const empty = { interested: [], hidden: [], muted: [] }
+  const empty = { interested: [], hidden: [], muted: [], mutedInfo: {} }
   try {
     const key = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
     const saved = JSON.parse(localStorage.getItem(key) || '{}')
@@ -194,6 +194,9 @@ function readStoryChoices(token) {
       interested: Array.isArray(saved.interested) ? saved.interested : [],
       hidden,
       muted: Array.isArray(saved.muted) ? saved.muted : [],
+      mutedInfo: saved.mutedInfo && typeof saved.mutedInfo === 'object' && !Array.isArray(saved.mutedInfo)
+        ? saved.mutedInfo
+        : {},
     }
   } catch {
     return empty
@@ -737,6 +740,58 @@ function ViewerStoryMenu({
   )
 }
 
+
+function MutedStoriesSheet({ open, creators, onClose, onUnmute }) {
+  const dragHandlers = useStoryMenuDrag(open, onClose)
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[200090]">
+      <button
+        type="button"
+        aria-label="Close muted stories"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/50"
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Manage muted stories"
+        className="absolute inset-x-0 bottom-0 mx-auto max-h-[85dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-white px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 text-[#111827] shadow-2xl dark:bg-[#202128] dark:text-white"
+        {...dragHandlers}
+      >
+        <div className="mx-auto mb-4 h-1 w-11 rounded-full bg-[#9ca3af]" />
+        <div className="mb-1 text-[17px] font-semibold">Muted stories</div>
+        <p className="mb-4 text-[12px] text-[#667085] dark:text-[#aeb4c0]">
+          Unmute a creator to see their current and future stories again.
+        </p>
+        <div className="space-y-2">
+          {creators.map((creator) => (
+            <div key={creator.key} className="flex items-center gap-3 rounded-[14px] bg-[#f3f4f7] px-3 py-2.5 dark:bg-[#30313a]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#374151] text-[13px] font-bold text-white">
+                {creator.avatar_url ? (
+                  <img src={creator.avatar_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : getInitial(creator.name)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-semibold">{creator.name}</div>
+                <div className="text-[11px] text-[#667085] dark:text-[#aeb4c0]">{creator.type} stories</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onUnmute(creator.key)}
+                className="shrink-0 rounded-full bg-white px-3.5 py-2 text-[12px] font-semibold text-[#111827] active:scale-95 dark:bg-[#444754] dark:text-white"
+              >
+                Unmute
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
 
 
 function DeleteStorySheet({
@@ -2114,7 +2169,10 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
         }}
         onShare={shareStory}
         onMute={() => {
-          onChoice('muted', group.key)
+          onChoice('muted', group.key, {
+            name: creator.name || '',
+            avatar_url: creator.avatar_url || '',
+          })
           setViewerMenuOpen(false)
           onClose()
         }}
@@ -2180,31 +2238,45 @@ export default function DiscoverStorySection() {
 
   const [token, setToken] = useState(() => getAuthToken())
   const [choices, setChoices] = useState(() => readStoryChoices(getAuthToken()))
+  const [mutedSheetOpen, setMutedSheetOpen] = useState(false)
 
   useEffect(() => {
     setChoices(readStoryChoices(token))
   }, [token])
 
-  const handleStoryChoice = useCallback((type, key, expiresAt = null) => {
-    if (!token || !key || !['interested', 'hidden', 'muted'].includes(type)) return
+  const handleStoryChoice = useCallback((type, key, detail = null) => {
+    if (!token || !key || !['interested', 'hidden', 'muted', 'unmute'].includes(type)) return
     const current = readStoryChoices(token)
-    const previous = current[type]
+    const bucket = type === 'unmute' ? 'muted' : type
+    const previous = current[bucket]
     let nextItems
 
     if (type === 'hidden') {
-      const expiryTime = Date.parse(String(expiresAt || ''))
+      const expiryTime = Date.parse(String(detail || ''))
       if (!Number.isFinite(expiryTime) || expiryTime <= Date.now()) return
       nextItems = [
         ...previous.filter((item) => item.id !== key),
         { id: key, expires_at: new Date(expiryTime).toISOString() },
       ].slice(-500)
+    } else if (type === 'unmute') {
+      nextItems = previous.filter((item) => item !== key)
     } else {
       nextItems = type === 'interested' && previous.includes(key)
         ? previous.filter((item) => item !== key)
         : [...new Set([...previous, key])].slice(-500)
     }
 
-    const updated = { ...current, [type]: nextItems }
+    const mutedInfo = { ...current.mutedInfo }
+    if (type === 'muted') {
+      mutedInfo[key] = {
+        name: String(detail?.name || '').slice(0, 100),
+        avatar_url: String(detail?.avatar_url || '').slice(0, 1000),
+      }
+    } else if (type === 'unmute') {
+      delete mutedInfo[key]
+    }
+
+    const updated = { ...current, [bucket]: nextItems, mutedInfo }
     try {
       const storageKey = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
       localStorage.setItem(storageKey, JSON.stringify(updated))
@@ -2233,6 +2305,22 @@ export default function DiscoverStorySection() {
         Number(choices.interested.includes(left.key))
       )
   }, [groups, choices])
+
+  const mutedCreators = useMemo(() => choices.muted.map((key) => {
+    const stored = choices.mutedInfo?.[key] || {}
+    const existing = groups.find((group) => group.key === key)?.creator || {}
+    const type = key.startsWith('author:') ? 'Author' : 'Reader'
+    return {
+      key,
+      name: stored.name || existing.name || `${type} creator`,
+      avatar_url: stored.avatar_url || existing.avatar_url || '',
+      type,
+    }
+  }), [choices.muted, choices.mutedInfo, groups])
+
+  useEffect(() => {
+    if (!token) setMutedSheetOpen(false)
+  }, [token])
 
   useEffect(() => {
     const updateToken = () => setToken(getAuthToken())
@@ -2588,11 +2676,34 @@ export default function DiscoverStorySection() {
             />
           ))}
 
+          {mutedCreators.length > 0 ? (
+            <button
+              type="button"
+              aria-label={`Manage ${mutedCreators.length} muted story creators`}
+              onClick={() => setMutedSheetOpen(true)}
+              className="flex h-[168px] w-[102px] shrink-0 flex-col items-center justify-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-[#f3f4f7] px-2 text-center text-[#374151] active:scale-[0.98] sm:h-[170px] sm:w-[104px] dark:border-[#4b5563] dark:bg-[#30313a] dark:text-white"
+            >
+              <i className="fa-solid fa-volume-xmark text-[23px]" aria-hidden="true" />
+              <span className="text-[12px] font-semibold">Muted stories</span>
+              <span className="text-[10px] opacity-70">{mutedCreators.length} creators</span>
+            </button>
+          ) : null}
+
           {loading ? (
             <div className="h-[168px] w-[102px] shrink-0 animate-pulse rounded-[8px] bg-gradient-to-br from-gray-200 to-gray-100 sm:h-[170px] sm:w-[104px]" />
           ) : null}
         </div>
       </section>
+
+      <MutedStoriesSheet
+        open={mutedSheetOpen}
+        creators={mutedCreators}
+        onClose={() => setMutedSheetOpen(false)}
+        onUnmute={(key) => {
+          handleStoryChoice('unmute', key)
+          if (mutedCreators.length <= 1) setMutedSheetOpen(false)
+        }}
+      />
 
       {activeGroup ? (
         <StoryViewer
