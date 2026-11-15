@@ -32,6 +32,18 @@ function tokenStatus(token) {
   }
 }
 
+
+function tokenSessionId(token) {
+  try {
+    const encoded = String(token || '').split('.')[1]
+    const payload = JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/')))
+    return String(payload.session_id || '').slice(0, 8) || 'MISSING'
+  } catch {
+    return 'INVALID'
+  }
+}
+
+
 function readDiagnostic(key) {
   try { return JSON.parse(sessionStorage.getItem(key) || 'null') } catch { return null }
 }
@@ -191,7 +203,9 @@ function inspectAuthResponse(response, requestToken, path) {
       path,
       http: response.status,
       code,
+      
       requestToken: tokenStatus(requestToken),
+      requestSessionId: tokenSessionId(requestToken),
       requestMatchesLocal: Boolean(requestToken && requestToken === local),
       requestMatchesSession: Boolean(requestToken && requestToken === session),
       requestMatchesLatestLogin: Boolean(requestToken && requestToken === lastLoginToken),
