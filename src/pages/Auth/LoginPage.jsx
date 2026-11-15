@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -177,6 +177,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const loginPendingRef = useRef(false)
   const [message, setMessage] = useState('')
   const [challenge, setChallenge] = useState(null)
   const [emailCode, setEmailCode] = useState('')
@@ -212,6 +213,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (loginPendingRef.current) return
+    loginPendingRef.current = true
     setMessage('')
     try {
       setLoading(true)
@@ -246,7 +249,8 @@ export default function LoginPage() {
       finishLogin(data)
     } catch (error) {
       setMessage(error.message === 'Failed to fetch' ? t('loginPage.serverStarting') : error.message || t('loginPage.loginFailed'))
-    } finally {
+        } finally {
+      loginPendingRef.current = false
       setLoading(false)
     }
   }
@@ -262,6 +266,8 @@ export default function LoginPage() {
       setMessage(t('loginPage.pinRequired'))
       return
     }
+      if (loginPendingRef.current) return
+    loginPendingRef.current = true
     try {
       setLoading(true)
       const response = await fetch(`${API_BASE_URL}/api/users/login/verify`, {
@@ -287,6 +293,7 @@ export default function LoginPage() {
     } catch (error) {
       setMessage(error.message === 'Failed to fetch' ? t('loginPage.serverStarting') : error.message || t('loginPage.verificationFailed'))
     } finally {
+      loginPendingRef.current = false
       setLoading(false)
     }
   }
