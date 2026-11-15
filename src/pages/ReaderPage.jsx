@@ -8003,7 +8003,7 @@ const nextReset = (Math.floor((now + cambodiaOffset) / dayMs) + 1) * dayMs - cam
 
 readingSessionIdleUntilRef.current = {
   episodeId: finishedSession ? currentEpisodeId : '',
-  until: finishedSession ? Math.min(now + 10 * 60 * 1000, nextReset) : 0,
+  until: finishedSession ? Math.min(now + 30 * 60 * 1000, nextReset) : 0,
 }
 
       const nextTarget = resolveReadingTarget({
