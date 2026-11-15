@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { markPromoAdDisplayed } from '../services/advertisements/placementAdSequence'
+import { grantReaderAdEntryPass } from '../services/advertisements/readerAdFrequency'
 
 registerTranslationNamespace('advertisementPopup', {
   en: {
@@ -540,6 +541,20 @@ export default function AdvertisementPopup({
         hostname === 'www.shadowerabook.site'
 
       if (isShadowLink) {
+        const episodeMatch = url.pathname.match(
+          /^\/story\/([^/]+)\/episode\/([^/]+)\/?$/
+        )
+
+        if (
+          episodeMatch &&
+          ['opening', 'me', 'freeUnlock'].includes(placement)
+        ) {
+          grantReaderAdEntryPass({
+            storyId: episodeMatch[1],
+            episodeId: episodeMatch[2],
+          })
+        }
+
         finishAd()
         navigate(`${url.pathname}${url.search}${url.hash}`)
         return
