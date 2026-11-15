@@ -545,13 +545,17 @@ export default function AdvertisementPopup({
           /^\/story\/([^/]+)\/episode\/([^/]+)\/?$/
         )
 
+                const storyMatch = url.pathname.match(
+          /^\/story\/([^/]+)\/?$/
+        )
+
         if (
-          episodeMatch &&
+          (episodeMatch || storyMatch) &&
           ['opening', 'me', 'freeUnlock'].includes(placement)
         ) {
           grantReaderAdEntryPass({
-            storyId: episodeMatch[1],
-            episodeId: episodeMatch[2],
+            storyId: episodeMatch?.[1] || storyMatch?.[1],
+            episodeId: episodeMatch?.[2] || '',
           })
         }
 
