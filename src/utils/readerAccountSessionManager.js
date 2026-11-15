@@ -8,6 +8,7 @@ import { clearReaderAccountSwitchIntent } from './readerAccountSwitchIntent'
 
 const TOKEN_KEY = 'shadow_reader_token'
 const USER_KEY = 'shadow_reader_user'
+const ACTIVATION_KEY = 'shadow_reader_activation_epoch_v1'
 const ACCOUNT_CHANGED_EVENT = 'shadow:reader-account-changed'
 
 function restore(storage, key, previousValue) {
@@ -25,16 +26,28 @@ export function activateReaderAccount({ token, user, remember = true }) {
 
   const primary = remember ? localStorage : sessionStorage
   const secondary = remember ? sessionStorage : localStorage
+  
+  const activationEpoch = String(Math.max(
+    Date.now(),
+    Number(localStorage.getItem(ACTIVATION_KEY)) || 0,
+    Number(sessionStorage.getItem(ACTIVATION_KEY)) || 0,
+  ) + 1)
+
   const records = [primary, secondary].flatMap((storage) => [
     { storage, key: TOKEN_KEY, previousValue: storage.getItem(TOKEN_KEY) },
     { storage, key: USER_KEY, previousValue: storage.getItem(USER_KEY) },
+    { storage, key: ACTIVATION_KEY, previousValue: storage.getItem(ACTIVATION_KEY) },
   ])
 
   try {
     primary.setItem(TOKEN_KEY, token)
+
     primary.setItem(USER_KEY, JSON.stringify(user))
+    primary.setItem(ACTIVATION_KEY, activationEpoch)
     secondary.removeItem(TOKEN_KEY)
     secondary.removeItem(USER_KEY)
+    secondary.removeItem(ACTIVATION_KEY)
+
     if (getActiveReaderToken() !== token) throw new Error('Unable to activate the selected reader account')
   } catch (error) {
     for (const entry of records) restore(entry.storage, entry.key, entry.previousValue)
