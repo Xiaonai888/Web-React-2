@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdvertisementPopup from '../AdvertisementPopup'
+import { grantReaderAdEntryPass } from '../../services/advertisements/readerAdFrequency'
 import { hasPremiumAdFree } from '../../services/premiumAdVisibility'
 import {
   openSmartPlacementEpisodeOne,
@@ -151,6 +152,10 @@ export default function SmartPlacementAdvertisement({
     if (!advertisement) return false
     try {
       const path = await openSmartPlacementEpisodeOne(advertisement)
+      grantReaderAdEntryPass({
+        storyId: advertisement.story_id,
+        episodeId: path.split('/episode/')[1],
+      })
       finish()
       navigate(path)
       return true
