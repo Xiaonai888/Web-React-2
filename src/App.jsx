@@ -66,6 +66,7 @@ import AuthorTrashPage from './pages/Author/AuthorTrashPage'
 import NotificationPage from './pages/NotificationPage'
 import AdvertisementPopup from './components/AdvertisementPopup'
 import SmartPlacementAdvertisement from './components/advertisements/SmartPlacementAdvertisement'
+import { observePromoRoute, canShowMeAd } from './services/advertisements/placementAdSequence'
 import ShadowSplashScreen from './components/ShadowSplashScreen'
 import PublishBlockedWarningPage from './pages/Author/PublishBlockedWarningPage'
 import InboxPage from './pages/InboxPage'
@@ -445,6 +446,16 @@ function CountryLocalAppGuard({ children }) {
 
 function AppShell() {
   const location = useLocation()
+  const [promoRoute, setPromoRoute] = useState(() => ({
+    path: location.pathname,
+    allowed: observePromoRoute(location.pathname),
+  }))
+  useEffect(() => {
+    setPromoRoute({
+      path: location.pathname,
+      allowed: observePromoRoute(location.pathname),
+    })
+  }, [location.pathname])
   useAuthorThemeScope(location.pathname)
   const readerNavPaths = [
   '/profile',
@@ -657,7 +668,10 @@ const shouldShowOpeningAds =
   const shouldShowMeAd =
   location.pathname === '/me' &&
   shouldShowOpeningAds &&
-  adStep === 'done'
+  adStep === 'done' &&
+  promoRoute.path === location.pathname &&
+  promoRoute.allowed &&
+  canShowMeAd(location.pathname)
   return (
     <>
       <VisitorTracker />
