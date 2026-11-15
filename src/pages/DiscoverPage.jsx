@@ -5133,9 +5133,8 @@ const visibleBoostPosts = useMemo(() => {
     const ownerId = String(
       userId || ''
     )
-
-    if (!ownerId) return
-    window.dispatchEvent(new Event('shadow:story-follow-updated'))
+  
+    if (!id) return
 
     setReaderPosts((current) =>
       current.map((post) => {
@@ -5456,9 +5455,10 @@ const visibleBoostPosts = useMemo(() => {
       authorId || ''
     )
 
-    if (!id) return
+   if (!id) return
+window.dispatchEvent(new Event('shadow:story-follow-updated'))
 
-    authorFollowOverridesRef.current.set(
+authorFollowOverridesRef.current.set(
       id,
       Boolean(isFollowing)
     )
