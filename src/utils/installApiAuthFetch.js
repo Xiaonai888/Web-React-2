@@ -215,18 +215,6 @@ function inspectAuthResponse(response, requestToken, path) {
       tokenChange: readDiagnostic(AUTH_CHANGE_KEY),
     })
 
-    
-    if (code === 'READER_SESSION_REVOKED' && requestToken) {
-      const active = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token')
-      const user = JSON.parse(sessionStorage.getItem('shadow_reader_user') || localStorage.getItem('shadow_reader_user') || 'null')
-      if (active === requestToken && String(user?.username || '').replace(/^@/, '').toLowerCase() === 'hexing001') {
-        for (const storage of [sessionStorage, localStorage]) {
-          if (storage.getItem('shadow_reader_token') === requestToken) { storage.removeItem('shadow_reader_token'); storage.removeItem('shadow_reader_user') }
-        }
-        window.location.replace('/login')
-      }
-    }
-
   }).catch(() => {})
 }
 
