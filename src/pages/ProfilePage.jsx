@@ -1061,6 +1061,14 @@ export default function ProfilePage() {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false)
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [readerPostCount, setReaderPostCount] = useState(0)
+  const handleReaderPostCountChange = useCallback(
+  (count) => {
+    if (isReaderAccountResponseCurrent(activeToken)) {
+      setReaderPostCount(count)
+    }
+  },
+  [activeToken]
+)
   const [profileTabMessage, setProfileTabMessage] = useState('')
   const [discoverPeopleOpen, setDiscoverPeopleOpen] = useState(false)
   const [user, setUser] = useState(() =>
@@ -1930,9 +1938,7 @@ async function handleOtherProfileOption(action) {
   isOwnProfile={isOwnProfile}
   profileUser={user}
   onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
-  onCountChange={(count) => {
-    if (isReaderAccountResponseCurrent(activeToken)) setReaderPostCount(count)
-  }}
+  onCountChange={handleReaderPostCountChange}
 />
 
         <ReaderProfileBlockAction
