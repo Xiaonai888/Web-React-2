@@ -5174,6 +5174,7 @@ const visibleBoostPosts = useMemo(() => {
     )
 
     if (!id) return
+    window.dispatchEvent(new Event('shadow:story-follow-updated'))
 
     hiddenReaderPostIdsRef.current.add(
       id
