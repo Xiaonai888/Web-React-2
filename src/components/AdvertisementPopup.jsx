@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { markPromoAdDisplayed } from '../services/advertisements/placementAdSequence'
 
 registerTranslationNamespace('advertisementPopup', {
   en: {
@@ -178,6 +179,10 @@ function shouldShowByFrequency(advertisement) {
 
 function markShown(advertisement) {
   if (getSearchFlag('adtest')) return
+
+  if (advertisement.placement === 'opening' || advertisement.placement === 'me') {
+    markPromoAdDisplayed(advertisement.placement)
+  }
 
   const key = storageKey(advertisement)
   const frequency = advertisement.frequency || 'once_per_session'
