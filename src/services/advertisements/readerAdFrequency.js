@@ -143,17 +143,6 @@ export function grantReaderAdEntryPass({ storyId, episodeId } = {}) {
   return true
 }
 
-export function grantReaderAdEntryPass({ storyId, episodeId } = {}) {
-  const account = getReaderAdAccountKey()
-  const episode = episodeKey(storyId, episodeId)
-  if (!account || !episode) return false
-  const pass = { episode, expiresAt: Date.now() + ENTRY_PASS_MS }
-  const key = `${ENTRY_PASS_PREFIX}${account}`
-  memoryPasses.set(key, pass)
-  try { storage('session')?.setItem(key, JSON.stringify(pass)) } catch {}
-  return true
-}
-
 export function peekReaderEpisodeAd({ storyId, episodeId, eligible = false } = {}) {
   const account = getReaderAdAccountKey()
   const key = episodeKey(storyId, episodeId)
