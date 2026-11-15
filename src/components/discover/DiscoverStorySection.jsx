@@ -1949,9 +1949,10 @@ export default function DiscoverStorySection() {
   useEffect(() => {
     let alive = true
     let requestRunning = false
+    let lastNetworkRequestAt = 0
+    let refreshAfterRequest = false
 
-    async function loadStories() {
-      // The feed requires a signed-in reader. Never request it as a guest.
+    async function loadStories({ force = false, followingChanged = false } = {}) {
       if (!token) {
         if (alive) {
           setGroups([])
@@ -1960,150 +1961,108 @@ export default function DiscoverStorySection() {
         }
         return
       }
-      if (requestRunning) return
+
+      if (requestRunning) {
+        if (followingChanged) refreshAfterRequest = true
+        return
+      }
+
       requestRunning = true
       let hasCachedGroups = false
 
       try {
-        const cached =
-          await loadHomeCache(
-            storyCacheKey,
-            {
-              maxAgeMs:
-                DISCOVER_STORY_CACHE_MAX_AGE_MS,
-              allowExpired: true,
-            }
-          )
+        const cached = await loadHomeCache(storyCacheKey, {
+          maxAgeMs: DISCOVER_STORY_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        })
 
         if (!alive) return
 
-        if (
-          Array.isArray(
-            cached?.data?.groups
-          )
-        ) {
+        if (Array.isArray(cached?.data?.groups)) {
           hasCachedGroups = true
-
-          const cachedGroups =
-            removeExpiredStoryGroups(
-              cached.data.groups
-            )
-
+          const cachedGroups = removeExpiredStoryGroups(cached.data.groups)
           setGroups(cachedGroups)
           setLoading(false)
 
           if (
+            !force &&
             cached.isFresh &&
-            (cachedGroups.length > 0 ||
-              cached.ageMs < 60 * 1000)
+            (cachedGroups.length > 0 || cached.ageMs < 60 * 1000)
           ) {
             return
           }
         }
 
-        if (!hasCachedGroups) {
-          setLoading(true)
-        }
+        if (!hasCachedGroups) setLoading(true)
 
-        const data =
-          await runDiscoverStoryRequest(
-            storyCacheKey,
-            async () => {
-              const response =
-                await fetch(
-                  `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
-                  {
-                    headers:
-                      requestHeaders,
-                    cache: 'no-store',
-                  }
-                )
-
-              const payload =
-                await response
-                  .json()
-                  .catch(() => ({}))
-
-              if (
-                !response.ok ||
-                payload.ok === false
-              ) {
-                throw new Error(
-                  payload.message ||
-                    'Failed to load stories'
-                )
-              }
-
-              return payload
+        lastNetworkRequestAt = Date.now()
+        const data = await runDiscoverStoryRequest(storyCacheKey, async () => {
+          const response = await fetch(
+            `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
+            {
+              headers: requestHeaders,
+              cache: 'no-store',
             }
           )
+          const payload = await response.json().catch(() => ({}))
+
+          if (!response.ok || payload.ok === false) {
+            throw new Error(payload.message || 'Failed to load stories')
+          }
+          return payload
+        })
 
         if (!alive) return
 
-        const nextGroups =
-          removeExpiredStoryGroups(
-            data.groups
-          )
-
+        const nextGroups = removeExpiredStoryGroups(data.groups)
         setGroups(nextGroups)
-
         setActiveGroup((current) => {
           if (!current) return current
-
-          return (
-            nextGroups.find(
-              (group) =>
-                group.key ===
-                current.key
-            ) || current
-          )
+          return nextGroups.find((group) => group.key === current.key) || null
         })
 
         await saveHomeCache(
           storyCacheKey,
-          {
-            groups: nextGroups,
-          },
-          {
-            maxAgeMs:
-              DISCOVER_STORY_CACHE_MAX_AGE_MS,
-          }
+          { groups: nextGroups },
+          { maxAgeMs: DISCOVER_STORY_CACHE_MAX_AGE_MS }
         )
       } catch {
-        if (
-          alive &&
-          !hasCachedGroups
-        ) {
-          setGroups([])
-        }
+        if (alive && !hasCachedGroups) setGroups([])
       } finally {
         requestRunning = false
         if (alive) {
           setLoading(false)
+          if (refreshAfterRequest) {
+            refreshAfterRequest = false
+            void loadStories({ force: true })
+          }
         }
       }
     }
 
     function handlePageReturn() {
-      if (document.visibilityState === 'visible') {
-        void loadStories()
-      }
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastNetworkRequestAt < 60 * 1000) return
+      void loadStories({ force: true })
     }
 
-    void loadStories()
+    function handleFollowingChanged() {
+      if (document.visibilityState !== 'visible') return
+      void loadStories({ force: true, followingChanged: true })
+    }
+
+    void loadStories({ force: true })
     window.addEventListener('focus', handlePageReturn)
     document.addEventListener('visibilitychange', handlePageReturn)
+    window.addEventListener('shadow:story-follow-updated', handleFollowingChanged)
 
     return () => {
       alive = false
       window.removeEventListener('focus', handlePageReturn)
       document.removeEventListener('visibilitychange', handlePageReturn)
+      window.removeEventListener('shadow:story-follow-updated', handleFollowingChanged)
     }
-  }, [
-    requestHeaders,
-    storyCacheKey,
-    token,
-  ])
+  }, [requestHeaders, storyCacheKey, token])
 
   const handleViewed = useCallback(
     (
