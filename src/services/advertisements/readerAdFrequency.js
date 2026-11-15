@@ -91,6 +91,14 @@ function clearPass(account) {
   try { storage('session')?.removeItem(key) } catch {}
 }
 
+function matchesEntryPass(pass, key) {
+  if (!pass || !key) return false
+  if (pass.episode === key) return true
+  return !pass.episode &&
+    Boolean(pass.story) &&
+    key.startsWith(`${pass.story}:`)
+}
+
 function consumeMatchingPass(account, key) {
   const pass = readPass(account)
   if (!pass) return false
@@ -98,14 +106,41 @@ function consumeMatchingPass(account, key) {
     clearPass(account)
     return false
   }
-  if (pass.episode !== key) return false
+  if (!matchesEntryPass(pass, key)) return false
   clearPass(account)
   return true
 }
 
 function hasMatchingPass(account, key) {
   const pass = readPass(account)
-  return Boolean(pass && pass.episode === key && Number(pass.expiresAt) > Date.now())
+  return Boolean(
+    pass &&
+    Number(pass.expiresAt) > Date.now() &&
+    matchesEntryPass(pass, key)
+  )
+}
+
+export function grantReaderAdEntryPass({ storyId, episodeId } = {}) {
+  const account = getReaderAdAccountKey()
+  const story = String(storyId || '').trim().toLowerCase()
+  const episode = episodeKey(storyId, episodeId)
+
+  if (!account || !story) return false
+
+  const pass = {
+    episode,
+    story: episode ? '' : story,
+    expiresAt: Date.now() + ENTRY_PASS_MS,
+  }
+
+  const key = `${ENTRY_PASS_PREFIX}${account}`
+  memoryPasses.set(key, pass)
+
+  try {
+    storage('session')?.setItem(key, JSON.stringify(pass))
+  } catch {}
+
+  return true
 }
 
 export function grantReaderAdEntryPass({ storyId, episodeId } = {}) {
