@@ -1,3 +1,4 @@
+import { isSameReaderSession } from './readerActiveAccount'
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
@@ -167,7 +168,7 @@ function inspectLoginResponse(response) {
   response.clone().json().then((data) => {
     if (!data?.token) return
     lastLoginToken = data.token
-    const login = { time: new Date().toISOString(), http: response.status, token: tokenStatus(data.token) }
+    const login = { time: new Date().toISOString(), http: response.status, token: tokenStatus(data.token), sessionId: tokenSessionId(data.token) }
     writeDiagnostic(AUTH_LOGIN_KEY, login)
     setTimeout(() => {
       const local = localStorage.getItem('shadow_reader_token') || ''
@@ -177,7 +178,11 @@ function inspectLoginResponse(response) {
         localToken: tokenStatus(local),
         sessionToken: tokenStatus(session),
         localMatchesLogin: !!local && local === data.token,
+        localSessionId: tokenSessionId(local),
+        localMatchesLoginSession: isSameReaderSession(local, data.token),
         sessionMatchesLogin: !!session && session === data.token,
+        sessionSessionId: tokenSessionId(session),
+        sessionMatchesLoginSession: isSameReaderSession(session, data.token),
       })
     }, 600)
   }).catch(() => {})
@@ -209,8 +214,11 @@ function inspectAuthResponse(response, requestToken, path) {
       requestMatchesLocal: Boolean(requestToken && requestToken === local),
       requestMatchesSession: Boolean(requestToken && requestToken === session),
       requestMatchesLatestLogin: Boolean(requestToken && requestToken === lastLoginToken),
+      requestMatchesLatestLoginSession: isSameReaderSession(requestToken, lastLoginToken),
       localToken: tokenStatus(local),
+      localSessionId: tokenSessionId(local),
       sessionToken: tokenStatus(session),
+      sessionSessionId: tokenSessionId(session),
       lastLogin: readDiagnostic(AUTH_LOGIN_KEY),
       tokenChange: readDiagnostic(AUTH_CHANGE_KEY),
     })
@@ -224,8 +232,14 @@ function handleReaderSessionResponse(fetchPromise, requestToken, path) {
     if (path === '/api/users/login' || path === '/api/users/login/verify') inspectLoginResponse(response)
     inspectAuthResponse(response, requestToken, path)
     const renewedToken = response.headers.get('X-Reader-Token')
-    if (renewedToken && tokenStatus(requestToken) === 'SESSION_FIELDS_PRESENT' && tokenStatus(renewedToken) !== 'SESSION_FIELDS_PRESENT') {
-      reportAuthFailure('INVALID_RENEWAL_TOKEN_RECEIVED', { path, http: response.status, requestToken: tokenStatus(requestToken), renewalToken: tokenStatus(renewedToken) })
+    if (renewedToken && (tokenStatus(renewedToken) !== 'SESSION_FIELDS_PRESENT' || !isSameReaderSession(requestToken, renewedToken))) {
+      reportAuthFailure('INVALID_RENEWAL_TOKEN_RECEIVED', {
+        path,
+        http: response.status,
+        requestSessionId: tokenSessionId(requestToken),
+        renewalSessionId: tokenSessionId(renewedToken),
+        renewalToken: tokenStatus(renewedToken),
+      })
       return response
     }
     const currentToken = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
