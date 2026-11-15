@@ -494,39 +494,177 @@ function OwnerStoryMenu({
 
 function ViewerStoryMenu({
   open,
+  creatorName,
+  interested,
   onClose,
+  onInterested,
+  onNotInterested,
+  onShare,
+  onMute,
+  onReport,
   onCopyLink,
+  onCreate,
 }) {
+  const touchStartRef = useRef(null)
+  const [dragY, setDragY] = useState(0)
+
+  useEffect(() => {
+    if (open) setDragY(0)
+  }, [open])
+
   if (!open) return null
+
+  const sections = [
+    [
+      {
+        key: 'interested',
+        icon: interested ? 'fa-circle-check' : 'fa-circle-plus',
+        title: interested ? 'Interested ✓' : 'Interested',
+        description: 'Show more stories from this creator.',
+        action: onInterested,
+      },
+      {
+        key: 'not-interested',
+        icon: 'fa-circle-minus',
+        title: 'Not interested',
+        description: 'Show fewer stories like this.',
+        action: onNotInterested,
+      },
+    ],
+    [
+      {
+        key: 'share',
+        icon: 'fa-share',
+        title: 'Share this story',
+        action: onShare,
+      },
+      {
+        key: 'mute',
+        icon: 'fa-volume-xmark',
+        title: `Mute ${creatorName || 'this creator'}'s stories`,
+        description: 'Stop seeing their stories in Discover.',
+        action: onMute,
+      },
+      {
+        key: 'report',
+        icon: 'fa-triangle-exclamation',
+        title: 'Find Support or Report',
+        action: onReport,
+      },
+      {
+        key: 'copy',
+        icon: 'fa-link',
+        title: 'Copy link to share this story',
+        description: 'Stories are available for 24 hours.',
+        action: onCopyLink,
+      },
+      {
+        key: 'create',
+        icon: 'fa-circle-plus',
+        title: 'Create a story',
+        action: onCreate,
+      },
+    ],
+  ]
 
   return (
     <div className="fixed inset-0 z-[200090]">
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 bg-black/45"
+        className="absolute inset-0 bg-black/50"
         aria-label="Close story options"
       />
 
-      <section className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[520px] rounded-t-[24px] bg-white px-3 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#9ca3af]" />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Story options"
+        className="absolute inset-x-0 bottom-0 mx-auto max-h-[88dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-[#f3f4f7] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 text-[#14161d] shadow-2xl dark:bg-[#202128] dark:text-white"
+        style={{
+          transform: `translateY(${dragY}px)`,
+          transition: touchStartRef.current === null
+            ? 'transform 180ms ease-out'
+            : 'none',
+        }}
+        onTouchStart={(event) => {
+          if (
+            event.touches.length !== 1 ||
+            event.target.closest('button')
+          ) return
 
-        <button
-          type="button"
-          onClick={onCopyLink}
-          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-left text-[#111827] active:bg-[#f2f4f7]"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] text-[#155eef]">
-            <i className="fa-solid fa-link text-[13px]" />
-          </span>
-          <span className="text-[13px] font-semibold">
-            Copy Story Link
-          </span>
-        </button>
+          touchStartRef.current = event.touches[0].clientY
+        }}
+        onTouchMove={(event) => {
+          if (
+            touchStartRef.current === null ||
+            event.touches.length !== 1
+          ) return
+
+          const distance =
+            event.touches[0].clientY - touchStartRef.current
+
+          if (
+            distance > 0 &&
+            event.currentTarget.scrollTop <= 0
+          ) {
+            setDragY(Math.min(260, distance))
+          }
+        }}
+        onTouchEnd={() => {
+          touchStartRef.current = null
+          if (dragY >= 90) onClose()
+          setDragY(0)
+        }}
+        onTouchCancel={() => {
+          touchStartRef.current = null
+          setDragY(0)
+        }}
+      >
+        <div className="mx-auto mb-3 h-[5px] w-12 rounded-full bg-[#a0a4ad]" />
+
+        <div className="space-y-3">
+          {sections.map((items, sectionIndex) => (
+            <div
+              key={sectionIndex}
+              className="overflow-hidden rounded-[17px] bg-white px-1 py-1 dark:bg-[#30313a]"
+            >
+              {items.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={item.action}
+                  className="flex min-h-[60px] w-full items-center gap-3 rounded-[13px] px-3 py-2.5 text-left active:bg-black/5 dark:active:bg-white/10"
+                >
+                  <span className="flex w-9 shrink-0 justify-center text-[21px]">
+                    <i
+                      className={`fa-solid ${item.icon}`}
+                      aria-hidden="true"
+                    />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold leading-5">
+                      {item.title}
+                    </span>
+
+                    {item.description ? (
+                      <span className="mt-0.5 block text-[12px] leading-4 text-[#677184] dark:text-[#aeb4c0]">
+                        {item.description}
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   )
 }
+
+
 
 function DeleteStorySheet({
   open,
