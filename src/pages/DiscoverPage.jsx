@@ -90,7 +90,7 @@ const discoverFeedInflightRequests =
 const discoverBoostSessionCache = new Map()
 const DISCOVER_BOOST_RECEIPT_CACHE_MS = 75 * 1000
 const DISCOVER_BOOST_EMPTY_RECHECK_MS = 5 * 60 * 1000
-const DISCOVER_VERSION_CHECK_INTERVAL_MS = 20 * 1000
+const DISCOVER_VERSION_CHECK_INTERVAL_MS = 60 * 1000
 let discoverFeedVersion = null
 let discoverFeedVersionCheckedAt = 0
 let discoverFeedVersionRequest = null
@@ -112,9 +112,9 @@ async function fetchDiscoverFeedVersion(entryKey = '') {
     'discover-content-version',
     async () => {
       const response = await fetch(
-        `${API_BASE_URL}/api/public/content-versions?keys=discover`,
-        { cache: 'no-store' }
-      )
+  `${API_BASE_URL}/api/public/content-versions?keys=discover`,
+  { cache: 'default' }
+)
       if (!response.ok) throw new Error('Version request failed')
       const data = await response.json()
       if (data?.ok === false) throw new Error('Version request failed')
