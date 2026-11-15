@@ -5134,7 +5134,8 @@ const visibleBoostPosts = useMemo(() => {
       userId || ''
     )
   
-    if (!id) return
+    if (!ownerId) return
+window.dispatchEvent(new Event('shadow:story-follow-updated'))
 
     setReaderPosts((current) =>
       current.map((post) => {
@@ -5173,7 +5174,6 @@ const visibleBoostPosts = useMemo(() => {
     )
 
     if (!id) return
-    window.dispatchEvent(new Event('shadow:story-follow-updated'))
 
     hiddenReaderPostIdsRef.current.add(
       id
