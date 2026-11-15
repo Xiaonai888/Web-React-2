@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdvertisementPopup from '../AdvertisementPopup'
+import { grantReaderAdEntryPass } from '../../services/advertisements/readerAdFrequency'
 import { takeSmartFreeUnlockAd } from '../../services/advertisements/smartFreeUnlockQueue'
 import {
   openSmartFreeUnlockEpisodeOne,
@@ -115,6 +116,10 @@ export default function SmartFreeUnlockAdvertisement({
     if (!ad) return false
     try {
       const path = await openSmartFreeUnlockEpisodeOne(ad)
+      grantReaderAdEntryPass({
+        storyId: ad.story_id,
+        episodeId: path.split('/episode/')[1],
+      })
       finish()
       navigate(path)
       return true
