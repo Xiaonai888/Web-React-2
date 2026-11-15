@@ -165,6 +165,23 @@ function getAuthToken() {
   )
 }
 
+
+function readStoryChoices(token) {
+  const empty = { interested: [], hidden: [], muted: [] }
+  try {
+    const key = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
+    const saved = JSON.parse(localStorage.getItem(key) || '{}')
+    return {
+      interested: Array.isArray(saved.interested) ? saved.interested : [],
+      hidden: Array.isArray(saved.hidden) ? saved.hidden : [],
+      muted: Array.isArray(saved.muted) ? saved.muted : [],
+    }
+  } catch {
+    return empty
+  }
+}
+
+
 function getInitial(value) {
   return String(value || 'S')
     .trim()
@@ -720,6 +737,7 @@ function DeleteStorySheet({
   )
 }
 
+
 function StoryViewer({
   group,
   allGroups,
@@ -727,7 +745,10 @@ function StoryViewer({
   onClose,
   onViewed,
   onDeleted,
+  choices,
+  onChoice,
 }) {
+
   const navigate = useNavigate()
   const [storyIndex, setStoryIndex] =
     useState(0)
@@ -799,28 +820,31 @@ function StoryViewer({
   }, [group?.key])
 
   useEffect(() => {
+
     if (
       !story ||
       story.media_type === 'video' ||
-      messageFocused
+      messageFocused ||
+      ownerMenuOpen ||
+      viewerMenuOpen ||
+      deleteSheetOpen
     ) {
-      setProgress(0)
       return undefined
     }
 
     const startedAt = Date.now()
     const duration = 5000
+    const initialProgress = progress
+
 
     const timer =
       window.setInterval(() => {
+
         const nextProgress = Math.min(
           100,
-          (
-            (Date.now() -
-              startedAt) /
-            duration
-          ) * 100
+          initialProgress + ((Date.now() - startedAt) / duration) * 100
         )
+
 
         setProgress(nextProgress)
 
@@ -1349,6 +1373,32 @@ function StoryViewer({
       )
     }
   }
+
+  
+  async function shareStory() {
+    if (!story?.id) return
+
+    const url = new URL('/discover', window.location.origin)
+    url.searchParams.set('story', String(story.id))
+    url.searchParams.set('source', String(story.source_type || ''))
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Shadow Story',
+          url: url.toString(),
+        })
+        setViewerMenuOpen(false)
+      } else {
+        await copyStoryLink()
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        await copyStoryLink()
+      }
+    }
+  }
+
 
   function handleSwipeStart(event) {
     if (event.touches.length !== 1) {
@@ -1968,13 +2018,44 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
       </div>
 
 
+
       <ViewerStoryMenu
         open={viewerMenuOpen}
-        onClose={() =>
+        creatorName={creator.name || 'this creator'}
+        interested={Boolean(choices?.interested?.includes(group.key))}
+        onClose={() => setViewerMenuOpen(false)}
+        onInterested={() => {
+          onChoice('interested', group.key)
           setViewerMenuOpen(false)
-        }
+        }}
+        onNotInterested={() => {
+          onChoice('hidden', `${story.source_type}:${story.id}`)
+          setViewerMenuOpen(false)
+          onClose()
+        }}
+        onShare={shareStory}
+        onMute={() => {
+          onChoice('muted', group.key)
+          setViewerMenuOpen(false)
+          onClose()
+        }}
+        onReport={() => {
+          setViewerMenuOpen(false)
+          navigate(`/report/story/${encodeURIComponent(story.id)}`, {
+            state: {
+              targetTitle: `Story from ${creator.name || 'Shadow'}`,
+              sourceUrl: window.location.href,
+              returnTo: '/discover',
+            },
+          })
+        }}
         onCopyLink={copyStoryLink}
+        onCreate={() => {
+          setViewerMenuOpen(false)
+          navigate('/reader/story/create')
+        }}
       />
+
 
       <OwnerStoryMenu
         open={ownerMenuOpen}
