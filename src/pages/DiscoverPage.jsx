@@ -5135,6 +5135,7 @@ const visibleBoostPosts = useMemo(() => {
     )
 
     if (!ownerId) return
+    window.dispatchEvent(new Event('shadow:story-follow-updated'))
 
     setReaderPosts((current) =>
       current.map((post) => {
