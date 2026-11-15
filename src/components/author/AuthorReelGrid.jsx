@@ -607,7 +607,7 @@ return data
         </div>
         <button
           type="button"
-          onClick={() => navigate('/author/reel/studio', {
+          onClick={() => navigate('/author/reel/studio/dashboard', {
             state: { returnTo: `${window.location.pathname}${window.location.search}` },
           })}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ffbf00] px-3 py-2 text-[11px] font-semibold text-black sm:text-xs"
