@@ -1,3 +1,4 @@
+import { getActiveReaderToken } from '../utils/readerActiveAccount'
 const API_BASE = import.meta.env.VITE_API_URL || (
   ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000'
@@ -7,8 +8,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 const PAGE_SIZE = 30
 
 function bearerToken() {
-  return localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 async function request(path, { signal, authenticated = false } = {}) {
