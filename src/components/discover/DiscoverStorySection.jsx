@@ -2440,8 +2440,15 @@ export default function DiscoverStorySection() {
 
         lastNetworkRequestAt = Date.now()
         const data = await runDiscoverStoryRequest(storyCacheKey, async () => {
+          const mutedCreators = readStoryChoices(token).muted
+            .filter((key) => /^(?:author|reader):[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(key))
+            .slice(-100)
+          const feedQuery = new URLSearchParams({ limit: '20' })
+          if (mutedCreators.length) {
+            feedQuery.set('exclude_creators', mutedCreators.join(','))
+          }
           const response = await fetch(
-            `${API_BASE_URL}/api/discover-stories/feed?limit=20`,
+            `${API_BASE_URL}/api/discover-stories/feed?${feedQuery.toString()}`,
             {
               headers: requestHeaders,
               cache: 'no-store',
