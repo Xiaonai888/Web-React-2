@@ -8,7 +8,16 @@ const AUTH_LOGIN_KEY = 'shadow_reader_login_diagnostic_v1'
 const AUTH_CHANGE_KEY = 'shadow_reader_token_change_v1'
 let lastLoginToken = ''
 let lastShownReport = ''
-const AUTH_POPUP_ENABLED = false
+
+const AUTH_POPUP_ENABLED = [sessionStorage, localStorage].some((storage) => {
+  try {
+    const user = JSON.parse(storage.getItem('shadow_reader_user') || 'null')
+    return String(user?.username || '').replace(/^@/, '').toLowerCase() === 'hexing001'
+  } catch {
+    return false
+  }
+})
+
 
 function tokenStatus(token) {
   if (!token) return 'MISSING'
