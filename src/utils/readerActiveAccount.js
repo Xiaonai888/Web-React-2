@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'shadow_reader_token'
 const USER_KEY = 'shadow_reader_user'
+const ACTIVATION_KEY = 'shadow_reader_activation_epoch_v1'
 
 function read(storage, key) {
   try {
@@ -9,9 +10,16 @@ function read(storage, key) {
   }
 }
 
+
 export function getActiveReaderToken() {
-  return read(sessionStorage, TOKEN_KEY) || read(localStorage, TOKEN_KEY)
+  const session = read(sessionStorage, TOKEN_KEY)
+  const local = read(localStorage, TOKEN_KEY)
+  if (!session || !local) return session || local
+  const sessionEpoch = Number(read(sessionStorage, ACTIVATION_KEY)) || 0
+  const localEpoch = Number(read(localStorage, ACTIVATION_KEY)) || 0
+  return localEpoch > sessionEpoch ? local : session
 }
+
 
 export function getReaderSessionIdentity(token) {
   try {
