@@ -171,9 +171,28 @@ function readStoryChoices(token) {
   try {
     const key = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
     const saved = JSON.parse(localStorage.getItem(key) || '{}')
+    const now = Date.now()
+    const storedHidden = Array.isArray(saved.hidden) ? saved.hidden : []
+    const hidden = storedHidden
+      .map((item) => typeof item === 'string'
+        ? { id: item, expires_at: new Date(now + 24 * 60 * 60 * 1000).toISOString() }
+        : item)
+      .filter((item) => (
+        item &&
+        typeof item.id === 'string' &&
+        item.id.trim() &&
+        Number.isFinite(Date.parse(item.expires_at)) &&
+        Date.parse(item.expires_at) > now
+      ))
+      .slice(-500)
+
+    if (JSON.stringify(storedHidden) !== JSON.stringify(hidden)) {
+      localStorage.setItem(key, JSON.stringify({ ...saved, hidden }))
+    }
+
     return {
       interested: Array.isArray(saved.interested) ? saved.interested : [],
-      hidden: Array.isArray(saved.hidden) ? saved.hidden : [],
+      hidden,
       muted: Array.isArray(saved.muted) ? saved.muted : [],
     }
   } catch {
@@ -2089,7 +2108,7 @@ const storyTextLayers = Array.isArray(rawTextStyle?.layers)
           setViewerMenuOpen(false)
         }}
         onNotInterested={() => {
-          onChoice('hidden', `${story.source_type}:${story.id}`)
+          onChoice('hidden', `${story.source_type}:${story.id}`, story.expires_at)
           setViewerMenuOpen(false)
           onClose()
         }}
@@ -2166,16 +2185,26 @@ export default function DiscoverStorySection() {
     setChoices(readStoryChoices(token))
   }, [token])
 
-  const handleStoryChoice = useCallback((type, key) => {
+  const handleStoryChoice = useCallback((type, key, expiresAt = null) => {
     if (!token || !key || !['interested', 'hidden', 'muted'].includes(type)) return
     const current = readStoryChoices(token)
     const previous = current[type]
-    const updated = {
-      ...current,
-      [type]: type === 'interested' && previous.includes(key)
+    let nextItems
+
+    if (type === 'hidden') {
+      const expiryTime = Date.parse(String(expiresAt || ''))
+      if (!Number.isFinite(expiryTime) || expiryTime <= Date.now()) return
+      nextItems = [
+        ...previous.filter((item) => item.id !== key),
+        { id: key, expires_at: new Date(expiryTime).toISOString() },
+      ].slice(-500)
+    } else {
+      nextItems = type === 'interested' && previous.includes(key)
         ? previous.filter((item) => item !== key)
-        : [...new Set([...previous, key])].slice(-500),
+        : [...new Set([...previous, key])].slice(-500)
     }
+
+    const updated = { ...current, [type]: nextItems }
     try {
       const storageKey = `discover-story-choices:${getDiscoverStoryCacheScope(token)}`
       localStorage.setItem(storageKey, JSON.stringify(updated))
@@ -2189,7 +2218,7 @@ export default function DiscoverStorySection() {
       .map((group) => {
         if (group.is_owner) return group
         const stories = (group.stories || []).filter(
-          (story) => !choices.hidden.includes(`${story.source_type}:${story.id}`)
+          (story) => !choices.hidden.some((item) => item.id === `${story.source_type}:${story.id}`)
         )
         return {
           ...group,
@@ -2368,6 +2397,7 @@ export default function DiscoverStorySection() {
 
     function handlePageReturn() {
       if (document.visibilityState !== 'visible') return
+      setChoices(readStoryChoices(token))
       if (Date.now() - lastNetworkRequestAt < 60 * 1000) return
       void loadStories({ force: true })
     }
