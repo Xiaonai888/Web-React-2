@@ -682,6 +682,7 @@ import { ImageSourceSheet } from './ChatStoryCharactersPage'
 import { PublishSettingsSheet } from './EpisodeEditorPage'
 import { SuccessModal } from './PublishEpisodePage'
 import ChatStoryEditorGuide from '../../components/chat-story/ChatStoryEditorGuide'
+import ChatStoryStickerPicker from '../../components/chat-story/ChatStoryStickerPicker'
 import { useStoryPublishAgreementGate } from '../../components/author/StoryPublishAgreementModal'
 
 const API_BASE_URL =
@@ -1264,7 +1265,7 @@ function EditorImageMessage({
 
   const imageContent = (
     <div
-      className={`max-w-[76%] overflow-hidden rounded-[18px] bg-[var(--shadow-bg-soft)] ${
+      className={`${message.type === 'sticker' || message.stickerImage ? 'max-w-[160px] bg-transparent' : 'max-w-[76%] bg-[var(--shadow-bg-soft)]'} overflow-hidden rounded-[18px] ${
         active
           ? 'ring-2 ring-[#f59e0b]'
           : 'ring-1 ring-[var(--shadow-border)]'
@@ -1274,7 +1275,7 @@ function EditorImageMessage({
         <img
           src={safeChatCharacterImageUrl(imageUrl)}
           alt={getDisplayText('chatStoryEditor.chatStory')}
-          className="block max-h-[360px] w-full object-contain"
+          className={`block w-full object-contain ${message.type === 'sticker' || message.stickerImage ? 'max-h-[180px]' : 'max-h-[360px]'}`}
         />
       ) : (
         <div className="flex h-28 items-center justify-center text-[var(--shadow-text-secondary)]">
@@ -2620,6 +2621,8 @@ export default function ChatStoryEditorPage() {
     if (audioPreviewRef.current) URL.revokeObjectURL(audioPreviewRef.current)
   }, [])
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false)
+  const [stickerOpen, setStickerOpen] = useState(false)
+  const [stickerHeight, setStickerHeight] = useState(320)
   const [composerMode, setComposerMode] = useState('message')
   const [activeMessageId, setActiveMessageId] = useState('')
   const [messageToolbarPosition, setMessageToolbarPosition] =
@@ -3624,10 +3627,10 @@ restoredDraftCharactersRef.current = false
               : {}),
             messages: snapshot.messages.map((message) => ({
               id: message.id,
-              type: message.type,
+              type: message.stickerImage ? 'sticker' : message.type,
               character_id: message.characterId || null,
               text: message.text || '',
-              image_url: ['image', 'notification'].includes(message.type) ? message.imageUrl || message.image_url || null : null,
+              image_url: ['image', 'sticker', 'notification'].includes(message.stickerImage ? 'sticker' : message.type) ? message.imageUrl || message.image_url || null : null,
               ...(message.type === 'notification' ? {
                 notification: {
                   dismiss_mode: message.notification?.dismissMode || 'duration',
@@ -4102,6 +4105,8 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
                     ? 'author_note'
                     : message.type === 'image'
                       ? 'image'
+                      : message.type === 'sticker'
+                        ? 'sticker'
                       : message.type === 'notification'
                         ? 'notification'
                         : 'aside',
@@ -4114,6 +4119,7 @@ if (!restoredDraftCharactersRef.current) setCharacters(nextCharacters)
                 message.image_url ||
                 message.imageUrl ||
                 '',
+              stickerImage: message.type === 'sticker',
               notification: message.type === 'notification' ? {
                 dismissMode: message.notification?.dismiss_mode || message.notification?.dismissMode || 'duration',
                 durationSeconds: Number(message.notification?.duration_seconds || message.notification?.durationSeconds || 4),
@@ -4200,6 +4206,59 @@ const insertMessageSymbol = (symbol) => {
   setSymbolPanelOpen(false)
   setComposerFocused(true)
   window.setTimeout(() => composerRef.current?.focus(), 50)
+}
+
+const openStickerPicker = () => {
+  if (messageEditMode?.type === 'modify') {
+    showToast(getDisplayText('chatStoryEditor.finishCurrentEdit'))
+    return
+  }
+  const viewport = window.visualViewport
+  const detected = viewport ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0
+  const fallback = Math.round(window.innerHeight * 0.39)
+  setStickerHeight(Math.max(260, Math.min(380, Math.round(detected || fallback))))
+  composerRef.current?.blur()
+  setComposerFocused(false)
+  setSymbolPanelOpen(false)
+  setStickerOpen(true)
+}
+
+const chooseStickerMessage = (item) => {
+  if (!item?.imageUrl || !/^https:\/\//i.test(item.imageUrl)) return
+  if (messageEditMode?.type === 'modify') return
+  const nextMessage = {
+    id: makeId(),
+    type: 'sticker',
+    characterId: selectedCharacter?.id || null,
+    text: '',
+    imageUrl: item.imageUrl,
+    stickerImage: true,
+    createdAt: new Date().toISOString(),
+  }
+  const inserting = ['insert_above', 'insert_below'].includes(messageEditMode?.type)
+  shouldScrollToEndRef.current = !inserting
+  commitMessages(current => {
+    const note = current.find(message => message.type === 'author_note')
+    const story = current.filter(message => message.type !== 'author_note')
+    if (inserting) {
+      const index = story.findIndex(message => message.id === messageEditMode.targetId)
+      const at = index < 0 ? story.length : messageEditMode.type === 'insert_above' ? index : index + 1
+      story.splice(at, 0, nextMessage)
+    } else {
+      story.push(nextMessage)
+    }
+    return note ? [...story, note] : story
+  })
+  setMessageEditMode(null)
+  setActiveMessageId('')
+  if (draftSnapshotRef.current) {
+    draftSnapshotRef.current = {
+      ...draftSnapshotRef.current,
+      messages: messagesRef.current,
+      updatedAt: new Date().toISOString(),
+    }
+    flushLocalDraft()
+  }
 }
 
 const openMessageToolbar = (messageId) => {
@@ -5321,7 +5380,7 @@ const handleAddConfirm = async () => {
     selectAudioFile(file)
   }
 
-  const handleImageChange = async (event) => {
+  const handleImageChange = async (event, asSticker = false) => {
   const file =
     event.target.files?.[0]
 
@@ -5362,6 +5421,7 @@ const handleAddConfirm = async () => {
     const nextMessage = {
       id: messageId,
       type: 'image',
+      stickerImage: Boolean(asSticker),
       characterId:
         selectedCharacter?.id || null,
       text: '',
@@ -6161,7 +6221,7 @@ setPublishSettingsOpen(true)
   </div>
 </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-4">
+      <main className="mx-auto max-w-5xl px-4 pt-4" style={stickerOpen && window.matchMedia('(max-width: 767px)').matches ? { paddingBottom: `${stickerHeight + 150}px` } : undefined}>
         <section className="hidden rounded-[20px] bg-[var(--shadow-bg-surface)] p-3 shadow-sm ring-1 ring-[var(--shadow-border)] sm:block">
           <div className="grid grid-cols-4 gap-2">
             <Step number="1" title={getDisplayText('chatStoryEditor.storyInfo')} done />
@@ -6204,7 +6264,7 @@ setPublishSettingsOpen(true)
     <EditorVoiceMessage key={message.id} message={message}
       character={characterMap[message.characterId]} right={message.characterId === effectiveLeadCharacterId}
       active={activeMessageId === message.id} onEdit={openMessageToolbar} onElementRef={registerMessageElement} />
-  ) : message.type === 'image' ? (
+  ) : ['image', 'sticker'].includes(message.type) ? (
     <EditorImageMessage
       key={message.id}
       message={message}
@@ -6310,7 +6370,7 @@ setPublishSettingsOpen(true)
   }}
 />
 
-      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] pb-[calc(8px+env(safe-area-inset-bottom))]">
+      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] pb-[calc(8px+env(safe-area-inset-bottom))]" style={stickerOpen && window.matchMedia('(max-width: 767px)').matches ? { bottom: `${stickerHeight}px` } : undefined}>
   <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[var(--shadow-bg-surface)] to-transparent" />
         <div className="mx-auto max-w-5xl">
   {messageEditMode ? (
@@ -6421,7 +6481,7 @@ setPublishSettingsOpen(true)
     <textarea
       ref={composerRef}
       value={draft}
-      onFocus={() => setComposerFocused(true)}
+      onFocus={() => { setComposerFocused(true); setStickerOpen(false) }}
       onBlur={() => {
         if (!draft.trim()) setComposerFocused(false)
       }}
@@ -6455,9 +6515,9 @@ setPublishSettingsOpen(true)
 
   <button
   type="button"
-  onClick={() => window.alert(getDisplayText('chatStoryEditor.comingSoon'))}
+  onClick={() => stickerOpen ? (setStickerOpen(false), composerRef.current?.focus()) : openStickerPicker()}
   className="flex h-11 w-10 items-center justify-center text-[var(--shadow-text-secondary)] active:scale-95"
-  aria-label={getDisplayText('chatStoryEditor.emojiComingSoon')}
+  aria-label="Stickers and Emoji"
 >
   <i className="fa-regular fa-face-smile text-[20px]" />
 </button>
@@ -6524,6 +6584,21 @@ setPublishSettingsOpen(true)
 ) : null}
         </div>
       </div>
+      <ChatStoryStickerPicker
+        open={stickerOpen}
+        height={stickerHeight}
+        onClose={() => setStickerOpen(false)}
+        onReturnKeyboard={() => {
+          setStickerOpen(false)
+          window.setTimeout(() => composerRef.current?.focus(), 40)
+        }}
+        onChooseSticker={chooseStickerMessage}
+        onChooseEmoji={emoji => {
+          setStickerOpen(false)
+          insertMessageSymbol(emoji)
+        }}
+        onCreateSticker={file => handleImageChange({ target: { files: [file], value: '' } }, true)}
+      />
     </div>
   )
 }
