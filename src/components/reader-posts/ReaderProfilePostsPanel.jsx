@@ -1,4 +1,4 @@
-import { isReaderAccountResponseCurrent } from '../../utils/readerAccountSessionManager'
+import { isReaderAccountResponseCurrent, subscribeReaderAccountChanges } from '../../utils/readerAccountSessionManager'
 import { getActiveReaderToken } from '../../utils/readerActiveAccount'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -304,29 +304,36 @@ function ReaderProfileOwnPostsPanel({
     useState(true)
   const [message, setMessage] =
     useState('')
+  const [activeToken, setActiveToken] = useState(getAuthToken)
+  const [loadedContext, setLoadedContext] = useState('')
+  const contextKey = `${activeToken}:${isOwnProfile ? 'me' : 'user'}:${String(username || '').trim().toLowerCase()}`
+
+  useEffect(() => subscribeReaderAccountChanges(() => {
+    setActiveToken(getAuthToken())
+  }), [])
 
   useEffect(() => {
     let alive = true
 
     async function loadPosts() {
-      const token = getAuthToken()
-      const safeUsername = String(
-        username || ''
-      )
+      const token = activeToken
+      const safeUsername = String(username || '')
         .trim()
         .replace(/^@+/, '')
 
       if (!token) {
+        setPosts([])
+        setMessage('')
+        setLoadedContext(contextKey)
+        setLoading(false)
         navigate('/login')
         return
       }
 
-      if (
-        !isOwnProfile &&
-        !safeUsername
-      ) {
+      if (!isOwnProfile && !safeUsername) {
         setPosts([])
-        onCountChange?.(0)
+        setMessage('')
+        setLoadedContext(contextKey)
         setLoading(false)
         return
       }
@@ -337,37 +344,20 @@ function ReaderProfileOwnPostsPanel({
 
         const endpoint = isOwnProfile
           ? `${API_BASE_URL}/api/reader-posts/me?limit=30`
-          : `${API_BASE_URL}/api/reader-posts/user/${encodeURIComponent(
-              safeUsername
-            )}?limit=30`
+          : `${API_BASE_URL}/api/reader-posts/user/${encodeURIComponent(safeUsername)}?limit=30`
 
-const data = await fetchReaderProfilePosts({
-  endpoint,
-  token,
-})
-
+        const data = await fetchReaderProfilePosts({ endpoint, token })
         if (!alive || !isReaderAccountResponseCurrent(token)) return
 
-        const nextPosts =
-          Array.isArray(data.posts)
-            ? data.posts
-            : []
-
-        setPosts(nextPosts)
-        onCountChange?.(
-          nextPosts.length
-        )
+        setPosts(Array.isArray(data.posts) ? data.posts : [])
+        setLoadedContext(contextKey)
       } catch (error) {
-        if (!alive) return
-
+        if (!alive || !isReaderAccountResponseCurrent(token)) return
         setPosts([])
-        onCountChange?.(0)
-        setMessage(
-          error.message ||
-            t('readerProfilePosts.loadFailed')
-        )
+        setLoadedContext(contextKey)
+        setMessage(error.message || t('readerProfilePosts.loadFailed'))
       } finally {
-        if (alive) {
+        if (alive && isReaderAccountResponseCurrent(token)) {
           setLoading(false)
         }
       }
@@ -378,49 +368,29 @@ const data = await fetchReaderProfilePosts({
     return () => {
       alive = false
     }
-  }, [
-    isOwnProfile,
-    navigate,
-    onCountChange,
-    t,
-    username,
-  ])
+  }, [activeToken, contextKey, isOwnProfile, navigate, t, username])
 
+  useEffect(() => {
+    if (!loading && loadedContext === contextKey) {
+      onCountChange?.(posts.length)
+    }
+  }, [contextKey, loadedContext, loading, onCountChange, posts.length])
 
   function updatePost(nextPost) {
     if (!nextPost?.id) return
 
     invalidateReaderProfilePostsCache()
-
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === nextPost.id
-          ? nextPost
-          : post
-      )
-    )
+    setPosts((current) => current.map((post) =>
+      post.id === nextPost.id ? nextPost : post
+    ))
   }
 
+  function removePost(postId) {
+    invalidateReaderProfilePostsCache()
+    setPosts((current) => current.filter((post) => post.id !== postId))
+  }
 
-function removePost(postId) {
-  invalidateReaderProfilePostsCache()
-
-  setPosts((current) => {
-    const nextPosts =
-      current.filter(
-        (post) =>
-          post.id !== postId
-      )
-
-    onCountChange?.(
-      nextPosts.length
-    )
-
-    return nextPosts
-  })
-}
-
-  if (loading) {
+  if (loading || loadedContext !== contextKey) {
     return (
       <section className="mt-2 space-y-1 bg-[var(--shadow-bg-soft)] py-1 sm:space-y-1.5 sm:bg-transparent sm:px-0 sm:py-0 md:mt-3">
         <div className="h-[140px] animate-pulse bg-[var(--shadow-bg-surface)] sm:rounded-[12px]" />
