@@ -306,10 +306,9 @@ export default function ReaderAccountSecurityPage() {
           )
         }
 
-        if (!ignore) {
-          setUser(data.user || null)
+                if (!ignore && saveStoredUser(data.user, token)) {
+          setUser(data.user)
           setDateOfBirth(data.user?.date_of_birth || '')
-          if (!saveStoredUser(data.user, token)) return
         }
       } catch (error) {
         if (!ignore) {
@@ -368,8 +367,8 @@ export default function ReaderAccountSecurityPage() {
         )
       }
 
-      setUser(data.user || user)
-      saveStoredUser(data.user)
+      if (!saveStoredUser(data.user, token)) return
+      setUser(data.user)
       setEditingBirthDate(false)
       setMessage(t('readerAccountSecurityPage.updateSuccess'))
     } catch (error) {
