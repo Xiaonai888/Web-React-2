@@ -21,6 +21,7 @@ import CommentsModal from '../components/story-detail/CommentsModal'
 import DiscoverTrendingStoriesSection from '../components/discover/DiscoverTrendingStoriesSection'
 import DiscoverAuthorsYouMayLikeSection from '../components/discover/DiscoverAuthorsYouMayLikeSection'
 import DiscoverReadersYouMayLikeSection from '../components/discover/DiscoverReadersYouMayLikeSection'
+import DiscoverReelsSection from '../components/discover/DiscoverReelsSection'
 import DiscoverNewUpdatedStoriesSection from '../components/discover/DiscoverNewUpdatedStoriesSection'
 import DiscoverYouMightLikeSection from '../components/discover/DiscoverYouMightLikeSection'
 import DiscoverCompletedStoriesSection from '../components/discover/DiscoverCompletedStoriesSection'
@@ -5820,6 +5821,13 @@ authorFollowOverridesRef.current.set(
   <DiscoverReadersYouMayLikeSection />
 </DeferredDiscoverSection>
                 ) : null}
+
+                {entry.kind === 'reader_post' &&
+entry.timelineIndex === firstReaderPostIndex ? (
+  <DeferredDiscoverSection>
+    <DiscoverReelsSection />
+  </DeferredDiscoverSection>
+) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
