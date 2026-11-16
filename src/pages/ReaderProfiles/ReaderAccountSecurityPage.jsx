@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { getActiveReaderToken, saveActiveReaderUser } from '../../utils/readerActiveAccount'
 
 registerTranslationNamespace('readerAccountSecurityPage', {
   en: {
@@ -175,24 +176,15 @@ const DISPLAY_LOCALES = {
   ko: 'ko-KR',
 }
 
+
 function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
+  return getActiveReaderToken()
 }
 
-function saveStoredUser(user) {
-  if (!user) return
-
-  if (localStorage.getItem('shadow_reader_token')) {
-    localStorage.setItem('shadow_reader_user', JSON.stringify(user))
-    return
-  }
-
-  sessionStorage.setItem('shadow_reader_user', JSON.stringify(user))
+function saveStoredUser(user, requestToken) {
+  return saveActiveReaderUser(user, requestToken)
 }
+
 
 function formatDate(dateString, language, t) {
   if (!dateString) return t('readerAccountSecurityPage.notSet')
@@ -317,7 +309,7 @@ export default function ReaderAccountSecurityPage() {
         if (!ignore) {
           setUser(data.user || null)
           setDateOfBirth(data.user?.date_of_birth || '')
-          saveStoredUser(data.user)
+          if (!saveStoredUser(data.user, token)) return
         }
       } catch (error) {
         if (!ignore) {
