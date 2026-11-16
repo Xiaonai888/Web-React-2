@@ -178,6 +178,7 @@ export default function Footer({ libraryMode = false }) {
           <NavLink
             key={to}
             to={to}
+            state={to === '/fast' ? { fromMainFooter: true } : undefined}
             end={to === '/'}
             style={() => ({
               display: 'flex',
