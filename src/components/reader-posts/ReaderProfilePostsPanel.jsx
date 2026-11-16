@@ -386,25 +386,21 @@ const data = await fetchReaderProfilePosts({
     username,
   ])
 
+
   function updatePost(nextPost) {
     if (!nextPost?.id) return
+
+    invalidateReaderProfilePostsCache()
 
     setPosts((current) =>
       current.map((post) =>
         post.id === nextPost.id
-         function updatePost(nextPost) {
-  if (!nextPost?.id) return
-
-  invalidateReaderProfilePostsCache()
-
-  setPosts((current) =>
-    current.map((post) =>
-      post.id === nextPost.id
-        ? nextPost
-        : post
+          ? nextPost
+          : post
+      )
     )
-  )
-}
+  }
+
 
 function removePost(postId) {
   invalidateReaderProfilePostsCache()
