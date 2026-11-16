@@ -5,6 +5,10 @@ import { useNavigate } from 'react-router-dom'
 import ReaderPostCard from './ReaderPostCard'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import {
+  fetchReaderProfilePosts,
+  invalidateReaderProfilePostsCache,
+} from '../../services/readerProfilePostsRequest'
 
 registerTranslationNamespace('readerProfilePosts', {
   en: {
@@ -337,32 +341,12 @@ function ReaderProfileOwnPostsPanel({
               safeUsername
             )}?limit=30`
 
-        const response = await fetch(
-          endpoint,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-            cache: 'no-store',
-          }
-        )
+const data = await fetchReaderProfilePosts({
+  endpoint,
+  token,
+})
 
-        const data = await response
-          .json()
-          .catch(() => ({}))
-
-        if (
-          !response.ok ||
-          data.ok === false
-        ) {
-          throw new Error(
-            data.message ||
-              t('readerProfilePosts.loadFailed')
-          )
-        }
-
-        if (!alive) return
+        if (!alive || !isReaderAccountResponseCurrent(token)) return
 
         const nextPosts =
           Array.isArray(data.posts)
@@ -408,27 +392,37 @@ function ReaderProfileOwnPostsPanel({
     setPosts((current) =>
       current.map((post) =>
         post.id === nextPost.id
-          ? nextPost
-          : post
-      )
+         function updatePost(nextPost) {
+  if (!nextPost?.id) return
+
+  invalidateReaderProfilePostsCache()
+
+  setPosts((current) =>
+    current.map((post) =>
+      post.id === nextPost.id
+        ? nextPost
+        : post
     )
-  }
+  )
+}
 
-  function removePost(postId) {
-    setPosts((current) => {
-      const nextPosts =
-        current.filter(
-          (post) =>
-            post.id !== postId
-        )
+function removePost(postId) {
+  invalidateReaderProfilePostsCache()
 
-      onCountChange?.(
-        nextPosts.length
+  setPosts((current) => {
+    const nextPosts =
+      current.filter(
+        (post) =>
+          post.id !== postId
       )
 
-      return nextPosts
-    })
-  }
+    onCountChange?.(
+      nextPosts.length
+    )
+
+    return nextPosts
+  })
+}
 
   if (loading) {
     return (
