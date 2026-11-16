@@ -1,3 +1,4 @@
+import { getActiveReaderToken } from '../../utils/readerActiveAccount'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
@@ -108,7 +109,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 function getToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function clearSession() {
