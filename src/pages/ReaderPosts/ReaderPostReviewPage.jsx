@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import ReaderPostTagPeopleSelector from './ReaderPostTagPeopleSelector'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { invalidateReaderProfilePostsCache } from '../../services/readerProfilePostsRequest'
 import {
   clearReaderPostDraft,
   readReaderPostDraft,
@@ -541,7 +542,8 @@ export default function ReaderPostReviewPage() {
         .catch(() => ({}))
 
       if (data.post_saved === true) {
-        clearReaderPostDraft()
+      invalidateReaderProfilePostsCache()
+      clearReaderPostDraft()
         window.alert(data.message || t('readerPostReviewPage.failedPublishPost'))
         navigate('/discover', { replace: true })
         return
@@ -557,6 +559,7 @@ export default function ReaderPostReviewPage() {
         )
       }
 
+      invalidateReaderProfilePostsCache()
       clearReaderPostDraft()
       navigate('/discover', {
         replace: true,
