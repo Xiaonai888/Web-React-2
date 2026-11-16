@@ -1,5 +1,15 @@
 import { NavLink } from 'react-router-dom'
+import { Clapperboard } from 'lucide-react'
 import { useDisplayTranslation } from '../utils/displayLanguage'
+import { registerTranslationNamespace } from '../i18n/registerTranslations'
+
+registerTranslationNamespace('footerReels', {
+  en: { reels: 'Reels' },
+  km: { reels: 'Reels' },
+  zh: { reels: '短视频' },
+  ja: { reels: 'リール' },
+  ko: { reels: '릴스' },
+})
 
 function StoriesIcon({ active }) {
   return (
@@ -106,10 +116,22 @@ function ChatStoryIcon({ active }) {
   )
 }
 
+function ReelsIcon({ active }) {
+  return (
+    <Clapperboard
+      size={21}
+      strokeWidth={1.9}
+      color={active ? 'var(--shadow-accent)' : 'currentColor'}
+      aria-hidden="true"
+    />
+  )
+}
+
 const NAV = [
   { to: '/', labelKey: 'navStories', Icon: StoriesIcon },
   { to: '/manga', labelKey: 'navManga', Icon: MangaIcon },
   { to: '/chat-story', labelKey: 'navChatStory', Icon: ChatStoryIcon },
+  { to: '/fast', labelKey: 'footerReels.reels', Icon: ReelsIcon },
   { to: '/discover', labelKey: 'navDiscover', Icon: CompassIcon },
   { to: '/me', labelKey: 'navMine', Icon: SmileIcon },
 ]
