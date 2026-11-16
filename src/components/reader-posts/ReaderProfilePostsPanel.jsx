@@ -1,3 +1,4 @@
+import { isReaderAccountResponseCurrent } from '../../utils/readerAccountSessionManager'
 import { getActiveReaderToken } from '../../utils/readerActiveAccount'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -545,18 +546,20 @@ function ReaderProfileTaggedPostsPanel() {
       setLoading(true)
       setError('')
       try {
+
+        const requestToken = getAuthToken()
+        if (!requestToken) throw new Error('LOGIN_REQUIRED')
         const response = await fetch(`${API_BASE_URL}/api/users/me/tags-mentions/approved?page=1`, {
-          headers: { Authorization: `Bearer ${getAuthToken()}` },
+          headers: { Authorization: `Bearer ${requestToken}` },
           cache: 'no-store',
           signal: controller.signal,
         })
-        if (response.status === 401) {
-          navigate('/login', { replace: true })
-          return
-        }
+        if (controller.signal.aborted || !isReaderAccountResponseCurrent(requestToken)) return
+        if (response.status === 401) throw new Error('SESSION_REJECTED')
+
         const data = await response.json().catch(() => ({}))
         if (!response.ok || data.ok !== true || !Array.isArray(data.posts)) throw new Error('LOAD_FAILED')
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && isReaderAccountResponseCurrent(requestToken)) {
           setPosts(data.posts)
           setHasMore(Boolean(data.has_more))
           setPage(1)
@@ -577,14 +580,16 @@ function ReaderProfileTaggedPostsPanel() {
     setError('')
     try {
       const nextPage = page + 1
+
+      const requestToken = getAuthToken()
+      if (!requestToken) throw new Error('LOGIN_REQUIRED')
       const response = await fetch(`${API_BASE_URL}/api/users/me/tags-mentions/approved?page=${nextPage}`, {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
+        headers: { Authorization: `Bearer ${requestToken}` },
         cache: 'no-store',
       })
-      if (response.status === 401) {
-        navigate('/login', { replace: true })
-        return
-      }
+      if (!isReaderAccountResponseCurrent(requestToken)) return
+      if (response.status === 401) throw new Error('SESSION_REJECTED')
+
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok !== true || !Array.isArray(data.posts)) throw new Error('LOAD_FAILED')
       setPosts((current) => {
