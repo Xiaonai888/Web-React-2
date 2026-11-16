@@ -1,3 +1,4 @@
+import Footer from '../components/Footer'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -867,6 +868,7 @@ export default function FastReelsPage({ embedded = false }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const location = useLocation()
+  const useMainFooter = location.state?.fromMainFooter === true
   const requestedReelId =
   new URLSearchParams(location.search).get('reel') || ''
   const openLinkedComments = new URLSearchParams(location.search).get('comments') === '1'
@@ -1444,7 +1446,11 @@ const openEcho = video => {
           className="absolute bottom-3 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-black"><RefreshCw size={13}/>{t('fastReels.retry')}</button> : null}
         {notice ? <div role="status" className="pointer-events-none absolute bottom-20 left-1/2 z-50 max-w-[90%] -translate-x-1/2 rounded-xl bg-black/85 px-4 py-2 text-center text-xs text-white">{notice}</div> : null}
       </main>
-      {!embedded && !clearDisplay ? <div className="h-[calc(64px+env(safe-area-inset-bottom))] shrink-0"><ReaderProfileFooter /></div> : null}
+      {!embedded && !clearDisplay ? (
+  <div className={`shrink-0 ${useMainFooter ? 'h-[calc(52px+env(safe-area-inset-bottom))]' : 'h-[calc(64px+env(safe-area-inset-bottom))]'}`}>
+    {useMainFooter ? <Footer /> : <ReaderProfileFooter />}
+  </div>
+) : null}
       <FastReelSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} t={t}
         soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
         speed={playbackSpeed} setSpeed={setPlaybackSpeed}
