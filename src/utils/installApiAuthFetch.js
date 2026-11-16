@@ -1,4 +1,4 @@
-import { isSameReaderSession } from './readerActiveAccount'
+import { getActiveReaderToken, getReaderSessionIdentity, isSameReaderSession } from './readerActiveAccount'
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
@@ -188,6 +188,25 @@ function inspectLoginResponse(response) {
   }).catch(() => {})
 }
 
+
+function alignReaderAuthorization(headers, activeToken, path) {
+  const authorization = headers.get('Authorization') || ''
+  if (!authorization.startsWith('Bearer ')) return
+  const suppliedToken = authorization.slice(7)
+  if (!suppliedToken || suppliedToken === activeToken) return
+  const supplied = getReaderSessionIdentity(suppliedToken)
+  const active = getReaderSessionIdentity(activeToken)
+  if (!supplied || !active || supplied.userId !== active.userId) return
+  headers.set('Authorization', `Bearer ${activeToken}`)
+  writeDiagnostic('shadow_reader_request_alignment_v1', {
+    time: new Date().toISOString(),
+    path,
+    fromSession: supplied.sessionId.slice(0, 8),
+    toSession: active.sessionId.slice(0, 8),
+  })
+}
+
+
 function inspectAuthResponse(response, requestToken, path) {
   if (response.status !== 401 && response.status !== 403) return
   response.clone().json().then((data) => {
@@ -211,6 +230,8 @@ function inspectAuthResponse(response, requestToken, path) {
       
       requestToken: tokenStatus(requestToken),
       requestSessionId: tokenSessionId(requestToken),
+      activeSessionId: tokenSessionId(getActiveReaderToken()),
+      requestMatchesActiveSession: isSameReaderSession(requestToken, getActiveReaderToken()),
       requestMatchesLocal: Boolean(requestToken && requestToken === local),
       requestMatchesSession: Boolean(requestToken && requestToken === session),
       requestMatchesLatestLogin: Boolean(requestToken && requestToken === lastLoginToken),
@@ -242,7 +263,7 @@ function handleReaderSessionResponse(fetchPromise, requestToken, path) {
       })
       return response
     }
-    const currentToken = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+    const currentToken = getActiveReaderToken()
     if (renewedToken && requestToken && currentToken === requestToken) {
       if (sessionStorage.getItem('shadow_reader_token') === requestToken) {
         sessionStorage.setItem('shadow_reader_token', renewedToken)
@@ -296,7 +317,7 @@ export function installApiAuthFetch() {
       url.origin !== API_ORIGIN ||
       (method === 'GET' && ['/health/maintenance', '/api/advertisements/public', '/api/public/content-versions', '/api/events'].includes(url.pathname))
     ) return nativeFetch(input, init)
-    const token = sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+    const token = getActiveReaderToken()
     if (!token) {
       const originalHeaders = new Headers(input instanceof Request ? input.headers : undefined)
       new Headers(init.headers || {}).forEach((value, key) => originalHeaders.set(key, value))
@@ -311,8 +332,16 @@ export function installApiAuthFetch() {
     }
     const headers = new Headers(input instanceof Request ? input.headers : undefined)
     new Headers(init.headers || {}).forEach((value, key) => headers.set(key, value))
-    if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
-    if (!headers.has('X-Shadow-Page') && url.pathname.startsWith('/api/')) headers.set('X-Shadow-Page', pageAttributionValue())
+
+    if (!headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`)
+    } else if (!['/api/users/login', '/api/users/login/verify'].includes(url.pathname)) {
+      alignReaderAuthorization(headers, token, url.pathname)
+    }
+    if (!headers.has('X-Shadow-Page') && url.pathname.startsWith('/api/')) {
+      headers.set('X-Shadow-Page', pageAttributionValue())
+    }
+
     const authorization = headers.get('Authorization') || ''
     const requestToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
     if (input instanceof Request) {
