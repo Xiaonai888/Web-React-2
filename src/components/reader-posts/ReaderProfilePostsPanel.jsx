@@ -1,3 +1,4 @@
+import { getActiveReaderToken } from '../../utils/readerActiveAccount'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReaderPostCard from './ReaderPostCard'
@@ -140,7 +141,7 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 function getAuthToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function ReaderProfileSetupSection({
