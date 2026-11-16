@@ -16,6 +16,8 @@ import {
 
 const PLACEMENT = 'freeUnlock'
 const EMPTY_RETRY_MS = 60000
+const MAX_SELECTION_ATTEMPTS = 2
+const MAX_EXCLUSIONS = 3000
 const pendingSelections = new Map()
 const emptySelections = new Map()
 
@@ -28,45 +30,69 @@ function readQueue(readerKey, version) {
   })
 }
 
+function hasNextUnplayedAd(queue) {
+  if (!queue) return false
+  const total = queue.batches.flat().length
+  return total > 0 && Number(queue.position || 0) < total
+}
+
+function getQueueExclusions(readerKey, version, queue) {
+  const queued = (queue?.batches || []).flat().map((item) => String(item?.story_id || '').toLowerCase()).filter(Boolean)
+  const otherPlacements = getSmartAdReservedIds({
+    readerKey,
+    placement: PLACEMENT,
+    excludePlacement: PLACEMENT,
+    slotKey: version.slot_key,
+    catalogVersion: version.catalog_version,
+  })
+  return [...new Set([...queued, ...otherPlacements])].slice(0, MAX_EXCLUSIONS)
+}
+
 async function prepareQueue(readerKey, version, signal) {
   const saved = readQueue(readerKey, version)
-  if (saved?.batches?.some((batch) => batch.length)) return saved
+  if (hasNextUnplayedAd(saved)) return saved
+  if (saved?.exhausted && saved.batches.flat().length) return saved
   const key = `${readerKey}:${version.slot_key}:${version.catalog_version}`
   if (Number(emptySelections.get(key) || 0) > Date.now()) return null
   if (pendingSelections.has(key)) return pendingSelections.get(key)
 
   const pending = (async () => {
-    const reserved = getSmartAdReservedIds({
-      readerKey,
-      placement: PLACEMENT,
-      excludePlacement: PLACEMENT,
-      slotKey: version.slot_key,
-      catalogVersion: version.catalog_version,
-    })
-    const result = await selectSmartAds({
-      placement: PLACEMENT,
-      cursor: '0',
-      queueIndex: 0,
-      interests: getSmartFreeUnlockInterests(),
-      excludeStoryIds: reserved,
-      signal,
-    })
-    if (result.slot_key !== version.slot_key ||
-        Number(result.catalog_version) !== Number(version.catalog_version)) {
-      const error = new Error('Smart Ad slot or catalog changed during selection')
-      error.code = 'SMART_AD_VERSION_CHANGED'
-      throw error
+    let queue = saved
+    let cursor = String(queue?.next_cursor ?? '0')
+
+    for (let attempt = 0; attempt < MAX_SELECTION_ATTEMPTS; attempt += 1) {
+      const result = await selectSmartAds({
+        placement: PLACEMENT,
+        cursor,
+        queueIndex: queue?.queue_index || 0,
+        interests: getSmartFreeUnlockInterests(),
+        excludeStoryIds: getQueueExclusions(readerKey, version, queue),
+        signal,
+      })
+      if (result.slot_key !== version.slot_key ||
+          Number(result.catalog_version) !== Number(version.catalog_version)) {
+        const error = new Error('Smart Ad slot or catalog changed during selection')
+        error.code = 'SMART_AD_VERSION_CHANGED'
+        throw error
+      }
+
+      const ads = Array.isArray(result.ads) ? result.ads.slice(0, 10) : []
+      queue = appendSmartAdSelection({
+        readerKey,
+        placement: PLACEMENT,
+        response: { ...result, ads },
+      })
+      if (ads.length) {
+        emptySelections.delete(key)
+        return queue
+      }
+      if (result.exhausted || result.next_cursor == null || String(result.next_cursor) === cursor) break
+      cursor = String(result.next_cursor)
     }
-    const ads = Array.isArray(result.ads) ? result.ads.slice(0, 10) : []
-    if (!ads.length) {
-      emptySelections.set(key, Date.now() + EMPTY_RETRY_MS)
-      return null
-    }
-    return appendSmartAdSelection({
-      readerKey,
-      placement: PLACEMENT,
-      response: { ...result, ads },
-    })
+
+    if (queue?.exhausted && queue.batches.flat().length) return queue
+    emptySelections.set(key, Date.now() + EMPTY_RETRY_MS)
+    return null
   })().finally(() => {
     if (pendingSelections.get(key) === pending) pendingSelections.delete(key)
   })
