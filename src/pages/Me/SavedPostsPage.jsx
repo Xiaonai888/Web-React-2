@@ -42,7 +42,8 @@ registerTranslationNamespace('savedPostsPage', {
     reader: 'Reader',
     author: 'Author',
     promoted: 'Promoted',
-    fastReel: 'Fast Reels',
+    fastReel: 'Reel',
+    recentlySaved: 'Recently Saved',
     newestSaved: 'Newest Saved',
     oldestSaved: 'Oldest Saved',
     close: 'Close',
@@ -120,7 +121,8 @@ registerTranslationNamespace('savedPostsPage', {
     reader: 'អ្នកអាន',
     author: 'អ្នកនិពន្ធ',
     promoted: 'បានផ្សព្វផ្សាយ',
-    fastReel: 'Fast Reels',
+    fastReel: 'Reel',
+    recentlySaved: 'បានរក្សាទុកថ្មីៗ',
     newestSaved: 'រក្សាទុកថ្មីបំផុត',
     oldestSaved: 'រក្សាទុកចាស់បំផុត',
     close: 'បិទ',
@@ -199,6 +201,7 @@ registerTranslationNamespace('savedPostsPage', {
     author: '作者',
     promoted: '推广',
     fastReel: '短视频',
+    recentlySaved: '最近保存',
     newestSaved: '最新保存',
     oldestSaved: '最早保存',
     close: '关闭',
@@ -277,6 +280,7 @@ registerTranslationNamespace('savedPostsPage', {
     author: '作者',
     promoted: 'プロモーション',
     fastReel: 'リール',
+    recentlySaved: '最近保存した投稿',
     newestSaved: '新しい保存順',
     oldestSaved: '古い保存順',
     close: '閉じる',
@@ -355,6 +359,7 @@ registerTranslationNamespace('savedPostsPage', {
     author: '작가',
     promoted: '프로모션',
     fastReel: '릴스',
+    recentlySaved: '최근 저장한 게시물',
     newestSaved: '최근 저장순',
     oldestSaved: '오래된 저장순',
     close: '닫기',
@@ -1176,7 +1181,20 @@ export default function SavedPostsPage() {
             <div className="grid grid-cols-2 gap-3">
               {items.map((item) => (
                 <SavedPostGridCard
-
+                  key={item.id}
+                  item={item}
+                  onOpen={handleOpenItem}
+                  onMenu={setActionItem}
+                  onEcho={(post) => {
+                    if (!post?.source_id || post.status === 'unavailable' ||
+                      (post.source_type === 'promotion' &&
+                        !/^[1-9]\d*$/.test(String(post.source_id)))) {
+                      showToast(t('savedPostsPage.originalUnavailable'))
+                      return
+                    }
+                    setEchoItem(post)
+                  }}
+                />
               ))}
 
               {hasNext ? (
@@ -1184,7 +1202,7 @@ export default function SavedPostsPage() {
                   type="button"
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-white text-[12px] font-extrabold text-[#6d4aff] ring-1 ring-black/5 active:scale-[0.99] disabled:opacity-60 dark:bg-[#171923] dark:text-[#b9a8ff] dark:ring-white/10"
+                  className="col-span-2 flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-white text-[12px] font-extrabold text-[#6d4aff] ring-1 ring-black/5 active:scale-[0.99] disabled:opacity-60 dark:bg-[#171923] dark:text-[#b9a8ff] dark:ring-white/10"
                 >
                   {loadingMore ? <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={1.8} /> : null}
                   {loadingMore ? t('savedPostsPage.loading') : t('savedPostsPage.loadMore')}
