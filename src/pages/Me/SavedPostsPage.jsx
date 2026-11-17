@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react'
 import SavedPostGridCard from '../../components/SavedPosts/SavedPostGridCard'
+import EchoShareSheetV2Connected from '../../components/social/EchoShareSheetV2Connected'
 import SavedPostCollectionEditor from '../../components/SavedPosts/SavedPostCollectionEditor'
 import SavedPostCollectionSheet from '../../components/SavedPosts/SavedPostCollectionSheet'
 import {
@@ -708,6 +709,7 @@ export default function SavedPostsPage() {
   const [toast, setToast] = useState('')
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
   const [actionItem, setActionItem] = useState(null)
+  const [echoItem, setEchoItem] = useState(null)
   const [collectionItem, setCollectionItem] = useState(null)
   const [collectionSaving, setCollectionSaving] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -1174,11 +1176,7 @@ export default function SavedPostsPage() {
             <div className="grid grid-cols-2 gap-3">
               {items.map((item) => (
                 <SavedPostGridCard
-                  key={item.id}
-                  item={item}
-                  onOpen={handleOpenItem}
-                  onMenu={setActionItem}
-                />
+
               ))}
 
               {hasNext ? (
@@ -1401,6 +1399,42 @@ export default function SavedPostsPage() {
           </button>
         </div>
       </BottomSheet>
+
+      <EchoShareSheetV2Connected
+  open={Boolean(echoItem)}
+  sourceType={
+    echoItem?.source_type === 'promotion'
+      ? 'shadow_mall_promotion'
+      : echoItem?.source_type || ''
+  }
+  sourceId={String(echoItem?.source_id || '')}
+  sourceName={
+    echoItem?.snapshot_data?.page_name ||
+    echoItem?.snapshot_data?.author_name ||
+    echoItem?.snapshot_data?.reader_name ||
+    echoItem?.snapshot_data?.user_name ||
+    'Shadow'
+  }
+  sourceAvatarUrl={
+    echoItem?.snapshot_data?.avatar_url ||
+    echoItem?.snapshot_data?.author_avatar_url ||
+    echoItem?.snapshot_data?.page_avatar_url ||
+    ''
+  }
+  sourceContent={[
+    echoItem?.snapshot_data?.title,
+    echoItem?.snapshot_data?.content ||
+      echoItem?.snapshot_data?.description,
+  ].filter(Boolean).join(' — ')}
+  sourceImageUrl={echoItem ? getPreviewImage(echoItem) : ''}
+  sourceLabel={echoItem?.source_type === 'fast_video' ? 'Reel' : 'Post'}
+  shareUrl={
+    echoItem?.source_url?.startsWith('/')
+      ? `${window.location.origin}${echoItem.source_url}`
+      : echoItem?.source_url || ''
+  }
+  onClose={() => setEchoItem(null)}
+/>
 
       {toast ? (
         <div className="fixed bottom-[28px] left-1/2 z-[160] -translate-x-1/2 rounded-full bg-[#111827] px-4 py-2.5 text-[12px] font-bold text-white shadow-xl dark:bg-white dark:text-[#111827]">
