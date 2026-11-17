@@ -1111,10 +1111,10 @@ export default function SavedPostsPage() {
   <button
     type="button"
     onClick={() => navigate(-1)}
-    className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95 dark:text-white"
+    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f1f1f4] dark:text-white dark:active:bg-white/10"
     aria-label={t('savedPostsPage.back')}
   >
-    <span aria-hidden="true" className="text-[24px] font-normal leading-none">{'<'}</span>
+    <i className="fa-solid fa-chevron-left text-[13px]" />
   </button>
 
   <h1 className="min-w-0 text-[18px] font-normal leading-tight text-[#111827] dark:text-white">
@@ -1317,7 +1317,7 @@ export default function SavedPostsPage() {
         hideCloseButton
         normalTitleWeight
       >
-        <div className="space-y-2">
+        <div className="space-y-1" role="radiogroup" aria-label={t('savedPostsPage.sortSavedPosts')}>
           {SORT_OPTIONS.map((option) => {
             const active = sort === option.key
 
@@ -1325,18 +1325,18 @@ export default function SavedPostsPage() {
               <button
                 key={option.key}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => {
                   setSort(option.key)
                   setSortSheetOpen(false)
                 }}
-                className={`flex w-full items-center justify-between rounded-[18px] px-4 py-3.5 text-left ${
-                  active
-                    ? 'bg-[#f3f0ff] text-[#6d4aff] ring-1 ring-[#6d4aff]/25 dark:bg-[#6d4aff]/12 dark:text-[#b9a8ff]'
-                    : 'bg-[#f8f8fb] text-[#111827] dark:bg-white/5 dark:text-white'
-                }`}
+                className="flex min-h-[52px] w-full items-center justify-between gap-3 bg-transparent px-3 py-3.5 text-left text-[#111827] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6d4aff] dark:text-white"
               >
                 <span className="text-[13.5px] font-normal">{t(`savedPostsPage.${option.labelKey}`)}</span>
-                {active ? <Check className="h-4 w-4" strokeWidth={2.4} /> : null}
+                <span className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border ${active ? 'border-[#171923] bg-[#171923] text-white dark:border-white dark:bg-white dark:text-[#171923]' : 'border-[#e2e5ec] bg-transparent dark:border-white/25'}`}>
+                  {active ? <Check className="h-3 w-3" strokeWidth={2.6} /> : null}
+                </span>
               </button>
             )
           })}
