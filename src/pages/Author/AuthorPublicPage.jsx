@@ -2400,7 +2400,28 @@ useEffect(() => {
     }
   }, [pageUsername])
 
+  useEffect(() => {
+    if (!location.state?.coverUpdated || !location.state?.coverUrl || !author?.is_owner) return
 
+    const nextUrl = String(location.state.coverUrl)
+    AUTHOR_OWNER_CACHE.delete(getAuthToken())
+
+    setAuthor(current =>
+      current?.is_owner && current.cover_url !== nextUrl
+        ? { ...current, cover_url: nextUrl }
+        : current
+    )
+
+    const nextState = { ...location.state }
+    delete nextState.coverUpdated
+    delete nextState.coverUrl
+
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: nextState,
+    })
+  }, [author?.is_owner, location.state, location.pathname, location.search, location.hash, navigate])
+  
 function handleOpenReviewsOverview() {
   setReviewsOverviewOpen(true)
   setReviewsOverviewDragY(0)
@@ -3054,7 +3075,11 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   }}
  onChooseCover={() => {
   setCoverOptionsOpen(false)
-  handleUploadSlide()
+  navigate('/author/page/covers', {
+    state: {
+      returnTo: `${location.pathname}${location.search}${location.hash}`,
+    },
+  })
 }}
 />
 
