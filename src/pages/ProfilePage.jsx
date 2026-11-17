@@ -2014,7 +2014,7 @@ async function handleOtherProfileOption(action) {
   {isOwnProfile ? (
     <button
       type="button"
-      onClick={() => navigate('/reader/story/create')}
+      onClick={() => navigate('/reader/story/create?returnTo=' + encodeURIComponent(`${location.pathname}${location.search}`))}
       className="absolute bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--shadow-bg-surface)] bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-page)] shadow-sm active:scale-90"
       aria-label={t('profilePage.addStory')}
     >
