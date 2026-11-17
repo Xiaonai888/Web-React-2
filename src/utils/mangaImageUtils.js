@@ -659,7 +659,11 @@ export async function uploadMangaPageFile({
         : 'https://shadow-backend-kucw.onrender.com'
     )
 
-    if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED === 'true') {
+      const allowEmergencyFallback = import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED === 'true'
+  if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED !== 'true' && !allowEmergencyFallback) {
+    throw new Error('Manga Direct Upload is disabled. Enable VITE_MANGA_DIRECT_UPLOAD_ENABLED=true.')
+  }
+  if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED === 'true') {
     const {
       stageMangaDirectUpload,
       isMangaDirectFallbackSafe,
@@ -682,7 +686,7 @@ export async function uploadMangaPageFile({
         signal,
       })
     } catch (error) {
-      if (signal?.aborted || !isMangaDirectFallbackSafe(error)) {
+            if (signal?.aborted || !allowEmergencyFallback || !isMangaDirectFallbackSafe(error)) {
         throw error
       }
     }
