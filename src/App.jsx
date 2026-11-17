@@ -257,6 +257,9 @@ const ReaderTagsMentionsPage = lazy(() =>
 const ReaderPendingTagsPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderPendingTagsPage')
 )
+const ReaderProfilePhotoLibraryPage = lazy(() =>
+  import('./pages/ReaderProfiles/ReaderProfilePhotoLibraryPage')
+)
 
 const ReaderAccountPrivacyPage = lazy(() =>
   import('./pages/ReaderProfiles/ReaderAccountPrivacyPage')
@@ -460,6 +463,7 @@ function AppShell() {
   useAuthorThemeScope(location.pathname)
   const readerNavPaths = [
   '/profile',
+  '/profile/photo-library',
   '/store',
   '/reader-mall',
   '/chat',
@@ -1878,6 +1882,10 @@ const shouldShowOpeningAds =
         <Route path="/wallet/orders" element={<WalletOrderHistoryPage />} />
         <Route path="/event" element={<EventPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+          <Route
+  path="/profile/photo-library"
+  element={<LazyPage><ReaderProfilePhotoLibraryPage /></LazyPage>}
+/>
         <Route path="/library" element={<Library />} />
         <Route path="/library/collection/:section" element={<LazyPage><LibraryCollectionPage /></LazyPage>} />
         <Route path="/discover/pdf/:productId" element={<LazyPage><DiscoverPdfReaderPage /></LazyPage>} />
