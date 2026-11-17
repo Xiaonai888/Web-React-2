@@ -132,6 +132,7 @@ export default function SharedProfilePhotoEditor({
   const [zoom, setZoom] = useState(1)
   const [cropPixels, setCropPixels] = useState(null)
   const [croppedFile, setCroppedFile] = useState(null)
+  const [usingOriginal, setUsingOriginal] = useState(false)
   const [croppedUrl, setCroppedUrl] = useState('')
   const [caption, setCaption] = useState('')
   const [shareToFeed, setShareToFeed] = useState(shareToFeedDefault)
@@ -151,6 +152,7 @@ export default function SharedProfilePhotoEditor({
     setZoom(1)
     setCropPixels(null)
     setCroppedFile(null)
+    setUsingOriginal(false)
     setCaption('')
     setShareToFeed(shareToFeedDefault)
     setError('')
@@ -174,7 +176,14 @@ export default function SharedProfilePhotoEditor({
     setBusy(true)
     setError('')
     try {
+      if (typeof image === 'string' && zoom === 1 && crop.x === 0 && crop.y === 0) {
+        setCroppedFile(null)
+        setUsingOriginal(true)
+        setStep('details')
+        return
+      }
       const file = await createCroppedFile(imageUrl, cropPixels)
+      setUsingOriginal(false)
       setCroppedFile(file)
       setStep('details')
     } catch {
@@ -185,11 +194,11 @@ export default function SharedProfilePhotoEditor({
   }
 
   async function savePhoto() {
-    if (!croppedFile || !onSave || busy || saving) return
+    if ((!croppedFile && !usingOriginal) || !onSave || busy || saving) return
     setBusy(true)
     setError('')
     try {
-      await onSave({ file: croppedFile, caption: caption.trim(), privacy: 'public', shareToFeed })
+      await onSave({ file: croppedFile, caption: caption.trim(), privacy: 'public', shareToFeed, unchanged: usingOriginal })
     } catch (saveError) {
       setError(saveError?.message || t('sharedProfilePhotoEditor.saveFailed'))
     } finally {
@@ -215,7 +224,7 @@ export default function SharedProfilePhotoEditor({
             <i className="fa-solid fa-arrow-left text-[19px]" />
           </button>
           <h1 className="min-w-0 flex-1 text-[17px] font-bold">{t(`sharedProfilePhotoEditor.${step === 'crop' ? 'preview' : 'details'}`)}</h1>
-          <button type="button" onClick={step === 'crop' ? continueToDetails : savePhoto} disabled={busy || saving || (step === 'crop' ? !imageUrl || !cropPixels : !croppedFile || !onSave)} className="min-w-16 rounded-lg bg-[#1877f2] px-4 py-2 text-[14px] font-bold text-white disabled:opacity-40">
+          <button type="button" onClick={step === 'crop' ? continueToDetails : savePhoto} disabled={busy || saving || (step === 'crop' ? !imageUrl || !cropPixels : (!croppedFile && !usingOriginal) || !onSave)} className="min-w-16 rounded-lg bg-[#1877f2] px-4 py-2 text-[14px] font-bold text-white disabled:opacity-40">
             {busy || saving ? t('sharedProfilePhotoEditor.saving') : t(`sharedProfilePhotoEditor.${step === 'crop' ? 'next' : 'save'}`)}
           </button>
         </div>
@@ -245,7 +254,7 @@ export default function SharedProfilePhotoEditor({
         ) : (
           <>
             <div className="flex aspect-square w-full items-center justify-center bg-[#111827]">
-              {croppedUrl ? <img src={croppedUrl} alt={t('sharedProfilePhotoEditor.photo')} className="aspect-square h-full w-full rounded-full object-contain" /> : null}
+              {(usingOriginal ? imageUrl : croppedUrl) ? <img src={usingOriginal ? imageUrl : croppedUrl} alt={t('sharedProfilePhotoEditor.photo')} className="aspect-square h-full w-full rounded-full object-contain" /> : null}
             </div>
             <div className="space-y-5 px-4 py-5">
               <textarea value={caption} onChange={(event) => setCaption(event.target.value)} rows={3} maxLength={2000} placeholder={t('sharedProfilePhotoEditor.caption')} className="min-h-24 w-full resize-none rounded-2xl border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] p-4 text-[15px] outline-none focus:border-[var(--shadow-accent)]" />
