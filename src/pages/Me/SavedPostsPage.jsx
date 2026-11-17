@@ -538,8 +538,39 @@ function openSavedSource(navigate, item) {
   return true
 }
 
-function BottomSheet({ open, title, description, onClose, children }) {
+function BottomSheet({ open, title, description, onClose, children, swipeToClose = false, hideCloseButton = false, normalTitleWeight = false }) {
   const { t } = useDisplayTranslation()
+  const pointerRef = useRef(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+
+  function onDragStart(event) {
+    if (!swipeToClose || (event.pointerType === 'mouse' && event.button !== 0)) return
+    if (event.target.closest('button, input, textarea, select, a')) return
+    pointerRef.current = { id: event.pointerId, y: event.clientY }
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function onDragMove(event) {
+    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
+    setDragOffset(Math.max(0, event.clientY - pointerRef.current.y))
+  }
+
+  function onDragEnd(event) {
+    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
+    const distance = Math.max(0, event.clientY - pointerRef.current.y)
+    pointerRef.current = null
+    setDragging(false)
+    setDragOffset(0)
+    if (distance >= 75) onClose?.()
+  }
+
+  function onDragCancel() {
+    pointerRef.current = null
+    setDragging(false)
+    setDragOffset(0)
+  }
 
   if (!open) return null
 
@@ -552,25 +583,34 @@ function BottomSheet({ open, title, description, onClose, children }) {
         aria-label={t('savedPostsPage.close')}
       />
 
-      <section className="relative z-10 w-full max-w-[560px] rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl dark:bg-[#171923]">
+      <section
+        className={`relative z-10 w-full max-w-[560px] rounded-t-[28px] bg-white px-4 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-2xl dark:bg-[#171923] ${swipeToClose && !dragging ? 'transition-transform duration-200 ease-out' : ''}`}
+        style={swipeToClose ? { transform: `translateY(${dragOffset}px)`, touchAction: 'none' } : undefined}
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragCancel}
+      >
         <div className="mx-auto h-1.5 w-12 rounded-full bg-[#d9dce4] dark:bg-white/15" />
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-[18px] font-black text-[#111827] dark:text-white">{title}</h2>
+            <h2 className={`text-[18px] ${normalTitleWeight ? 'font-bold' : 'font-black'} text-[#111827] dark:text-white`}>{title}</h2>
             {description ? (
               <p className="mt-1 text-[12px] leading-5 text-[#8d94a1] dark:text-white/45">{description}</p>
             ) : null}
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-white/10 dark:text-white"
-            aria-label={t('savedPostsPage.close')}
-          >
-            <X className="h-4 w-4" strokeWidth={2} />
-          </button>
+          {!hideCloseButton ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f3fa] text-[#111827] active:scale-95 dark:bg-white/10 dark:text-white"
+              aria-label={t('savedPostsPage.close')}
+            >
+              <X className="h-4 w-4" strokeWidth={2} />
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-4">{children}</div>
@@ -1112,7 +1152,7 @@ export default function SavedPostsPage() {
             <button
               type="button"
               onClick={() => setSortSheetOpen(true)}
-              className="flex h-11 shrink-0 items-center gap-2 rounded-[15px] bg-[#f7f7fa] px-3.5 text-[12px] font-extrabold text-[#4b5563] active:scale-[0.98] dark:bg-white/5 dark:text-white/70"
+              className="flex h-11 shrink-0 items-center gap-2 rounded-[15px] bg-[#f7f7fa] px-3.5 text-[12px] font-normal text-[#4b5563] active:scale-[0.98] dark:bg-white/5 dark:text-white/70"
             >
               <SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />
               <span className="hidden sm:inline">{currentSortLabel}</span>
@@ -1273,6 +1313,9 @@ export default function SavedPostsPage() {
         title={t('savedPostsPage.sortSavedPosts')}
         description={t('savedPostsPage.sortDescription')}
         onClose={() => setSortSheetOpen(false)}
+        swipeToClose
+        hideCloseButton
+        normalTitleWeight
       >
         <div className="space-y-2">
           {SORT_OPTIONS.map((option) => {
@@ -1292,7 +1335,7 @@ export default function SavedPostsPage() {
                     : 'bg-[#f8f8fb] text-[#111827] dark:bg-white/5 dark:text-white'
                 }`}
               >
-                <span className="text-[13.5px] font-extrabold">{t(`savedPostsPage.${option.labelKey}`)}</span>
+                <span className="text-[13.5px] font-normal">{t(`savedPostsPage.${option.labelKey}`)}</span>
                 {active ? <Check className="h-4 w-4" strokeWidth={2.4} /> : null}
               </button>
             )
