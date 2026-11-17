@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, AtSign, Tag, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, AtSign, Tag, ShieldCheck, Users, Megaphone } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
@@ -10,10 +10,12 @@ registerTranslationNamespace('readerTagsMentions', {
     intro: 'Choose who can tag or mention you on Shadow.',
     tagTitle: 'Who can tag you?', tagHelp: 'Choose who can tag you in posts.',
     mentionTitle: 'Who can mention you?', mentionHelp: 'Choose who can mention your @username.',
+    followersTitle: 'Who can notify you with @followers?', followersHelp: 'Choose whose follower mentions you receive.',
+    highlightTitle: 'Who can notify you with @highlight?', highlightHelp: 'Choose whose highlight mentions you receive.',
     everyone: 'Everyone', following: 'People you follow', nobody: 'No one',
     reviewTitle: 'Review tags manually', reviewHelp: 'Approve tags before they appear on your profile when tagged posts are supported.',
     blocked: 'Blocked readers cannot tag or mention you once these controls are connected to the account system.',
-    draft: 'Preferences are stored in your Shadow account. Tag, mention, and tag-review restrictions are not enforced in posts yet.',
+    draft: 'Preferences are stored in your Shadow account. Tag, mention, and tag-review restrictions are not enforced in posts yet. Mass mention notifications will respect these choices when that notification system is connected.',
     saveError: 'Could not save your settings. Please try again.',
     loading: 'Loading settings...', saving: 'Saving...', saved: 'Saved to your account.',
     loadError: 'Could not load settings.', retry: 'Try again',
@@ -25,10 +27,12 @@ registerTranslationNamespace('readerTagsMentions', {
     intro: 'ជ្រើសរើសអ្នកដែលអាច Tag ឬ Mention អ្នកនៅលើ Shadow។',
     tagTitle: 'តើអ្នកណាអាច Tag អ្នក?', tagHelp: 'ជ្រើសរើសអ្នកដែលអាច Tag អ្នកក្នុង Post។',
     mentionTitle: 'តើអ្នកណាអាច Mention អ្នក?', mentionHelp: 'ជ្រើសរើសអ្នកដែលអាច Mention @username របស់អ្នក។',
+    followersTitle: 'តើអ្នកណាអាចជូនដំណឹងអ្នកតាម @followers?', followersHelp: 'ជ្រើសរើសអ្នកដែលអាចផ្ញើដំណឹងតាមរយៈ @followers មកអ្នក។',
+    highlightTitle: 'តើអ្នកណាអាចជូនដំណឹងអ្នកតាម @highlight?', highlightHelp: 'ជ្រើសរើសអ្នកដែលអាចផ្ញើដំណឹងតាមរយៈ @highlight មកអ្នក។',
     everyone: 'មនុស្សគ្រប់គ្នា', following: 'អ្នកដែលអ្នកបាន Follow', nobody: 'គ្មាននរណាម្នាក់',
     reviewTitle: 'ពិនិត្យ Tag មុនបង្ហាញ', reviewHelp: 'អនុញ្ញាត Tag មុនបង្ហាញលើ Profile ពេលមុខងារ Tagged Posts ត្រូវបានភ្ជាប់។',
     blocked: 'អ្នកដែលអ្នកបាន Block នឹងមិនអាច Tag ឬ Mention អ្នកបានទេ បន្ទាប់ពីភ្ជាប់ការកំណត់នេះទៅប្រព័ន្ធគណនី។',
-    draft: 'ការកំណត់ត្រូវបានរក្សាទុកក្នុងគណនី Shadow។ ការទប់ Tag, Mention និងការអនុម័ត Tag ក្នុង Post មិនទាន់ដំណើរការពិតប្រាកដទេ។',
+    draft: 'ការកំណត់ត្រូវបានរក្សាទុកក្នុងគណនី Shadow។ ការទប់ Tag, Mention និងការអនុម័ត Tag ក្នុង Post មិនទាន់ដំណើរការពិតប្រាកដទេ។ ការជូនដំណឹង @followers និង @highlight នឹងគោរពជម្រើសនេះ ពេលភ្ជាប់ប្រព័ន្ធជូនដំណឹង។',
     saveError: 'មិនអាចរក្សាទុកការកំណត់បានទេ។ សូមព្យាយាមម្ដងទៀត។',
     loading: 'កំពុងផ្ទុកការកំណត់...', saving: 'កំពុងរក្សាទុក...', saved: 'បានរក្សាទុកក្នុងគណនីរបស់អ្នក។',
     loadError: 'មិនអាចផ្ទុកការកំណត់បានទេ។', retry: 'ព្យាយាមម្ដងទៀត',
@@ -40,12 +44,14 @@ registerTranslationNamespace('readerTagsMentions', {
     intro: '选择谁可以在 Shadow 上标记或提及你。',
     tagTitle: '谁可以标记你？', tagHelp: '选择谁能在帖子中标记你。',
     mentionTitle: '谁可以提及你？', mentionHelp: '选择谁可以提及你的 @用户名。',
+    followersTitle: '谁可以通过 @followers 通知你？', followersHelp: '选择可以向你发送关注者群体提及通知的人。',
+    highlightTitle: '谁可以通过 @highlight 通知你？', highlightHelp: '选择可以向你发送重点提及通知的人。',
     everyone: '所有人', following: '你关注的人', nobody: '没有人',
     reviewTitle: '手动审核标签', reviewHelp: '支持标签帖子后，在标签显示于个人主页前先进行批准。',
     blocked: '接入账户权限系统后，被你屏蔽的人将无法标记或提及你。',
-    draft: '设置已保存到你的 Shadow 账号。帖子中的标签、提及及标签审核限制尚未生效。',
+    draft: '设置已保存到你的 Shadow 账号。帖子中的标签、提及及标签审核限制尚未生效。群体提及通知功能接入后，将遵守这里的设置。',
     saveError: '无法保存设置，请重试。',
-    loading: '正在加载设置...', saving: '正在保存...', saved: '已保存到你的账号。',
+    loading: '正在加载设置...', saving: '保存中...', saved: '已保存到你的账号。',
     loadError: '无法加载设置。', retry: '重试',
     signIn: '请先登录以管理这些设置。',
     missingAccount: '无法识别读者账户，请重新登录。',
@@ -55,10 +61,12 @@ registerTranslationNamespace('readerTagsMentions', {
     intro: 'Shadow であなたをタグ付け・メンションできる人を選びます。',
     tagTitle: 'タグ付けできる人', tagHelp: '投稿であなたをタグ付けできる人を選びます。',
     mentionTitle: 'メンションできる人', mentionHelp: '@ユーザー名をメンションできる人を選びます。',
+    followersTitle: '@followers で通知できる人', followersHelp: 'フォロワーへの一括メンション通知を送れる人を選びます。',
+    highlightTitle: '@highlight で通知できる人', highlightHelp: 'ハイライトメンション通知を送れる人を選びます。',
     everyone: 'すべての人', following: 'フォローしている人', nobody: '誰も許可しない',
     reviewTitle: 'タグを手動で承認', reviewHelp: 'タグ付き投稿が対応した際、プロフィール表示前に承認します。',
     blocked: 'アカウント側の制御が接続されると、ブロックした相手はタグ付けやメンションができなくなります。',
-    draft: '設定は Shadow アカウントに保存されます。投稿内のタグ・メンション制限とタグ承認はまだ適用されません。',
+    draft: '設定は Shadow アカウントに保存されます。投稿内のタグ・メンション制限とタグ承認はまだ適用されません。一括メンション通知が接続されると、この設定が適用されます。',
     saveError: '設定を保存できませんでした。再試行してください。',
     loading: '設定を読み込み中...', saving: '保存中...', saved: 'アカウントに保存しました。',
     loadError: '設定を読み込めませんでした。', retry: '再試行',
@@ -70,14 +78,16 @@ registerTranslationNamespace('readerTagsMentions', {
     intro: 'Shadow에서 나를 태그하거나 멘션할 수 있는 사람을 선택하세요.',
     tagTitle: '나를 태그할 수 있는 사람', tagHelp: '게시물에서 나를 태그할 수 있는 사람을 선택하세요.',
     mentionTitle: '나를 멘션할 수 있는 사람', mentionHelp: '내 @사용자 이름을 멘션할 수 있는 사람을 선택하세요.',
+    followersTitle: '누가 @followers로 알림을 보낼 수 있나요?', followersHelp: '팔로워 일괄 멘션 알림을 보낼 사람을 선택하세요.',
+    highlightTitle: '누가 @highlight로 알림을 보낼 수 있나요?', highlightHelp: '하이라이트 멘션 알림을 보낼 사람을 선택하세요.',
     everyone: '모든 사람', following: '내가 팔로우하는 사람', nobody: '아무도 없음',
     reviewTitle: '태그 직접 검토', reviewHelp: '태그된 게시물이 지원되면 프로필에 표시하기 전에 승인합니다.',
     blocked: '계정 제한 기능을 연결하면 차단된 사용자는 나를 태그하거나 멘션할 수 없습니다.',
-    draft: '설정은 Shadow 계정에 저장됩니다. 게시물의 태그·멘션 제한 및 태그 승인은 아직 적용되지 않습니다.',
+    draft: '설정은 Shadow 계정에 저장됩니다. 게시물의 태그·멘션 제한 및 태그 승인은 아직 적용되지 않습니다. 일괄 멘션 알림을 연결한 뒤 이 설정이 적용됩니다.',
     saveError: '설정을 저장하지 못했습니다. 다시 시도하세요.',
     loading: '설정을 불러오는 중...', saving: '저장 중...', saved: '계정에 저장했습니다.',
     loadError: '설정을 불러오지 못했습니다.', retry: '다시 시도',
-    signIn: '설정을 관리하려면 로그인하세요.',
+    signIn: '설정에 접근하려면 로그인하세요.',
     missingAccount: '독자 계정을 확인할 수 없습니다. 다시 로그인하세요.',
   },
 })
@@ -100,6 +110,8 @@ const API_URL = `${API_BASE_URL}/api/users/me/tags-mentions`
 const DEFAULT_SETTINGS = {
   tags: 'everyone',
   mentions: 'everyone',
+  followersMentions: 'everyone',
+  highlightMentions: 'everyone',
   reviewTags: true,
 }
 
@@ -118,6 +130,8 @@ function isValidSettings(value) {
   return value && typeof value === 'object' && !Array.isArray(value) &&
     CHOICES.some((choice) => choice.value === value.tags) &&
     CHOICES.some((choice) => choice.value === value.mentions) &&
+    CHOICES.some((choice) => choice.value === value.followersMentions) &&
+    CHOICES.some((choice) => choice.value === value.highlightMentions) &&
     typeof value.reviewTags === 'boolean'
 }
 
@@ -277,6 +291,8 @@ export default function ReaderTagsMentionsPage() {
         <p className="px-1 text-[13px] leading-6 text-[var(--shadow-text-secondary)]">{tr('intro')}</p>
         <PreferenceGroup title={tr('tagTitle')} description={tr('tagHelp')} name="tags" value={preferences.tags} onChange={updatePreference} disabled={!ready || loading || saving} tr={tr} Icon={Tag} />
         <PreferenceGroup title={tr('mentionTitle')} description={tr('mentionHelp')} name="mentions" value={preferences.mentions} onChange={updatePreference} disabled={!ready || loading || saving} tr={tr} Icon={AtSign} />
+        <PreferenceGroup title={tr('followersTitle')} description={tr('followersHelp')} name="followersMentions" value={preferences.followersMentions} onChange={updatePreference} disabled={!ready || loading || saving} tr={tr} Icon={Users} />
+        <PreferenceGroup title={tr('highlightTitle')} description={tr('highlightHelp')} name="highlightMentions" value={preferences.highlightMentions} onChange={updatePreference} disabled={!ready || loading || saving} tr={tr} Icon={Megaphone} />
         <section className="rounded-[20px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
@@ -288,7 +304,7 @@ export default function ReaderTagsMentionsPage() {
             <ReviewSwitch checked={preferences.reviewTags} onChange={() => updatePreference('reviewTags', !preferences.reviewTags)} disabled={!ready || loading || saving} label={tr('reviewTitle')} />
           </div>
           <p className="mt-3 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">{tr('reviewHelp')}</p>
-               </section>
+        </section>
         <button
           type="button"
           onClick={() => navigate(`/profile/settings/tags-mentions/pending${fromMeSettings ? '?from=me-settings' : ''}`)}
