@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
@@ -148,6 +148,14 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com')
 
 const NOTIFICATION_PAGE_SIZE = 30
+const MASS_MENTION_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const MASS_MENTION_COPY = {
+  en: { title: 'Mass mentions', loading: 'Loading mentions...', empty: 'No available posts for this notification.', failed: 'Could not load mentions.', retry: 'Try again', open: 'Open post', count: 'Posts' },
+  km: { title: 'ការហៅជាក្រុម', loading: 'កំពុងផ្ទុកការហៅ...', empty: 'មិនមាន Post ដែលអាចបើកបានទេ។', failed: 'មិនអាចផ្ទុកការហៅបានទេ។', retry: 'ព្យាយាមម្ដងទៀត', open: 'បើក Post', count: 'ចំនួន Post' },
+  zh: { title: '群体提及', loading: '正在加载提及...', empty: '没有可查看的帖子。', failed: '无法加载提及。', retry: '重试', open: '打开帖子', count: '帖子' },
+  ja: { title: '一斉メンション', loading: 'メンションを読み込み中...', empty: '表示できる投稿がありません。', failed: 'メンションを読み込めませんでした。', retry: '再試行', open: '投稿を開く', count: '投稿' },
+  ko: { title: '단체 멘션', loading: '멘션을 불러오는 중...', empty: '표시할 수 있는 게시물이 없습니다.', failed: '멘션을 불러오지 못했습니다.', retry: '다시 시도', open: '게시물 열기', count: '게시물' },
+}
 
 const TABS = [
   { key: 'all', label: 'All' },
@@ -389,7 +397,15 @@ function getDisplayGroupLabel(group, language, t) {
 export default function NotificationPage({ isOpen = true, onClose, mode = 'popup' }) {
   const isFullPage = mode === 'page'
   const navigate = useNavigate()
+  const location = useLocation()
   const { language, t } = useDisplayTranslation()
+  const digestCopy = MASS_MENTION_COPY[language] || MASS_MENTION_COPY.en
+  const digestParam = new URLSearchParams(location.search).get('mass_mention_digest')
+  const digestId = MASS_MENTION_UUID.test(digestParam || '') ? digestParam.toLowerCase() : ''
+  const [digestData, setDigestData] = useState(null)
+  const [digestLoading, setDigestLoading] = useState(false)
+  const [digestError, setDigestError] = useState('')
+  const [digestRetry, setDigestRetry] = useState(0)
   const [activeTab, setActiveTab] = useState('all')
   const [notifications, setNotifications] = useState([])
   const [counts, setCounts] = useState(emptyCounts)
@@ -417,6 +433,53 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   const lastSuccessfulLoadAtRef = useRef(0)
   isOpenRef.current = isOpen
   activeTabRef.current = activeTab
+
+  useEffect(() => {
+    if (!digestId || !isOpen) {
+      setDigestData(null)
+      setDigestError('')
+      setDigestLoading(false)
+      return undefined
+    }
+    const token = getReaderToken()
+    if (!token) {
+      navigate('/login', { replace: true })
+      return undefined
+    }
+    const controller = new AbortController()
+    let active = true
+    setDigestLoading(true)
+    setDigestData(null)
+    setDigestError('')
+
+    async function loadDigest() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/notifications/mass-mentions/${encodeURIComponent(digestId)}`,
+          { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: controller.signal }
+        )
+        if (response.status === 401) {
+          if (active) navigate('/login', { replace: true })
+          return
+        }
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok !== true || !Array.isArray(data.items)) {
+          throw new Error('MASS_MENTION_DIGEST_FAILED')
+        }
+        if (active) setDigestData(data)
+      } catch {
+        if (active && !controller.signal.aborted) setDigestError('MASS_MENTION_DIGEST_FAILED')
+      } finally {
+        if (active) setDigestLoading(false)
+      }
+    }
+
+    void loadDigest()
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [digestId, digestRetry, navigate, isOpen])
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
@@ -1082,6 +1145,55 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
             ) : null}
           </main>
         </div>
+
+        {digestId ? (
+          <section role="dialog" aria-modal="true" aria-label={digestCopy.title} className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white dark:bg-[var(--shadow-bg-page)]">
+            <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 py-3 dark:border-[var(--shadow-border)] dark:bg-[var(--shadow-nav-bg)]">
+              <button
+                type="button"
+                onClick={() => navigate('/notifications', { replace: true })}
+                aria-label={t('notificationPage.backToNotifications')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#111111] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]"
+              >
+                <i className="fas fa-arrow-left text-[14px]" />
+              </button>
+              <h1 className="text-[16px] font-black text-[#111111] dark:text-[var(--shadow-text-primary)]">{digestCopy.title}</h1>
+            </header>
+            <div className="mx-auto w-full max-w-[720px] px-4 pb-10 pt-6">
+              {digestLoading ? <p role="status" className="text-sm text-[var(--shadow-text-secondary)]">{digestCopy.loading}</p> : null}
+              {digestError ? (
+                <div role="alert" className="rounded-2xl border border-[var(--shadow-border)] p-5">
+                  <p className="mb-3 text-sm text-[var(--shadow-text-secondary)]">{digestCopy.failed}</p>
+                  <button type="button" onClick={() => setDigestRetry((value) => value + 1)} className="rounded-full bg-[#111827] px-4 py-2 text-sm font-semibold text-white">{digestCopy.retry}</button>
+                </div>
+              ) : null}
+              {!digestLoading && !digestError && digestData ? (
+                <div className="space-y-3">
+                  <p className="mb-4 text-[13px] font-semibold text-[var(--shadow-text-secondary)]">{digestCopy.count}: {digestData.items.length}</p>
+                  {digestData.items.length === 0 ? (
+                    <p role="status" className="rounded-2xl border border-[var(--shadow-border)] p-5 text-sm text-[var(--shadow-text-secondary)]">{digestCopy.empty}</p>
+                  ) : digestData.items.map((item, index) => (
+                    <button
+                      key={`${item.commentId || item.postId}-${item.tag}-${index}`}
+                      type="button"
+                      onClick={() => {
+                        const link = String(item.link || '')
+                        if (link.startsWith('/reader/post/') || link.startsWith('/author/page?post=')) navigate(link)
+                      }}
+                      className="flex min-h-[75px] w-full items-center justify-between gap-3 rounded-[18px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-left active:bg-[var(--shadow-bg-hover)]"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-bold text-[var(--shadow-text-primary)]">@{item.tag === 'highlight' ? 'highlight' : 'followers'}</span>
+                        <span className="mt-1 block text-[12px] text-[var(--shadow-text-secondary)]">{formatDisplayDateGroup(item.createdAt, language)} · {formatDisplayNotificationTime(item.createdAt, language)}</span>
+                      </span>
+                      <span className="shrink-0 text-[12px] font-bold text-[var(--shadow-text-primary)]">{digestCopy.open} ›</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {selectedAnnouncement ? (
           <div className="fixed inset-0 z-[2147483647] overflow-y-auto bg-white dark:bg-[var(--shadow-bg-page)]">
