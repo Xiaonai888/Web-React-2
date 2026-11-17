@@ -403,6 +403,20 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   const dragStartYRef = useRef(null)
   const sheetDragYRef = useRef(0)
   const requestIdRef = useRef(0)
+  const activeLoadRef = useRef(null)
+  const activeRefreshRef = useRef(null)
+  const loadMoreBusyRef = useRef(false)
+  const readPendingRef = useRef(new Set())
+  const readCompletedRef = useRef(new Set())
+  const mutationPendingRef = useRef(0)
+  const mutationNeedsRefreshRef = useRef(false)
+  const markAllBusyRef = useRef(false)
+  const isOpenRef = useRef(isOpen)
+  const activeTabRef = useRef(activeTab)
+  const mountedRef = useRef(false)
+  const lastSuccessfulLoadAtRef = useRef(0)
+  isOpenRef.current = isOpen
+  activeTabRef.current = activeTab
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'unread') return notifications.filter((item) => !item.isRead)
@@ -415,27 +429,40 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   const groupedNotifications = useMemo(() => groupNotificationsByDate(filteredNotifications), [filteredNotifications])
 
   async function loadNotifications(requestedPage = 1, append = false) {
-    const token = getReaderToken()
+    if (!mountedRef.current || !isOpenRef.current) return
+    if (mutationPendingRef.current) {
+      if (!append) mutationNeedsRefreshRef.current = true
+      return
+    }
+    if (append && (loadMoreBusyRef.current || activeLoadRef.current)) return
 
+    const token = getReaderToken()
     if (!token) {
       navigate('/login')
       return
     }
 
-    const requestId = requestIdRef.current + 1
-    requestIdRef.current = requestId
+    activeRefreshRef.current?.abort()
+    activeLoadRef.current?.abort()
+
+    const controller = new AbortController()
+    activeLoadRef.current = controller
+    if (append) loadMoreBusyRef.current = true
+
+    const requestId = ++requestIdRef.current
+    const requestedTab = activeTabRef.current
+
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setLoadingMore(false)
+      setLoading(true)
+      setMessage('')
+    }
 
     try {
-      if (append) {
-        setLoadingMore(true)
-      } else {
-        setLoadingMore(false)
-        setLoading(true)
-        setMessage('')
-      }
-
       const params = new URLSearchParams({
-        type: activeTab,
+        type: requestedTab,
         page: String(requestedPage),
         limit: String(NOTIFICATION_PAGE_SIZE),
         include_counts: append ? '0' : '1',
@@ -444,15 +471,24 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
       const response = await fetch(
         `${API_BASE_URL}/api/notifications?${params.toString()}`,
         {
-          headers: getHeaders(),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
         }
       )
 
       const data = await response.json().catch(() => ({}))
 
-      if (requestId !== requestIdRef.current) {
-        return
-      }
+      if (
+        controller.signal.aborted ||
+        !mountedRef.current ||
+        !isOpenRef.current ||
+        activeLoadRef.current !== controller ||
+        requestId !== requestIdRef.current ||
+        token !== getReaderToken()
+      ) return
 
       if (response.status === 401 || response.status === 403) {
         navigate('/login')
@@ -473,57 +509,88 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
           return [...merged.values()]
         })
       } else {
+        readCompletedRef.current.clear()
         setNotifications(incoming)
       }
 
-      if (data.counts) {
-        setCounts(data.counts)
-      }
-
+      if (data.counts) setCounts(data.counts)
+      lastSuccessfulLoadAtRef.current = Date.now()
       setPage(Number(data.page || requestedPage))
       setHasMore(Boolean(data.has_more))
     } catch (error) {
       if (
+        !controller.signal.aborted &&
+        mountedRef.current &&
+        isOpenRef.current &&
         requestId === requestIdRef.current &&
-        !append
+        token === getReaderToken()
       ) {
-        setMessage(error.message || t('notificationPage.loadFailed'))
-        setNotifications([])
-        setHasMore(false)
+        if (!append) {
+          setMessage(error.message || t('notificationPage.loadFailed'))
+          setNotifications([])
+          setHasMore(false)
+        }
+        console.warn('NOTIFICATION_PAGE_LOAD_FAILED', String(error?.name || 'NetworkError'))
       }
     } finally {
-      if (requestId === requestIdRef.current) {
-        if (append) {
-          setLoadingMore(false)
-        } else {
-          setLoading(false)
-        }
+      if (activeLoadRef.current === controller) {
+        activeLoadRef.current = null
+        if (append) loadMoreBusyRef.current = false
+      }
+      if (mountedRef.current && isOpenRef.current && requestId === requestIdRef.current) {
+        if (append) setLoadingMore(false)
+        else setLoading(false)
       }
     }
   }
 
   function loadMoreNotifications() {
-    if (loadingMore || !hasMore) return
-    loadNotifications(page + 1, true)
+    if (!mountedRef.current || !isOpenRef.current || loading || loadingMore || loadMoreBusyRef.current || !hasMore) return
+    void loadNotifications(page + 1, true)
   }
 
   useEffect(() => {
-    if (!isOpen) return
-    loadNotifications(1, false)
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    void loadNotifications(1, false)
+
+    return () => {
+      requestIdRef.current += 1
+      activeLoadRef.current?.abort()
+      activeRefreshRef.current?.abort()
+      activeLoadRef.current = null
+      activeRefreshRef.current = null
+      loadMoreBusyRef.current = false
+    }
   }, [activeTab, isOpen])
 
   useEffect(() => {
     if (!isOpen) return undefined
     let cancelled = false
-    let refreshRunning = false
-    let lastRefreshAt = 0
+    let lastRefreshAt = Date.now()
 
     async function refreshVisibleNotifications() {
-      if (document.visibilityState !== 'visible' || !getReaderToken()) return
+      if (cancelled || !mountedRef.current || document.visibilityState !== 'visible') return
+      const token = getReaderToken()
+      if (
+        !token ||
+        activeLoadRef.current ||
+        activeRefreshRef.current ||
+        mutationPendingRef.current
+      ) return
+
       const now = Date.now()
-      if (refreshRunning || now - lastRefreshAt < 15000) return
-      refreshRunning = true
+      if (now - Math.max(lastRefreshAt, lastSuccessfulLoadAtRef.current) < 15000) return
       lastRefreshAt = now
+
+      const controller = new AbortController()
+      activeRefreshRef.current = controller
       const requestId = requestIdRef.current
       const params = new URLSearchParams({
         type: activeTab,
@@ -533,27 +600,55 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
       })
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/notifications?${params.toString()}`, {
-          headers: getHeaders(),
-        })
-        if (!response.ok) return
-        const data = await response.json().catch(() => ({}))
-        if (cancelled || requestId !== requestIdRef.current || !data.ok) return
-        if (data.counts) setCounts(data.counts)
+        const response = await fetch(
+          `${API_BASE_URL}/api/notifications?${params.toString()}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        )
 
+        if (!response.ok) {
+          if (response.status >= 500) {
+            console.warn('NOTIFICATION_REFRESH_HTTP_ERROR', response.status)
+          }
+          return
+        }
+
+        const data = await response.json().catch(() => ({}))
+        if (
+          cancelled ||
+          controller.signal.aborted ||
+          !mountedRef.current ||
+          !isOpenRef.current ||
+          requestId !== requestIdRef.current ||
+          token !== getReaderToken() ||
+          mutationPendingRef.current ||
+          !data.ok
+        ) return
+
+        if (data.counts) setCounts(data.counts)
         const latest = (data.notifications || []).map(mapNotification)
         setNotifications((current) => {
           const seen = new Set(latest.map((item) => String(item.id)))
           return [...latest, ...current.filter((item) => !seen.has(String(item.id)))]
         })
-      } catch {
+      } catch (error) {
+        if (!cancelled && !controller.signal.aborted) {
+          console.warn('NOTIFICATION_REFRESH_FAILED', String(error?.name || 'NetworkError'))
+        }
       } finally {
-        refreshRunning = false
+        if (activeRefreshRef.current === controller) {
+          activeRefreshRef.current = null
+        }
       }
     }
 
     function refreshOnVisibility() {
-      if (document.visibilityState === 'visible') refreshVisibleNotifications()
+      if (document.visibilityState === 'visible') void refreshVisibleNotifications()
     }
 
     const refreshInterval = window.setInterval(refreshVisibleNotifications, 120000)
@@ -562,6 +657,8 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
 
     return () => {
       cancelled = true
+      activeRefreshRef.current?.abort()
+      activeRefreshRef.current = null
       window.clearInterval(refreshInterval)
       document.removeEventListener('visibilitychange', refreshOnVisibility)
       window.removeEventListener('focus', refreshOnVisibility)
@@ -592,11 +689,36 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
     }
   }, [isFullPage, isOpen])
 
-  async function markAllAsRead() {
-    setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
-    if (activeTab === 'unread') {
-      setHasMore(false)
+  function beginNotificationMutation() {
+    requestIdRef.current += 1
+    activeLoadRef.current?.abort()
+    activeRefreshRef.current?.abort()
+    activeLoadRef.current = null
+    activeRefreshRef.current = null
+    loadMoreBusyRef.current = false
+    setLoading(false)
+    setLoadingMore(false)
+  }
+
+  function finishNotificationMutation() {
+    mutationPendingRef.current = Math.max(0, mutationPendingRef.current - 1)
+    if (mutationPendingRef.current === 0 && mutationNeedsRefreshRef.current) {
+      mutationNeedsRefreshRef.current = false
+      if (mountedRef.current && isOpenRef.current) void loadNotifications(1, false)
     }
+  }
+
+  async function markAllAsRead() {
+    if (!mountedRef.current || !isOpenRef.current || mutationPendingRef.current || markAllBusyRef.current) return
+    const token = getReaderToken()
+    if (!token) return
+
+    markAllBusyRef.current = true
+    mutationPendingRef.current += 1
+    beginNotificationMutation()
+
+    setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
+    if (activeTab === 'unread') setHasMore(false)
     setCounts((current) => ({
       ...current,
       unread: 0,
@@ -606,24 +728,70 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
     }))
 
     try {
-      await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+      const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
         method: 'PATCH',
-        headers: getHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       })
-    } catch {
+      if (!response.ok) throw new Error(`HTTP_${response.status}`)
+      const data = await response.json().catch(() => ({}))
+      if (!data.ok) throw new Error('NOTIFICATION_MARK_ALL_REJECTED')
+    } catch (error) {
+      console.warn('NOTIFICATION_MARK_ALL_FAILED', String(error?.message || 'NetworkError').slice(0, 60))
+      mutationNeedsRefreshRef.current = true
+    } finally {
+      markAllBusyRef.current = false
+      finishNotificationMutation()
     }
   }
 
   async function markNotificationAsRead(notification) {
-    setNotifications((items) => items.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)))
+    const notificationId = String(notification?.id || '')
+    if (
+      !mountedRef.current ||
+      !isOpenRef.current ||
+      !notificationId ||
+      notification.isRead ||
+      markAllBusyRef.current ||
+      readPendingRef.current.has(notificationId) ||
+      readCompletedRef.current.has(notificationId)
+    ) return
+
+    const token = getReaderToken()
+    if (!token) return
+
+    readPendingRef.current.add(notificationId)
+    mutationPendingRef.current += 1
+    beginNotificationMutation()
+
+    setNotifications((items) => items.map((item) => (
+      String(item.id) === notificationId ? { ...item, isRead: true } : item
+    )))
     setCounts((current) => decreaseUnreadCounts(current, notification))
 
     try {
-      await fetch(`${API_BASE_URL}/api/notifications/${notification.id}/read`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-      })
-    } catch {
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/${encodeURIComponent(notificationId)}/read`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      if (!response.ok) throw new Error(`HTTP_${response.status}`)
+      const data = await response.json().catch(() => ({}))
+      if (!data.ok) throw new Error('NOTIFICATION_MARK_READ_REJECTED')
+      readCompletedRef.current.add(notificationId)
+    } catch (error) {
+      console.warn('NOTIFICATION_MARK_READ_FAILED', String(error?.message || 'NetworkError').slice(0, 60))
+      mutationNeedsRefreshRef.current = true
+    } finally {
+      readPendingRef.current.delete(notificationId)
+      finishNotificationMutation()
     }
   }
 
