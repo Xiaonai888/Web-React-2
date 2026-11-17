@@ -2423,7 +2423,29 @@ useEffect(() => {
       state: nextState,
     })
   }, [author?.is_owner, location.state, location.pathname, location.search, location.hash, navigate])
-  
+
+  useEffect(() => {
+    const avatarUrl = location.state?.authorProfilePhotoUrl
+    if (!location.state?.authorProfilePhotoUpdated || !avatarUrl || !author?.is_owner) return
+    AUTHOR_OWNER_CACHE.delete(getAuthToken())
+    setAuthor(current => current?.is_owner && current.avatar_url !== avatarUrl
+      ? { ...current, avatar_url: avatarUrl }
+      : current)
+    try {
+      const saved = JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
+      if (saved?.id && String(saved.id) === String(author.id)) {
+        localStorage.setItem('shadow_author_page', JSON.stringify({ ...saved, avatar_url: avatarUrl }))
+      }
+    } catch {}
+    const nextState = { ...location.state }
+    delete nextState.authorProfilePhotoUpdated
+    delete nextState.authorProfilePhotoUrl
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: nextState,
+    })
+  }, [author?.is_owner, author?.id, location.state, location.pathname, location.search, location.hash, navigate])
+
 function handleOpenReviewsOverview() {
   setReviewsOverviewOpen(true)
   setReviewsOverviewDragY(0)
@@ -3088,10 +3110,15 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
       <ReaderProfilePhotoSheet
         open={Boolean(displayAuthor.is_owner) && authorProfilePhotoSheetOpen}
         onClose={() => setAuthorProfilePhotoSheetOpen(false)}
-        enabledActions={displayAuthor.avatar_url ? ['upload', 'view'] : ['upload']}
+        enabledActions={displayAuthor.avatar_url ? ['upload', 'view', 'choose'] : ['upload', 'choose']}
         onSelect={(action) => {
           setAuthorProfilePhotoSheetOpen(false)
           if (action === 'upload') openCropEditor('avatar')
+          if (action === 'choose') {
+            navigate('/author/page/photo-library', {
+              state: { returnTo: `${location.pathname}${location.search}${location.hash}` },
+            })
+          }
           if (action === 'view' && displayAuthor.avatar_url) {
             setPhotoView({ src: displayAuthor.avatar_url, kind: 'profile' })
           }
