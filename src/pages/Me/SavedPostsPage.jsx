@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -705,6 +705,8 @@ export default function SavedPostsPage() {
   const [allSaved, setAllSaved] = useState(null)
   const [collections, setCollections] = useState([])
   const [items, setItems] = useState([])
+  const [cardDataById, setCardDataById] = useState({})
+  const requestedCardsRef = useRef(new Set())
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -846,6 +848,40 @@ export default function SavedPostsPage() {
     loadItems()
     return () => controller.abort()
   }, [activeType, handleUnauthorized, searchedQuery, selectedCollectionId, sort, t, token])
+
+  useEffect(() => {
+    if (!token || !items.length) return
+    const pendingIds = items
+      .map(item => String(item?.id || ''))
+      .filter(id => id && !requestedCardsRef.current.has(id))
+      .slice(0, 30)
+    if (!pendingIds.length) return
+    pendingIds.forEach(id => requestedCardsRef.current.add(id))
+    const apiBase = import.meta.env.VITE_API_URL ||
+      (['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ? 'http://localhost:5000'
+        : 'https://shadow-backend-kucw.onrender.com')
+    const query = new URLSearchParams({ ids: pendingIds.join(',') })
+
+    fetch(`${apiBase}/api/saved-posts/cards?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+      .then(async response => {
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Unable to load saved post details')
+        }
+        return data
+      })
+      .then(data => {
+        const cards = data.cards || {}
+        setCardDataById(current => ({ ...current, ...cards }))
+      })
+      .catch(() => {
+        pendingIds.forEach(id => requestedCardsRef.current.delete(id))
+      })
+  }, [items, token])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -1028,7 +1064,7 @@ export default function SavedPostsPage() {
   const currentSortLabel = t(`savedPostsPage.${currentSortLabelKey}`)
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pb-[96px] dark:bg-[#0d0f16]">
+    <div className="min-h-screen bg-white pb-[96px] dark:bg-[#0d0f16]">
       <header className="sticky top-0 z-40 border-b border-[#eceaf2] bg-white/95 px-4 pb-3 pt-4 backdrop-blur dark:border-white/10 dark:bg-[#171923]/95">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center justify-between gap-3">
@@ -1182,7 +1218,7 @@ export default function SavedPostsPage() {
               {items.map((item) => (
                 <SavedPostGridCard
                   key={item.id}
-                  item={item}
+                  item={{ ...item, card_data: cardDataById[item.id] || null }}
                   onOpen={handleOpenItem}
                   onMenu={setActionItem}
                   onEcho={(post) => {
@@ -1427,6 +1463,7 @@ export default function SavedPostsPage() {
   }
   sourceId={String(echoItem?.source_id || '')}
   sourceName={
+    echoItem?.card_data?.name ||
     echoItem?.snapshot_data?.page_name ||
     echoItem?.snapshot_data?.author_name ||
     echoItem?.snapshot_data?.reader_name ||
@@ -1434,17 +1471,18 @@ export default function SavedPostsPage() {
     'Shadow'
   }
   sourceAvatarUrl={
+    echoItem?.card_data?.avatar_url ||
     echoItem?.snapshot_data?.avatar_url ||
     echoItem?.snapshot_data?.author_avatar_url ||
     echoItem?.snapshot_data?.page_avatar_url ||
     ''
   }
   sourceContent={[
-    echoItem?.snapshot_data?.title,
-    echoItem?.snapshot_data?.content ||
+    echoItem?.card_data?.title || echoItem?.snapshot_data?.title,
+    echoItem?.card_data?.content || echoItem?.snapshot_data?.content ||
       echoItem?.snapshot_data?.description,
   ].filter(Boolean).join(' — ')}
-  sourceImageUrl={echoItem ? getPreviewImage(echoItem) : ''}
+  sourceImageUrl={echoItem?.card_data?.image_url || (echoItem ? getPreviewImage(echoItem) : '')}
   sourceLabel={echoItem?.source_type === 'fast_video' ? 'Reel' : 'Post'}
   shareUrl={
     echoItem?.source_url?.startsWith('/')
