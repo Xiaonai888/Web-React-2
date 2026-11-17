@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePostsPanel'
@@ -6,6 +6,7 @@ import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
 import ReaderProfilePhotoSheet from '../components/reader-profile/ReaderProfilePhotoSheet'
+import SharedProfilePhotoEditor from '../components/common/SharedProfilePhotoEditor'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
@@ -1076,6 +1077,8 @@ export default function ProfilePage() {
     isOwnProfile ? storedUser : navigationPreview
   )
   const [profilePhotoSheetOpen, setProfilePhotoSheetOpen] = useState(false)
+  const profilePhotoInputRef = useRef(null)
+  const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(null)
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -1434,6 +1437,22 @@ async function handleOtherProfileOption(action) {
     setCroppedAreaPixels(croppedPixels)
   }, [isOwnProfile])
 
+  const handleProfilePhotoSelection = async (file) => {
+  if (!file || !isOwnProfile) return
+
+  try {
+    const result = await optimizeImageForUpload(file, {
+      preset: 'avatar',
+      maxSourceBytes: PROFILE_AVATAR_MAX_BYTES,
+    })
+
+    if (!isReaderAccountResponseCurrent(activeToken)) return
+    setSelectedProfilePhoto(result.file)
+  } catch (error) {
+    window.alert(error.message || t('profilePage.uploadImageFailed'))
+  }
+}
+  
   const openAvatarEditor = () => {
     if (!isOwnProfile) return
 
@@ -1672,11 +1691,40 @@ async function handleOtherProfileOption(action) {
     navigate('/discover', { replace: true })
   }
 
+  if (isOwnProfile && selectedProfilePhoto) {
+  return (
+    <div className="fixed inset-0 z-[5000] overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]">
+      <SharedProfilePhotoEditor
+        image={selectedProfilePhoto}
+        onBack={() => setSelectedProfilePhoto(null)}
+      />
+    </div>
+  )
+}
+  
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
-      <ReaderProfilePhotoSheet
+      <input
+  ref={profilePhotoInputRef}
+  type="file"
+  accept="image/*,.heic,.heif"
+  className="hidden"
+  onChange={(event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    handleProfilePhotoSelection(file)
+  }}
+/>
+
+<ReaderProfilePhotoSheet
   open={isOwnProfile && profilePhotoSheetOpen}
   onClose={() => setProfilePhotoSheetOpen(false)}
+  enabledActions={['upload']}
+  onSelect={(key) => {
+    if (key !== 'upload') return
+    setProfilePhotoSheetOpen(false)
+    profilePhotoInputRef.current?.click()
+  }}
 />
       <AvatarCropModal
         open={isOwnProfile && avatarModalOpen}
