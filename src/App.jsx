@@ -171,6 +171,7 @@ const AuthorStoreWithdrawalDetailsPage = lazy(() => import('./pages/Author/Autho
 const AuthorStorePendingBalancePage = lazy(() => import('./pages/Author/AuthorStorePendingBalancePage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
 const AuthorPageDashboardPage = lazy(() => import('./pages/Author/AuthorPageDashboardPage'))
+const AuthorCoverLibraryPage = lazy(() => import('./pages/Author/AuthorCoverLibraryPage'))
 const AuthorAdsPage = lazy(() => import('./pages/Author/AuthorAdsPage'))
 const AuthorAdsLandingPage = lazy(() => import('./pages/Author/AuthorAdsLandingPage'))
 const AuthorAdsBoostContentPage = lazy(() => import('./pages/Author/AuthorAdsBoostContentPage'))
@@ -1936,6 +1937,7 @@ const shouldShowOpeningAds =
         <Route path="/author/payment-method" element={<AuthorPaymentMethodPage />} />
         <Route path="/author/benefits" element={<AuthorBenefitsPage />} />
         <Route path="/author/quest" element={<AuthorQuestPage />} />
+        <Route path="/author/page/covers" element={<LazyPage><AuthorCoverLibraryPage /></LazyPage>} />
         <Route path="/author/page/:pageUsername" element={<AuthorPublicPage />} />
         <Route path="/author/page" element={<AuthorPublicPage />} />
         <Route path="/ranking" element={<RankingPage />} />
