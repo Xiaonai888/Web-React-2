@@ -20,7 +20,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import SavedPostCard from '../../components/SavedPosts/SavedPostCard'
+import SavedPostGridCard from '../../components/SavedPosts/SavedPostGridCard'
 import SavedPostCollectionEditor from '../../components/SavedPosts/SavedPostCollectionEditor'
 import SavedPostCollectionSheet from '../../components/SavedPosts/SavedPostCollectionSheet'
 import {
@@ -430,10 +430,10 @@ registerTranslationNamespace('savedPostsPage', {
 
 const TYPE_TABS = [
   { key: 'all', labelKey: 'all' },
+  { key: 'fast_video', labelKey: 'fastReel' },
   { key: 'reader', labelKey: 'reader' },
   { key: 'author', labelKey: 'author' },
   { key: 'promoted', labelKey: 'promoted' },
-  { key: 'fast_video', labelKey: 'fastReel' },
 ]
 
 const SORT_OPTIONS = [
@@ -1142,7 +1142,9 @@ export default function SavedPostsPage() {
         <section className="mt-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="text-[14px] font-black text-[#111827] dark:text-white">
-              {getCollectionDisplayName(collectionCards.find((collection) => collection.id === selectedCollectionId), t)}
+              {selectedCollectionId === 'all' && activeType === 'all'
+  ? t('savedPostsPage.recentlySaved')
+  : getCollectionDisplayName(collectionCards.find((collection) => collection.id === selectedCollectionId), t)}
             </div>
             {!loading ? (
               <div className="text-[10.5px] font-semibold text-[#9aa1ad] dark:text-white/35">{t('savedPostsPage.total', { count: formatDisplayNumber(total) })}</div>
@@ -1163,15 +1165,15 @@ export default function SavedPostsPage() {
           ) : null}
 
           {loading ? (
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="h-48 animate-pulse rounded-[22px] bg-white ring-1 ring-black/5 dark:bg-[#171923] dark:ring-white/10" />
               ))}
             </div>
           ) : items.length ? (
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {items.map((item) => (
-                <SavedPostCard
+                <SavedPostGridCard
                   key={item.id}
                   item={item}
                   onOpen={handleOpenItem}
