@@ -57,7 +57,7 @@ export default function AuthorCoverOptionsSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[260]" role="presentation">
+    <div className="fixed inset-0 z-[260] flex items-center justify-center px-4 py-4" role="presentation">
       <button
         type="button"
         aria-label={t('authorPublicPage.closeCoverOptions')}
@@ -68,7 +68,7 @@ export default function AuthorCoverOptionsSheet({
         role="dialog"
         aria-modal="true"
         aria-label={t('authorPublicPage.chooseCover')}
-        className="absolute bottom-0 left-0 right-0 mx-auto max-w-[720px] rounded-t-[28px] bg-[var(--shadow-bg-surface)] px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 shadow-2xl"
+        className="relative z-10 mx-auto max-h-[calc(100dvh-32px)] w-full max-w-[420px] overflow-y-auto overscroll-contain rounded-[28px] bg-[var(--shadow-bg-surface)] px-5 py-4 shadow-2xl"
         style={{
           transform: `translate3d(0, ${dragY}px, 0)`,
           transition: dragStart.current === null ? 'transform 180ms ease-out' : 'none',
@@ -95,7 +95,7 @@ export default function AuthorCoverOptionsSheet({
           </button>
           <button type="button" onClick={onChooseCover} className="flex w-full items-center gap-4 rounded-[16px] px-1 py-3 text-left active:bg-[var(--shadow-bg-soft)]">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
-              <i className="fa-regular fa-folder-open text-[17px]" />
+              <i className="fa-regular fa-folder-open text-[18px]" />
             </span>
             <span className="text-[17px] font-normal text-[var(--shadow-text-primary)]">{t('authorPublicPage.chooseCover')}</span>
           </button>
