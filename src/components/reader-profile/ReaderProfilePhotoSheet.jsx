@@ -48,6 +48,7 @@ export default function ReaderProfilePhotoSheet({ open, onClose, onSelect, enabl
     <SharedBottomSheet
       open={open}
       onClose={onClose}
+      swipeAnywhere
       title={t('readerProfilePhotoSheet.title')}
       contentClassName="px-4 pb-4"
     >
