@@ -11,6 +11,7 @@ import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPop
 import AuthorPageAboutPopup from '../../components/AuthorPageAboutPopup'
 import AuthorCoverOptionsSheet from '../../components/author/AuthorCoverOptionsSheet'
 import AuthorCoverCropModal from '../../components/author/AuthorCoverCropModal'
+import ReaderProfilePhotoSheet from '../../components/reader-profile/ReaderProfilePhotoSheet'
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -1837,6 +1838,7 @@ const [menuSwitcherOpen, setMenuSwitcherOpen] = useState(
   const readerLetter = readerName.charAt(0).toUpperCase() || 'S'
   const [coverOptionsOpen, setCoverOptionsOpen] = useState(false)
   const [photoView, setPhotoView] = useState(null)
+  const [authorProfilePhotoSheetOpen, setAuthorProfilePhotoSheetOpen] = useState(false)
   const [readerHeaderSolid, setReaderHeaderSolid] = useState(false)
   const [readerHeaderTitle, setReaderHeaderTitle] = useState(false)
   const coverRef = useRef(null)
@@ -3083,6 +3085,19 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
 }}
 />
 
+      <ReaderProfilePhotoSheet
+        open={Boolean(displayAuthor.is_owner) && authorProfilePhotoSheetOpen}
+        onClose={() => setAuthorProfilePhotoSheetOpen(false)}
+        enabledActions={displayAuthor.avatar_url ? ['upload', 'view'] : ['upload']}
+        onSelect={(action) => {
+          setAuthorProfilePhotoSheetOpen(false)
+          if (action === 'upload') openCropEditor('avatar')
+          if (action === 'view' && displayAuthor.avatar_url) {
+            setPhotoView({ src: displayAuthor.avatar_url, kind: 'profile' })
+          }
+        }}
+      />
+
       <AuthorPagePhotoViewer
         open={Boolean(photoView)}
         src={photoView?.src || ''}
@@ -3920,7 +3935,10 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                   {displayAuthor.avatar_url ? (
                     <button
                       type="button"
-                      onClick={() => setPhotoView({ src: displayAuthor.avatar_url, kind: 'profile' })}
+                      onClick={() => {
+                        if (displayAuthor.is_owner) setAuthorProfilePhotoSheetOpen(true)
+                        else setPhotoView({ src: displayAuthor.avatar_url, kind: 'profile' })
+                      }}
                       aria-label={t('authorPublicPage.seeProfilePhoto')}
                       className="h-full w-full overflow-hidden rounded-full"
                     >
@@ -3931,9 +3949,14 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
                       />
                     </button>
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[42px] font-black text-[var(--shadow-text-tertiary)]">
+                    <button
+                      type="button"
+                      disabled={!displayAuthor.is_owner}
+                      onClick={() => setAuthorProfilePhotoSheetOpen(true)}
+                      className="flex h-full w-full items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[42px] font-black text-[var(--shadow-text-tertiary)] disabled:cursor-default"
+                    >
                       {displayAuthor.page_name.slice(0, 1).toUpperCase()}
-                    </div>
+                    </button>
                   )}
 
                   {displayAuthor.is_owner ? (
