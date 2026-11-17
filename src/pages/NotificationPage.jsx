@@ -514,9 +514,15 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   useEffect(() => {
     if (!isOpen) return undefined
     let cancelled = false
+    let refreshRunning = false
+    let lastRefreshAt = 0
 
     async function refreshVisibleNotifications() {
       if (document.visibilityState !== 'visible' || !getReaderToken()) return
+      const now = Date.now()
+      if (refreshRunning || now - lastRefreshAt < 15000) return
+      refreshRunning = true
+      lastRefreshAt = now
       const requestId = requestIdRef.current
       const params = new URLSearchParams({
         type: activeTab,
@@ -540,6 +546,8 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
           return [...latest, ...current.filter((item) => !seen.has(String(item.id)))]
         })
       } catch {
+      } finally {
+        refreshRunning = false
       }
     }
 
