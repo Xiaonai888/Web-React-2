@@ -14,6 +14,7 @@ import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
 import { invalidateReaderProfilePostsCache } from '../services/readerProfilePostsRequest'
+import { fetchProfilePhotoLibraryPage, registerProfilePhotoInLibrary } from '../services/profilePhotoLibrary.service'
 import ReaderProfileBlockAction from '../components/reader-profile/ReaderProfileBlockAction'
 import { getActiveReaderToken, getActiveReaderUser, saveActiveReaderUser, isSameReaderSession } from '../utils/readerActiveAccount'
 import { isReaderAccountResponseCurrent, subscribeReaderAccountChanges } from '../utils/readerAccountSessionManager'
@@ -81,6 +82,8 @@ registerTranslationNamespace('profilePage', {
     uploadCropFirst: 'Please upload and crop a profile photo first',
     updatePhotoFailed: 'Failed to update profile photo',
     photoFeedShareUncertain: 'Profile photo saved. Feed sharing could not be confirmed. Check your Feed before posting again.',
+    photoLibraryFull: 'Your profile photo library is full (100 pictures). Delete an old picture before uploading another.',
+    photoLibrarySaveFailed: 'Profile photo updated, but it could not be added to your saved photo library.',
     photoFeedShareFailed: 'Profile photo saved, but sharing to Feed failed. You can share it separately from your Feed.',
     photoFeedSharePartial: 'Profile photo saved and the post was published, but some related information could not be saved.',
     displayNameRequired: 'Display name is required',
@@ -163,6 +166,8 @@ registerTranslationNamespace('profilePage', {
     uploadCropFirst: 'សូម Upload និងកាត់រូបប្រវត្តិរូបជាមុន',
     updatePhotoFailed: 'មិនអាច Update រូបប្រវត្តិរូបបានទេ',
     photoFeedShareUncertain: 'បានរក្សាទុករូប Profile រួច។ មិនអាចបញ្ជាក់លទ្ធផលចែករំលែកទៅ Feed បានទេ។ សូមពិនិត្យ Feed មុនបង្ហោះម្ដងទៀត។',
+    photoLibraryFull: 'Library រូប Profile ពេញ 100 រូបហើយ។ សូមលុបរូបចាស់មួយសិន មុន Upload រូបថ្មី។',
+    photoLibrarySaveFailed: 'បានប្ដូររូប Profile រួច ប៉ុន្តែមិនអាចរក្សាទុករូបនេះក្នុង Photo Library បានទេ។',
     photoFeedShareFailed: 'បានរក្សាទុករូប Profile រួច ប៉ុន្តែមិនអាចចែករំលែកទៅ Feed បានទេ។ អ្នកអាចបង្ហោះវាក្នុង Feed ដោយឡែក។',
     photoFeedSharePartial: 'បានរក្សាទុករូប Profile និងបង្ហោះ Post រួច ប៉ុន្តែព័ត៌មានពាក់ព័ន្ធខ្លះមិនបានរក្សាទុក។',
     displayNameRequired: 'ត្រូវបញ្ចូលឈ្មោះបង្ហាញ',
@@ -245,6 +250,8 @@ registerTranslationNamespace('profilePage', {
     uploadCropFirst: '请先上传并裁剪头像',
     updatePhotoFailed: '更新头像失败',
     photoFeedShareUncertain: '头像已保存，但无法确认是否分享到动态。重新发布前请先检查动态。',
+    photoLibraryFull: '头像图库已满（100张）。请删除旧照片后再上传。',
+    photoLibrarySaveFailed: '头像已更新，但无法保存到头像图库。',
     photoFeedShareFailed: '头像已保存，但分享到动态失败。您可以稍后单独分享。',
     photoFeedSharePartial: '头像已保存，动态已发布，但部分相关信息未能保存。',
     displayNameRequired: '显示名称为必填项',
@@ -327,6 +334,8 @@ registerTranslationNamespace('profilePage', {
     uploadCropFirst: '先にプロフィール写真をアップロードして切り抜いてください',
     updatePhotoFailed: 'プロフィール写真の更新に失敗しました',
     photoFeedShareUncertain: 'プロフィール写真を保存しました。フィードへの共有結果を確認できませんでした。再投稿する前にフィードをご確認ください。',
+    photoLibraryFull: '写真ライブラリは100枚で満杯です。古い写真を削除してからアップロードしてください。',
+    photoLibrarySaveFailed: 'プロフィール写真を更新しましたが、ライブラリには保存できませんでした。',
     photoFeedShareFailed: 'プロフィール写真は保存されましたが、フィードへの共有に失敗しました。後で個別に共有できます。',
     photoFeedSharePartial: 'プロフィール写真と投稿は保存されましたが、一部の関連情報を保存できませんでした。',
     displayNameRequired: '表示名は必須です',
@@ -409,6 +418,8 @@ registerTranslationNamespace('profilePage', {
     uploadCropFirst: '먼저 프로필 사진을 업로드하고 잘라주세요',
     updatePhotoFailed: '프로필 사진 업데이트에 실패했습니다',
     photoFeedShareUncertain: '프로필 사진이 저장되었습니다. 피드 공유 여부를 확인할 수 없습니다. 다시 게시하기 전에 피드를 확인하세요.',
+    photoLibraryFull: '프로필 사진 라이브러리가 100장으로 가득 찼습니다. 이전 사진을 삭제한 후 업로드하세요.',
+    photoLibrarySaveFailed: '프로필 사진은 변경되었지만 사진 라이브러리에 저장하지 못했습니다.',
     photoFeedShareFailed: '프로필 사진은 저장되었지만 피드 공유에 실패했습니다. 나중에 따로 공유할 수 있습니다.',
     photoFeedSharePartial: '프로필 사진과 게시물은 저장되었지만 일부 관련 정보를 저장하지 못했습니다.',
     displayNameRequired: '표시 이름은 필수입니다',
@@ -1097,6 +1108,7 @@ export default function ProfilePage() {
   const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(null)
   const [viewingProfilePhoto, setViewingProfilePhoto] = useState(false)
   const profilePhotoUploadRef = useRef(null)
+  const selectedLibraryPhotoRef = useRef('')
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -1148,6 +1160,21 @@ export default function ProfilePage() {
   const profilePostsUsername = isOwnProfile
     ? String(user?.username || storedUser?.username || '').replace(/^@+/, '')
     : requestedUsername
+
+  useEffect(() => {
+    const chosenPhoto = location.state?.profilePhotoLibraryChoice
+    if (!chosenPhoto) return
+    const chosenUrl = String(chosenPhoto.image_url || '')
+    if (isOwnProfile && /^https:\/\/[^\s]+$/i.test(chosenUrl) && isReaderAccountResponseCurrent(activeToken)) {
+      selectedLibraryPhotoRef.current = chosenUrl
+      profilePhotoUploadRef.current = null
+      setSelectedProfilePhoto(chosenUrl)
+      setProfilePhotoSheetOpen(false)
+    }
+    const nextState = { ...(location.state || {}) }
+    delete nextState.profilePhotoLibraryChoice
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: nextState })
+  }, [location.pathname, location.search, location.state, isOwnProfile, activeToken, navigate])
 
   function showProfileTabComingSoon(label) {
     setProfileTabMessage(t('profilePage.comingSoon', { item: label }))
@@ -1468,28 +1495,40 @@ async function handleOtherProfileOption(action) {
 
     if (!isReaderAccountResponseCurrent(activeToken)) return
     profilePhotoUploadRef.current = null
+    selectedLibraryPhotoRef.current = ''
     setSelectedProfilePhoto(result.file)
   } catch (error) {
     window.alert(error.message || t('profilePage.uploadImageFailed'))
   }
 }
-  const handleSaveSharedProfilePhoto = async ({ file, caption, shareToFeed }) => {
+  const handleSaveSharedProfilePhoto = async ({ file, caption, shareToFeed, unchanged }) => {
     const token = getAuthToken()
-    if (!file || !isOwnProfile || !token || !isReaderAccountResponseCurrent(token)) {
+    if ((!file && !unchanged) || !isOwnProfile || !token || !isReaderAccountResponseCurrent(token)) {
       throw new Error(t('profilePage.updatePhotoFailed'))
     }
 
     setSavingAvatar(true)
     try {
+      const sourceUrl = selectedLibraryPhotoRef.current
+      const canReuse = Boolean(sourceUrl && unchanged && selectedProfilePhoto === sourceUrl)
+      if (!canReuse) {
+        const library = await fetchProfilePhotoLibraryPage({ offset: 0, limit: 1, force: true })
+        if (Number(library.total || 0) >= 100) {
+          throw new Error(t('profilePage.photoLibraryFull'))
+        }
+      }
+
       const cached = profilePhotoUploadRef.current
-      const imageUrl = cached?.file === file && cached?.token === token
-        ? cached.url
-        : await uploadImageToStorage({
-            token,
-            sourceFile: file,
-            folder: 'reader-profiles',
-            fileName: file.name,
-          })
+      const imageUrl = canReuse
+        ? sourceUrl
+        : cached?.file === file && cached?.token === token
+          ? cached.url
+          : await uploadImageToStorage({
+              token,
+              sourceFile: file,
+              folder: 'reader-profiles',
+              fileName: file.name,
+            })
 
       if (!imageUrl || !isReaderAccountResponseCurrent(token)) {
         throw new Error(t('profilePage.uploadImageFailed'))
@@ -1508,10 +1547,7 @@ async function handleOtherProfileOption(action) {
       if (!response.ok || data.ok === false || !data.user?.id) {
         throw new Error(data.message || t('profilePage.updatePhotoFailed'))
       }
-      if (!isReaderAccountResponseCurrent(token, data.user.id)) {
-        throw new Error(t('profilePage.updatePhotoFailed'))
-      }
-      if (!saveStoredUser(data.user, token)) {
+      if (!isReaderAccountResponseCurrent(token, data.user.id) || !saveStoredUser(data.user, token)) {
         throw new Error(t('profilePage.updatePhotoFailed'))
       }
 
@@ -1525,11 +1561,14 @@ async function handleOtherProfileOption(action) {
       }
       setUser(data.user)
 
-      let feedWarning = ''
-      if (shareToFeed) {
-        if (!isReaderAccountResponseCurrent(token, data.user.id)) {
-          throw new Error(t('profilePage.updatePhotoFailed'))
-        }
+      const warnings = []
+      try {
+        await registerProfilePhotoInLibrary(imageUrl)
+      } catch {
+        warnings.push(t('profilePage.photoLibrarySaveFailed'))
+      }
+
+      if (shareToFeed && isReaderAccountResponseCurrent(token, data.user.id)) {
         try {
           const postResponse = await fetch(`${API_BASE_URL}/api/reader-posts/me`, {
             method: 'POST',
@@ -1548,23 +1587,24 @@ async function handleOtherProfileOption(action) {
           })
           const postData = await postResponse.json().catch(() => ({}))
           if (postData.post_saved === true) {
-            feedWarning = t('profilePage.photoFeedSharePartial')
+            warnings.push(t('profilePage.photoFeedSharePartial'))
           } else if (!postResponse.ok || postData.ok === false) {
-            feedWarning = t('profilePage.photoFeedShareFailed')
+            warnings.push(t('profilePage.photoFeedShareFailed'))
           } else if (!postData.post?.id) {
-            feedWarning = t('profilePage.photoFeedShareUncertain')
+            warnings.push(t('profilePage.photoFeedShareUncertain'))
           }
         } catch {
-          feedWarning = t('profilePage.photoFeedShareUncertain')
+          warnings.push(t('profilePage.photoFeedShareUncertain'))
         }
         invalidateReaderProfilePostsCache()
       }
 
       if (!isReaderAccountResponseCurrent(token, data.user.id)) return
       profilePhotoUploadRef.current = null
+      selectedLibraryPhotoRef.current = ''
       setSelectedProfilePhoto(null)
       setProfilePhotoSheetOpen(false)
-      if (feedWarning) window.alert(feedWarning)
+      if (warnings.length) window.alert(warnings.join('\n'))
     } finally {
       setSavingAvatar(false)
     }
@@ -1831,8 +1871,11 @@ async function handleOtherProfileOption(action) {
       <SharedProfilePhotoEditor
   image={selectedProfilePhoto}
   onBack={() => {
+          const fromLibrary = Boolean(selectedLibraryPhotoRef.current)
           profilePhotoUploadRef.current = null
+          selectedLibraryPhotoRef.current = ''
           setSelectedProfilePhoto(null)
+          if (fromLibrary) navigate('/profile/photo-library', { state: { returnTo: `${location.pathname}${location.search}` } })
         }}
   onSave={handleSaveSharedProfilePhoto}
   saving={savingAvatar}
@@ -1858,7 +1901,7 @@ async function handleOtherProfileOption(action) {
 <ReaderProfilePhotoSheet
   open={isOwnProfile && profilePhotoSheetOpen}
   onClose={() => setProfilePhotoSheetOpen(false)}
-  enabledActions={['upload', 'view']}
+  enabledActions={['upload', 'view', 'choose']}
   onSelect={(key) => {
     if (key === 'upload') {
       setProfilePhotoSheetOpen(false)
@@ -1866,6 +1909,9 @@ async function handleOtherProfileOption(action) {
     } else if (key === 'view') {
       setProfilePhotoSheetOpen(false)
       setViewingProfilePhoto(true)
+    } else if (key === 'choose') {
+      setProfilePhotoSheetOpen(false)
+      navigate('/profile/photo-library', { state: { returnTo: `${location.pathname}${location.search}` } })
     }
   }}
 />
