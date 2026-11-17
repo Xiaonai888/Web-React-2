@@ -5,6 +5,7 @@ import ReaderProfilePostsPanel from '../components/reader-posts/ReaderProfilePos
 import ReaderPostComposer from '../components/reader-posts/ReaderPostComposer'
 import ReaderDiscoverPeoplePanel from '../components/reader-profile/ReaderDiscoverPeoplePanel'
 import ReaderProfileOptionsSheet from '../components/reader-profile/ReaderProfileOptionsSheet'
+import ReaderProfilePhotoSheet from '../components/reader-profile/ReaderProfilePhotoSheet'
 import ReaderProfileFooter from '../components/reader-profile/ReaderProfileFooter'
 import ReaderReaderMessageRequestModal from '../components/chat/ReaderReaderMessageRequestModal'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
@@ -1074,6 +1075,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState(() =>
     isOwnProfile ? storedUser : navigationPreview
   )
+  const [profilePhotoSheetOpen, setProfilePhotoSheetOpen] = useState(false)
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [rawAvatarImage, setRawAvatarImage] = useState('')
@@ -1672,6 +1674,10 @@ async function handleOtherProfileOption(action) {
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px] text-[var(--shadow-text-primary)]">
+      <ReaderProfilePhotoSheet
+  open={isOwnProfile && profilePhotoSheetOpen}
+  onClose={() => setProfilePhotoSheetOpen(false)}
+/>
       <AvatarCropModal
         open={isOwnProfile && avatarModalOpen}
         profile={profile}
@@ -1699,10 +1705,7 @@ async function handleOtherProfileOption(action) {
         message={profileMessage}
         onChange={(field, value) => setEditForm((current) => ({ ...current, [field]: value }))}
         onClose={() => setEditProfileOpen(false)}
-        onOpenAvatar={() => {
-          setEditProfileOpen(false)
-          openAvatarEditor()
-        }}
+        onOpenAvatar={() => setProfilePhotoSheetOpen(true)}
         onSave={handleSaveProfileInfo}
       />
 
@@ -1761,7 +1764,7 @@ async function handleOtherProfileOption(action) {
   {isOwnProfile ? (
     <button
       type="button"
-      onClick={openAvatarEditor}
+      onClick={() => setProfilePhotoSheetOpen(true)}
       className="rounded-full active:scale-[0.98]"
       aria-label={t('profilePage.editProfilePhotoAria')}
     >
@@ -1937,7 +1940,7 @@ async function handleOtherProfileOption(action) {
   username={profilePostsUsername}
   isOwnProfile={isOwnProfile}
   profileUser={user}
-  onEditAvatar={isOwnProfile ? openAvatarEditor : undefined}
+  onEditAvatar={isOwnProfile ? () => setProfilePhotoSheetOpen(true) : undefined}
   onCountChange={handleReaderPostCountChange}
 />
 
