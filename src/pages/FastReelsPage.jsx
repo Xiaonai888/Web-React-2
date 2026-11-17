@@ -16,6 +16,7 @@ import FastReelLikeButton from '../components/fast/FastReelLikeButton'
 import FastReelSaveButton from '../components/fast/FastReelSaveButton'
 import FastReelCommentsSheet from '../components/fast/FastReelCommentsSheet'
 import { recordFastReelViewV2 } from '../services/fastReelViewsApi'
+import { getActiveReaderToken } from '../utils/readerActiveAccount'
 import useStudioPlaybackTracking from '../components/author/studio/channel/useStudioPlaybackTracking'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
@@ -72,7 +73,9 @@ const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
 let cachedFeed = null
 
 function getToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
+  try {
+    return getActiveReaderToken() || ''
+  } catch { return '' }
 }
 function getStoredIds(key) {
   try {
@@ -380,7 +383,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       let token = ''
       try { token = getToken() } catch { /* storage blocked */ }
       if (!token) {
-        tracker.fastSent = true
+        tracker.fastRetryAt = Date.now() + 15000
         return
       }
 
@@ -400,15 +403,24 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           submitQualifiedView(tracker)
         } else if (reason === 'fast_cooldown') {
           tracker.fastRetryAt = Date.now() + 61000
-        } else {
-          // A current-day cooldown or unavailable Reel is terminal for this play.
+        } else if (reason === 'qualified_cooldown' || reason === 'reel_unavailable') {
           tracker.fastSent = true
           tracker.needsQualified = false
+        } else {
+          tracker.fastFailures = Math.min(4, tracker.fastFailures + 1)
+          tracker.fastRetryAt = Date.now() + Math.min(60000, 15000 * tracker.fastFailures)
+          console.warn('[FAST_VIEW_NOT_COUNTED]', {
+            videoId: video.id,
+            reason: reason || 'missing_reason',
+            fastRemaining: result?.fast_remaining ?? null,
+          })
         }
       }).catch(error => {
         if (tracker.day !== day) return
         tracker.fastFailures = Math.min(4, tracker.fastFailures + 1)
-        tracker.fastRetryAt = Date.now() + Math.min(60000, 15000 * tracker.fastFailures)
+        tracker.fastRetryAt = Date.now() + ([401, 403].includes(Number(error?.status))
+          ? 60000
+          : Math.min(60000, 15000 * tracker.fastFailures))
         console.warn('[FAST_VIEW_V2_ERROR]', error)
       }).finally(() => {
         if (tracker.day === day) tracker.fastInFlight = false
