@@ -66,6 +66,7 @@ export default function SharedBottomSheet({
   maxHeight = '88dvh',
   panelClassName = '',
   contentClassName = '',
+  swipeAnywhere = false,
 }) {
   const sheetId = useId()
   const panelRef = useRef(null)
@@ -148,30 +149,38 @@ export default function SharedBottomSheet({
   const onPointerDown = (event) => {
     if (activeSheets[activeSheets.length - 1] !== sheetId) return
     if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
+    const handle = event.target.closest?.('[data-sheet-drag-handle]')
+    if (!handle && (!swipeAnywhere || event.pointerType === 'mouse')) return
 
     dragRef.current = {
       id: event.pointerId,
       startY: event.clientY,
       startTime: performance.now(),
+      active: false,
     }
-    setDragging(true)
-    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   const onPointerMove = (event) => {
-    if (dragRef.current?.id !== event.pointerId) return
-    const distance = Math.max(0, event.clientY - dragRef.current.startY)
-    setDragOffset(Math.min(distance, window.innerHeight * 0.7))
+    const drag = dragRef.current
+    if (!drag || drag.id !== event.pointerId) return
+    const distance = Math.max(0, event.clientY - drag.startY)
+    if (!drag.active) {
+      if (distance < 7) return
+      drag.active = true
+      setDragging(true)
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    }
+    setDragOffset(Math.min(distance, window.innerHeight * 0.75))
   }
 
   const onPointerUp = (event) => {
-    if (dragRef.current?.id !== event.pointerId) return
-    const distance = Math.max(0, event.clientY - dragRef.current.startY)
-    const elapsed = Math.max(1, performance.now() - dragRef.current.startTime)
+    const drag = dragRef.current
+    if (!drag || drag.id !== event.pointerId) return
+    const distance = Math.max(0, event.clientY - drag.startY)
+    const elapsed = Math.max(1, performance.now() - drag.startTime)
+    const dismiss = drag.active && (distance >= 72 || (distance >= 28 && distance / elapsed >= 0.55))
     stopDrag()
-    if (distance >= 75 || (distance >= 28 && distance / elapsed >= 0.55)) {
-      onCloseRef.current?.()
-    }
+    if (dismiss) onCloseRef.current?.()
   }
 
   const onPointerCancel = (event) => {
@@ -182,7 +191,7 @@ export default function SharedBottomSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-end justify-center"
+      className="fixed inset-0 flex items-end justify-center overscroll-none"
       style={{
         zIndex: 5000 + Math.max(stackIndex, 0) * 10,
         pointerEvents: isTop ? 'auto' : 'none',
@@ -190,54 +199,64 @@ export default function SharedBottomSheet({
     >
       <style>{`
         @keyframes shadowSharedSheetEnter {
-          from { opacity: 0; transform: translateY(100%); }
+          from { opacity: 0.7; transform: translateY(100%); }
           to { opacity: 1; transform: translateY(0); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .shadow-shared-sheet-panel { animation: none !important; transition: none !important; }
+          .shadow-shared-sheet-enter { animation: none !important; }
+          .shadow-shared-sheet-panel { transition: none !important; }
         }
       `}</style>
       <button
         type="button"
         tabIndex={-1}
         aria-label={title || 'Close'}
-        className="absolute inset-0 bg-black/45"
+        className="absolute inset-0 touch-none bg-black/45"
         onClick={() => {
           if (isTop && closeOnBackdrop) onCloseRef.current?.()
         }}
       />
-      <section
-        ref={panelRef}
-        role="dialog"
-        aria-modal={isTop ? 'true' : 'false'}
-        aria-label={title || 'Options'}
-        tabIndex={-1}
-        className={`shadow-shared-sheet-panel relative flex w-full max-w-[560px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-2xl outline-none ${panelClassName}`}
+      <div
+        className="shadow-shared-sheet-enter relative w-full max-w-[560px]"
         style={{
           maxHeight,
-          transform: `translateY(${dragOffset}px)`,
-          transition: dragging ? 'none' : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
-          animation: 'shadowSharedSheetEnter 220ms ease-out both',
-          willChange: 'transform',
+          animation: 'shadowSharedSheetEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both',
         }}
       >
-        <div
-          role="presentation"
+        <section
+          ref={panelRef}
+          role="dialog"
+          aria-modal={isTop ? 'true' : 'false'}
+          aria-label={title || 'Options'}
+          tabIndex={-1}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
           onLostPointerCapture={onPointerCancel}
-          className="flex h-12 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+          className={`shadow-shared-sheet-panel relative flex w-full flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-2xl outline-none ${panelClassName}`}
+          style={{
+            maxHeight,
+            touchAction: swipeAnywhere ? 'none' : undefined,
+            transform: `translate3d(0, ${dragOffset}px, 0)`,
+            transition: dragging ? 'none' : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+            willChange: 'transform',
+          }}
         >
-          <div className="h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
-        </div>
-        <div
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] ${contentClassName}`}
-        >
-          {children}
-        </div>
-      </section>
+          <div
+            role="presentation"
+            data-sheet-drag-handle=""
+            className="flex h-12 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+          >
+            <div className="h-1.5 w-12 rounded-full bg-[var(--shadow-border-strong)]" />
+          </div>
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] ${contentClassName}`}
+          >
+            {children}
+          </div>
+        </section>
+      </div>
     </div>,
     document.body
   )
