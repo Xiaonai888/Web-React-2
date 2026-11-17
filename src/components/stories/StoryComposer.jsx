@@ -614,9 +614,11 @@ export default function StoryComposer({ mode }) {
   const config = MODE_CONFIG[mode] || MODE_CONFIG.reader
   const requestedReturnPath = new URLSearchParams(window.location.search).get('returnTo')
   const returnPath =
-  mode === 'author' && requestedReturnPath === '/author/dashboard'
-    ? '/author/dashboard'
-    : config.returnPath
+    mode === 'author' && requestedReturnPath === '/author/dashboard'
+      ? '/author/dashboard'
+      : mode === 'reader' && /^\/profile(?:[/?]|$)/.test(requestedReturnPath || '')
+        ? requestedReturnPath
+        : config.returnPath
 
   const [step, setStep] = useState('choose')
   const [mediaFile, setMediaFile] = useState(null)
