@@ -121,7 +121,8 @@ function ReelsIcon({ active }) {
     <Clapperboard
       size={21}
       strokeWidth={1.9}
-      color={active ? 'var(--shadow-accent)' : 'currentColor'}
+      color={active ? 'var(--shadow-accent-text)' : 'currentColor'}
+fill={active ? 'var(--shadow-accent)' : 'none'}
       aria-hidden="true"
     />
   )
