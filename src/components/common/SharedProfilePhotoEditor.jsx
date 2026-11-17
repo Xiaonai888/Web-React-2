@@ -86,6 +86,20 @@ registerTranslationNamespace('sharedProfilePhotoEditor', {
   },
 })
 
+function getSafeImageUrl(value) {
+  if (typeof value !== 'string') return ''
+  const input = value.trim()
+  if (!input || /[\u0000-\u001F\u007F<>]/.test(input)) return ''
+  try {
+    const url = new URL(input, window.location.origin)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return ''
+    if (url.username || url.password) return ''
+    return url.href
+  } catch {
+    return ''
+  }
+}
+
 async function createCroppedFile(imageUrl, area) {
   const image = new Image()
   image.crossOrigin = 'anonymous'
@@ -145,7 +159,7 @@ export default function SharedProfilePhotoEditor({
       return undefined
     }
     const isBlob = typeof Blob !== 'undefined' && image instanceof Blob
-    const url = isBlob ? URL.createObjectURL(image) : String(image)
+    const url = isBlob ? URL.createObjectURL(image) : getSafeImageUrl(image)
     setImageUrl(url)
     setStep('crop')
     setCrop({ x: 0, y: 0 })
