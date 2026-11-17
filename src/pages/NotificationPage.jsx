@@ -508,8 +508,9 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
   }
 
   useEffect(() => {
+    if (!isOpen) return
     loadNotifications(1, false)
-  }, [activeTab])
+  }, [activeTab, isOpen])
 
   useEffect(() => {
     if (!isOpen) return undefined
