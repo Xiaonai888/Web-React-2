@@ -1,3 +1,5 @@
+import { getActiveReaderToken } from '../utils/readerActiveAccount'
+
 const API_BASE = import.meta.env.VITE_API_URL || (
   ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000'
@@ -10,14 +12,69 @@ const KINDS = new Set(['start', 'progress', 'end'])
 const SURFACES = new Set(['search', 'discover', 'profile', 'author', 'related'])
 const ACTIONS = new Set(['impression', 'click'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const AUTH_COOLDOWN_MS = 60 * 1000
+const BAD_EVENT_COOLDOWN_MS = 30 * 1000
+const UNAVAILABLE_COOLDOWN_MS = 5 * 60 * 1000
+const FAILED_EVENT_LIMIT = 100
+
+let failureSessionToken = ''
+let authBlockedUntil = 0
+let unavailableUntil = 0
+const failedEvents = new Map()
+
+function errorWithStatus(message, status, code = '') {
+  const error = new Error(message)
+  error.status = status
+  error.code = code
+  return error
+}
+
+function currentSessionToken() {
+  const token = getActiveReaderToken()
+  if (token !== failureSessionToken) {
+    failureSessionToken = token
+    authBlockedUntil = 0
+    unavailableUntil = 0
+    failedEvents.clear()
+  }
+  return token
+}
+
+function rememberFailedEvent(key, error) {
+  failedEvents.delete(key)
+  failedEvents.set(key, {
+    error,
+    expiresAt: Date.now() + BAD_EVENT_COOLDOWN_MS,
+  })
+  while (failedEvents.size > FAILED_EVENT_LIMIT) {
+    failedEvents.delete(failedEvents.keys().next().value)
+  }
+}
 
 export function hasStudioViewerSession() {
-  return Boolean(localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token'))
+  return Boolean(currentSessionToken())
 }
 
 async function studioRequest(path, { method = 'GET', body, signal, keepalive = false } = {}) {
-  const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token')
-  if (!token) throw new Error('Sign in to use Studio analytics.')
+  const token = currentSessionToken()
+  if (!token) throw errorWithStatus('Sign in to use Studio analytics.', 401, 'LOGIN_REQUIRED')
+
+  const now = Date.now()
+  if (authBlockedUntil > now) {
+    throw errorWithStatus('Studio analytics requires a valid reader session.', 401, 'STUDIO_SESSION_REJECTED')
+  }
+  if (unavailableUntil > now) {
+    throw errorWithStatus('Studio advanced metrics have not been installed.', 503, 'STUDIO_ADVANCED_METRICS_NOT_INSTALLED')
+  }
+
+  const eventKey = method === 'POST' && path === '/thumbnail'
+    ? JSON.stringify([path, body?.video_id, body?.surface, body?.action])
+    : ''
+  if (eventKey) {
+    const prior = failedEvents.get(eventKey)
+    if (prior && prior.expiresAt > now) throw prior.error
+    if (prior) failedEvents.delete(eventKey)
+  }
 
   const response = await fetch(`${API_BASE}/api/shadow-studio/advanced-analytics${path}`, {
     method,
@@ -30,12 +87,29 @@ async function studioRequest(path, { method = 'GET', body, signal, keepalive = f
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   })
+
   const result = await response.json().catch(() => null)
   if (!response.ok || result?.ok !== true) {
-    const error = new Error(result?.message || result?.reason || `Studio analytics error (${response.status}).`)
-    error.status = response.status
+    const code = String(result?.code || '')
+    const error = errorWithStatus(
+      result?.message || result?.reason || `Studio analytics error (${response.status}).`,
+      response.status,
+      code
+    )
+
+    if (token === currentSessionToken()) {
+      if (response.status === 401 || response.status === 403) {
+        authBlockedUntil = Date.now() + AUTH_COOLDOWN_MS
+      } else if (code === 'STUDIO_ADVANCED_METRICS_NOT_INSTALLED') {
+        unavailableUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS
+      } else if (eventKey && (response.status === 400 || response.status === 404)) {
+        rememberFailedEvent(eventKey, error)
+      }
+    }
     throw error
   }
+
+  if (eventKey) failedEvents.delete(eventKey)
   return result
 }
 
