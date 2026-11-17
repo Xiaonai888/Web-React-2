@@ -480,6 +480,15 @@ function waitForMangaPoll(ms, signal) {
   })
 }
 
+
+function mangaV2PollDelay(startedAt) {
+  const elapsed = Date.now() - startedAt
+  if (elapsed >= 120000) return 15000
+  if (elapsed >= 30000) return 10000
+  return MANGA_V2_JOB_POLL_MS
+}
+
+
 async function waitForMangaV2Job({
   apiBaseUrl,
   token,
@@ -531,9 +540,9 @@ async function waitForMangaV2Job({
       }
 
       await waitForMangaPoll(
-        MANGA_V2_JOB_POLL_MS,
-        signal
-      )
+  mangaV2PollDelay(startedAt),
+  signal
+)
       continue
     }
 
@@ -562,9 +571,9 @@ async function waitForMangaV2Job({
         response.status < 600
       ) {
         await waitForMangaPoll(
-          MANGA_V2_JOB_POLL_MS,
-          signal
-        )
+  mangaV2PollDelay(startedAt),
+  signal
+)
         continue
       }
 
@@ -614,9 +623,9 @@ async function waitForMangaV2Job({
     }
 
     await waitForMangaPoll(
-      MANGA_V2_JOB_POLL_MS,
-      signal
-    )
+  mangaV2PollDelay(startedAt),
+  signal
+)  
   }
 
   throw new Error(
