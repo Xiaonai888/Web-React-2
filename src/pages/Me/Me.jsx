@@ -1183,12 +1183,6 @@ const handleOpenProfileSwitcher = (event) => {
         {isLoggedIn ? (
           <section className="mt-3 overflow-hidden rounded-[14px] bg-white dark:bg-[#171923]">
             <MenuRow
-              onClick={openReaderAccountChooser}
-              icon="fa-solid fa-users"
-              title={tx('mePage.chooseReaderAccount')}
-              divider
-            />
-            <MenuRow
               onClick={handleLogout}
               icon="fa-solid fa-right-from-bracket"
               title={tx('logout')}
