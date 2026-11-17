@@ -1777,6 +1777,8 @@ async function uploadEpisodeInlineImage({ token, file, signal, onProgress }) {
   if (!directFile && import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED !== 'true') {
     throw new Error('Direct Novel upload requires a JPEG, PNG or WebP image that can be compressed.')
   }
+         const data = directFile
+    ? await uploadMediaWithFallback({
         signal,
         onProgress,
         file: directFile,
