@@ -13,6 +13,7 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../utils/uploadMediaWithFallback'
+import { invalidateReaderProfilePostsCache } from '../services/readerProfilePostsRequest'
 import ReaderProfileBlockAction from '../components/reader-profile/ReaderProfileBlockAction'
 import { getActiveReaderToken, getActiveReaderUser, saveActiveReaderUser, isSameReaderSession } from '../utils/readerActiveAccount'
 import { isReaderAccountResponseCurrent, subscribeReaderAccountChanges } from '../utils/readerAccountSessionManager'
@@ -472,12 +473,12 @@ function dataUrlToFile(dataUrl, fileName) {
   return new File([array], fileName, { type: mime })
 }
 
-async function uploadImageToStorage({ token, imageDataUrl, folder, fileName }) {
-  if (!imageDataUrl || String(imageDataUrl).startsWith('http')) {
+async function uploadImageToStorage({ token, imageDataUrl, sourceFile, folder, fileName }) {
+  if (!sourceFile && (!imageDataUrl || String(imageDataUrl).startsWith('http'))) {
     return imageDataUrl || null
   }
 
-  const file = dataUrlToFile(imageDataUrl, fileName)
+  const file = sourceFile || dataUrlToFile(imageDataUrl, fileName)
   const optimized = await optimizeImageForUpload(file, {
     preset: 'avatar',
     maxSourceBytes: PROFILE_AVATAR_MAX_BYTES,
@@ -1452,6 +1453,84 @@ async function handleOtherProfileOption(action) {
     window.alert(error.message || t('profilePage.uploadImageFailed'))
   }
 }
+  const handleSaveSharedProfilePhoto = async ({ file, caption, shareToFeed }) => {
+  const token = getAuthToken()
+  if (!file || !isOwnProfile || !token || !isReaderAccountResponseCurrent(token)) {
+    throw new Error(t('profilePage.updatePhotoFailed'))
+  }
+
+  setSavingAvatar(true)
+  try {
+    const imageUrl = await uploadImageToStorage({
+      token,
+      sourceFile: file,
+      folder: 'reader-profiles',
+      fileName: file.name,
+    })
+
+    if (!imageUrl || !isReaderAccountResponseCurrent(token)) {
+      throw new Error(t('profilePage.uploadImageFailed'))
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/users/avatar`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ avatar_url: imageUrl }),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data.ok === false || !data.user?.id) {
+      throw new Error(data.message || t('profilePage.updatePhotoFailed'))
+    }
+    if (!isReaderAccountResponseCurrent(token, data.user.id) || !saveStoredUser(data.user, token)) {
+      throw new Error(t('profilePage.updatePhotoFailed'))
+    }
+
+    setStoredUser(getStoredUser())
+    if (localStorage.getItem('shadow_reader_token') === token) {
+      rememberReaderAccount(data.user)
+    }
+    setUser(data.user)
+
+    let feedResultUncertain = false
+    if (shareToFeed) {
+      try {
+        if (!isReaderAccountResponseCurrent(token, data.user.id)) throw new Error('SESSION_CHANGED')
+        const postResponse = await fetch(`${API_BASE_URL}/api/reader-posts/me`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            content: String(caption || '').trim(),
+            image_urls: [imageUrl],
+            visibility: 'public',
+            comments_permission: 'everyone',
+            story_sharing: false,
+            publish_at: new Date().toISOString(),
+          }),
+        })
+        const postData = await postResponse.json().catch(() => ({}))
+        if ((!postResponse.ok || postData.ok === false) && postData.post_saved !== true) {
+          throw new Error(postData.message || 'POST_FAILED')
+        }
+        invalidateReaderProfilePostsCache()
+      } catch {
+        feedResultUncertain = true
+      }
+    }
+
+    if (!isReaderAccountResponseCurrent(token, data.user.id)) return
+    setSelectedProfilePhoto(null)
+    if (feedResultUncertain) window.alert(t('profilePage.photoFeedShareUncertain'))
+  } finally {
+    setSavingAvatar(false)
+  }
+}
+
   
   const openAvatarEditor = () => {
     if (!isOwnProfile) return
@@ -1695,9 +1774,11 @@ async function handleOtherProfileOption(action) {
   return (
     <div className="fixed inset-0 z-[5000] overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]">
       <SharedProfilePhotoEditor
-        image={selectedProfilePhoto}
-        onBack={() => setSelectedProfilePhoto(null)}
-      />
+  image={selectedProfilePhoto}
+  onBack={() => setSelectedProfilePhoto(null)}
+  onSave={handleSaveSharedProfilePhoto}
+  saving={savingAvatar}
+/>
     </div>
   )
 }
