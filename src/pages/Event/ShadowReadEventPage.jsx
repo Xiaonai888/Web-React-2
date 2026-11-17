@@ -8,7 +8,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import ReadEventMissionBoard from '../../components/events/shadowReadEvent/ReadEventMissionBoard'
 import ReadEventLeaderboards from '../../components/events/shadowReadEvent/ReadEventLeaderboards'
 import {
-  getShadowReadEvent, joinShadowReadEvent, claimShadowReadEventMilestones,
+  getShadowReadEvent, claimShadowReadEventMilestones,
   getShadowReadEventLeaderboard,
 } from '../../services/shadowReadEventClient'
 
@@ -16,13 +16,14 @@ registerTranslationNamespace('shadowReadEventPage', {
   en: {
     title: 'Shadow Read Event', subtitle: 'Seven days of reading and rewards', back: 'Go back', retry: 'Try again',
     refresh: 'Refresh', loading: 'Loading Read Event...', loadError: 'Could not load Read Event',
-    loginRequired: 'Sign in to join this event.', notEligible: 'This event is for Cambodian readers.',
+    loginRequired: 'Sign in to join this event.', notEligible: 'This event is for Khmer Story Language readers.',
     inactive: 'The Read Event is not active yet.', nextStart: 'Next event: {{date}}',
     join: 'Join event', joining: 'Joining...', joined: 'Joined', joinSuccess: 'You have joined the event.',
+    joinHint: 'Read 2 episodes of today\'s story to join automatically.',
     missionsTab: 'Missions', rankingsTab: 'Rankings', dayNumber: 'Day {{count}}',
     dailyScore: 'Today', totalScore: 'Overall', points: 'points',
     featured: 'Featured prize story', featuredDetails: 'Event Story Cards are for this story only. 10 cards unlock one episode.',
-    unknownStory: 'Story unavailable', openStory: 'Open story', dailyMissions: 'Daily missions',
+    unknownStory: 'Story unavailable', openStory: 'Read Now', dailyMissions: 'Daily missions',
     target: 'Target: {{count}}', completed: 'Completed', inProgress: 'In progress', readStory: 'Read story',
     dailyRewards: 'Daily milestone rewards', maxCoins: 'Up to 400 coins', claimed: 'Claimed',
     ready: 'Ready', locked: 'Locked', claiming: 'Claiming...', claimRewards: 'Claim available rewards',
@@ -41,13 +42,14 @@ registerTranslationNamespace('shadowReadEventPage', {
   km: {
     title: 'Shadow Read Event', subtitle: 'អានរឿង ៧ ថ្ងៃ និងទទួលរង្វាន់', back: 'ត្រឡប់ក្រោយ', retry: 'សាកល្បងម្ដងទៀត',
     refresh: 'ផ្ទុកឡើងវិញ', loading: 'កំពុងផ្ទុកព្រឹត្តិការណ៍...', loadError: 'មិនអាចផ្ទុកព្រឹត្តិការណ៍បាន',
-    loginRequired: 'សូមចូលគណនីដើម្បីចូលរួម។', notEligible: 'ព្រឹត្តិការណ៍នេះសម្រាប់អ្នកអានកម្ពុជាប៉ុណ្ណោះ។',
+    loginRequired: 'សូមចូលគណនីដើម្បីចូលរួម។', notEligible: 'ព្រឹត្តិការណ៍នេះសម្រាប់ Story Language ខ្មែរប៉ុណ្ណោះ។',
     inactive: 'ព្រឹត្តិការណ៍មិនទាន់បើកទេ។', nextStart: 'ព្រឹត្តិការណ៍បន្ទាប់៖ {{date}}',
     join: 'ចូលរួមព្រឹត្តិការណ៍', joining: 'កំពុងចូលរួម...', joined: 'បានចូលរួម', joinSuccess: 'អ្នកបានចូលរួមជោគជ័យ។',
+    joinHint: 'អានរឿងប្រចាំថ្ងៃ ២ ភាគ ដើម្បីចូលរួមដោយស្វ័យប្រវត្តិ។',
     missionsTab: 'បេសកកម្ម', rankingsTab: 'ចំណាត់ថ្នាក់', dayNumber: 'ថ្ងៃទី {{count}}',
     dailyScore: 'ពិន្ទុថ្ងៃនេះ', totalScore: 'ពិន្ទុសរុប', points: 'ពិន្ទុ',
     featured: 'រឿងរង្វាន់ពិសេស', featuredDetails: 'កាតពីព្រឹត្តិការណ៍ប្រើបានតែរឿងនេះ។ ១០ កាតដោះសោ ១ ភាគ។',
-    unknownStory: 'រកមិនឃើញរឿង', openStory: 'បើករឿង', dailyMissions: 'បេសកកម្មប្រចាំថ្ងៃ',
+    unknownStory: 'រកមិនឃើញរឿង', openStory: 'អានឥឡូវនេះ', dailyMissions: 'បេសកកម្មប្រចាំថ្ងៃ',
     target: 'គោលដៅ៖ {{count}}', completed: 'បានសម្រេច', inProgress: 'កំពុងធ្វើ', readStory: 'អានរឿង',
     dailyRewards: 'រង្វាន់ពិន្ទុប្រចាំថ្ងៃ', maxCoins: 'រហូតដល់ ៤០០ កាក់', claimed: 'បានទទួល',
     ready: 'អាចទទួល', locked: 'មិនទាន់ដោះសោ', claiming: 'កំពុងទទួល...', claimRewards: 'ទទួលរង្វាន់ដែលមាន',
@@ -66,10 +68,11 @@ registerTranslationNamespace('shadowReadEventPage', {
   zh: {
     title:'Shadow 阅读活动', subtitle:'连续七天阅读并赢取奖励', back:'返回', retry:'重试', refresh:'刷新',
     loading:'正在加载阅读活动...', loadError:'无法加载阅读活动', loginRequired:'请先登录才能参加。',
-    notEligible:'此活动仅面向柬埔寨读者。', inactive:'阅读活动尚未开始。', nextStart:'下次活动：{{date}}',
+    notEligible:'此活动仅面向高棉语阅读用户。', inactive:'阅读活动尚未开始。', nextStart:'下次活动：{{date}}',
     join:'参加活动', joining:'正在参加...', joined:'已参加', joinSuccess:'成功参加活动。',
+    joinHint:'阅读今日指定故事的 2 话即可自动参加。',
     missionsTab:'任务', rankingsTab:'排行榜', dayNumber:'第 {{count}} 天', dailyScore:'今日积分', totalScore:'总积分', points:'积分',
-    featured:'精选奖励故事', featuredDetails:'活动故事卡仅适用于本故事。10 张卡解锁一集。', unknownStory:'故事不可用', openStory:'打开故事',
+    featured:'精选奖励故事', featuredDetails:'活动故事卡仅适用于本故事。10 张卡解锁一集。', unknownStory:'故事不可用', openStory:'立即阅读',
     dailyMissions:'每日任务', target:'目标：{{count}}', completed:'已完成', inProgress:'进行中', readStory:'阅读故事',
     dailyRewards:'每日里程碑奖励', maxCoins:'最多 400 金币', claimed:'已领取', ready:'可领取', locked:'未解锁',
     claiming:'领取中...', claimRewards:'领取可用奖励', claimSuccess:'获得 {{count}} 金币', claimNone:'没有新奖励可领取。',
@@ -85,11 +88,12 @@ registerTranslationNamespace('shadowReadEventPage', {
   ja: {
     title:'Shadow 読書イベント', subtitle:'7日間読んで報酬を獲得', back:'戻る', retry:'再試行', refresh:'更新',
     loading:'イベントを読み込み中...', loadError:'イベントを読み込めません', loginRequired:'参加するにはログインしてください。',
-    notEligible:'カンボジアの読者限定イベントです。', inactive:'イベントはまだ開催されていません。', nextStart:'次回：{{date}}',
+    notEligible:'クメール語設定の読者向けイベントです。', inactive:'イベントはまだ開催されていません。', nextStart:'次回：{{date}}',
     join:'参加する', joining:'参加中...', joined:'参加済み', joinSuccess:'イベントに参加しました。',
+    joinHint:'今日の指定作品を2話読むと自動的に参加できます。',
     missionsTab:'ミッション', rankingsTab:'ランキング', dayNumber:'{{count}} 日目', dailyScore:'今日のポイント',
     totalScore:'累計ポイント', points:'ポイント', featured:'特典対象作品',
-    featuredDetails:'イベントカードはこの作品限定。10枚で1話を解放できます。', unknownStory:'作品がありません', openStory:'作品を開く',
+    featuredDetails:'イベントカードはこの作品限定。10枚で1話を解放できます。', unknownStory:'作品がありません', openStory:'今すぐ読む',
     dailyMissions:'デイリーミッション', target:'目標：{{count}}', completed:'完了', inProgress:'進行中', readStory:'読む',
     dailyRewards:'デイリー達成報酬', maxCoins:'最大400コイン', claimed:'受取済み', ready:'受取可能', locked:'未解放',
     claiming:'受取中...', claimRewards:'報酬を受け取る', claimSuccess:'{{count}} コイン獲得', claimNone:'新しい報酬はありません。',
@@ -105,11 +109,12 @@ registerTranslationNamespace('shadowReadEventPage', {
   ko: {
     title:'Shadow 독서 이벤트', subtitle:'7일 동안 읽고 보상 받기', back:'뒤로', retry:'다시 시도', refresh:'새로고침',
     loading:'이벤트 불러오는 중...', loadError:'이벤트를 불러올 수 없습니다', loginRequired:'참여하려면 로그인하세요.',
-    notEligible:'캄보디아 독자 전용 이벤트입니다.', inactive:'이벤트가 아직 시작되지 않았습니다.', nextStart:'다음 이벤트: {{date}}',
+    notEligible:'크메르어 독자 전용 이벤트입니다.', inactive:'이벤트가 아직 시작되지 않았습니다.', nextStart:'다음 이벤트: {{date}}',
     join:'이벤트 참여', joining:'참여 중...', joined:'참여 완료', joinSuccess:'이벤트에 참여했습니다.',
+    joinHint:'오늘 지정된 이야기 2편을 읽으면 자동으로 참여합니다.',
     missionsTab:'미션', rankingsTab:'랭킹', dayNumber:'{{count}}일 차', dailyScore:'오늘 점수', totalScore:'전체 점수', points:'점수',
     featured:'특별 보상 작품', featuredDetails:'이벤트 카드는 이 작품에서만 사용합니다. 10장으로 1화를 해제합니다.',
-    unknownStory:'작품을 찾을 수 없음', openStory:'작품 보기', dailyMissions:'일일 미션', target:'목표: {{count}}',
+    unknownStory:'작품을 찾을 수 없음', openStory:'지금 읽기', dailyMissions:'일일 미션', target:'목표: {{count}}',
     completed:'완료', inProgress:'진행 중', readStory:'작품 읽기', dailyRewards:'일일 단계 보상', maxCoins:'최대 400코인',
     claimed:'수령 완료', ready:'수령 가능', locked:'잠김', claiming:'수령 중...', claimRewards:'보상 수령',
     claimSuccess:'{{count}}코인 획득', claimNone:'새로 받을 보상이 없습니다.', dailyRanking:'일일 Top 3',
@@ -142,6 +147,7 @@ export default function ShadowReadEventPage() {
   const [rankingLoading, setRankingLoading] = useState(false)
   const [rankingError, setRankingError] = useState('')
   const rankingCache = useRef(new Map())
+  const lastResumeAt = useRef(Date.now())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -163,14 +169,34 @@ export default function ShadowReadEventPage() {
     return () => controller.abort()
   }, [refresh])
 
+  useEffect(() => {
+    const onResume = () => {
+      if (document.visibilityState === 'hidden') return
+      const now = Date.now()
+      if (now - lastResumeAt.current < 30000) return
+      lastResumeAt.current = now
+      rankingCache.current.clear()
+      setRankingCacheVersion((n) => n + 1)
+      setRefresh((n) => n + 1)
+    }
+    window.addEventListener('focus', onResume)
+    window.addEventListener('pageshow', onResume)
+    document.addEventListener('visibilitychange', onResume)
+    return () => {
+      window.removeEventListener('focus', onResume)
+      window.removeEventListener('pageshow', onResume)
+      document.removeEventListener('visibilitychange', onResume)
+    }
+  }, [])
+
   const eventId = data?.event?.id || ''
   const lastDay = Math.min(7, Math.max(1, Number(data?.event?.day_number) || 1))
   useEffect(() => {
     if (tab !== 'rankings' || !data?.active || !eventId) return undefined
     const key = `${eventId}:${rankingKind}:${rankingDay}`
     const cached = rankingCache.current.get(key)
-    if (cached) {
-      setRankingData(cached)
+    if (cached && Date.now() - cached.fetchedAt < 90000) {
+      setRankingData(cached.value)
       setRankingError('')
       setRankingLoading(false)
       return undefined
@@ -182,32 +208,19 @@ export default function ShadowReadEventPage() {
     getShadowReadEventLeaderboard(rankingKind, rankingDay, { signal: controller.signal })
       .then((result) => {
         if (!controller.signal.aborted) {
-          rankingCache.current.set(key, result)
+          rankingCache.current.set(key, { value: result, fetchedAt: Date.now() })
           setRankingData(result)
         }
       })
       .catch((error) => { if (!controller.signal.aborted) setRankingError(error?.message || 'READ_EVENT_UNAVAILABLE') })
       .finally(() => { if (!controller.signal.aborted) setRankingLoading(false) })
     return () => controller.abort()
-  }, [tab, eventId, rankingKind, rankingDay, rankingCacheVersion])
+  }, [tab, eventId, rankingKind, rankingDay, rankingCacheVersion, refresh])
 
   function reload() {
     rankingCache.current.clear()
     setRankingCacheVersion((n) => n + 1)
     setRefresh((n) => n + 1)
-  }
-
-  async function join() {
-    if (busy || data?.participation?.joined) return
-    setBusy('join')
-    setNotice('')
-    try {
-      await joinShadowReadEvent()
-      setNotice(t('shadowReadEventPage.joinSuccess'))
-      reload()
-    } catch (error) {
-      setNotice(error?.message || t('shadowReadEventPage.loadError'))
-    } finally { setBusy('') }
   }
 
   async function claim() {
@@ -235,11 +248,7 @@ export default function ShadowReadEventPage() {
   return (
     <PageShell className="pb-20">
       <PageHeader title={t('shadowReadEventPage.title')} subtitle={t('shadowReadEventPage.subtitle')}
-        onBack={() => navigate(-1)} backLabel={t('shadowReadEventPage.back')}
-        right={<button type="button" onClick={reload} disabled={loading || Boolean(busy)}
-          className="rounded-full border border-[var(--shadow-border)] px-3 py-2 text-[11px] font-bold text-[var(--shadow-text-primary)]">
-          {t('shadowReadEventPage.refresh')}
-        </button>} />
+        onBack={() => navigate(-1)} backLabel={t('shadowReadEventPage.back')} />
 
       <main className="mx-auto grid max-w-[960px] gap-4 px-4 py-5">
         {notice && <SurfaceCard className="p-3 text-[12px] text-[var(--shadow-text-primary)]" as="aside">{notice}</SurfaceCard>}
@@ -264,10 +273,9 @@ export default function ShadowReadEventPage() {
                     {t('shadowReadEventPage.joined')}
                   </span>
                 ) : (
-                  <button type="button" onClick={join} disabled={Boolean(busy)}
-                    className="rounded-full bg-[var(--shadow-accent)] px-5 py-2.5 text-[12px] font-extrabold text-[var(--shadow-accent-text)] disabled:opacity-50">
-                    {busy === 'join' ? t('shadowReadEventPage.joining') : t('shadowReadEventPage.join')}
-                  </button>
+                  <span className="max-w-[230px] rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-[var(--shadow-text-secondary)]">
+                    {t('shadowReadEventPage.joinHint')}
+                  </span>
                 )}
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
