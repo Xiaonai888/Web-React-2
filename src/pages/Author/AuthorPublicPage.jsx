@@ -9,6 +9,8 @@ import AuthorReelGrid from '../../components/author/AuthorReelGrid'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
 import AuthorPageAboutPopup from '../../components/AuthorPageAboutPopup'
+import AuthorCoverOptionsSheet from '../../components/author/AuthorCoverOptionsSheet'
+import AuthorCoverCropModal from '../../components/author/AuthorCoverCropModal'
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -2952,7 +2954,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   onEdit={() => navigate('/author/page/edit?section=contact&modal=social')}
 />
 
-      <CropImageModal
+      <AuthorCoverCropModal
         open={cropModalOpen}
         image={rawImage}
         mode={cropMode}
@@ -3034,7 +3036,7 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   avatarLetter={readerLetter}
 />
 
-      <CoverOptionsSheet
+      <AuthorCoverOptionsSheet
   open={coverOptionsOpen}
   savingSlide={savingSlide}
   onClose={() => setCoverOptionsOpen(false)}
