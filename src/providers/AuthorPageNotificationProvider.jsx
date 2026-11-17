@@ -18,6 +18,7 @@ const API_BASE_URL =
 
 const MIN_RECONNECT_MS = 10 * 1000
 const MAX_RECONNECT_MS = 2 * 60 * 1000
+const AUTH_RETRY_BLOCK_MS = 60 * 1000
 const AuthorPageNotificationContext = createContext(null)
 
 function getReaderToken() {
@@ -114,6 +115,7 @@ export function AuthorPageNotificationProvider({ children }) {
   const [visible, setVisible] = useState(() => document.visibilityState === 'visible')
   const [online, setOnline] = useState(() => navigator.onLine)
   const unreadRequestRef = useRef(null)
+  const authFailureRef = useRef({ token: '', until: 0 })
   const notificationRevisionRef = useRef(0)
   const storyStatsListenersRef = useRef(new Set())
 
@@ -144,6 +146,10 @@ export function AuthorPageNotificationProvider({ children }) {
       return 0
     }
 
+    if (authFailureRef.current.token === token && authFailureRef.current.until > Date.now()) {
+      return null
+    }
+
     if (unreadRequestRef.current?.token === token) {
       return unreadRequestRef.current.promise
     }
@@ -151,7 +157,15 @@ export function AuthorPageNotificationProvider({ children }) {
     const promise = requestUnreadCount(token)
       .then((result) => {
         if (token !== getReaderToken()) return null
+        if (result.authError) {
+          authFailureRef.current = { token, until: Date.now() + AUTH_RETRY_BLOCK_MS }
+          setAuthorUnreadCountState(0)
+          setHasAuthorPage(false)
+          setConnectionState('idle')
+          return null
+        }
         if (!result.ok) return null
+        authFailureRef.current = { token: '', until: 0 }
         setAuthorUnreadCountState(result.count)
         setHasAuthorPage(result.hasAuthorPage)
         return result.count
@@ -260,11 +274,11 @@ export function AuthorPageNotificationProvider({ children }) {
       }
 
       if (payload?.action === 'created') {
-  notificationRevisionRef.current += 1
-  if (payload?.notification?.metadata?.source === 'fast_reel') {
-    invalidateStudioVideoNotifications()
-  }
-}
+        notificationRevisionRef.current += 1
+        if (payload?.notification?.metadata?.source === 'fast_reel') {
+          invalidateStudioVideoNotifications()
+        }
+      }
     }
 
     const run = async () => {
@@ -291,8 +305,11 @@ export function AuthorPageNotificationProvider({ children }) {
               signal: activeController.signal,
             }
           )
-          if (cancelled) return
+          if (cancelled || getReaderToken() !== sessionToken) return
           if (response.status === 401 || response.status === 403) {
+            authFailureRef.current = { token: sessionToken, until: Date.now() + AUTH_RETRY_BLOCK_MS }
+            setAuthorUnreadCountState(0)
+            setHasAuthorPage(false)
             setConnectionState('idle')
             return
           }
