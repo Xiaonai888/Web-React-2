@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
-  ArrowLeft,
   Bookmark,
   Check,
   ChevronDown,
@@ -1075,17 +1074,12 @@ export default function SavedPostsPage() {
     className="flex h-10 w-7 shrink-0 items-center justify-start text-[#111827] active:scale-95 dark:text-white"
     aria-label={t('savedPostsPage.back')}
   >
-    <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+    <span aria-hidden="true" className="text-[24px] font-normal leading-none">{'<'}</span>
   </button>
 
-  <div className="min-w-0">
-    <h1 className="text-[21px] font-bold leading-tight text-[#111827] dark:text-white">
-      {t('savedPostsPage.savedPosts')}
-    </h1>
-    <p className="mt-0.5 text-[11px] text-[#8d94a1] dark:text-white/40">
-       {t(`savedPostsPage.${total === 1 ? 'savedCountOne' : 'savedCountMany'}`, { count: formatDisplayNumber(total) })}
-    </p>
-  </div>
+  <h1 className="min-w-0 text-[18px] font-normal leading-tight text-[#111827] dark:text-white">
+    Saved Posts
+  </h1>
 </div>
 
             <button
