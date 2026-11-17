@@ -41,7 +41,7 @@ const ACTIONS = [
   { key: 'choose', icon: 'fa-regular fa-image' },
 ]
 
-export default function ReaderProfilePhotoSheet({ open, onClose, onSelect }) {
+export default function ReaderProfilePhotoSheet({ open, onClose, onSelect, enabledActions = ['upload', 'view', 'choose'] }) {
   const { t } = useDisplayTranslation()
 
   return (
@@ -55,7 +55,7 @@ export default function ReaderProfilePhotoSheet({ open, onClose, onSelect }) {
         <button
           key={key}
           type="button"
-          disabled={!onSelect}
+          disabled={!onSelect || !enabledActions.includes(key)}
           onClick={() => onSelect?.(key)}
           className="flex min-h-[64px] w-full items-center gap-4 rounded-xl px-1 text-left text-[16px] text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
         >
