@@ -3902,7 +3902,7 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       type="button"
       onClick={(event) => {
         event.stopPropagation()
-        setCoverOptionsOpen(true)
+        openCropEditor('cover')
       }}
       className="absolute bottom-5 right-3 flex h-11 w-11 items-center justify-center text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] active:scale-95"
     >
