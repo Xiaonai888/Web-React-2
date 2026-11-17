@@ -264,12 +264,13 @@ export async function uploadMediaWithFallback({
   })
 
   if (!Object.hasOwn(DIRECT_IMAGE_LIMITS, category) || !DIRECT_MIME_TYPES.has(file.type)) {
+        if (import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED !== 'true') throw uploadError('Direct upload supports JPEG, PNG or WebP only.', 415, 'DIRECT_UPLOAD_UNSUPPORTED')
     return uploadLegacy()
   }
   if (file.size < 16 || file.size > DIRECT_IMAGE_LIMITS[category]) {
     throw uploadError('Image size is invalid or exceeds its limit', 413, 'DIRECT_UPLOAD_SIZE_INVALID')
   }
-  if (Date.now() < temporarilyUnavailableUntil) return uploadLegacy()
+  if (Date.now() < temporarilyUnavailableUntil && import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED === 'true') return uploadLegacy()
 
   const base = String(apiBaseUrl).replace(/\/+$/, '')
   let stage = 'init'
@@ -310,7 +311,7 @@ export async function uploadMediaWithFallback({
     return result
   } catch (error) {
     if (isCanceled(error, signal) || error?.code === 'DIRECT_UPLOAD_CANCELED') throw error
-    if (!allowLegacyFallback(error, stage)) throw error
+    if (import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED !== 'true' || !allowLegacyFallback(error, stage)) throw error
     if (stage === 'init' && (
   ['DIRECT_UPLOAD_NOT_ENABLED', 'DIRECT_UPLOAD_UNAVAILABLE'].includes(error?.code) ||
   [404, 405].includes(error?.status)
