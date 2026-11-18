@@ -154,6 +154,37 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   const endedRef = useRef(false)
   const lastSwipeAtRef = useRef(0)
   const viewTrackerRef = useRef(null)
+  const viewDebugEnabled = (() => {
+    try { return new URLSearchParams(window.location.search).get('viewDebug') === '1' }
+    catch { return false }
+  })()
+  const [viewDiagnostic, setViewDiagnostic] = useState({
+    phase: 'WAITING_IFRAME', code: '', detail: '', http: 0, at: '',
+  })
+  const traceView = useCallback((phase, code = '', detail = '', http = 0) => {
+    if (!viewDebugEnabled) return
+    const item = {
+      phase: String(phase).slice(0, 60),
+      code: String(code).slice(0, 64),
+      detail: String(detail).slice(0, 160),
+      http: Number(http) || 0,
+      at: new Date().toISOString(),
+      videoId: String(video.id),
+    }
+    setViewDiagnostic(previous => previous.phase === item.phase &&
+      previous.code === item.code && previous.detail === item.detail &&
+      previous.http === item.http ? previous : item)
+    try {
+      const key = 'shadow_fast_view_diagnostics_v1'
+      const existing = JSON.parse(sessionStorage.getItem(key) || '[]')
+      const events = Array.isArray(existing) ? existing.slice(-29) : []
+      events.push(item)
+      sessionStorage.setItem(key, JSON.stringify(events))
+    } catch {}
+    if (phase === 'ERROR' || phase === 'PLAYER_TIMEOUT' || phase === 'IFRAME_TIMEOUT') {
+      console.warn('[SHADOW_REEL_VIEW_DIAGNOSTIC]', item)
+    }
+  }, [viewDebugEnabled, video.id])
   const videoPositionRef = useRef(0)
   const videoDurationRef = useRef(0)
   const tapTimerRef = useRef(null)
@@ -165,6 +196,13 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
     const tracker = active && id ? {
       videoId: video.id,
       day: fastViewCambodiaDay(),
+      createdAt: Date.now(),
+      iframeLoadedAt: 0,
+      playRequestedAt: 0,
+      playConfirmedAt: 0,
+      sawYoutubeEvent: false,
+      timeoutReported: false,
+      missingTokenReported: false,
       playing: false,
       ended: false,
       fastSent: false,
@@ -183,10 +221,12 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       lastMediaAt: 0,
     } : null
     viewTrackerRef.current = tracker
+    if (active) traceView(id ? 'IFRAME_WAIT' : 'ERROR', id ? 'WAITING_LOAD' : 'INVALID_YOUTUBE_URL',
+      id ? 'Reel selected; waiting for YouTube iframe' : 'Video URL has no valid YouTube ID')
     return () => {
       if (viewTrackerRef.current === tracker) viewTrackerRef.current = null
     }
-  }, [active, id, video.id])
+  }, [active, id, video.id, traceView])
 
   useEffect(() => {
     endedRef.current = false
@@ -324,6 +364,8 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         qualifiedFailures: 0,
         watched: 0,
         coverage: [],
+        timeoutReported: false,
+        missingTokenReported: false,
         lastMediaTime: null,
         lastMediaAt: 0,
       })
@@ -341,6 +383,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       if (tracker.watched < required) return
 
       tracker.qualifiedInFlight = true
+      traceView('API_REQUEST', 'QUALIFIED_SENT', `watched=${Math.round(tracker.watched)}s duration=${Math.round(tracker.duration)}s`)
       const day = tracker.day
       void recordFastReelViewV2(video.id, {
         mode: 'qualified',
@@ -353,23 +396,31 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         if (result?.counted === true || reason === 'qualified_counted') {
           tracker.qualifiedSent = true
           tracker.needsQualified = false
+          traceView('COUNTED', 'QUALIFIED_COUNTED', `server_total=${result?.view_count ?? 'unknown'}`, 200)
         } else if (reason === 'watch_time_pending') {
+          traceView('SQL_RESPONSE', 'WATCH_TIME_PENDING', 'SQL requires more qualified watch time', 200)
           tracker.qualifiedRetryAt = Date.now() + 15000
         } else if (reason === 'qualification_session_required' || reason === 'fast_view_available') {
+          traceView('SQL_RESPONSE', reason.toUpperCase(), 'SQL requests another Fast View', 200)
           tracker.needsQualified = false
           tracker.fastSent = false
           tracker.fastRetryAt = Date.now() + 1000
         } else if (reason === 'qualified_cooldown' || reason === 'reel_unavailable' ||
                    reason === 'invalid_watch_data') {
+          traceView(reason === 'reel_unavailable' || reason === 'invalid_watch_data' ? 'ERROR' : 'SQL_RESPONSE',
+            reason.toUpperCase(), 'SQL did not count qualified view', 200)
           tracker.qualifiedSent = true
           tracker.needsQualified = false
         } else {
+          traceView('ERROR', reason || 'QUALIFIED_UNKNOWN_REASON', 'SQL did not count qualified view', 200)
           tracker.qualifiedRetryAt = Date.now() + 15000
         }
       }).catch(error => {
         if (tracker.day !== day) return
         tracker.qualifiedFailures = Math.min(4, tracker.qualifiedFailures + 1)
         tracker.qualifiedRetryAt = Date.now() + Math.min(60000, 15000 * tracker.qualifiedFailures)
+        traceView('ERROR', error?.code || 'QUALIFIED_REQUEST_FAILED',
+          error?.message || 'Qualified API request failed', error?.status)
         console.warn('[FAST_QUALIFIED_VIEW_ERROR]', error)
       }).finally(() => {
         if (tracker.day === day) tracker.qualifiedInFlight = false
@@ -383,11 +434,17 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       let token = ''
       try { token = getToken() } catch { /* storage blocked */ }
       if (!token) {
+        if (!tracker.missingTokenReported) {
+          tracker.missingTokenReported = true
+          traceView('ERROR', 'READER_TOKEN_MISSING', 'Reader login is required; no API request sent')
+        }
         tracker.fastRetryAt = Date.now() + 15000
         return
       }
+      tracker.missingTokenReported = false
 
       tracker.fastInFlight = true
+      traceView('API_REQUEST', 'FAST_SENT', 'POST /api/fast/videos/:id/view/v2')
       const day = tracker.day
       void recordFastReelViewV2(video.id, { mode: 'fast' }).then(result => {
         if (tracker.day !== day) return
@@ -396,17 +453,24 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         if (result?.counted === true || reason === 'fast_counted') {
           tracker.fastSent = true
           tracker.needsQualified = false
+          traceView('COUNTED', 'FAST_COUNTED', `server_total=${result?.view_count ?? 'unknown'}`, 200)
         } else if (result?.requires_qualified_view === true || reason === 'qualified_view_required') {
+          traceView('SQL_RESPONSE', 'QUALIFIED_VIEW_REQUIRED', `fast_used=${result?.fast_used ?? 'unknown'}`, 200)
           tracker.fastSent = true
           tracker.needsQualified = true
           // Handle a Reel that ended before the Fast response arrived.
           submitQualifiedView(tracker)
         } else if (reason === 'fast_cooldown') {
+          traceView('SQL_RESPONSE', 'FAST_COOLDOWN', 'SQL enforces one minute between Fast Views', 200)
           tracker.fastRetryAt = Date.now() + 61000
         } else if (reason === 'qualified_cooldown' || reason === 'reel_unavailable') {
+          traceView(reason === 'reel_unavailable' ? 'ERROR' : 'SQL_RESPONSE',
+            reason.toUpperCase(), 'SQL did not count Fast View', 200)
           tracker.fastSent = true
           tracker.needsQualified = false
         } else {
+          traceView('ERROR', reason || 'FAST_UNKNOWN_REASON',
+            `SQL returned counted=false; remaining=${result?.fast_remaining ?? 'unknown'}`, 200)
           tracker.fastFailures = Math.min(4, tracker.fastFailures + 1)
           tracker.fastRetryAt = Date.now() + Math.min(60000, 15000 * tracker.fastFailures)
           console.warn('[FAST_VIEW_NOT_COUNTED]', {
@@ -421,6 +485,8 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         tracker.fastRetryAt = Date.now() + ([401, 403].includes(Number(error?.status))
           ? 60000
           : Math.min(60000, 15000 * tracker.fastFailures))
+        traceView('ERROR', error?.code || 'FAST_REQUEST_FAILED',
+          error?.message || 'Fast API request failed', error?.status)
         console.warn('[FAST_VIEW_V2_ERROR]', error)
       }).finally(() => {
         if (tracker.day === day) tracker.fastInFlight = false
@@ -429,7 +495,10 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
 
     const onMessage = event => {
       if (event.source !== frameRef.current?.contentWindow) return
-      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) return
+      if (!['https://www.youtube-nocookie.com', 'https://www.youtube.com'].includes(event.origin)) {
+        traceView('ERROR', 'YOUTUBE_ORIGIN_MISMATCH', String(event.origin).slice(0, 100))
+        return
+      }
       let data = event.data
       try { if (typeof data === 'string') data = JSON.parse(data) } catch { return }
       if (!data || typeof data !== 'object') return
@@ -437,8 +506,17 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       const tracker = viewTrackerRef.current
       if (!tracker || tracker.videoId !== video.id) return
       checkDay(tracker)
+      if (['onReady', 'onStateChange', 'infoDelivery', 'onError'].includes(data.event)) {
+        if (!tracker.sawYoutubeEvent) traceView('YOUTUBE_MESSAGE', 'PLAYER_MESSAGE_RECEIVED', String(data.event))
+        tracker.sawYoutubeEvent = true
+      }
+      if (data.event === 'onError') {
+        traceView('ERROR', 'YOUTUBE_PLAYER_ERROR', `YouTube code=${String(data.info ?? 'unknown').slice(0, 50)}`)
+        return
+      }
 
       if (data.event === 'onReady') {
+        traceView('PLAYER_READY', 'YOUTUBE_READY', 'YouTube iframe API is ready')
         sendCommand(soundEnabled ? 'unMute' : 'mute')
         sendCommand(captionExpandedRef.current ? 'pauseVideo' : 'playVideo')
         sendCommand('getDuration')
@@ -469,6 +547,10 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
         return
       }
       if (state === 1) {
+        if (!tracker.playConfirmedAt) {
+          tracker.playConfirmedAt = Date.now()
+          traceView('PLAYER_PLAYING', 'YOUTUBE_STATE_1', 'Playback confirmed; submitting Fast View')
+        }
         if (!tracker.playing) {
           tracker.lastMediaTime = null
           tracker.lastMediaAt = 0
@@ -495,6 +577,18 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       const tracker = viewTrackerRef.current
       if (!tracker || tracker.videoId !== video.id) return
       checkDay(tracker)
+      const now = Date.now()
+      if (viewDebugEnabled && !tracker.timeoutReported) {
+        if (!tracker.iframeLoadedAt && now - tracker.createdAt >= 12000) {
+          tracker.timeoutReported = true
+          traceView('IFRAME_TIMEOUT', 'YOUTUBE_IFRAME_NOT_LOADED', 'YouTube frame did not fire onLoad after 12 seconds')
+        } else if (tracker.playRequestedAt && !tracker.playConfirmedAt &&
+          now - tracker.playRequestedAt >= 10000) {
+          tracker.timeoutReported = true
+          traceView('PLAYER_TIMEOUT', tracker.sawYoutubeEvent ? 'YOUTUBE_PLAYING_NOT_CONFIRMED' : 'YOUTUBE_PLAYER_EVENTS_MISSING',
+            tracker.sawYoutubeEvent ? 'YouTube responded but never reported playerState=1' : 'No onReady/onStateChange/infoDelivery received')
+        }
+      }
       if (tracker.playing && document.visibilityState === 'visible') {
         submitFastView(tracker)
       }
@@ -506,7 +600,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       window.clearInterval(timer)
       window.removeEventListener('message', onMessage)
     }
-  }, [active, id, video.id, soundEnabled, playbackSpeed, sendCommand, onEnded])
+  }, [active, id, video.id, soundEnabled, playbackSpeed, sendCommand, onEnded, traceView, viewDebugEnabled])
 
   useEffect(() => {
     if (!active) return undefined
@@ -526,6 +620,14 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   }, [])
 
   const handlePlayerLoad = () => {
+    const tracker = viewTrackerRef.current
+    if (tracker && tracker.videoId === video.id) {
+      tracker.iframeLoadedAt = Date.now()
+      tracker.playRequestedAt = Date.now()
+      tracker.playConfirmedAt = 0
+      tracker.timeoutReported = false
+    }
+    traceView('IFRAME_LOADED', 'YOUTUBE_IFRAME_LOADED', 'Registering player events and requesting autoplay')
     frameRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'listening', id }), 'https://www.youtube-nocookie.com'
     )
@@ -535,8 +637,16 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
   }
   const togglePlayback = () => {
     if (!active || !id || captionExpandedRef.current) return
+    const tracker = viewTrackerRef.current
+    if (!playing && tracker) {
+      tracker.playRequestedAt = Date.now()
+      tracker.playConfirmedAt = 0
+      tracker.timeoutReported = false
+      traceView('PLAY_COMMAND', 'PLAY_REQUESTED', 'Waiting for YouTube to confirm actual playback')
+    } else if (playing) {
+      traceView('PLAY_COMMAND', 'PAUSE_REQUESTED', 'Waiting for YouTube pause response')
+    }
     sendCommand(playing ? 'pauseVideo' : 'playVideo')
-    setPlaying(current => !current)
   }
 
   const seekBySeconds = seconds => {
@@ -684,6 +794,22 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           viewTrackerRef.current.lastMediaAt = 0
         }
       }}>
+      {active && viewDebugEnabled ? (
+        <div role="status" aria-live="polite"
+          className="pointer-events-auto absolute left-3 right-3 top-3 z-[70] rounded-xl border border-yellow-300/70 bg-black/90 px-3 py-2 text-[11px] leading-5 text-white shadow-lg">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-yellow-300">REEL VIEW DIAGNOSTIC</span>
+            <button type="button" className="rounded bg-white/20 px-2 py-0.5 font-semibold" onClick={event => {
+              event.stopPropagation()
+              const report = `Video: ${video.id}\nPhase: ${viewDiagnostic.phase}\nCode: ${viewDiagnostic.code}\nDetail: ${viewDiagnostic.detail}\nHTTP: ${viewDiagnostic.http || '-'}\nTime: ${viewDiagnostic.at}`
+              navigator.clipboard?.writeText(report).catch(() => {})
+            }}>Copy</button>
+          </div>
+          <p className="font-mono break-all">{viewDiagnostic.phase} · {viewDiagnostic.code || '-'}</p>
+          <p className="break-words text-white/80">{viewDiagnostic.detail || 'Waiting for next event'}{viewDiagnostic.http ? ` · HTTP ${viewDiagnostic.http}` : ''}</p>
+          <p className="font-mono text-[10px] text-white/60">{String(video.id).slice(0, 8)} · {viewDiagnostic.at ? viewDiagnostic.at.slice(11, 19) : 'waiting'}</p>
+        </div>
+      ) : null}
       {active && id ? (
         <iframe ref={frameRef} title={video.title || 'YouTube'} src={iframeUrl} onLoad={handlePlayerLoad}
           className="pointer-events-none absolute inset-0 h-full w-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
