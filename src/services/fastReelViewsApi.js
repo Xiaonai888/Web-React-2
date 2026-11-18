@@ -1,3 +1,5 @@
+import { markStudioContentCacheStale } from '../components/author/studio/content/ShadowStudioContentCache'
+import { invalidateStudioAnalyticsCache } from './shadowStudioAnalyticsApi'
 import { getActiveReaderToken } from '../utils/readerActiveAccount'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
@@ -142,6 +144,13 @@ export async function recordFastReelViewV2(
   ) {
     throw new FastReelViewError(response.status, 'INVALID_VIEW_RESPONSE', 'Invalid Reel view response')
   }
+
+  
+  if (data.counted === true) {
+    markStudioContentCacheStale(['videos', 'shorts'])
+    invalidateStudioAnalyticsCache()
+  }
+
 
   return data
 }
