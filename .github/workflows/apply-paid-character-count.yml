@@ -1,0 +1,53 @@
+name: Apply Paid Episode Character Count Fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paid-episode-character-count-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Test shared paid character counter
+        run: node --test src/tests/paidEpisodeCharacterCount.test.mjs
+
+      - name: Update EpisodeEditorPage.jsx
+        run: node scripts/applyPaidCountPatch.mjs
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate Web build
+        run: npm run build
+
+      - name: Commit Episode Editor update to GitHub
+        shell: bash
+        run: |
+          git diff --check
+          git add src/pages/Author/EpisodeEditorPage.jsx
+          if git diff --cached --quiet; then
+            echo "EpisodeEditorPage.jsx is already updated"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix paid episode character count display"
+          git push origin HEAD:main
