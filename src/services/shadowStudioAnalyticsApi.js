@@ -1,4 +1,5 @@
 import { getActiveReaderToken } from '../utils/readerActiveAccount'
+
 const API_BASE = import.meta.env.VITE_API_URL || (
   ['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000'
@@ -13,15 +14,30 @@ function bearerToken() {
 
 async function request(path, { signal, authenticated = false } = {}) {
   const token = authenticated ? bearerToken() : ''
-  if (authenticated && !token) throw new Error('Sign in to view your Studio.')
-  const response = await fetch(`${API_BASE}${path.startsWith('/api/') ? path : `/api/fast${path}`}`, {
-    signal,
-    cache: 'no-store',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
+  if (authenticated && !token) throw new Error('[STUDIO_TOKEN_MISSING] No active Reader token. Please sign in again.')
+
+  let response
+  try {
+    response = await fetch(`${API_BASE}${path.startsWith('/api/') ? path : `/api/fast${path}`}`, {
+      signal,
+      cache: 'no-store',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+  } catch (error) {
+    if (signal?.aborted) throw error
+    throw new Error(`[STUDIO_NETWORK_ERROR] Cannot connect to Studio API. ${error?.message || 'Network unavailable.'}`)
+  }
+
   const data = await response.json().catch(() => null)
   if (!response.ok || data?.ok === false) {
-    throw new Error(data?.message || `Unable to load Studio data (${response.status}).`)
+    const code = typeof data?.code === 'string' && /^[A-Z0-9_]{1,80}$/.test(data.code)
+      ? data.code
+      : 'STUDIO_API_ERROR'
+    const diagnostic = data?.diagnostic
+    const detail = diagnostic && typeof diagnostic === 'object'
+      ? ` (reason: ${String(diagnostic.reason || 'unknown')}, claim type: ${String(diagnostic.claim_type || 'unknown')}, length: ${String(diagnostic.claim_length ?? '?')})`
+      : ''
+    throw new Error(`[${code} | HTTP ${response.status}] ${data?.message || 'Unable to load Studio data.'}${detail}`)
   }
   return data || {}
 }
@@ -124,7 +140,7 @@ export function invalidateStudioAnalyticsCache() {
 }
 
 async function cachedAnalyticsRequest(kind, path, { signal, force = false } = {}, identifier = '') {
-  if (!ensureAnalyticsCacheSession()) throw new Error('Sign in to view your Studio.')
+  if (!ensureAnalyticsCacheSession()) throw new Error('[STUDIO_TOKEN_MISSING] Sign in to view your Studio.')
   const owner = analyticsCacheSession
   const revision = analyticsCacheRevision
   const key = `${kind}:${identifier}`
