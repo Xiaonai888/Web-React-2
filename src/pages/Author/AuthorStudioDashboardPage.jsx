@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, RefreshCw, ThumbsUp } from 'lucide-react'
+import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, Heart } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
-import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import {
   StudioCard, StudioFrame, StudioMetric, StudioMissing,
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
 } from '../../components/author/studio/ShadowStudioAnalyticsShared'
-
-registerTranslationNamespace('shadowStudioDashboardRefresh', {
-  en: { refresh: 'Refresh dashboard' },
-  km: { refresh: 'ទាញទិន្នន័យ Dashboard ថ្មី' },
-  zh: { refresh: '刷新数据概览' },
-  ja: { refresh: 'ダッシュボードを更新' },
-  ko: { refresh: '대시보드 새로고침' },
-})
 
 export default function AuthorStudioDashboardPage() {
   const { t } = useDisplayTranslation()
@@ -30,6 +21,13 @@ export default function AuthorStudioDashboardPage() {
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
   const refreshAfterSave = location.state?.reelSaved === true
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') setReload(value => value + 1)
+    }, 3 * 60 * 1000)
+    return () => window.clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -63,19 +61,7 @@ export default function AuthorStudioDashboardPage() {
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <h2 className="text-lg font-bold">{t('shadowStudioStats.channel')}</h2>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
-          <button
-            type="button"
-            onClick={() => setReload(value => value + 1)}
-            disabled={loading}
-            aria-label={t('shadowStudioDashboardRefresh.refresh')}
-            title={t('shadowStudioDashboardRefresh.refresh')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--shadow-border)] text-[var(--shadow-text-primary)] hover:bg-[var(--shadow-bg-soft)] disabled:opacity-50"
-          >
-            <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <span className="text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <StudioMetric label={t('shadowStudioStats.views')} value={channel?.views ?? null} icon={Eye} />
@@ -103,7 +89,7 @@ export default function AuthorStudioDashboardPage() {
           <div className="border-t border-[var(--shadow-border)] pt-3">
             <div className="flex items-center gap-5 text-xs">
               <span className="inline-flex items-center gap-1.5"><BarChart3 size={17} />{formatStudioCount(video.view_count != null && Number.isFinite(Number(video.view_count)) ? Number(video.view_count) : null)}</span>
-              <span className="inline-flex items-center gap-1.5"><ThumbsUp size={17} />{formatStudioCount(video.likes)}</span>
+              <span className="inline-flex items-center gap-1.5"><Heart size={17} />{formatStudioCount(video.likes)}</span>
               <span className="inline-flex items-center gap-1.5"><MessageSquare size={17} />{formatStudioCount(video.comments)}</span>
               <button type="button" aria-expanded={isOpen} aria-label={isOpen ? 'Collapse' : 'Expand'} onClick={() => setExpanded(current => ({ ...current, [video.id]: !current[video.id] }))} className="ml-auto flex h-8 w-8 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)]">
                 {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
