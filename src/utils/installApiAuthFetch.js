@@ -318,6 +318,7 @@ export function installApiAuthFetch() {
       const explicitToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
       if (!originalHeaders.has('X-Shadow-Page') && url.pathname.startsWith('/api/') && alreadyRequiresPreflight(method, originalHeaders)) {
         originalHeaders.set('X-Shadow-Page', pageAttributionValue())
+        originalHeaders.set('X-Shadow-Visibility', document.visibilityState)
         const taggedInput = input instanceof Request ? new Request(input, { ...init, headers: originalHeaders }) : input
         return handleReaderSessionResponse(nativeFetch(taggedInput, input instanceof Request ? undefined : { ...init, headers: originalHeaders }), explicitToken, url.pathname)
       }
@@ -332,10 +333,14 @@ export function installApiAuthFetch() {
       alignReaderAuthorization(headers, token, url.pathname)
     }
     if (!headers.has('X-Shadow-Page') && url.pathname.startsWith('/api/')) {
-      headers.set('X-Shadow-Page', pageAttributionValue())
-    }
+  headers.set('X-Shadow-Page', pageAttributionValue())
+}
 
-    const authorization = headers.get('Authorization') || ''
+if (!headers.has('X-Shadow-Visibility') && url.pathname.startsWith('/api/')) {
+  headers.set('X-Shadow-Visibility', document.visibilityState)
+}
+
+const authorization = headers.get('Authorization') || ''
     const requestToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
     if (input instanceof Request) {
       return handleReaderSessionResponse(nativeFetch(new Request(input, { ...init, headers })), requestToken, url.pathname)
