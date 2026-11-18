@@ -1187,7 +1187,7 @@ export default function SavedPostsPage() {
         <section>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-[14px] font-black text-[#111827] dark:text-white">{t('savedPostsPage.collections')}</h2>
+              <h2 className="text-[14px] font-bold text-[#111827] dark:text-white">{t('savedPostsPage.collections')}</h2>
               <p className="mt-0.5 text-[10.5px] text-[#8d94a1] dark:text-white/40">{t('savedPostsPage.keepRelated')}</p>
             </div>
             <button
@@ -1218,7 +1218,7 @@ export default function SavedPostsPage() {
 
         <section className="mt-3">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="text-[14px] font-black text-[#111827] dark:text-white">
+            <div className="text-[14px] font-bold text-[#111827] dark:text-white">
               {selectedCollectionId === 'all' && activeType === 'all'
   ? t('savedPostsPage.recentlySaved')
   : getCollectionDisplayName(collectionCards.find((collection) => collection.id === selectedCollectionId), t)}
