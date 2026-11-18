@@ -480,14 +480,12 @@ function waitForMangaPoll(ms, signal) {
   })
 }
 
-
 function mangaV2PollDelay(startedAt) {
   const elapsed = Date.now() - startedAt
   if (elapsed >= 120000) return 15000
   if (elapsed >= 30000) return 10000
   return MANGA_V2_JOB_POLL_MS
 }
-
 
 async function waitForMangaV2Job({
   apiBaseUrl,
@@ -540,9 +538,9 @@ async function waitForMangaV2Job({
       }
 
       await waitForMangaPoll(
-  mangaV2PollDelay(startedAt),
-  signal
-)
+        mangaV2PollDelay(startedAt),
+        signal
+      )
       continue
     }
 
@@ -571,9 +569,9 @@ async function waitForMangaV2Job({
         response.status < 600
       ) {
         await waitForMangaPoll(
-  mangaV2PollDelay(startedAt),
-  signal
-)
+          mangaV2PollDelay(startedAt),
+          signal
+        )
         continue
       }
 
@@ -623,9 +621,9 @@ async function waitForMangaV2Job({
     }
 
     await waitForMangaPoll(
-  mangaV2PollDelay(startedAt),
-  signal
-)  
+      mangaV2PollDelay(startedAt),
+      signal
+    )
   }
 
   throw new Error(
@@ -638,267 +636,48 @@ export async function uploadMangaPageFile({
   file,
   onProgress,
   signal,
-  useV2 = false,
+  useV2 = true,
 }) {
   if (!file) {
     throw new Error('Choose a manga page first.')
   }
 
   const validationError = validateMangaFile(file)
+  if (validationError) throw new Error(validationError)
 
-  if (validationError) {
-    throw new Error(validationError)
-  }
-
-  const apiBaseUrl =
-    import.meta.env.VITE_API_URL ||
-    (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : 'https://shadow-backend-kucw.onrender.com'
-    )
-
-      const allowEmergencyFallback = import.meta.env?.VITE_MEDIA_LEGACY_FALLBACK_ENABLED === 'true'
-  if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED !== 'true' && !allowEmergencyFallback) {
-    throw new Error('Manga Direct Upload is disabled. Enable VITE_MANGA_DIRECT_UPLOAD_ENABLED=true.')
-  }
-  if (useV2 && import.meta.env.VITE_MANGA_DIRECT_UPLOAD_ENABLED === 'true') {
-    const {
-      stageMangaDirectUpload,
-      isMangaDirectFallbackSafe,
-    } = await import('./mangaDirectUploadClient')
-
-    try {
-      const staged = await stageMangaDirectUpload({
-        token,
-        file,
-        apiBaseUrl,
-        signal,
-        onProgress,
-      })
-
-      return await waitForMangaV2Job({
-        apiBaseUrl,
-        token,
-        jobId: staged.job_id,
-        statusUrl: staged.status_url,
-        signal,
-      })
-    } catch (error) {
-            if (signal?.aborted || !allowEmergencyFallback || !isMangaDirectFallbackSafe(error)) {
-        throw error
-      }
-    }
-  }
-
-  let bytes
-
-
-  try {
-    bytes = await file.arrayBuffer()
-  } catch {
-    throw new Error(
-      'This device could not read the manga image. [read: IMAGE_FILE_READ_FAILED]'
-    )
-  }
-
-  if (!bytes.byteLength) {
-    throw new Error(
-      'The selected manga image contains 0 bytes. [read: IMAGE_FILE_EMPTY]'
-    )
+  if (!token) {
+    const error = new Error('Sign in before uploading Manga pages. [auth: MANGA_DIRECT_UNAUTHORIZED]')
+    error.status = 401
+    error.permanent = true
+    throw error
   }
 
   if (signal?.aborted) {
     throw new Error('Upload canceled.')
   }
 
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    const startedAt = performance.now()
-    let settled = false
+  const apiBaseUrl = String(import.meta.env.VITE_API_URL || (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000'
+      : 'https://shadow-backend-kucw.onrender.com'
+  )).replace(/\/+$/, '')
 
-    const cleanup = () => {
-      signal?.removeEventListener(
-        'abort',
-        handleAbortSignal
-      )
-    }
+  const { stageMangaDirectUpload } = await import('./mangaDirectUploadClient')
+  const staged = await stageMangaDirectUpload({
+    token,
+    file,
+    apiBaseUrl,
+    signal,
+    onProgress,
+  })
 
-    const finishResolve = (value) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      resolve(value)
-    }
-
-    const fail = (error) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      reject(error)
-    }
-
-    const handleAbortSignal = () => {
-      xhr.abort()
-    }
-
-    const uploadPath = useV2
-      ? '/api/story-media/upload-manga-page-v2'
-      : '/api/story-media/upload-manga-page'
-
-    xhr.open(
-      'POST',
-      `${apiBaseUrl}${uploadPath}`,
-      true
-    )
-    xhr.setRequestHeader(
-      'Authorization',
-      `Bearer ${token}`
-    )
-        xhr.setRequestHeader(
-      'Content-Type',
-      file.type || 'application/octet-stream'
-    )
-    xhr.timeout = 90000
-    xhr.ontimeout = () => {
-      fail(new Error('Manga upload timed out. The local file is preserved. Check upload status before retrying. [network: IMAGE_UPLOAD_TIMEOUT]'))
-    }
-
-    xhr.upload.onprogress = (event) => {
-      const total = event.lengthComputable
-        ? event.total
-        : bytes.byteLength
-      const loaded = Math.min(
-        event.loaded,
-        total
-      )
-      const elapsedSeconds = Math.max(
-        (performance.now() - startedAt) / 1000,
-        0.001
-      )
-      const percent = total > 0
-        ? Math.min(
-            100,
-            Math.round((loaded / total) * 100)
-          )
-        : 0
-
-      onProgress?.({
-        loaded,
-        total,
-        percent,
-        speedBytesPerSecond:
-          loaded / elapsedSeconds,
-      })
-    }
-
-    xhr.onerror = () => {
-      fail(
-        new Error(
-         'Network error: the manga page could not reach the server. Check your connection and try again. [network: IMAGE_REQUEST_FAILED]'
-        )
-      )
-    }
-
-    xhr.onabort = () => {
-      fail(new Error('Upload canceled.'))
-    }
-
-    xhr.onload = async () => {
-      let data = {}
-
-      try {
-        data = xhr.responseText
-          ? JSON.parse(xhr.responseText)
-          : {}
-      } catch {
-        data = {}
-      }
-
-      if (
-        xhr.status < 200 ||
-        xhr.status >= 300 ||
-        data.ok === false
-      ) {
-        const stage = String(
-          data.stage || 'upload'
-        )
-        const code = String(
-          data.code || `HTTP_${xhr.status}`
-        )
-        const message =
-          data.message ||
-          'Manga page upload failed.'
-
-        fail(
-          new Error(
-            `${message} [${stage}: ${code}]`
-          )
-        )
-        return
-      }
-
-      if (
-        useV2 &&
-        (
-          xhr.status === 202 ||
-          data.code ===
-            'MANGA_PAGE_V2_QUEUED' ||
-          data.status === 'queued'
-        )
-      ) {
-        cleanup()
-
-        onProgress?.({
-          loaded: bytes.byteLength,
-          total: bytes.byteLength,
-          percent: 100,
-          speedBytesPerSecond: 0,
-          processing: true,
-        })
-
-        try {
-          const result =
-            await waitForMangaV2Job({
-              apiBaseUrl,
-              token,
-              jobId: data.job_id,
-              statusUrl: data.status_url,
-              signal,
-            })
-
-          finishResolve(result)
-        } catch (error) {
-          fail(error)
-        }
-
-        return
-      }
-
-      try {
-        finishResolve(
-          normalizeMangaUploadResult(data)
-        )
-      } catch (error) {
-        fail(error)
-      }
-    }
-
-    signal?.addEventListener(
-      'abort',
-      handleAbortSignal,
-      { once: true }
-    )
-
-    onProgress?.({
-      loaded: 0,
-      total: bytes.byteLength,
-      percent: 0,
-      speedBytesPerSecond: 0,
-    })
-
-    xhr.send(bytes)
+  return waitForMangaV2Job({
+    apiBaseUrl,
+    token,
+    jobId: staged.job_id,
+    statusUrl: staged.status_url,
+    signal,
   })
 }
 
