@@ -26,7 +26,9 @@ const PAGE_SIZE = 12
 const API_BASE_URL = import.meta.env.VITE_API_URL ||
   (['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
+
 
 function isLocalPreviewVideo(file) {
   if (!file || !Number.isFinite(file.size) || file.size <= 0) return false
