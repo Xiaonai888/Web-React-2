@@ -281,12 +281,13 @@ function pageAttributionValue() {
 }
 
 function alreadyRequiresPreflight(method, headers) {
-  if (headers.has('Authorization')) return true
   if (!['GET', 'HEAD', 'POST'].includes(method)) return true
   const contentType = String(headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase()
   if (contentType && !['text/plain', 'multipart/form-data', 'application/x-www-form-urlencoded'].includes(contentType)) return true
-  // Existing non-safelisted diagnostics headers already require preflight.
-  if (headers.has('X-Shadow-Visitor-Id') || headers.has('X-Shadow-Country-Ticket')) return true
+  const safelistedHeaders = new Set(['accept', 'accept-language', 'content-language', 'content-type', 'range'])
+  for (const header of headers.keys()) {
+    if (!safelistedHeaders.has(header.toLowerCase())) return true
+  }
   return false
 }
 
@@ -316,9 +317,9 @@ export function installApiAuthFetch() {
       new Headers(init.headers || {}).forEach((value, key) => originalHeaders.set(key, value))
       const authorization = originalHeaders.get('Authorization') || ''
       const explicitToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
-      if (!originalHeaders.has('X-Shadow-Page') && url.pathname.startsWith('/api/') && alreadyRequiresPreflight(method, originalHeaders)) {
-        originalHeaders.set('X-Shadow-Page', pageAttributionValue())
-        originalHeaders.set('X-Shadow-Visibility', document.visibilityState)
+      if (url.pathname.startsWith('/api/') && alreadyRequiresPreflight(method, originalHeaders)) {
+        if (!originalHeaders.has('X-Shadow-Page')) originalHeaders.set('X-Shadow-Page', pageAttributionValue())
+        if (!originalHeaders.has('X-Shadow-Visibility')) originalHeaders.set('X-Shadow-Visibility', document.visibilityState)
         const taggedInput = input instanceof Request ? new Request(input, { ...init, headers: originalHeaders }) : input
         return handleReaderSessionResponse(nativeFetch(taggedInput, input instanceof Request ? undefined : { ...init, headers: originalHeaders }), explicitToken, url.pathname)
       }
