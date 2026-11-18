@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     : 'https://shadow-backend-kucw.onrender.com')
 
 const VIEWER_STORAGE_KEY = 'shadow_fast_reel_viewer_id_v1'
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
 const recentlyReported = new Map()
 const REPEAT_INTERVAL_MS = 30 * 60 * 1000
 let volatileViewerId = null
