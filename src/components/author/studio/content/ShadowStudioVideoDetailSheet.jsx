@@ -5,6 +5,7 @@ import { useDisplayTranslation } from '../../../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../../../i18n/registerTranslations'
 import { fetchStudioVideoAnalytics } from './ShadowStudioContentApi'
 import { studioDateLabel, studioFormatCount, studioFormatDuration } from './ShadowStudioContentData'
+import useStudioReelViewTracking from './useStudioReelViewTracking'
 
 registerTranslationNamespace('shadowStudioContentDetail', {
   en: { title: 'Video details', analytics: 'View analytics', edit: 'Edit video', close: 'Close',
@@ -37,6 +38,9 @@ export default function ShadowStudioVideoDetailSheet({ video, onClose, onEdit, o
   const { t } = useDisplayTranslation()
   const id = video?.id || null
   const status = video?.status || 'draft'
+  const youtube = getReelYouTubeId(video?.video_url)
+  const { frameRef, onIframeLoad, debugEnabled, diagnostic, copyDiagnostic, latestViewCount } =
+    useStudioReelViewTracking(video, youtube)
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -67,9 +71,11 @@ export default function ShadowStudioVideoDetailSheet({ video, onClose, onEdit, o
   }, [id, onClose])
 
   if (!id) return null
-  const youtube = getReelYouTubeId(video.video_url)
+  const originalViewCount = detail?.view_count ?? video?.view_count
+  const mergedViewCount = latestViewCount == null ? originalViewCount :
+    Math.max(Number(originalViewCount) || 0, latestViewCount)
   const metrics = [
-    { key: 'views', Icon: BarChart3, value: detail?.view_count ?? video?.view_count },
+    { key: 'views', Icon: BarChart3, value: mergedViewCount },
     { key: 'likes', Icon: ThumbsUp, value: detail?.likes },
     { key: 'comments', Icon: MessageSquare, value: detail?.comments },
   ]
@@ -82,10 +88,20 @@ export default function ShadowStudioVideoDetailSheet({ video, onClose, onEdit, o
         <button type="button" onClick={onClose} aria-label={t('shadowStudioContentDetail.close')} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)]"><X size={22}/></button>
       </header>
       <div className="space-y-4 overflow-y-auto p-4">
-        {youtube ? <div className="aspect-video overflow-hidden rounded-xl bg-black">
-          <iframe title={video.title || t('shadowStudioContentDetail.title')} className="h-full w-full"
-            src={`https://www.youtube-nocookie.com/embed/${youtube}?autoplay=0&playsinline=1&controls=1&rel=0`}
-            referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+        {youtube ? <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+          <iframe key={id} ref={frameRef} title={video.title || t('shadowStudioContentDetail.title')}
+            className="h-full w-full" onLoad={onIframeLoad}
+            src={`https://www.youtube-nocookie.com/embed/${youtube}?autoplay=0&playsinline=1&controls=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&rel=0`}
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+          {debugEnabled ? <div role="status" className="absolute inset-x-2 top-2 z-20 rounded-lg border border-yellow-300/70 bg-black/90 p-2 text-[11px] leading-5 text-white">
+            <div className="flex items-center justify-between gap-2">
+              <strong className="text-yellow-300">STUDIO VIEW DIAGNOSTIC</strong>
+              <button type="button" className="rounded bg-white/20 px-2 py-0.5" onClick={() => { void copyDiagnostic()?.catch(() => {}) }}>Copy</button>
+            </div>
+            <p className="break-all font-mono">{diagnostic.phase} · {diagnostic.code || '-'}</p>
+            <p className="break-words text-white/80">{diagnostic.detail}{diagnostic.http ? ` · HTTP ${diagnostic.http}` : ''}</p>
+          </div> : null}
         </div> : null}
         <div className="space-y-2">
           <h3 className="break-words text-base font-semibold">{video.title || '—'}</h3>
