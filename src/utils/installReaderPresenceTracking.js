@@ -1,3 +1,5 @@
+import { getActiveReaderToken } from './readerActiveAccount'
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'localhost' ||
@@ -13,11 +15,7 @@ const MAX_FAILURE_RETRY_MS = 5 * 60 * 1000
 const SESSION_KEY = 'shadow_reader_presence_session_id'
 
 function getReaderToken() {
-  return (
-    sessionStorage.getItem('shadow_reader_token') ||
-    localStorage.getItem('shadow_reader_token') ||
-    ''
-  )
+  return getActiveReaderToken()
 }
 
 function createSessionId() {
