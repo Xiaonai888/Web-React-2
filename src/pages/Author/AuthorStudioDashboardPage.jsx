@@ -35,14 +35,16 @@ export default function AuthorStudioDashboardPage() {
     const controller = new AbortController()
     setLoading(true)
     setError('')
+    setExpanded({})
     getStudioDashboard({ signal: controller.signal, force: refreshAfterSave || reload > 0 })
       .then(data => {
         if (controller.signal.aborted) return
-        const items = Array.isArray(data.latest_long_videos) ? data.latest_long_videos : []
+        const items = (Array.isArray(data.latest_long_videos) ? data.latest_long_videos : [])
+          .filter(video => video?.video_type === 'long' && !/\/shorts\//i.test(video?.video_url || ''))
+          .slice(0, 3)
         setVideos(items)
         setChannel(data.channel || null)
         setCoverage(data.coverage || null)
-        setExpanded(items[0] ? { [items[0].id]: true } : {})
         setLoading(false)
       })
       .catch(cause => {
