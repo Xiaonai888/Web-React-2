@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { formatFileSize } from '../../utils/mangaImageUtils'
 
 function safeBytes(value) {
@@ -10,11 +11,18 @@ function totalForPage(page) {
 }
 
 export default function MangaUploadProgressModal({ pages, onCancel }) {
+  const [accepted, setAccepted] = useState(false)
   const items = Array.isArray(pages) ? pages : []
+
+  useEffect(() => {
+    const onAccepted = () => setAccepted(true)
+    window.addEventListener('shadow-manga-r2-accepted', onAccepted)
+    return () => window.removeEventListener('shadow-manga-r2-accepted', onAccepted)
+  }, [])
+
   if (!items.length) return null
 
   const totalBytes = items.reduce((sum, page) => sum + totalForPage(page), 0)
-
   const uploadedBytes = items.reduce((sum, page) => {
     const total = totalForPage(page)
     if (page.status === 'done') return sum + total
@@ -31,34 +39,19 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     items.find((page) => page.status === 'queued') ||
     items[items.length - 1]
 
-  const serverProcessing = items.some(
-    (page) =>
-      page.status === 'processing' &&
-      page.serverProcessing
-  )
-
-  const batchAccepted = items.some(
-    (page) =>
-      Boolean(page.serverProcessing) &&
-      (page.status === 'processing' || page.status === 'done')
-  )
-
+  const serverProcessing = items.some((page) => page.status === 'processing' && page.serverProcessing)
+  const batchAccepted = accepted || items.some((page) => Boolean(page.serverProcessing) &&
+    (page.status === 'processing' || page.status === 'done'))
   const canCancel = !serverProcessing
-
   const currentTotal = totalForPage(current)
-
   const currentLoaded = current?.status === 'done'
     ? currentTotal
     : Math.min(safeBytes(current?.uploadedBytes), currentTotal)
-
   const currentPercent = currentTotal > 0
     ? Math.min(100, Math.round((currentLoaded / currentTotal) * 100))
     : 0
-
   const speed = items.reduce((sum, page) => sum + safeBytes(page.uploadSpeed), 0)
-
   const currentName = current?.sourceFile?.name || 'Manga page'
-
   const currentLabel = current?.serverProcessing
     ? 'Processing'
     : current?.status === 'processing'
@@ -83,61 +76,30 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef4ff] text-[#0b5cff]">
               <i className="fa-solid fa-cloud-arrow-up text-[16px]" />
             </div>
-
             <div className="min-w-0">
-              <h2 className="truncate text-[16px] font-extrabold text-[#111827]">
-                Uploading Manga Pages
-              </h2>
+              <h2 className="truncate text-[16px] font-extrabold text-[#111827]">Uploading Manga Pages</h2>
               <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
                 Uploading {Math.max(1, items.indexOf(current) + 1)} of {items.length} images
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={!canCancel}
+          <button type="button" onClick={onCancel} disabled={!canCancel}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
-            aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}
-          >
+            aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}>
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
         </div>
 
         <div className="mt-5 flex justify-center">
           <div className="relative h-[142px] w-[142px]">
-            <svg
-              className="h-full w-full -rotate-90"
-              viewBox="0 0 120 120"
-              aria-hidden="true"
-            >
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                fill="none"
-                stroke="#e7eeff"
-                strokeWidth="9"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r={radius}
-                fill="none"
-                stroke="#0b5cff"
-                strokeWidth="9"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                className="transition-all duration-200"
-              />
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r={radius} fill="none" stroke="#e7eeff" strokeWidth="9" />
+              <circle cx="60" cy="60" r={radius} fill="none" stroke="#0b5cff" strokeWidth="9"
+                strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
+                className="transition-all duration-200" />
             </svg>
-
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <div className="text-[30px] font-black leading-none text-[#0b5cff]">
-                {overallPercent}%
-              </div>
+              <div className="text-[30px] font-black leading-none text-[#0b5cff]">{overallPercent}%</div>
               <div className="mt-2 text-[11px] font-bold text-[#555b66]">
                 {formatFileSize(uploadedBytes)} / {formatFileSize(totalBytes)}
               </div>
@@ -153,37 +115,26 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-white text-[#0b5cff] shadow-sm ring-1 ring-[#dfe8ff]">
               <i className="fa-regular fa-image text-[15px]" />
             </div>
-
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 truncate text-[11.5px] font-extrabold text-[#111827]">
                   {currentLabel}: {currentName}
                 </div>
-                <div className="shrink-0 text-[11px] font-extrabold text-[#0b5cff]">
-                  {currentPercent}%
-                </div>
+                <div className="shrink-0 text-[11px] font-extrabold text-[#0b5cff]">{currentPercent}%</div>
               </div>
-
               <div className="mt-1 text-[10.5px] font-medium text-[#667085]">
                 {formatFileSize(currentLoaded)} / {formatFileSize(currentTotal)}
               </div>
-
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#dfe8ff]">
-                <div
-                  className="h-full rounded-full bg-[#0b5cff] transition-all duration-200"
-                  style={{ width: `${currentPercent}%` }}
-                />
+                <div className="h-full rounded-full bg-[#0b5cff] transition-all duration-200"
+                  style={{ width: `${currentPercent}%` }} />
               </div>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={!canCancel}
-          className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55"
-        >
+        <button type="button" onClick={onCancel} disabled={!canCancel}
+          className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55">
           {canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
       </div>
