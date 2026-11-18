@@ -185,6 +185,36 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       console.warn('[SHADOW_REEL_VIEW_DIAGNOSTIC]', item)
     }
   }, [viewDebugEnabled, video.id])
+  const verifyCountReadback = useCallback(reported => {
+    if (!viewDebugEnabled) return
+    const expected = Number(reported)
+    if (!Number.isSafeInteger(expected) || expected < 0) {
+      traceView('ERROR', 'RPC_TOTAL_INVALID', `write_total=${String(reported)}`)
+      return
+    }
+    void (async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(video.id)}?view_check=${Date.now()}`,
+          { cache: 'no-store' }
+        )
+        const payload = await response.json().catch(() => null)
+        const actual = Number(payload?.video?.view_count)
+        if (!response.ok || payload?.ok !== true ||
+            payload?.video?.view_count == null || !Number.isSafeInteger(actual) || actual < 0) {
+          traceView('ERROR', 'DB_READ_API_FAILED',
+            `GET status=${response.status}; response_code=${String(payload?.code || 'unknown')}`, response.status)
+          return
+        }
+        const confirmed = actual >= expected
+        traceView(confirmed ? 'DB_READ_CONFIRMED' : 'ERROR',
+          confirmed ? 'VIEW_WRITE_READ_MATCH' : 'VIEW_READ_COUNT_BEHIND',
+          `write_total=${expected}; read_total=${actual}`, response.status)
+      } catch (error) {
+        traceView('ERROR', 'DB_READ_NETWORK_FAILED', String(error?.message || 'Readback request failed'))
+      }
+    })()
+  }, [viewDebugEnabled, video.id, traceView])
   const videoPositionRef = useRef(0)
   const videoDurationRef = useRef(0)
   const tapTimerRef = useRef(null)
@@ -397,6 +427,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           tracker.qualifiedSent = true
           tracker.needsQualified = false
           traceView('COUNTED', 'QUALIFIED_COUNTED', `server_total=${result?.view_count ?? 'unknown'}`, 200)
+          verifyCountReadback(result?.view_count)
         } else if (reason === 'watch_time_pending') {
           traceView('SQL_RESPONSE', 'WATCH_TIME_PENDING', 'SQL requires more qualified watch time', 200)
           tracker.qualifiedRetryAt = Date.now() + 15000
@@ -454,6 +485,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
           tracker.fastSent = true
           tracker.needsQualified = false
           traceView('COUNTED', 'FAST_COUNTED', `server_total=${result?.view_count ?? 'unknown'}`, 200)
+          verifyCountReadback(result?.view_count)
         } else if (result?.requires_qualified_view === true || reason === 'qualified_view_required') {
           traceView('SQL_RESPONSE', 'QUALIFIED_VIEW_REQUIRED', `fast_used=${result?.fast_used ?? 'unknown'}`, 200)
           tracker.fastSent = true
@@ -600,7 +632,7 @@ function VideoSlide({ video, active, soundEnabled, onSoundToggle, playbackSpeed,
       window.clearInterval(timer)
       window.removeEventListener('message', onMessage)
     }
-  }, [active, id, video.id, soundEnabled, playbackSpeed, sendCommand, onEnded, traceView, viewDebugEnabled])
+  }, [active, id, video.id, soundEnabled, playbackSpeed, sendCommand, onEnded, traceView, verifyCountReadback, viewDebugEnabled])
 
   useEffect(() => {
     if (!active) return undefined
@@ -1165,7 +1197,7 @@ const {
 // Save button, and feed pagination are unchanged.
 useEffect(() => {
   if (!requestedReelId) return undefined
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedReelId)) {
+  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(requestedReelId)) {
     showNotice('Invalid Reel link')
     return undefined
   }
