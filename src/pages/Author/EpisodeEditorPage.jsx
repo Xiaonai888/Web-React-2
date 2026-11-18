@@ -43,6 +43,7 @@ import {
   novelImageUploadMarker,
   countPendingNovelImageMarkers,
 } from '../../utils/novelInlineUploadQueue'
+import { countPaidNovelCharacters, PAID_NOVEL_MINIMUMS, FREE_PUBLISHED_EPISODE_LIMIT } from '../../utils/paidEpisodeCharacterCount'
 
 registerTranslationNamespace('episodeEditor', {
   en: {
@@ -4174,6 +4175,19 @@ export default function EpisodeEditorPage() {
   const hasServerEpisode = Boolean(currentEpisodeId || editEpisodeId)
   const plainContent = useMemo(() => episodeHtmlToPlainText(content), [content])
   const characterCount = plainContent.length
+  const paidCharacterCount = useMemo(
+    () => countPaidNovelCharacters(sanitizeEpisodeHtml(content)),
+    [content]
+  )
+  const episodeNumberForDisplay = Number(currentEpisodeNumber) > 0
+    ? Number(currentEpisodeNumber)
+    : isFirstEpisode
+      ? 1
+      : Number(storyRecord?.total_episodes || 0) + 1
+  const paidMinimumCharacters = PAID_NOVEL_MINIMUMS[storyLanguage] || PAID_NOVEL_MINIMUMS.English
+  const isPaidNovelEpisode = !isManga && !episodeFree && episodeNumberForDisplay > FREE_PUBLISHED_EPISODE_LIMIT
+  const displayedCharacterCount = isPaidNovelEpisode ? paidCharacterCount : characterCount
+  const displayedMinimumCharacters = isPaidNovelEpisode ? paidMinimumCharacters : MIN_CHARACTERS
   const completedMangaPages = mangaPages.filter((page) => page.status === 'done')
   const mangaErrorCount = mangaPages.filter((page) => page.status === 'error').length
   const mangaUploadPending = mangaQueuePreparing || mangaPages.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
@@ -6472,7 +6486,7 @@ releaseOption={releaseOption}
             <div className="truncate text-[12px] font-bold text-[var(--shadow-text-secondary)]">
               {isManga
                 ? getDisplayText('episodeEditor.pageCount', { count: completedMangaPages.length.toLocaleString(getDisplayLanguageId()) })
-                : getDisplayText('episodeEditor.characterCount', { count: characterCount.toLocaleString(getDisplayLanguageId()), minimum: MIN_CHARACTERS.toLocaleString(getDisplayLanguageId()) })}
+                : getDisplayText('episodeEditor.characterCount', { count: displayedCharacterCount.toLocaleString(getDisplayLanguageId()), minimum: displayedMinimumCharacters.toLocaleString(getDisplayLanguageId()) })}
             </div>
             <div className="mt-0.5 text-[10px] text-[var(--shadow-text-tertiary)]">
               {hasUnsavedChanges &&
