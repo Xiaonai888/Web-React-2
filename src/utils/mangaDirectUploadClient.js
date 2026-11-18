@@ -327,6 +327,12 @@ export async function stageMangaDirectUpload({
       })
     } catch {}
 
+    if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('shadow-manga-r2-accepted', {
+        detail: { jobId, uploadId: String(result.upload_id || '') },
+      }))
+    }
+
     return result
   } catch (error) {
     if (!fileUploaded) {
