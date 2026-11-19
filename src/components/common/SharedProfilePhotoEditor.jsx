@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Cropper from 'react-easy-crop'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -140,7 +140,6 @@ export default function SharedProfilePhotoEditor({
   shareToFeedDefault = true,
 }) {
   const { t } = useDisplayTranslation()
-  const detailsImageRef = useRef(null)
   const [imageUrl, setImageUrl] = useState('')
   const [step, setStep] = useState('crop')
   const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -187,17 +186,6 @@ export default function SharedProfilePhotoEditor({
   }, [croppedFile])
 
   const detailsImageUrl = usingOriginal ? imageUrl : croppedUrl
-
-  useEffect(() => {
-    const element = detailsImageRef.current
-    if (step !== 'details' || !element) return undefined
-    if (detailsImageUrl) {
-      element.src = detailsImageUrl
-    } else {
-      element.removeAttribute('src')
-    }
-    return () => element.removeAttribute('src')
-  }, [step, detailsImageUrl])
 
   async function continueToDetails() {
     if (!imageUrl || !cropPixels || busy) return
@@ -282,7 +270,7 @@ export default function SharedProfilePhotoEditor({
         ) : (
           <>
             <div className="flex aspect-square w-full items-center justify-center bg-[#111827]">
-              {detailsImageUrl ? <img ref={detailsImageRef} alt={t('sharedProfilePhotoEditor.photo')} className="aspect-square h-full w-full rounded-full object-contain" /> : null}
+              {detailsImageUrl ? <img src={detailsImageUrl} alt={t('sharedProfilePhotoEditor.photo')} className="aspect-square h-full w-full rounded-full object-contain" /> : null}
             </div>
             <div className="space-y-5 px-4 py-5">
               <textarea value={caption} onChange={(event) => setCaption(event.target.value)} rows={3} maxLength={2000} placeholder={t('sharedProfilePhotoEditor.caption')} className="min-h-24 w-full resize-none rounded-2xl border border-[var(--shadow-border-strong)] bg-[var(--shadow-bg-surface)] p-4 text-[15px] outline-none focus:border-[var(--shadow-accent)]" />
