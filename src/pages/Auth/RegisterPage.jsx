@@ -4,6 +4,7 @@ import TurnstileBox from '../../components/TurnstileBox'
 import Cropper from 'react-easy-crop'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL } from '../../config/api'
 import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
 import { activateReaderAccount, isReaderAccountResponseCurrent } from '../../utils/readerAccountSessionManager'
 import { getActiveReaderToken, saveActiveReaderUser } from '../../utils/readerActiveAccount'
@@ -328,12 +329,6 @@ registerTranslationNamespace('registerPage', {
     login: '로그인',
   },
 })
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
