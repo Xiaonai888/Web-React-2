@@ -6,6 +6,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import AuthorDashboardContentTab from '../../components/Author/AuthorDashboardContentTab'
 import AuthorDashboardCommunityTab from '../../components/Author/AuthorDashboardCommunityTab'
 import AuthorDashboardPageToolsTab from '../../components/Author/AuthorDashboardPageToolsTab'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
 
 registerTranslationNamespace('authorPageDashboard', {
   "en": {
@@ -424,25 +425,12 @@ function dashText(key, options) {
   return getDisplayText(`authorPageDashboard.${key}`, options)
 }
 
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-
 const DASHBOARD_TABS = [
   { id: 'Overview', labelKey: 'overview', icon: 'fa-regular fa-window-maximize' },
   { id: 'Content', labelKey: 'content', icon: 'fa-regular fa-pen-to-square' },
   { id: 'Community', labelKey: 'community', icon: 'fa-regular fa-comment-dots' },
   { id: 'Page Tools', labelKey: 'pageTools', icon: 'fa-regular fa-square-check' },
 ]
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
