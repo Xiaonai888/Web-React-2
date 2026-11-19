@@ -1,9 +1,8 @@
 import { getActiveReaderToken, getReaderSessionIdentity, isSameReaderSession } from './readerActiveAccount'
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  'https://shadow-backend-kucw.onrender.com'
+import { API_BASE_URL } from '../config/api'
 
 const API_ORIGIN = new URL(API_BASE_URL, window.location.origin).origin
+
 const AUTH_REPORT_KEY = 'shadow_reader_auth_report_v1'
 const AUTH_LOGIN_KEY = 'shadow_reader_login_diagnostic_v1'
 const AUTH_CHANGE_KEY = 'shadow_reader_token_change_v1'
@@ -307,10 +306,13 @@ export function installApiAuthFetch() {
     const requestUrl = input instanceof Request ? input.url : String(input)
     const url = new URL(requestUrl, window.location.origin)
     const method = String(init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase()
+
     if (
       url.origin !== API_ORIGIN ||
+      !url.pathname.startsWith('/api/') ||
       (method === 'GET' && ['/health/maintenance', '/api/advertisements/public', '/api/public/content-versions', '/api/events'].includes(url.pathname))
     ) return nativeFetch(input, init)
+
     const token = getActiveReaderToken()
     if (!token) {
       const originalHeaders = new Headers(input instanceof Request ? input.headers : undefined)
