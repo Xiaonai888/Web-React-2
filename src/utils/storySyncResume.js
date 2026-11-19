@@ -1,12 +1,10 @@
 import { listStoryCreationJobs, startStoryCreationSync } from './storyCreationSyncQueue'
 import { startStoryUpdateSync } from './storyUpdateSyncQueue'
 import { loadStoryMediaDraftRecord } from './storyMediaDraftDB'
+import { API_BASE_URL, getAuthToken as getToken } from '../config/api'
 
 const CHECK_INTERVAL_MS = 60000
-const API_BASE_URL = import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
+
 
 let installed = false
 let checking = false
@@ -14,15 +12,6 @@ let checkingOwner = ''
 let rescanRequested = false
 let lastCheckedAt = 0
 let lastCheckedOwner = ''
-
-function getToken() {
-  try {
-    return sessionStorage.getItem('shadow_reader_token') ||
-      localStorage.getItem('shadow_reader_token') || ''
-  } catch {
-    return ''
-  }
-}
 
 function tokenUserId(token) {
   try {
