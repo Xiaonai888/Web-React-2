@@ -16,6 +16,8 @@ import {
   toSmartFreeUnlockAdvertisement,
 } from './smartFreeUnlockPresentation'
 
+import { getStoryLanguageId } from '../../utils/storyLanguage'
+
 const PLACEMENTS = new Set(['opening', 'me'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const pending = new Map()
@@ -55,6 +57,7 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
     throw new Error('Invalid Smart Ad version')
   }
   const readerKey = getSmartAdReaderKey()
+  const language = getStoryLanguageId()
   const options = {
     readerKey,
     placement,
@@ -66,7 +69,7 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
   if (cachedAd) return cachedAd
   if (existing?.exhausted && !existing.next_cursor) return null
 
-  const key = `${readerKey}:${placement}:${version.slot_key}:${version.catalog_version}`
+  const key = `${readerKey}:${placement}:${version.slot_key}:${version.catalog_version}:${language}`
   if ((emptyRetry.get(key) || 0) > Date.now()) return null
   if (!pending.has(key)) {
     const request = (async () => {
@@ -103,7 +106,7 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
     pending.set(key, request)
   }
   const result = await pending.get(key)
-  if (!result) return null
+  if (!result || getStoryLanguageId() !== language) return null
   return findNext(readerKey, placement, version)
 }
 
