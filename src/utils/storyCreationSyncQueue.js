@@ -3,7 +3,11 @@ import {
   saveStoryMediaDraftRecord,
   deleteStoryMediaDraftRecord,
 } from './storyMediaDraftDB'
+
 import { createStoryMediaUploadQueue } from './storyMediaUploadQueue'
+import { API_BASE_URL } from '../config/api'
+import { getActiveReaderToken, isSameReaderSession } from './readerActiveAccount'
+
 
 const runtimes = new Map()
 const INDEX_PREFIX = 'shadow:story-create:index:'
@@ -171,8 +175,14 @@ function runtimeFor(ownerId, getToken, apiBaseUrl) {
 
 async function syncOne(runtime, job) {
   if (!shouldProcessJob(job)) return
+
   const token = runtime.getToken()
-  if (!token || userFromToken(token) !== runtime.ownerId) return
+  if (
+    !token ||
+    userFromToken(token) !== runtime.ownerId ||
+    !isSameReaderSession(token, getActiveReaderToken())
+  ) return
+
   const media = job.submittedPayload
     ? { ready: true, payload: job.submittedPayload }
     : await resolveMedia(job, runtime.uploadQueue)
@@ -200,9 +210,16 @@ async function syncOne(runtime, job) {
     submittedAt: Date.now(),
     retryAt: 0,
   })
+
+  if (
+    userFromToken(runtime.getToken()) !== runtime.ownerId ||
+    !isSameReaderSession(token, getActiveReaderToken())
+  ) return
+
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), CREATE_TIMEOUT_MS)
+
     let response
     let data
     try {
@@ -285,8 +302,13 @@ async function tick(runtime) {
 export function startStoryCreationSync({ userId, getToken, apiBaseUrl }) {
   const ownerId = requiredText(userId, 'Owner ID')
   if (typeof getToken !== 'function') throw new Error('Token provider is required')
+
   const base = requiredText(apiBaseUrl, 'API URL').replace(/\/+$/, '')
+  if (base !== API_BASE_URL) {
+    throw new Error('Story sync API URL is not approved')
+  }
   const runtime = runtimeFor(ownerId, getToken, base)
+
   runtime.uploadQueue.start()
   if (!runtime.timer) {
     runtime.timer = setInterval(() => { void tick(runtime) }, POLL_MS)
