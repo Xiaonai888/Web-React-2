@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdvertisementPopup from '../AdvertisementPopup'
+import useStoryLanguageId from '../../hooks/useStoryLanguageId'
 import { grantReaderAdEntryPass } from '../../services/advertisements/readerAdFrequency'
 import { hasPremiumAdFree } from '../../services/premiumAdVisibility'
 import {
@@ -75,6 +76,7 @@ export default function SmartPlacementAdvertisement({
   onFinish = null,
 }) {
   const navigate = useNavigate()
+  const storyLanguage = useStoryLanguageId()
   const onFinishRef = useRef(onFinish)
   onFinishRef.current = onFinish
   const finishedRef = useRef(false)
@@ -145,7 +147,7 @@ export default function SmartPlacementAdvertisement({
       controller.abort()
       clearTimeout(timeout)
     }
-  }, [placement, finish])
+  }, [placement, finish, storyLanguage])
 
   const handleOpen = useCallback(async () => {
     const advertisement = state.advertisement
