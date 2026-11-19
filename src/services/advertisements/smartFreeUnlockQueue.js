@@ -14,6 +14,8 @@ import {
   toSmartFreeUnlockAdvertisement,
 } from './smartFreeUnlockPresentation'
 
+import { getStoryLanguageId } from '../../utils/storyLanguage'
+
 const PLACEMENT = 'freeUnlock'
 const EMPTY_RETRY_MS = 60000
 const MAX_SELECTION_ATTEMPTS = 2
@@ -49,10 +51,11 @@ function getQueueExclusions(readerKey, version, queue) {
 }
 
 async function prepareQueue(readerKey, version, signal) {
+  const language = getStoryLanguageId()
   const saved = readQueue(readerKey, version)
   if (hasNextUnplayedAd(saved)) return saved
   if (saved?.exhausted && saved.batches.flat().length) return saved
-  const key = `${readerKey}:${version.slot_key}:${version.catalog_version}`
+  const key = `${readerKey}:${version.slot_key}:${version.catalog_version}:${language}`
   if (Number(emptySelections.get(key) || 0) > Date.now()) return null
   if (pendingSelections.has(key)) return pendingSelections.get(key)
 
@@ -102,12 +105,15 @@ async function prepareQueue(readerKey, version, signal) {
 }
 
 export async function takeSmartFreeUnlockAd({ currentStoryId = '', signal } = {}) {
+  const language = getStoryLanguageId()
   const version = await getSmartAdVersion({ signal })
   if (!version?.slot_key || !Number.isSafeInteger(Number(version.catalog_version))) {
     throw new Error('Invalid Smart Ad version')
   }
+  if (getStoryLanguageId() !== language) return null
   const readerKey = getSmartAdReaderKey()
   const queue = await prepareQueue(readerKey, version, signal)
+  if (getStoryLanguageId() !== language) return null
   const ads = queue?.batches?.flat() || []
   if (!ads.length) return null
 
