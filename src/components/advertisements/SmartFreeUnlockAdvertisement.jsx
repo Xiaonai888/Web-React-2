@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdvertisementPopup from '../AdvertisementPopup'
+import useStoryLanguageId from '../../hooks/useStoryLanguageId'
 import { grantReaderAdEntryPass } from '../../services/advertisements/readerAdFrequency'
 import { takeSmartFreeUnlockAd } from '../../services/advertisements/smartFreeUnlockQueue'
 import {
@@ -65,6 +66,7 @@ export default function SmartFreeUnlockAdvertisement({
   onFinish,
 }) {
   const navigate = useNavigate()
+  const storyLanguage = useStoryLanguageId()
   const onFinishRef = useRef(onFinish)
   onFinishRef.current = onFinish
   const finishedRef = useRef(false)
@@ -99,7 +101,7 @@ export default function SmartFreeUnlockAdvertisement({
           finish()
           return
         }
-        setState({ status: 'smart', selection })
+        setState({ status: 'smart', selection, language: storyLanguage })
       } catch (error) {
         if (cancelled) return
         console.warn('SMART_FREE_UNLOCK_SELECTION_ERROR', error?.message || error)
@@ -109,7 +111,7 @@ export default function SmartFreeUnlockAdvertisement({
 
     void load()
     return () => { cancelled = true }
-  }, [enabled, currentStoryId, finish])
+  }, [enabled, currentStoryId, finish, storyLanguage])
 
   const handleOpen = useCallback(async () => {
     const ad = state.selection?.advertisement
@@ -131,6 +133,7 @@ export default function SmartFreeUnlockAdvertisement({
   }, [state.selection, finish, navigate])
 
   if (state.status === 'loading') return null
+  if (state.status === 'smart' && state.language !== storyLanguage) return null
   if (state.status === 'legacy') {
     return (
       <AdvertisementPopup
