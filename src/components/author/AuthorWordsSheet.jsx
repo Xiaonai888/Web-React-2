@@ -126,7 +126,11 @@ export default function AuthorWordsSheet({
         </div>
 
         <div className="mt-4 flex items-start gap-2 rounded-[10px] bg-[#f7f7fa] px-3 py-3">
-          <UserRound size={16} className="mt-0.5 shrink-0 text-[#667085]" />
+          <img
+  src="/assets/Icons/Hint.svg"
+  alt=""
+  className="mt-0.5 h-[16px] w-[16px] shrink-0 object-contain"
+/>
           <p className="text-[11.5px] leading-5 text-[#667085]">
             This message is for this novel episode only. Readers will see the full message after the story text.
           </p>
