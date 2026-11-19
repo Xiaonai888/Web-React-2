@@ -23,6 +23,8 @@ import AuthorPageTransparencyPopup from '../../components/AuthorPageTransparency
 import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
 import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('authorPublicPage', {
   en: {
@@ -802,11 +804,6 @@ registerTranslationNamespace('authorPublicPage', {
   },
 })
 
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-
 const AUTHOR_PAGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 const tabs = ['Posts', 'Works', 'Reel', 'Store']
@@ -851,14 +848,6 @@ async function fetchAuthorReviewsPage(username, offset = 0) {
     hasMore: Boolean(data.has_more),
     nextOffset: data.has_more ? Number(data.next_offset ?? offset + reviews.length) : null,
   }
-}
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
 }
 
 function getAuthorPublicQueueAccount(token) {
