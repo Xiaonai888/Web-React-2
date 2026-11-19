@@ -16,10 +16,13 @@ import {
   Link,
   Search,
   WandSparkles,
+  UserRound,
 } from 'lucide-react'
 import RichFindReplacePanel from '../../components/Author/RichFindReplacePanel'
 import SmartFindReplacePanel from '../../components/Author/SmartFindReplacePanel'
 import YouTubeVideoSheet from '../../components/author/YouTubeVideoSheet'
+import AuthorWordsSheet from '../../components/author/AuthorWordsSheet'
+import { limitAuthorNote } from '../../utils/authorNote'
 import StorySettingSheet from '../../components/author/StorySettingSheet'
 import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
@@ -4133,6 +4136,8 @@ export default function EpisodeEditorPage() {
   const [youtubeSheetOpen, setYoutubeSheetOpen] = useState(false)
   const [youtubeVideo, setYoutubeVideo] = useState({ title: '', url: '' })
   const [youtubeDraft, setYoutubeDraft] = useState({ title: '', url: '' })
+  const [authorWords, setAuthorWords] = useState('')
+  const [authorWordsOpen, setAuthorWordsOpen] = useState(false)
   const [editorFocused, setEditorFocused] = useState(false)
   const [alignmentMode, setAlignmentMode] = useState('left')
   const [boldActive, setBoldActive] = useState(false)
@@ -4220,6 +4225,7 @@ export default function EpisodeEditorPage() {
     episodeCover,
     content,
     youtubeVideo,
+    authorWords,
     episodeAdult,
     episodeFree,
     mangaPages,
@@ -4303,6 +4309,8 @@ export default function EpisodeEditorPage() {
     serverSavedRevisionRef.current = 0
     lastServerSaveResultRef.current = null
     confirmedEpisodeIdRef.current = editEpisodeId || ''
+    setAuthorWords('')
+    setAuthorWordsOpen(false)
   }, [storyId, editEpisodeId])
 
   const saveCurrentLocalDraft = useCallback(async () => {
@@ -4354,6 +4362,7 @@ export default function EpisodeEditorPage() {
               title: String(draft.youtubeVideo?.title || ''),
               url: String(draft.youtubeVideo?.url || ''),
             },
+      authorWords: draft.authorWords,
       episodeAdult: draft.episodeAdult,
       episodeFree: draft.episodeFree,
       mangaPages: localMangaPages,
@@ -4732,6 +4741,7 @@ return true
         setEpisodeCover(episode.cover_url || '')
         setOriginalCover(episode.cover_url || '')
         setContent(normalizeEpisodeHtml(episode.content || ''))
+        setAuthorWords(limitAuthorNote(episode.author_note || ''))
         setOldEpisodeStatus(episode.status || 'draft')
         setEpisodeAdult(Boolean(episode.is_adult))
         setEpisodeFree(Boolean(episode.is_author_free ?? episode.is_free_published))
@@ -6449,6 +6459,18 @@ releaseOption={releaseOption}
       {!isManga ? (
         <>
 
+                   {storyType === 'novel' ? (
+            <AuthorWordsSheet
+              open={authorWordsOpen}
+              storyType={storyType}
+              value={authorWords}
+              onClose={() => setAuthorWordsOpen(false)}
+              onSave={saveAuthorWords}
+              onRemove={removeAuthorWords}
+              hasNote={Boolean(authorWords.trim())}
+            />
+          ) : null}
+
           <YouTubeVideoSheet
   open={youtubeSheetOpen}
   value={youtubeDraft}
@@ -6716,9 +6738,27 @@ releaseOption={releaseOption}
     onClick={handleAlignmentChange}
   />
 
+   {storyType === 'novel' ? (
+    <ToolButton
+      Icon={UserRound}
+      label="Author Words"
+      active={Boolean(authorWords.trim())}
+      onClick={openAuthorWords}
+    />
+  ) : null}
+
+  {storyType === 'novel' ? (
   <ToolButton
-    Icon={ImageIcon}
-    label="Insert image"
+    Icon={UserRound}
+    label="Author Words"
+    active={Boolean(authorWords.trim())}
+    onClick={openAuthorWords}
+  />
+) : null}
+
+<ToolButton
+  Icon={ImageIcon}
+  label="Insert image"
     disabled={inlineImageUploading}
     onClick={() => {
       saveEditorSelection()
@@ -6782,6 +6822,28 @@ releaseOption={releaseOption}
                   onTouchEnd={saveEditorSelection}
                   className="rich-episode-editor min-h-[calc(100dvh-120px)] w-full bg-[var(--shadow-bg-surface)] px-0 pb-24 pt-3 text-[15px] leading-8 text-[var(--shadow-text-primary)] outline-none md:min-h-[calc(100dvh-170px)] md:rounded-[10px] md:px-4"
                 />
+
+                               {storyType === 'novel' && authorWords.trim() ? (
+                  <button
+                    type="button"
+                    onClick={openAuthorWords}
+                    className="mb-5 mt-3 block w-full border-t border-[var(--shadow-border)] pt-4 text-left"
+                    aria-label="Edit Author Words"
+                  >
+                    <div className="rounded-[12px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[var(--shadow-text-primary)]">
+                      <div className="flex items-center gap-2 text-[13px] font-semibold">
+                        <UserRound size={16} strokeWidth={1.7} />
+                        <span>Author Words</span>
+                        <span className="ml-auto text-[11px] font-normal text-[var(--shadow-text-secondary)]">
+                          Edit
+                        </span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap break-words text-[14px] font-normal leading-7">
+                        {authorWords}
+                      </p>
+                    </div>
+                  </button>
+                ) : null}
 
                 <input
                   ref={imageInputRef}
