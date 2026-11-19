@@ -606,11 +606,10 @@ export default function PublishEpisodePage() {
     return new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
   }
 
+
   const updateEpisodeStatus = async () => {
-    const token =
-      localStorage.getItem('shadow_reader_token') ||
-      sessionStorage.getItem('shadow_reader_token') ||
-      ''
+    const token = getAuthToken()
+
 
     if (!token) {
       navigate('/login')
