@@ -6,6 +6,8 @@ import StorySortMenu from '../../components/author/StorySortMenu'
 import StoryActionsSheet from '../../components/author/StoryActionsSheet'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('authorStories', {
   en: {
@@ -195,11 +197,6 @@ registerTranslationNamespace('authorStories', {
   },
 })
 
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-
 const AUTHOR_PREVIEW_ENABLED =
   import.meta.env.DEV && import.meta.env.VITE_AUTHOR_PREVIEW === 'true'
 
@@ -261,14 +258,6 @@ const SORT_OPTIONS = [
   { id: 'episodes', labelKey: 'mostEpisodes' },
   { id: 'title', labelKey: 'az' },
 ]
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
