@@ -1,3 +1,5 @@
+import { getStoryLanguageId } from '../utils/storyLanguage'
+
 const PLACEMENTS = ['discover', 'opening', 'freeUnlock', 'me']
 const PREFIX = 'shadow_smart_ad_shared_queue_v1:'
 const MAX_BATCHES = 8
@@ -25,7 +27,8 @@ function getStorage(storage) {
 
 function keyFor(readerKey, placement) {
   if (!readerKey) throw new TypeError('Smart Ad reader key is required')
-  return `${PREFIX}${hash(readerKey)}:${validatePlacement(placement)}`
+  const language = getStoryLanguageId()
+  return `${PREFIX}${hash(readerKey)}:${validatePlacement(placement)}:${language}`
 }
 
 function parse(value) {
