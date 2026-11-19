@@ -1,10 +1,9 @@
 import { getActiveReaderToken } from '../utils/readerActiveAccount'
+import { API_BASE_URL } from '../config/api'
 
-const API_BASE = import.meta.env.VITE_API_URL || (
-  ['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-)
+
+const API_BASE = API_BASE_URL
+
 
 const PAGE_SIZE = 30
 
