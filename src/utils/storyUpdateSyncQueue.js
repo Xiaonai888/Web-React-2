@@ -5,6 +5,9 @@ import {
 } from './storyMediaDraftDB'
 import { deleteStoryMediaSnapshot } from './storyMediaDraftAssets'
 import { createStoryMediaUploadQueue } from './storyMediaUploadQueue'
+import { API_BASE_URL } from '../config/api'
+import { getActiveReaderToken, isSameReaderSession } from './readerActiveAccount'
+
 
 const INDEX_PREFIX = 'shadow:story-update:index:'
 const JOB_PREFIX = 'shadow:story-update:job:'
@@ -110,8 +113,14 @@ async function clearMedia(job, queue) {
 }
 
 async function syncOne(runtime, job) {
+
   const token = runtime.getToken()
-  if (!token || userFromToken(token) !== runtime.ownerId) return
+  if (
+    !token ||
+    userFromToken(token) !== runtime.ownerId ||
+    !isSameReaderSession(token, getActiveReaderToken())
+  ) return
+
   if (!['pending', 'waiting_upload'].includes(job.state) || Number(job.retryAt || 0) > Date.now()) return
 
   if (!job.expectedUpdatedAt) {
@@ -131,8 +140,18 @@ async function syncOne(runtime, job) {
     return
   }
 
+
+  if (!isSameReaderSession(token, getActiveReaderToken())) return
+
   const submitting = await saveJob({ ...job, state: 'submitting', error: '', retryAt: 0 })
+
+  if (!isSameReaderSession(token, getActiveReaderToken())) {
+    await saveJob({ ...submitting, state: 'pending', retryAt: 0 })
+    return
+  }
+
   try {
+
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 45000)
     let response
@@ -206,9 +225,17 @@ async function tick(runtime) {
 }
 
 export function startStoryUpdateSync({ userId, getToken, apiBaseUrl }) {
+
   const owner = clean(userId)
   if (!owner || typeof getToken !== 'function') throw new Error('Valid story sync account is required')
+
+  const base = clean(apiBaseUrl).replace(/\/+$/, '')
+  if (base !== API_BASE_URL) {
+    throw new Error('Story update sync API URL is not approved')
+  }
+
   let runtime = runtimes.get(owner)
+
   if (!runtime) {
     runtime = {
       ownerId: owner,
