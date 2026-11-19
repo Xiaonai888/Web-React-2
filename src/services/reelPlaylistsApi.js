@@ -1,12 +1,9 @@
 // Author-owned Reel playlists: stored in Shadow (metadata only, not video files).
-const BASE_URL = import.meta.env.VITE_API_URL ||
-  (['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
 
-function readToken() {
-  return localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') || ''
-}
+import { API_BASE_URL, getAuthToken as readToken } from '../config/api'
+
+const BASE_URL = API_BASE_URL
+
 
 async function request(path, { method = 'GET', body, signal } = {}) {
   const token = readToken()
