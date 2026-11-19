@@ -1,10 +1,8 @@
-const FALLBACK_API = 'https://shadow-backend-kucw.onrender.com'
-const API_ORIGIN = (
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'http://localhost:5000'
-    : FALLBACK_API)
-).replace(/\/$/, '')
+
+import { API_BASE_URL, getAuthToken as getReaderToken } from '../config/api'
+
+const API_ORIGIN = API_BASE_URL
+
 const BASE_PATH = `${API_ORIGIN}/api/author-ads/me/campaigns`
 const PAGE_SIZE = 20
 const MAX_PAGE_SIZE = 50
@@ -19,10 +17,6 @@ const activeLists = new Map()
 let cacheGeneration = 0
 
 export const AUTHOR_ADS_PAGE_SIZE = PAGE_SIZE
-
-function getReaderToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
-}
 
 function fingerprint(value) {
   let hash = 2166136261
