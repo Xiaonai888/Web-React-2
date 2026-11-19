@@ -6792,15 +6792,6 @@ releaseOption={releaseOption}
   />
 ) : null}
 
-{storyType === 'novel' ? (
-  <ToolButton
-    Icon={UserRound}
-    label="Author Words"
-    active={Boolean(authorWords.trim())}
-    onClick={openAuthorWords}
-  />
-) : null}
-
 <ToolButton
   Icon={ImageIcon}
   label="Insert image"
@@ -6926,6 +6917,15 @@ releaseOption={releaseOption}
   label={`Align ${alignmentMode}`}
   onClick={handleAlignmentChange}
 />
+
+{storyType === 'novel' ? (
+  <ToolButton
+    Icon={UserRound}
+    label="Author Words"
+    active={Boolean(authorWords.trim())}
+    onClick={openAuthorWords}
+  />
+) : null}
 
 <ToolButton
   Icon={ImageIcon}
