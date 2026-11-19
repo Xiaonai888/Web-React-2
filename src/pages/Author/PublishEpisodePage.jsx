@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('publishEpisode', {
   en: {
@@ -278,19 +280,6 @@ registerTranslationNamespace('publishEpisode', {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import StoryPublishAgreementModal from '../../components/author/StoryPublishAgreementModal'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
-
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
 
 function Step({ number, title, active }) {
   return (
