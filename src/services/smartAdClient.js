@@ -1,3 +1,5 @@
+import { getStoryLanguageId } from '../utils/storyLanguage'
+
 const API_BASE_URL = (
   import.meta.env?.VITE_API_URL ||
   (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -180,9 +182,11 @@ export async function selectSmartAds({
   placement, cursor = '0', queueIndex = 0, interests = {}, excludeStoryIds = [], cooldownStoryIds = [], signal,
 } = {}) {
   validatePlacement(placement)
-  return requestSmartAd('/select', {
+  const storyLanguage = getStoryLanguageId()
+  const result = await requestSmartAd('/select', {
     body: {
       placement,
+      story_language: storyLanguage,
       cursor: String(cursor),
       queue_index: queueIndex,
       interests,
@@ -191,6 +195,12 @@ export async function selectSmartAds({
     },
     signal,
   })
+  if (getStoryLanguageId() !== storyLanguage || result.story_language !== storyLanguage) {
+    const error = new Error('Smart Ad Story Language changed during selection')
+    error.code = 'SMART_AD_LANGUAGE_CHANGED'
+    throw error
+  }
+  return result
 }
 
 export async function recordSmartAdImpressions({ placement, slotKey, storyIds, signal } = {}) {
