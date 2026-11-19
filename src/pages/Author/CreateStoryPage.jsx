@@ -31,6 +31,8 @@ import {
 } from '../../utils/storyCreationSyncQueue'
 import { queueStoryUpdate, startStoryUpdateSync } from '../../utils/storyUpdateSyncQueue'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('createStory', {
   en: {
@@ -49,12 +51,6 @@ registerTranslationNamespace('createStory', {
     closeCropEditor: '자르기 편집기 닫기', zoom: '확대', cropTip: '팁: 이미지 안을 드래그해 이동하세요. 핀치가 잘 작동하지 않으면 확대 슬라이더를 사용하세요.', cancel: '취소', saveCrop: '자르기 저장', closeEditor: '편집기 닫기', save: '저장', descriptionPlaceholder: '독자가 작품을 열어 보고 싶게 만드는 매력을 알려 주세요.', titlePlaceholder: '작품 제목 추가', slideNumber: '슬라이드 {{count}}', oldSlideLoaded: '기존 슬라이드 불러옴', tapEditCrop: '이미지를 눌러 자르기 편집', active: '활성', inactive: '비활성', failedUploadImage: '이미지 업로드에 실패했습니다', failedLoadStory: '작품을 불러오지 못했습니다', maxSlides: '슬라이드는 최대 5개까지 가능합니다.', adjustImage: '먼저 이미지를 조정해 주세요.', cropFailed: '자르기를 저장하지 못했습니다. 다른 이미지를 사용해 주세요.', enterTitle: '작품 제목을 입력해 주세요.', addPortraitCover: '세로형 커버를 추가해 주세요.', addSummary: '작품 설명을 추가해 주세요.', confirmRights: '권리와 작가 동의를 확인해 주세요.', descriptionTooLong: '설명이 너무 깁니다. 최대 5000자입니다.', loginFirst: '먼저 로그인해 주세요.', updateFailed: '작품 업데이트에 실패했습니다', createFailed: '작품 만들기에 실패했습니다', updatedMissingId: '작품은 업데이트되었지만 작품 ID가 없습니다', createdMissingId: '작품은 만들어졌지만 작품 ID가 없습니다', cannotConnect: '백엔드에 연결할 수 없습니다. 배포 상태를 확인해 주세요.', cropMangaCover: '만화 커버 자르기', cropBookCover: '책 커버 자르기', cropLandscape: '가로 썸네일 자르기', cropMangaSlide: '만화 슬라이드 자르기', cropStorySlide: '작품 슬라이드 자르기', cropMangaCoverHelp: '이미지를 드래그해 세로 2:3 만화 커버에 맞춰 주세요.', cropBookCoverHelp: '이미지를 드래그해 세로 2:3 책 커버에 맞춰 주세요.', cropLandscapeHelp: '이미지를 드래그해 가로 16:9 썸네일에 맞춰 주세요.', cropMangaSlideHelp: '이미지를 드래그해 16:9 만화 슬라이드에 맞춰 주세요.', cropStorySlideHelp: '이미지를 드래그해 16:9 작품 슬라이드에 맞춰 주세요.', manga: '만화', chatStory: '채팅 스토리', novel: '소설', updateManga: '만화 업데이트', updateChatStory: '채팅 스토리 업데이트', updateNovel: '소설 업데이트', createManga: '만화 만들기', createChatStory: '채팅 스토리 만들기', createNovel: '소설 만들기', adultTitle: '18+ 작품', adultDescription: '18+로 표시된 작품은 18세 미만 독자에게 숨겨집니다. 18세 이상 독자는 정상적으로 보고 읽을 수 있습니다.', storyLanguage: '작품 언어', mangaTitle: '만화 제목', storyTitle: '작품 제목', description: '설명', needTitleHelp: '제목을 고르는 데 도움이 필요하신가요?', getTitleIdeas: '제목 아이디어 보기', needDescriptionHelp: '설명을 쓰는 데 도움이 필요하신가요?', getIdeas: '아이디어 보기', closeCoverMedia: '커버와 미디어 닫기', coverMedia: '커버와 미디어', mangaCover: '만화 커버', bookCover: '책 커버', portraitCover: '세로 커버', dropCoverImage: '커버 이미지를 여기에 놓으세요', portraitMangaCover: '세로 만화 커버', portraitBookCover: '세로 책 커버', replace: '교체', dropOrTapCover: '커버를 놓거나 눌러 추가', crop23: '2:3 자르기', landscapeThumbnail: '가로 썸네일', dropThumbnailImage: '썸네일 이미지를 여기에 놓으세요', landscapeThumbnailAlt: '가로 썸네일', dropOrAddThumbnail: '썸네일 놓기 또는 추가', crop169: '16:9 자르기', mangaSlides: '만화 슬라이드', storySlides: '작품 슬라이드', optionalCropPreview: '선택, 16:9 자르기 미리보기', add: '+ 추가', dropSlideImage: '슬라이드 이미지를 여기에 놓으세요', dropOrAddMangaSlide: '만화 슬라이드 놓기 또는 추가', dropOrAddStorySlide: '작품 슬라이드 놓기 또는 추가', mediaHelpManga: '세로 커버는 2:3, 가로 썸네일과 만화 슬라이드는 16:9를 사용합니다. 이미지를 다시 누르면 자르기를 조정할 수 있습니다.', mediaHelpStory: '세로 커버는 2:3, 가로 썸네일과 작품 슬라이드는 16:9를 사용합니다. 이미지를 다시 누르면 자르기를 조정할 수 있습니다.', goBack: '뒤로', mangaInfo: '만화 정보', storyInfo: '작품 정보', characters: '캐릭터', chat: '채팅', publish: '공개', firstMangaEpisode: '첫 만화 에피소드', firstEpisode: '첫 에피소드', loadingOldStory: '기존 작품 데이터를 불러오는 중...', cover: '커버', coverHelp: '독자가 가장 먼저 보게 될 세로형 커버를 추가하세요.', addCover: '커버 추가', addMangaTitle: '만화 제목 추가', addStoryTitle: '작품 제목 추가', chooseLanguage: '언어 선택', mainGenre: '메인 장르', chooseGenre: '장르 선택', storySetting: '스토리 설정', chooseStorySetting: '스토리 설정 1–6개 선택', storySettingRequired: '스토리 설정을 최소 1개 선택해 주세요.', tags: '태그', chooseTags: '태그 최대 6개 선택', updateDays: '업데이트 요일', storyStatus: '작품 상태', completed: '완결', toggleCompleted: '완결 상태 전환', aboutAdult: '18+ 작품 안내', toggleAdult: '18+ 작품 전환', basicInfoNoteManga: '이 단계에서는 기본 정보만 입력합니다. 만화를 만든 후 “만화 업데이트”를 열어 나머지 정보를 완성하세요.', basicInfoNoteChat: '이 단계에서는 기본 정보만 입력합니다. 채팅 스토리를 만든 후 “채팅 스토리 업데이트”를 열어 나머지 정보를 완성하세요.', basicInfoNoteNovel: '이 단계에서는 기본 정보만 입력합니다. 소설을 만든 후 “소설 업데이트”를 열어 나머지 정보를 완성하세요.', savingChanges: '변경사항 저장 중...', uploadingCreatingManga: '만화 업로드 및 생성 중...', uploadingCreatingStory: '작품 업로드 및 생성 중...', saveChanges: '변경사항 저장', createStory: '작품 만들기', mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일'
   },
 })
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
 
 const STORY_SYNC_LABELS = {
   en: {
@@ -144,14 +140,6 @@ const updateDayOptions = [
   { value: 'Sat', labelKey: 'sat' },
   { value: 'Sun', labelKey: 'sun' },
 ]
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
 
 function dataUrlToFile(dataUrl, fileName) {
   const [header, base64] = dataUrl.split(',')
