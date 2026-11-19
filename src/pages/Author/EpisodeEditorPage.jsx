@@ -6792,10 +6792,19 @@ releaseOption={releaseOption}
   />
 ) : null}
 
+{storyType === 'novel' ? (
+  <ToolButton
+    Icon={UserRound}
+    label="Author Words"
+    active={Boolean(authorWords.trim())}
+    onClick={openAuthorWords}
+  />
+) : null}
+
 <ToolButton
   Icon={ImageIcon}
   label="Insert image"
-    disabled={inlineImageUploading}
+  disabled={inlineImageUploading}
     onClick={() => {
       saveEditorSelection()
       imageInputRef.current?.click()
