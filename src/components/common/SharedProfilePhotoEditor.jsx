@@ -141,6 +141,7 @@ export default function SharedProfilePhotoEditor({
 }) {
   const { t } = useDisplayTranslation()
   const [imageUrl, setImageUrl] = useState('')
+  const [remoteImageUrl, setRemoteImageUrl] = useState('')
   const [step, setStep] = useState('crop')
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -156,11 +157,20 @@ export default function SharedProfilePhotoEditor({
   useEffect(() => {
     if (!image) {
       setImageUrl('')
+      setRemoteImageUrl('')
       return undefined
     }
     const isBlob = typeof Blob !== 'undefined' && image instanceof Blob
-    const url = isBlob ? URL.createObjectURL(image) : getSafeImageUrl(image)
-    setImageUrl(url)
+    let objectUrl = ''
+    if (isBlob) {
+      objectUrl = URL.createObjectURL(image)
+      setImageUrl(objectUrl)
+      setRemoteImageUrl('')
+    } else {
+      const safeRemoteUrl = getSafeImageUrl(image)
+      setImageUrl(safeRemoteUrl)
+      setRemoteImageUrl(safeRemoteUrl)
+    }
     setStep('crop')
     setCrop({ x: 0, y: 0 })
     setZoom(1)
@@ -171,7 +181,7 @@ export default function SharedProfilePhotoEditor({
     setShareToFeed(shareToFeedDefault)
     setError('')
     return () => {
-      if (isBlob) URL.revokeObjectURL(url)
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [image, shareToFeedDefault])
 
@@ -185,7 +195,7 @@ export default function SharedProfilePhotoEditor({
     return () => URL.revokeObjectURL(url)
   }, [croppedFile])
 
-  const detailsImageUrl = usingOriginal ? imageUrl : croppedUrl
+  const detailsImageUrl = usingOriginal ? remoteImageUrl : croppedUrl
 
   async function continueToDetails() {
     if (!imageUrl || !cropPixels || busy) return
