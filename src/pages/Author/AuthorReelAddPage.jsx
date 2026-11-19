@@ -13,6 +13,8 @@ import {
 } from '../../services/reelPlaylistsApi'
 import { markStudioContentCacheStale } from '../../components/author/studio/content/ShadowStudioContentCache'
 import { invalidateStudioAnalyticsCache } from '../../services/shadowStudioAnalyticsApi'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('authorReelAdd', {
   en: {
@@ -236,9 +238,11 @@ export default function AuthorReelAddPage() {
         setPendingVideo({ id: savedId, status: savedStatus, videoType })
       } else {
         if (pendingVideo.videoType !== videoType) {
-          const token = localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
-          const base = import.meta.env.VITE_API_URL || (['localhost', '127.0.0.1'].includes(window.location.hostname) ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
-          const response = await fetch(`${base}/api/shadow-studio/video-type/videos/${encodeURIComponent(savedId)}`, {
+
+          const token = getAuthToken()
+          if (!token) throw new Error('Please sign in again')
+          const response = await fetch(`${API_BASE_URL}/api/shadow-studio/video-type/videos/${encodeURIComponent(savedId)}`, {
+
             method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ video_type: videoType }),
           })
