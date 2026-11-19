@@ -2,6 +2,9 @@ import { useStoryPublishAgreementGate } from '../../components/author/StoryPubli
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { SuccessModal } from './PublishEpisodePage'
+import EpisodeLocalPreview, { EpisodePreviewRow } from '../../components/author/EpisodeLocalPreview'
+import { buildNovelPreviewDraft } from '../../utils/novelPreviewDraft'
+import { buildMangaPreviewDraft } from '../../utils/mangaPreviewDraft'
 import Cropper from 'react-easy-crop'
 import {
   AlignCenter,
@@ -3375,6 +3378,7 @@ export function PublishSettingsSheet({
   onClose,
   onSave,
   isChatStory = false,
+  previewDraft = null,
 
 }) {
   useDisplayTranslation()
@@ -3388,6 +3392,7 @@ export function PublishSettingsSheet({
   const [activeHint, setActiveHint] = useState('')
   const [releasePickerOpen, setReleasePickerOpen] = useState(false)
   const [schedulePickerOpen, setSchedulePickerOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return undefined
@@ -3415,6 +3420,7 @@ export function PublishSettingsSheet({
     setActiveHint('')
     setReleasePickerOpen(false)
     setSchedulePickerOpen(false)
+    setPreviewOpen(false)
   }, [open])
 
   const handleDragStart = (event) => {
@@ -3516,6 +3522,11 @@ const canSave =
 
   return (
     <>
+      <EpisodeLocalPreview
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        {...(previewDraft || {})}
+      />
       <AdultHintPopup
   open={activeHint === 'story-adult'}
   title={getDisplayText('episodeEditor.adultStory')}
@@ -3861,6 +3872,7 @@ const canSave =
       </span>
     </button>
   ) : null}
+  <EpisodePreviewRow onClick={() => setPreviewOpen(true)} />
 </div>
             </section>
           </div>
@@ -6353,6 +6365,13 @@ const handleEditorCompositionEnd = (event) => {
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
+        previewDraft={isManga
+          ? buildMangaPreviewDraft({ episodeTitle, mangaPages })
+          : buildNovelPreviewDraft({
+              episodeTitle,
+              content,
+              editorElement: editorRef.current
+            })}
         showStorySettings={legacyStorySettingsBlank}
         storySettingRequired={legacyStorySettingsBlank}
         requireStoryDetails={isFirstEpisode}
