@@ -1,15 +1,4 @@
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
+import { API_BASE_URL, getAuthToken } from '../../config/api'
 
 async function requestSalesReports(path, options = {}) {
   const token = getAuthToken()
