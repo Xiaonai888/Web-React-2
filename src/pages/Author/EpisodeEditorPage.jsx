@@ -6784,15 +6784,6 @@ releaseOption={releaseOption}
   />
 
    {storyType === 'novel' ? (
-    <ToolButton
-      Icon={UserRound}
-      label="Author Words"
-      active={Boolean(authorWords.trim())}
-      onClick={openAuthorWords}
-    />
-  ) : null}
-
-{storyType === 'novel' ? (
   <ToolButton
     Icon={UserRound}
     label="Author Words"
