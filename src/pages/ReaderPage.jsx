@@ -10,6 +10,7 @@ import ReactionAction from '../components/social/reactions/ReactionAction'
 import { getReactionMeta } from '../components/social/reactions/reactionConfig'
 import SmartFreeUnlockAdvertisement from '../components/advertisements/SmartFreeUnlockAdvertisement'
 import GiftPopup from '../components/reader/GiftPopup'
+import AuthorWordsCard from '../components/reader/AuthorWordsCard'
 import { loadOfflineReaderFallback } from '../utils/offlineReaderFallback'
 import { rememberViewedEpisode } from '../utils/offlineViewedEpisode'
 import {
@@ -5820,6 +5821,13 @@ function ContinuousEpisodeBlock({
         theme={theme}
       />
 
+      {String(story?.story_type || 'novel') === 'novel' ? (
+        <AuthorWordsCard
+          value={episode.author_note}
+          theme={theme}
+        />
+      ) : null}
+
       <YouTubeEpisodeCard
   videoId={episode.youtube_video_id}
   title={episode.youtube_title}
@@ -9505,7 +9513,15 @@ adultAccepted &&
   />
 )}
 
-                  {isLastReadingPage ? (
+                  {isLastReadingPage &&
+ String(story?.story_type || 'novel') === 'novel' ? (
+  <AuthorWordsCard
+    value={episode.author_note}
+    theme={theme}
+  />
+) : null}
+
+{isLastReadingPage ? (
   <YouTubeEpisodeCard
     videoId={episode.youtube_video_id}
     title={episode.youtube_title}
