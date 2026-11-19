@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config/api'
 const MB = 1024 * 1024
 
 const DIRECT_IMAGE_LIMITS = Object.freeze({
@@ -36,10 +37,8 @@ const LEGACY_STORY_MEDIA_CATEGORIES = new Set([
 ])
 
 const DIRECT_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const DEFAULT_API_URL = import.meta.env?.VITE_API_URL ||
-  (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
+const DEFAULT_API_URL = API_BASE_URL
+
 
 let temporarilyUnavailableUntil = 0
 
