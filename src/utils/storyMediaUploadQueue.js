@@ -2,6 +2,8 @@ import { optimizeImageForUpload, validateImageUploadFile } from './imageUploadOp
 import { createUploadQueueManager } from './uploadQueueManager'
 import { requestUploadStoragePersistence } from './uploadQueueDB'
 import { uploadMediaWithFallback } from './uploadMediaWithFallback'
+import { API_BASE_URL } from '../config/api'
+
 
 const CATEGORIES = Object.freeze({
   cover: 'story_cover',
@@ -102,13 +104,16 @@ function createRuntime(ownerId, owner, getToken) {
       }
       if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
 
+
       const data = await uploadMediaWithFallback({
         file: prepared,
         token,
         category: task.category,
+        apiBaseUrl: API_BASE_URL,
         signal,
         onProgress,
       })
+
       const imageUrl = String(data?.image_url || data?.imageUrl || '').trim()
       if (!/^https?:\/\//i.test(imageUrl)) {
         const error = new Error('Story media upload finished without a usable image URL')
