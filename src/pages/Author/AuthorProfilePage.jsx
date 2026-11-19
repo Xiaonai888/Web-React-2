@@ -6,6 +6,9 @@ import './AuthorProfileTheme.css'
 import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.js'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+import { getActiveReaderUser } from '../../utils/readerActiveAccount'
+
 
 registerTranslationNamespace('authorProfile', {
   en: {
@@ -24,11 +27,6 @@ registerTranslationNamespace('authorProfile', {
     myIncome: '내 수익', incomeSubtitle: '수익 및 지급 상세', storyPayout: '스토리 수익 지급', storyPayoutSubtitle: '유료 스토리 수익 및 지급 상태', quest: '퀘스트', questSubtitle: '과제 및 크리에이터 보상', authorBenefits: '작가 혜택', benefitsSubtitle: '크리에이터 프로그램 및 지원', commentProtection: '댓글 보호', protectionSubtitle: '차단 단어 및 숨긴 댓글', trash: '휴지통', trashSubtitle: '삭제한 작품을 30일 이내 복원', closeProfileSwitcher: '프로필 전환 닫기', authorPage: '작가 페이지', notification: '알림 {{count}}개', notifications: '알림 {{count}}개', manageAccount: '계정 관리', notificationsLabel: '알림', settings: '설정', switchProfile: '프로필 전환', openDiamondHistory: '다이아 기록 열기', diamond: '다이아', openIncomeRecords: '수익 기록 열기', earned: '수익', openGiftHistory: '선물 기록 열기', gift: '선물', author: '작가', reader: '독자', failedProfile: '작가 프로필을 불러오지 못했습니다', failedSummary: '작가 요약을 불러오지 못했습니다', cannotConnect: '백엔드에 연결할 수 없습니다.'
   },
 })
-
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
 
 const AUTHOR_PREVIEW_ENABLED =
   import.meta.env.DEV && import.meta.env.VITE_AUTHOR_PREVIEW === 'true'
@@ -87,26 +85,6 @@ const MENU_ITEMS = [
     path: '/author/trash',
   },
 ]
-
-function getAuthToken() {
-  return (
-    localStorage.getItem('shadow_reader_token') ||
-    sessionStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
-
-function getStoredReaderUser() {
-  try {
-    return JSON.parse(
-      localStorage.getItem('shadow_reader_user') ||
-        sessionStorage.getItem('shadow_reader_user') ||
-        'null'
-    )
-  } catch {
-    return null
-  }
-}
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString(getDisplayLanguageId(), {
@@ -208,17 +186,12 @@ function safeProfileImageUrl(value) {
 export default function AuthorProfilePage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
-  const storedAuthorPage = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('shadow_author_page') || 'null')
-    } catch {
-      return null
-    }
-  }, [])
-  const storedReaderUser = useMemo(() => getStoredReaderUser(), [])
+
+  const storedReaderUser = useMemo(() => getActiveReaderUser(), [])
   const [authorPage, setAuthorPage] = useState(
-    AUTHOR_PREVIEW_ENABLED ? PREVIEW_PROFILE : storedAuthorPage
+    AUTHOR_PREVIEW_ENABLED ? PREVIEW_PROFILE : null
   )
+
   const [summary, setSummary] = useState(
     AUTHOR_PREVIEW_ENABLED ? PREVIEW_SUMMARY : null
   )
