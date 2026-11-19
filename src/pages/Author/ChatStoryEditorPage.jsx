@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { buildChatStoryPreviewDraft } from '../../utils/chatStoryPreviewDraft'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
@@ -5872,6 +5873,11 @@ setPublishSettingsOpen(true)
       <PublishSettingsSheet
         open={publishSettingsOpen}
         episodeTitle={episodeTitle}
+        previewDraft={buildChatStoryPreviewDraft({
+          episodeTitle,
+          messages,
+          characters
+        })}
         showStorySettings={legacyStorySettingsBlank}
         storySettingRequired={legacyStorySettingsBlank}
         requireStoryDetails={publishedIsFirstEpisode}
