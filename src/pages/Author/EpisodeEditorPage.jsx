@@ -4837,6 +4837,9 @@ return true
             sanitizeEpisodeHtml(draft.content || '') !== sanitizeEpisodeHtml(content || '')) ||
           String(draftYoutube.title || '') !== String(youtubeVideo.title || '') ||
           String(draftYoutube.url || '') !== String(youtubeVideo.url || '') ||
+          (draftType === 'novel' &&
+            Object.prototype.hasOwnProperty.call(draft, 'authorWords') &&
+            String(draft.authorWords || '') !== String(authorWords || '')) ||
           Boolean(draft.episodeAdult) !== Boolean(episodeAdult) ||
           Boolean(draft.episodeFree) !== Boolean(episodeFree) ||
           JSON.stringify(draftPageData) !== JSON.stringify(currentPageData)
@@ -4873,6 +4876,14 @@ return true
     setEpisodeTitle(String(draft.title || ''))
     setEpisodeCover(String(draft.episodeCover || ''))
     setContent(restoredType === 'manga' ? '' : normalizeEpisodeHtml(draft.content || ''))
+
+    if (restoredType === 'novel' &&
+        Object.prototype.hasOwnProperty.call(draft, 'authorWords')) {
+      setAuthorWords(limitAuthorNote(draft.authorWords || ''))
+    } else if (restoredType !== 'novel') {
+      setAuthorWords('')
+    }
+
     setYoutubeVideo(
       restoredType === 'manga'
         ? { title: '', url: '' }
@@ -5248,6 +5259,37 @@ const handleEditorCompositionEnd = (event) => {
     setYoutubeVideo({ title: '', url: '' })
     setYoutubeDraft({ title: '', url: '' })
     setYoutubeSheetOpen(false)
+  }
+
+   const openAuthorWords = () => {
+    if (storyType !== 'novel') return
+    setEditorFocused(false)
+    editorRef.current?.blur()
+    setAuthorWordsOpen(true)
+  }
+
+  const saveAuthorWords = (value) => {
+    if (storyType !== 'novel') return
+
+    const next = limitAuthorNote(value).trim()
+
+    if (next !== authorWords) {
+      setAuthorWords(next)
+      markUnsaved()
+    }
+
+    setAuthorWordsOpen(false)
+  }
+
+  const removeAuthorWords = () => {
+    if (storyType !== 'novel') return
+
+    if (authorWords) {
+      setAuthorWords('')
+      markUnsaved()
+    }
+
+    setAuthorWordsOpen(false)
   }
 
   const openEpisodeDetails = () => {
@@ -5646,6 +5688,9 @@ const handleEditorCompositionEnd = (event) => {
       title: episodeTitle.trim(),
       cover_url: episodeCoverUrl,
       content: isManga ? '' : sanitizeEpisodeHtml(currentNovelHtml),
+      author_note: storyType === 'novel'
+        ? authorWords.trim() || null
+        : undefined,
       youtube_url: isManga ? '' : youtubeVideo.url,
       youtube_title: isManga ? '' : youtubeVideo.title,
       pages: isManga ? pagesPayload : undefined,
@@ -6747,7 +6792,7 @@ releaseOption={releaseOption}
     />
   ) : null}
 
-  {storyType === 'novel' ? (
+{storyType === 'novel' ? (
   <ToolButton
     Icon={UserRound}
     label="Author Words"
