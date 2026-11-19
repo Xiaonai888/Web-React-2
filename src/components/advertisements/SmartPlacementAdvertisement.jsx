@@ -133,7 +133,11 @@ export default function SmartPlacementAdvertisement({
           return
         }
         clearTimeout(timeout)
-        setState({ status: 'smart', advertisement })
+                setState({
+          status: 'smart',
+          advertisement,
+          language: storyLanguage,
+        })
       } catch (error) {
         if (cancelled || finishedRef.current) return
         console.warn('SMART_PLACEMENT_SELECT_ERROR', placement, error?.message || error)
@@ -169,6 +173,7 @@ export default function SmartPlacementAdvertisement({
   }, [state.advertisement, placement, finish, navigate])
 
   if (state.status === 'loading' || state.status === 'none') return null
+  if (state.status === 'smart' && state.language !== storyLanguage) return null
   if (state.status === 'legacy') {
     return <AdvertisementPopup placement={placement} blocking={blocking} onFinish={finish} />
   }
