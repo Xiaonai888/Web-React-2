@@ -8,15 +8,27 @@ function normalizeApiBaseUrl(value) {
 
   try {
     const url = new URL(input)
-    const isLocalHost = ['localhost', '127.0.0.1'].includes(url.hostname)
-    const allowedProtocol = url.protocol === 'https:' ||
-      (import.meta.env.DEV && isLocalHost && url.protocol === 'http:')
 
-    if (!allowedProtocol || url.username || url.password || url.search || url.hash) {
+    const isProductionApi = url.origin === DEFAULT_API_BASE_URL
+    const isLocalDevApi =
+      import.meta.env.DEV &&
+      url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1'].includes(url.hostname) &&
+      url.port === '5000'
+
+    if (
+      !(isProductionApi || isLocalDevApi) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== '/'
+    ) {
       return DEFAULT_API_BASE_URL
     }
 
-    return `${url.origin}${url.pathname.replace(/\/+$/, '')}`
+    return url.origin
+
   } catch {
     return DEFAULT_API_BASE_URL
   }
