@@ -10,6 +10,7 @@ import { fetchMyAuthorPageCached } from '../../services/myAuthorPageClientCache.
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
 
 registerTranslationNamespace('authorDashboard', {
   en: {
@@ -309,10 +310,6 @@ registerTranslationNamespace('authorDashboard', {
   },
 })
 
-const API_BASE_URL =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com'
 
 const AUTHOR_PREVIEW_ENABLED =
   import.meta.env.DEV && import.meta.env.VITE_AUTHOR_PREVIEW === 'true'
@@ -401,13 +398,7 @@ const createStoryCards = [
   },
 ]
 
-function getAuthToken() {
-  return (
-    sessionStorage.getItem('shadow_reader_token') ||
-    localStorage.getItem('shadow_reader_token') ||
-    ''
-  )
-}
+
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
