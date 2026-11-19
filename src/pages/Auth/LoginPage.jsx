@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL } from '../../config/api'
 import { getReaderDeviceKey, persistReaderDeviceKey } from '../../utils/readerDeviceKey'
 import { activateReaderAccount } from '../../utils/readerAccountSessionManager'
 import { getReaderAccountSwitchIntent, clearReaderAccountSwitchIntent } from '../../utils/readerAccountSwitchIntent'
@@ -164,8 +165,6 @@ registerTranslationNamespace('loginPage', {
     switchAccountMismatch: '로그인한 계정이 선택한 계정과 일치하지 않습니다. 올바른 계정이나 다른 계정을 선택하세요.',
   },
 })
-
-const API_BASE_URL = 'https://shadow-backend-kucw.onrender.com'
 
 export default function LoginPage() {
   const navigate = useNavigate()
