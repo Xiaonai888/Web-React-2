@@ -1,4 +1,6 @@
 import { getStoryBadge } from '../utils/storyBadge'
+import { getStoryLanguageId } from '../utils/storyLanguage'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import { getSmartAdVersion, watchSmartAdVersion } from '../services/smartAdClient'
 import { openDiscoverSmartAd, trackDiscoverSmartAdImpression, requestDiscoverSmartAdBatch } from '../services/smartAdDiscoverAdapter'
@@ -2200,7 +2202,10 @@ const SMART_AD_BATCH_SIZE = 10
 const SMART_AD_HISTORY_LIMIT = 20000
 
 function smartAdReaderKey(token, part) {
-  return `shadow_smart_auto_ads_v2:${getShadowMallAdRotationStorageKey(token)}:${part}`
+  const keyPart = part === 'queue'
+    ? `queue:${getStoryLanguageId()}`
+    : part
+  return `shadow_smart_auto_ads_v2:${getShadowMallAdRotationStorageKey(token)}:${keyPart}`
 }
 
 function smartAdTailStorageKey(visitKey) {
@@ -3460,6 +3465,7 @@ function ShadowMallAdsLoadTrigger({ enabled, count, onLoadMore }) {
 
 export default function DiscoverPage() {
   useDisplayTranslation()
+  const storyLanguage = useStoryLanguageId()
   const location = useLocation()
   const discoverLocationKey = location.state?.backgroundLocation?.pathname === '/discover'
     ? location.state.backgroundLocation.key || location.key
@@ -3686,7 +3692,7 @@ useEffect(() => {
   }, [discoverAdControl?.mode])
 
   const autoAdSlotKey = sharedSmartAdVersion?.slot_key || discoverAdControl?.slot_key || discoverAdControl?.day || ''
-  const smartAdScope = getShadowMallAdRotationStorageKey(token)
+  const smartAdScope = `${getShadowMallAdRotationStorageKey(token)}:${storyLanguage}`
   const smartAdVisitKey = `${smartAdScope}:${location.key}`
   const [smartAdTailState, setSmartAdTailState] = useState(() => ({
     visitKey: smartAdVisitKey,
@@ -3798,7 +3804,7 @@ useEffect(() => {
       if (smartAdActiveVisitRef.current === smartAdVisitKey) smartAdActiveVisitRef.current = ''
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, location.key, discoverAdControl?.mode, sharedSmartAdVersion?.slot_key, sharedSmartAdVersion?.catalog_version])
+  }, [token, location.key, storyLanguage, discoverAdControl?.mode, sharedSmartAdVersion?.slot_key, sharedSmartAdVersion?.catalog_version])
 
   const smartAutoAdBatches = useMemo(() => {
     if (smartAdQueueState?.visitKey !== smartAdVisitKey || discoverAdControl?.mode !== 'auto') return null
