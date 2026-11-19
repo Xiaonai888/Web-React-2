@@ -3,6 +3,8 @@ import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
 import { uploadMediaWithFallback } from '../../utils/uploadMediaWithFallback'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { API_BASE_URL, getAuthToken } from '../../config/api'
+
 
 registerTranslationNamespace('authorStoreBannerSettings', {
   en: {
@@ -72,18 +74,10 @@ registerTranslationNamespace('authorStoreBannerSettings', {
   },
 })
 
-const API_BASE_URL = import.meta.env?.VITE_API_URL ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
 const MAX_BYTES = 5 * 1024 * 1024
 const DEFAULT_TITLE = 'Author Store'
 const DEFAULT_SUBTITLE = 'Books, PDFs & Special Releases'
 const DEFAULT_BUTTON = 'Shop Now →'
-
-function getAuthToken() {
-  return localStorage.getItem('shadow_reader_token') || sessionStorage.getItem('shadow_reader_token') || ''
-}
 
 function safeBannerSrc(value, objectUrl) {
   if (typeof value !== 'string') return ''
