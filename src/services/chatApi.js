@@ -1,9 +1,6 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://shadow-backend-kucw.onrender.com')
+
+import { API_BASE_URL, getAuthToken } from '../config/api'
+
 
 const CHAT_PRESENCE_MIN_INTERVAL_MS = 60 * 1000
 const CHAT_PRESENCE_CACHE_PREFIX = 'shadow_chat_presence_touch_v2:'
@@ -43,13 +40,11 @@ export class ChatApiError extends Error {
   }
 }
 
+
 export function getReaderToken() {
-  return (
-    sessionStorage.getItem('shadow_reader_token') ||
-    localStorage.getItem('shadow_reader_token') ||
-    ''
-  )
+  return getAuthToken()
 }
+
 
 export function hasReaderSession() {
   return Boolean(getReaderToken())
