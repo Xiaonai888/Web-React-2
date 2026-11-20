@@ -758,20 +758,16 @@ export default function MangaPage() {
               <button
   key={item.label}
   type="button"
-  onClick={async () => {
-    if (item.label !== 'Shop') {
-      navigate(item.path)
-      return
-    }
+  onClick={() => {
+  if (item.label === 'Shop') {
+    navigate('/shop/mall/purchase', {
+      state: { returnTo: '/manga' }
+    })
+    return
+  }
 
-    const settings = await loadCountrySettings()
-    const target = getCountryShopTarget(settings, 'diamonds')
-
-    navigate(
-      target === 'diamonds' ? '/shop/mall/purchase' : '/shop',
-      target === 'diamonds' ? { state: { returnTo: '/manga' } } : undefined
-    )
-  }}
+  navigate(item.path)
+}}
 >
                 <div className="mx-auto mb-1 flex h-12 w-12 items-center justify-center">
                   <img src={item.icon} alt={displayLabel} className="h-7 w-7 object-contain" />
