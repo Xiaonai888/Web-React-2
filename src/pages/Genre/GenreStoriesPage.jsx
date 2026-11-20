@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
+import { addStoryLanguageParam } from '../../utils/storyLanguage'
+import useStoryLanguageId from '../../hooks/useStoryLanguageId'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -514,7 +515,7 @@ export default function GenreStoriesPage({
   const [loadMoreError, setLoadMoreError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
   const loadMoreControllerRef = useRef(null)
-  const storyLanguageId = getStoryLanguageId()
+  const storyLanguageId = useStoryLanguageId()
 
   const cacheKey = useMemo(
     () =>
