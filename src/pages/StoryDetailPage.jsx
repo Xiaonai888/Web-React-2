@@ -3,6 +3,7 @@ import StoryHeroSection from '../components/story-detail/StoryHeroSection'
 import StoryStatsSection from '../components/story-detail/StoryStatsSection'
 import StoryInfoSection from '../components/story-detail/StoryInfoSection'
 import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSection'
+import UpcomingEpisodeSection from '../components/story-detail/UpcomingEpisodeSection'
 import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
 import SignUpRequiredPopup from './SignUpRequiredPopup'
@@ -514,6 +515,7 @@ export default function StoryDetailPage() {
 
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
+  const [upcomingEpisode, setUpcomingEpisode] = useState(null)
   const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -626,6 +628,7 @@ export default function StoryDetailPage() {
       setErrorCode('')
       setStory(null)
       setEpisodes([])
+      setUpcomingEpisode(null)
       setAuthorFollowing(false)
       setAuthorFollowerCount(0)
       setAuthorIsOwnerPage(false)
@@ -694,8 +697,10 @@ export default function StoryDetailPage() {
 
         if (episodesData?.error) {
           setEpisodes([])
+          setUpcomingEpisode(null)
         } else {
           setEpisodes(episodesData.episodes || [])
+          setUpcomingEpisode(episodesData.upcoming_episode || null)
         }
 
         setEpisodesLoading(false)
@@ -1027,6 +1032,11 @@ if (message || !story) {
         />
 
         <StoryInfoSection story={story} />
+
+        <UpcomingEpisodeSection
+          episode={upcomingEpisode}
+          story={story}
+        />
 
         <EpisodePreviewSection
           story={story}
