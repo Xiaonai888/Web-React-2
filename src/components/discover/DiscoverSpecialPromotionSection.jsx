@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LockKeyhole, X } from 'lucide-react'
+import SpecialPromotionCheckoutSheet from '../promotions/SpecialPromotionCheckoutSheet'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import DiscoverSpecialPromotionCard from './DiscoverSpecialPromotionCard'
@@ -106,7 +106,6 @@ const ROTATION_STORAGE_KEY = 'shadow_discover_special_promotion_rotation_v2'
 const VISIT_STORAGE_KEY = 'shadow_discover_special_promotion_slide_v2'
 const PURCHASED_STORAGE_PREFIX = 'shadow_discover_special_promotion_purchased_v1'
 const RETRY_DELAY_MS = 30 * 1000
-const DIAMOND_ICON_URL = '/assets/Icons/Diamond.svg'
 
 let cachedRotation = null
 let pendingRequest = null
@@ -147,12 +146,6 @@ function savePurchasedPromotionIds(rotationKey, ids) {
   try {
     sessionStorage.setItem(key, JSON.stringify([...ids]))
   } catch {}
-}
-
-function formatDiamonds(value) {
-  return Number(value || 0).toLocaleString('en-US', {
-    maximumFractionDigits: 0,
-  })
 }
 
 function normalizeRotation(payload) {
@@ -338,27 +331,6 @@ export default function DiscoverSpecialPromotionSection() {
       document.removeEventListener('visibilitychange', tick)
     }
   }, [rotation?.expiresAt])
-
-  useEffect(() => {
-    if (!quote) return undefined
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    function handleEscape(event) {
-      if (event.key === 'Escape' && !purchaseInFlightRef.current) {
-        setQuote(null)
-        setPurchaseError('')
-      }
-    }
-
-    window.addEventListener('keydown', handleEscape)
-
-    return () => {
-      window.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [quote])
 
   function startPurchase(offer) {
     if (!getReaderToken()) {
@@ -649,99 +621,24 @@ export default function DiscoverSpecialPromotionSection() {
       ) : null}
 
       {quote ? (
-        <div
-          className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 sm:items-center sm:p-5"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('discoverSpecialPromotionCheckout.confirmTitle')}
-        >
-          <button
-            type="button"
-            aria-label={t('discoverSpecialPromotionCheckout.close')}
-            className="absolute inset-0 cursor-default"
-            disabled={purchaseBusy}
-            onClick={closePurchase}
-          />
-
-          <div className="relative z-10 w-full max-w-[410px] rounded-t-[22px] bg-white px-5 pb-7 pt-5 text-[#25142f] shadow-2xl dark:bg-[#241d2b] dark:text-white sm:rounded-[22px] sm:pb-5">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-[16px] font-extrabold leading-snug">
-                {t('discoverSpecialPromotionCheckout.confirmTitle')}
-              </h2>
-              <button
-                type="button"
-                aria-label={t('discoverSpecialPromotionCheckout.close')}
-                onClick={closePurchase}
-                disabled={purchaseBusy}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 disabled:opacity-40 dark:bg-white/10 dark:text-white"
-              >
-                <X size={17} aria-hidden="true" />
-              </button>
-            </div>
-
-            <p className="mt-3 text-[14px] font-bold leading-relaxed">{quote.title}</p>
-            <p className="mt-1 text-[12px] leading-relaxed text-gray-500 dark:text-white/60">
-              {t('discoverSpecialPromotionCheckout.confirmDescription', { count: quote.count })}
-            </p>
-
-            <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-1 text-[12px] text-gray-400 line-through dark:text-white/40">
-                  <img src={DIAMOND_ICON_URL} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain opacity-70" />
-                  {formatDiamonds(quote.originalPrice)}
-                </span>
-                <span className="rounded-lg bg-red-600 px-2 py-1 text-[11px] font-extrabold text-white">
-                  -50%
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-[22px] font-black">
-                <img src={DIAMOND_ICON_URL} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
-                {formatDiamonds(quote.price)}
-                <span className="ml-auto text-[11px] font-semibold text-gray-500 dark:text-white/60">
-                  <LockKeyhole size={12} className="mr-1 inline" aria-hidden="true" />
-                  {quote.count}
-                </span>
-              </div>
-            </div>
-
-            {purchaseError ? (
-              <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-[12px] text-red-700 dark:bg-red-950/40 dark:text-red-200" role="alert">
-                {purchaseError}
-              </p>
-            ) : null}
-
-            {needsTopUp ? (
-              <button
-                type="button"
-                onClick={() => navigate('/shop/mall/purchase')}
-                className="mt-3 w-full rounded-full border border-[#d6a343] bg-white px-3 py-2.5 text-[12px] font-bold text-[#25142f] dark:bg-white/10 dark:text-white"
-              >
-                {t('discoverSpecialPromotionCheckout.topUp')}
-              </button>
-            ) : null}
-
-            <div className="mt-5 flex gap-2.5">
-              <button
-                type="button"
-                disabled={purchaseBusy}
-                onClick={closePurchase}
-                className="flex-1 rounded-full border border-gray-200 px-3 py-3 text-[12px] font-bold disabled:opacity-50 dark:border-white/20"
-              >
-                {t('discoverSpecialPromotionCheckout.cancel')}
-              </button>
-              <button
-                type="button"
-                disabled={purchaseBusy}
-                onClick={confirmPurchase}
-                className="flex-[1.4] rounded-full border-[1.5px] border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white disabled:opacity-50"
-              >
-                {purchaseBusy
-                  ? t('discoverSpecialPromotionCheckout.processing')
-                  : t('discoverSpecialPromotionCheckout.confirm')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <SpecialPromotionCheckoutSheet
+          quote={quote}
+          busy={purchaseBusy}
+          error={purchaseError}
+          needsTopUp={needsTopUp}
+          onClose={closePurchase}
+          onConfirm={confirmPurchase}
+          onTopUp={() => navigate('/shop/mall/purchase')}
+          labels={{
+            title: t('discoverSpecialPromotionCheckout.confirmTitle'),
+            description: t('discoverSpecialPromotionCheckout.confirmDescription', { count: quote.count }),
+            close: t('discoverSpecialPromotionCheckout.close'),
+            cancel: t('discoverSpecialPromotionCheckout.cancel'),
+            confirm: t('discoverSpecialPromotionCheckout.confirm'),
+            processing: t('discoverSpecialPromotionCheckout.processing'),
+            topUp: t('discoverSpecialPromotionCheckout.topUp'),
+          }}
+        />
       ) : null}
     </>
   )
