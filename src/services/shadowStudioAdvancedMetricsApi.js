@@ -52,7 +52,7 @@ function rememberFailedEvent(key, error) {
 }
 
 export function hasStudioViewerSession() {
-  return Boolean(currentSessionToken())
+  return Boolean(currentSessionToken()) && authBlockedUntil <= Date.now()
 }
 
 async function studioRequest(path, { method = 'GET', body, signal, keepalive = false } = {}) {
@@ -99,8 +99,19 @@ async function studioRequest(path, { method = 'GET', body, signal, keepalive = f
 
     if (token === currentSessionToken()) {
       if (response.status === 401 || response.status === 403) {
-        authBlockedUntil = Date.now() + AUTH_COOLDOWN_MS
-      } else if (code === 'STUDIO_ADVANCED_METRICS_NOT_INSTALLED') {
+  const sessionRejected = [
+    'READER_SESSION_REVOKED',
+    'READER_SESSION_EXPIRED',
+    'READER_SESSION_REQUIRED',
+    'TOKEN_EXPIRED',
+    'TOKEN_INVALID',
+    'WRONG_TOKEN_TYPE',
+  ].includes(code)
+
+  authBlockedUntil = sessionRejected
+    ? Number.POSITIVE_INFINITY
+    : Date.now() + AUTH_COOLDOWN_MS
+} else if (code === 'STUDIO_ADVANCED_METRICS_NOT_INSTALLED') {
         unavailableUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS
       } else if (eventKey && (response.status === 400 || response.status === 404)) {
         rememberFailedEvent(eventKey, error)
