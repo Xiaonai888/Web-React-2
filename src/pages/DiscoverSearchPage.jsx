@@ -9,6 +9,8 @@ import {
 } from '../services/discoverSearchAnalytics'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getStoryLanguageLabel } from '../utils/storyLanguage'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 
 
 registerTranslationNamespace('discoverSearchPage', {
@@ -17,6 +19,8 @@ registerTranslationNamespace('discoverSearchPage', {
     readers: 'Readers',
     pages: 'Pages',
     stories: 'Stories',
+    storiesInLanguage: 'Stories in {{language}}',
+    otherLanguages: 'Stories in Other Languages',
     pdfBooks: 'PDF Books',
     posts: 'Posts',
     profile: 'Profile',
@@ -52,6 +56,8 @@ registerTranslationNamespace('discoverSearchPage', {
     readers: 'អ្នកអាន',
     pages: 'ទំព័រ',
     stories: 'រឿង',
+    storiesInLanguage: 'រឿងភាសា {{language}}',
+    otherLanguages: 'រឿងជាភាសាផ្សេង',
     pdfBooks: 'សៀវភៅ PDF',
     posts: 'Post',
     profile: 'ប្រវត្តិរូប',
@@ -87,6 +93,8 @@ registerTranslationNamespace('discoverSearchPage', {
     readers: '读者',
     pages: '主页',
     stories: '故事',
+    storiesInLanguage: '{{language}}故事',
+    otherLanguages: '其他语言的故事',
     pdfBooks: 'PDF 书籍',
     posts: '帖子',
     profile: '个人资料',
@@ -122,6 +130,8 @@ registerTranslationNamespace('discoverSearchPage', {
     readers: '読者',
     pages: 'ページ',
     stories: 'ストーリー',
+    storiesInLanguage: '{{language}}のストーリー',
+    otherLanguages: '他の言語のストーリー',
     pdfBooks: 'PDF 書籍',
     posts: '投稿',
     profile: 'プロフィール',
@@ -157,6 +167,8 @@ registerTranslationNamespace('discoverSearchPage', {
     readers: '독자',
     pages: '페이지',
     stories: '스토리',
+    storiesInLanguage: '{{language}} 스토리',
+    otherLanguages: '다른 언어의 스토리',
     pdfBooks: 'PDF 도서',
     posts: '게시물',
     profile: '프로필',
@@ -209,6 +221,7 @@ const EMPTY_SECTIONS = {
   readers: [],
   pages: [],
   stories: [],
+  other_language_stories: [],
   pdfs: [],
   posts: [],
 }
@@ -429,6 +442,7 @@ function PageResult({
 function StoryResult({
   story,
   onOpen,
+  showLanguageBadge = false,
 }) {
   const { t } = useDisplayTranslation()
   const authorName =
@@ -476,6 +490,11 @@ function StoryResult({
           {story.main_genre ? (
             <span className="rounded-full bg-[#f3f4f6] px-2 py-1 dark:bg-[var(--shadow-bg-elevated)]">
               {story.main_genre}
+            </span>
+          ) : null}
+          {showLanguageBadge && story.story_language ? (
+            <span className="rounded-full bg-[#ede9fe] px-2 py-1 text-[#6d28d9] dark:bg-[var(--shadow-bg-elevated)] dark:text-[var(--shadow-text-primary)]">
+              {story.story_language}
             </span>
           ) : null}
           <span>
@@ -798,6 +817,8 @@ function EmptyState({
 export default function DiscoverSearchPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const storyLanguage = useStoryLanguageId()
+  const selectedStoryLanguage = getStoryLanguageLabel()
   const initialParams =
     new URLSearchParams(
       window.location.search
@@ -863,6 +884,7 @@ export default function DiscoverSearchPage() {
           new URLSearchParams({
             q: keyword,
             type: activeType,
+            language: selectedStoryLanguage,
             limit:
               activeType === 'all'
                 ? '20'
@@ -919,7 +941,9 @@ export default function DiscoverSearchPage() {
                   responseCounts[
                     activeType
                   ] || 0
-                ),
+                ) + (activeType === 'stories'
+                  ? Number(responseCounts.other_language_stories || 0)
+                  : 0),
           token,
         })
       } catch (error) {
@@ -949,7 +973,7 @@ export default function DiscoverSearchPage() {
     runSearch()
 
     return () => controller.abort()
-  }, [activeQuery, activeType, t])
+  }, [activeQuery, activeType, storyLanguage, t])
 
   const totalShown = useMemo(() => {
     return Object.values(
@@ -1138,9 +1162,9 @@ export default function DiscoverSearchPage() {
     },
     {
       key: 'stories',
-      title: t(
-        'discoverSearchPage.stories'
-      ),
+      title: t('discoverSearchPage.storiesInLanguage', {
+        language: selectedStoryLanguage,
+      }),
       items: sections.stories,
       render: (item) => (
         <StoryResult
@@ -1178,19 +1202,31 @@ export default function DiscoverSearchPage() {
         />
       ),
     },
+    {
+      key: 'other_language_stories',
+      title: t('discoverSearchPage.otherLanguages'),
+      items: sections.other_language_stories,
+      render: (item) => (
+        <StoryResult
+          key={item.id}
+          story={item}
+          onOpen={openStory}
+          showLanguageBadge
+        />
+      ),
+    },
   ]
 
   const visibleSections =
     activeType === 'all'
-      ? sectionConfig.filter(
-          (section) =>
+      ? sectionConfig.filter((section) => section.items.length)
+      : activeType === 'stories'
+        ? sectionConfig.filter((section) =>
+            (section.key === 'stories' ||
+              section.key === 'other_language_stories') &&
             section.items.length
-        )
-      : sectionConfig.filter(
-          (section) =>
-            section.key ===
-            activeType
-        )
+          )
+        : sectionConfig.filter((section) => section.key === activeType)
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] pb-10 text-[#16181d] dark:bg-[var(--shadow-bg-page)] dark:text-[var(--shadow-text-primary)]">
@@ -1314,7 +1350,9 @@ export default function DiscoverSearchPage() {
                   }
                   onShowAll={() =>
                     changeType(
-                      section.key
+                      section.key === 'other_language_stories'
+                        ? 'stories'
+                        : section.key
                     )
                   }
                 >
