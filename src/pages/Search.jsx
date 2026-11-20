@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
+import { getStoryLanguageLabel } from '../utils/storyLanguage'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 
 registerTranslationNamespace('searchPage', {
@@ -174,6 +176,7 @@ function getTabLabel(tabLabel, t) {
 
 export default function Search() {
   const { t } = useDisplayTranslation()
+  const storyLanguage = useStoryLanguageId()
   const [activeTab, setActiveTab] = useState(TABS[0].label)
   const [searchText, setSearchText] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
@@ -208,6 +211,7 @@ const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ?
           sort: activeTabConfig.sort,
         })
 
+        params.set('language', getStoryLanguageLabel())
         if (filteredStoryType) params.set('story_type', filteredStoryType)
 
         if (activeSearch.trim()) {
@@ -241,7 +245,7 @@ const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ?
     return () => {
       ignore = true
     }
-  }, [activeTabConfig.sort, activeSearch, filteredStoryType])
+  }, [activeTabConfig.sort, activeSearch, filteredStoryType, storyLanguage, t])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
