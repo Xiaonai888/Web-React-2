@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addStoryLanguageParam, getStoryLanguageId } from '../../utils/storyLanguage'
+import { addStoryLanguageParam } from '../../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../../utils/homeDataCache'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import useGenreAutoLoad from '../../hooks/useGenreAutoLoad'
+import useStoryLanguageId from '../../hooks/useStoryLanguageId'
 
 registerTranslationNamespace('sharedGenrePage', {
   en: {
@@ -721,6 +722,7 @@ export default function SharedGenrePage({
 }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const storyLanguageId = useStoryLanguageId()
   const normalizedGenreSlug = toSlug(genreSlug)
   const fallbackGenreName = formatGenreName(normalizedGenreSlug)
   const [genreName, setGenreName] = useState(fallbackGenreName)
@@ -748,6 +750,7 @@ export default function SharedGenrePage({
 
     async function loadGenrePage() {
       loadMoreControllerRef.current?.abort()
+      setLoading(true)
       setLoadingMore(false)
       setMessage('')
       setLoadMoreError('')
@@ -767,7 +770,7 @@ export default function SharedGenrePage({
 
       const storiesCacheKey = getHomeCacheKey({
         section: 'stories',
-        language: getStoryLanguageId(),
+        language: storyLanguageId,
         params: {
           page: 'shared-genre',
           genre: normalizedGenreSlug,
@@ -1026,7 +1029,7 @@ export default function SharedGenrePage({
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [fallbackGenreName, normalizedGenreSlug])
+  }, [fallbackGenreName, normalizedGenreSlug, storyLanguageId])
 
   const loadMoreStories = async () => {
     if (!hasAccount) return false
@@ -1102,7 +1105,7 @@ export default function SharedGenrePage({
 
       const storiesCacheKey = getHomeCacheKey({
         section: 'stories',
-        language: getStoryLanguageId(),
+        language: storyLanguageId,
         params: {
           page: 'shared-genre',
           genre: normalizedGenreSlug,
@@ -1147,7 +1150,7 @@ export default function SharedGenrePage({
 
 
   const { sentinelRef, showManualLoad, hasAccount } = useGenreAutoLoad({
-    resetKey: `${normalizedGenreSlug}:${getStoryLanguageId()}`,
+    resetKey: `${normalizedGenreSlug}:${storyLanguageId}`,
     hasMore,
     loading,
     loadingMore,
