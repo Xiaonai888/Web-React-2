@@ -2,10 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import {
-  addStoryLanguageParam,
-  getStoryLanguageId,
-} from '../utils/storyLanguage'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -59,15 +56,13 @@ const API_BASE_URL =
 
 const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
-const fallbackTrendingStories = Array.from({ length: 9 }).map((_, index) => ({
-  id: 201 + index,
-  title: '',
-  titleKey: 'trendingStory',
-  image: `/assets/New Arrival/New Arrival ${index + 1}.jpg`,
-  genre: '',
-  genreKey: index % 2 === 0 ? 'romance' : 'fantasy',
-  isAdult: false,
-}))
+const STORY_LANGUAGE_LABELS = Object.freeze({
+  km: 'Khmer',
+  en: 'English',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+})
 
 function normalizeStory(story, index = 0) {
   return {
@@ -170,111 +165,117 @@ export default function TrendingNowSection({
   const startXRef = useRef(0)
   const scrollLeftRef = useRef(0)
 
+  const storyLanguageId = useStoryLanguageId()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadedScope, setLoadedScope] = useState('')
 
   const normalizedStoryType = String(storyType || '')
     .trim()
     .toLowerCase()
+  const resultScope = `${storyLanguageId}:${normalizedStoryType || 'all'}`
 
   useEffect(() => {
-  let ignore = false
+    let ignore = false
+    const controller = new AbortController()
+    const scope = resultScope
 
-  async function loadTrendingStories() {
-    const cacheKey = getHomeCacheKey({
-      section: 'stories',
-      language: getStoryLanguageId(),
-      params: {
-        home_section: 'trending',
-        sort: 'popular',
-        limit: 9,
-        story_type: normalizedStoryType || 'all',
-        schema: 1,
-      },
-    })
+    async function loadTrendingStories() {
+      setLoading(true)
+      setStories([])
+      setLoadedScope('')
 
-    const cached = await loadHomeCache(cacheKey, {
-      maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
-      allowExpired: true,
-    })
-
-    const hasCachedStories = Array.isArray(cached?.data)
-
-    if (hasCachedStories && !ignore) {
-      setStories(cached.data)
-      setLoading(false)
-    }
-
-    if (cached?.isFresh && hasCachedStories) {
-      return
-    }
-
-    try {
-      if (!hasCachedStories && !ignore) {
-        setLoading(true)
-      }
-
-      const storyTypeQuery = normalizedStoryType
-        ? `&story_type=${encodeURIComponent(
-            normalizedStoryType
-          )}`
-        : ''
-
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=9&sort=popular${storyTypeQuery}`
-        )
-      )
-
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false) {
-        throw new Error(
-          data.message ||
-            'Failed to load trending stories'
-        )
-      }
-
-      const nextStories = (data.stories || [])
-        .filter(
-          (story) =>
-            !normalizedStoryType ||
-            String(story?.story_type || '')
-              .trim()
-              .toLowerCase() === normalizedStoryType
-        )
-        .map(normalizeStory)
-        .slice(0, 9)
-
-      if (ignore) return
-
-      setStories(nextStories)
-
-      await saveHomeCache(cacheKey, nextStories, {
-        maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
+      const cacheKey = getHomeCacheKey({
+        section: 'stories',
+        language: storyLanguageId,
+        params: {
+          home_section: 'trending',
+          sort: 'popular',
+          limit: 9,
+          story_type: normalizedStoryType || 'all',
+          schema: 2,
+        },
       })
-    } catch (error) {
-      console.error(
-        'TrendingNowSection fetch error:',
-        error
-      )
 
-      if (!ignore && !hasCachedStories) {
-        setStories([])
-      }
-    } finally {
-      if (!ignore) {
-        setLoading(false)
+      let hasCachedStories = false
+
+      try {
+        const cached = await loadHomeCache(cacheKey, {
+          maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
+          allowExpired: true,
+        }).catch(() => null)
+
+        if (ignore || controller.signal.aborted) return
+
+        hasCachedStories = Array.isArray(cached?.data)
+        if (hasCachedStories) {
+          setStories(cached.data)
+          setLoadedScope(scope)
+          setLoading(false)
+        }
+
+        if (cached?.isFresh && hasCachedStories) return
+
+        const params = new URLSearchParams({
+          limit: '9',
+          sort: 'popular',
+          language: STORY_LANGUAGE_LABELS[storyLanguageId] || 'Khmer',
+        })
+        if (normalizedStoryType) {
+          params.set('story_type', normalizedStoryType)
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/public/stories?${params.toString()}`,
+          { signal: controller.signal }
+        )
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.message || 'Failed to load trending stories')
+        }
+
+        const selectedLanguage = (STORY_LANGUAGE_LABELS[storyLanguageId] || 'Khmer').toLowerCase()
+        const nextStories = (Array.isArray(data.stories) ? data.stories : [])
+          .filter((story) => {
+            const language = String(story?.story_language || '').trim().toLowerCase()
+            const type = String(story?.story_type || '').trim().toLowerCase()
+            return (
+              (language === selectedLanguage || language === storyLanguageId) &&
+              (!normalizedStoryType || type === normalizedStoryType)
+            )
+          })
+          .map(normalizeStory)
+          .slice(0, 9)
+
+        if (ignore || controller.signal.aborted) return
+
+        setStories(nextStories)
+        setLoadedScope(scope)
+        await saveHomeCache(cacheKey, nextStories, {
+          maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
+        }).catch(() => {})
+      } catch (error) {
+        if (ignore || controller.signal.aborted || error?.name === 'AbortError') return
+        console.error('TrendingNowSection fetch error:', error)
+        if (!hasCachedStories) {
+          setStories([])
+          setLoadedScope(scope)
+        }
+      } finally {
+        if (!ignore && !controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
-  }
 
-  loadTrendingStories()
+    loadTrendingStories()
 
-  return () => {
-    ignore = true
-  }
-}, [normalizedStoryType])
+    return () => {
+      ignore = true
+      controller.abort()
+    }
+  }, [normalizedStoryType, storyLanguageId])
 
   const handleMouseDown = (event) => {
     const container = scrollRef.current
@@ -325,15 +326,11 @@ export default function TrendingNowSection({
 })
 }
 
-  if (loading) {
+  if (loading || loadedScope !== resultScope) {
     return <LoadingGrid />
   }
 
-  const books = stories.length
-    ? stories
-    : normalizedStoryType
-      ? []
-      : fallbackTrendingStories
+  const books = stories
 
   if (!books.length) {
     return null
