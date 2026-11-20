@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  addStoryLanguageParam,
-  getStoryLanguageId,
-} from '../utils/storyLanguage'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -126,6 +123,14 @@ const API_BASE_URL =
     : 'https://shadow-backend-kucw.onrender.com'
 const TOP_NOVEL_PAGE_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 
+const STORY_LANGUAGE_LABELS = Object.freeze({
+  km: 'Khmer',
+  en: 'English',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+})
+
 const topNovelCategories = [
   'Romance',
   'Fantasy',
@@ -146,57 +151,9 @@ const queryByCategory = {
   Romance: '/api/public/stories?limit=30&sort=likes&genre=Romance',
   Fantasy: '/api/public/stories?limit=30&sort=likes&genre=Fantasy',
   Investigation: '/api/public/stories?limit=30&sort=popular&genre=Mystery',
-  Completed: '/api/public/stories?limit=30&sort=popular',
-  'Recently Completed': '/api/public/stories?limit=30&sort=updated',
+  Completed: '/api/public/stories?limit=30&sort=popular&story_status=Completed',
+  'Recently Completed': '/api/public/stories?limit=30&sort=updated&story_status=Completed',
 }
-
-const fallbackTopNovelData = [
-  {
-    id: 1,
-    rank: 1,
-    title: 'Name book',
-    author: 'Author Name',
-    views: '100k',
-    likes: '1000',
-    description:
-      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
-    image: '/assets/top-novel/top-1.jpg',
-    category: 'Romance',
-    link: '/story/1',
-    genre: 'Romance',
-    isAdult: false,
-  },
-  {
-    id: 2,
-    rank: 2,
-    title: 'Name book',
-    author: 'Author Name',
-    views: '100k',
-    likes: '1000',
-    description:
-      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
-    image: '/assets/top-novel/top-2.jpg',
-    category: 'Romance',
-    link: '/story/2',
-    genre: 'Romance',
-    isAdult: false,
-  },
-  {
-    id: 3,
-    rank: 3,
-    title: 'Name book',
-    author: 'Author Name',
-    views: '100k',
-    likes: '1000',
-    description:
-      "After looking around, I saw that there were monsters moving towards me. This time, it wasn't just humans anymore, but all kinds of monsters and zombie plants.",
-    image: '/assets/top-novel/top-3.jpg',
-    category: 'Romance',
-    link: '/story/3',
-    genre: 'Romance',
-    isAdult: false,
-  },
-]
 
 function formatCompactNumber(value) {
   const number = Number(value || 0)
@@ -314,6 +271,7 @@ function getDisplayDescription(description, t) {
 export default function TopNovelPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const storyLanguageId = useStoryLanguageId()
   const [activeCategory, setActiveCategory] = useState('Romance')
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -328,9 +286,10 @@ export default function TopNovelPage() {
       queryByCategory[category] ||
       '/api/public/stories?limit=30&sort=popular'
 
+    const categoryDataKey = `${storyLanguageId}:${category}`
     const cacheKey = getHomeCacheKey({
       section: 'stories',
-      language: getStoryLanguageId(),
+      language: storyLanguageId,
       params: {
         page: 'top-novel',
         category,
@@ -354,7 +313,7 @@ export default function TopNovelPage() {
       if (hasCachedData) {
         setDataByCategory((current) => ({
           ...current,
-          [category]: cached.data,
+          [categoryDataKey]: cached.data,
         }))
         setLoading(false)
         setMessage('')
@@ -372,12 +331,12 @@ export default function TopNovelPage() {
 
       setMessage('')
 
-      const response = await fetch(
-        addStoryLanguageParam(
-          `${API_BASE_URL}${endpoint}`
-        ),
-        { signal }
+      const url = new URL(`${API_BASE_URL}${endpoint}`)
+      url.searchParams.set(
+        'language',
+        STORY_LANGUAGE_LABELS[storyLanguageId] || 'Khmer'
       )
+      const response = await fetch(url.toString(), { signal })
       const data = await response
         .json()
         .catch(() => ({}))
@@ -401,7 +360,7 @@ export default function TopNovelPage() {
 
       setDataByCategory((current) => ({
         ...current,
-        [category]: items,
+        [categoryDataKey]: items,
       }))
 
       await saveHomeCache(cacheKey, items, {
@@ -413,7 +372,7 @@ export default function TopNovelPage() {
       if (!hasCachedData) {
         setDataByCategory((current) => ({
           ...current,
-          [category]: [],
+          [categoryDataKey]: [],
         }))
         setMessage(
           error.message === 'Failed to fetch'
@@ -430,6 +389,8 @@ export default function TopNovelPage() {
 
   useEffect(() => {
     const controller = new AbortController()
+    setLoading(true)
+    setMessage('')
 
     fetchTopNovelPageData({
       category: activeCategory,
@@ -439,14 +400,12 @@ export default function TopNovelPage() {
     return () => {
       controller.abort()
     }
-  }, [activeCategory])
+  }, [activeCategory, storyLanguageId])
 
-  const filteredData = useMemo(() => {
-    const realList = dataByCategory[activeCategory]
-    if (realList?.length) return realList
-    if (message) return []
-    return fallbackTopNovelData.filter((item) => item.category === activeCategory)
-  }, [activeCategory, dataByCategory, message])
+  const filteredData = useMemo(
+    () => dataByCategory[`${storyLanguageId}:${activeCategory}`] || [],
+    [activeCategory, dataByCategory, storyLanguageId]
+  )
 
   return (
     <main className="app-page min-h-screen bg-[#f7f7f8] pb-24 dark:bg-[var(--shadow-bg-page)]">
