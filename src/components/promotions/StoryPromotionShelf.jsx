@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Gem, LockKeyhole, X } from 'lucide-react'
+import SpecialPromotionCheckoutSheet from './SpecialPromotionCheckoutSheet'
 import PromotionBookShelf from '../PromotionBookShelf'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -88,10 +88,6 @@ function savePurchased(rotationKey, ids) {
   } catch {}
 }
 
-function diamonds(value) {
-  return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
-
 export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, onStale }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
@@ -110,20 +106,6 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
     setNotice('')
     setPurchasedStoryId('')
   }, [rotationKey])
-
-  useEffect(() => {
-    if (!quote) return undefined
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape' && !inFlightRef.current) setQuote(null)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = overflow
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [quote])
 
   function openStory(offer) {
     const storyId = String(offer?.story_id || '').trim()
@@ -262,39 +244,24 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
         </div>
       ) : null}
       {quote ? (
-        <div className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label={t('storyShelfCheckout.title')}>
-          <button type="button" className="absolute inset-0" onClick={closePurchase} disabled={busy} aria-label={t('storyShelfCheckout.close')} />
-          <div className="relative z-10 w-full max-w-[410px] rounded-t-[22px] bg-white p-5 pb-7 text-[#25142f] shadow-2xl dark:bg-[#241d2b] dark:text-white sm:rounded-[22px] sm:pb-5">
-            <div className="flex items-start justify-between gap-2">
-              <h2 className="text-[16px] font-extrabold">{t('storyShelfCheckout.title')}</h2>
-              <button type="button" onClick={closePurchase} disabled={busy} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 disabled:opacity-50 dark:bg-white/10 dark:text-white" aria-label={t('storyShelfCheckout.close')}>
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="mt-3 text-[14px] font-bold">{quote.title}</p>
-            <p className="mt-1 text-[12px] text-gray-500 dark:text-white/60">{t('storyShelfCheckout.description', { count: quote.count })}</p>
-            <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
-              <div className="flex items-center justify-between text-[12px]">
-                <span className="line-through text-gray-500 dark:text-white/50"><Gem className="mr-1 inline h-3.5 w-3.5" />{diamonds(quote.originalPrice)}</span>
-                <span className="rounded-lg bg-red-600 px-2 py-1 font-extrabold text-white">−50%</span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-[22px] font-black">
-                <Gem className="h-5 w-5 text-[#1baff0]" />{diamonds(quote.price)}
-                <span className="ml-auto flex items-center gap-1 text-[11px] text-gray-500 dark:text-white/60"><LockKeyhole className="h-3.5 w-3.5" />{quote.count}</span>
-              </div>
-            </div>
-            {error ? <p className="mt-3 rounded-xl bg-red-50 p-3 text-[12px] text-red-700 dark:bg-red-950/40 dark:text-red-200" role="alert">{error}</p> : null}
-            {needsTopUp ? (
-              <button type="button" onClick={() => navigate('/shop/mall/purchase')} className="mt-3 w-full rounded-full border border-[#d6a343] px-3 py-2.5 text-[12px] font-bold dark:border-[#d6a343]">
-                {t('storyShelfCheckout.topUp')}
-              </button>
-            ) : null}
-            <div className="mt-5 flex gap-2.5">
-              <button type="button" onClick={closePurchase} disabled={busy} className="flex-1 rounded-full border border-gray-200 px-3 py-3 text-[12px] font-bold disabled:opacity-50 dark:border-white/20">{t('storyShelfCheckout.cancel')}</button>
-              <button type="button" onClick={confirmPurchase} disabled={busy} className="flex-[1.4] rounded-full border-[1.5px] border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white disabled:opacity-50">{busy ? t('storyShelfCheckout.processing') : t('storyShelfCheckout.confirm')}</button>
-            </div>
-          </div>
-        </div>
+        <SpecialPromotionCheckoutSheet
+          quote={quote}
+          busy={busy}
+          error={error}
+          needsTopUp={needsTopUp}
+          onClose={closePurchase}
+          onConfirm={confirmPurchase}
+          onTopUp={() => navigate('/shop/mall/purchase')}
+          labels={{
+            title: t('storyShelfCheckout.title'),
+            description: t('storyShelfCheckout.description', { count: quote.count }),
+            close: t('storyShelfCheckout.close'),
+            cancel: t('storyShelfCheckout.cancel'),
+            confirm: t('storyShelfCheckout.confirm'),
+            processing: t('storyShelfCheckout.processing'),
+            topUp: t('storyShelfCheckout.topUp'),
+          }}
+        />
       ) : null}
     </>
   )
