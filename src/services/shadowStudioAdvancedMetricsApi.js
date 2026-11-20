@@ -1,4 +1,4 @@
-import { getActiveReaderToken } from '../utils/readerActiveAccount'
+import { getActiveReaderToken, getReaderSessionIdentity, isSameReaderSession } from '../utils/readerActiveAccount'
 
 const API_BASE = import.meta.env.VITE_API_URL || (
   ['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -17,7 +17,7 @@ const BAD_EVENT_COOLDOWN_MS = 30 * 1000
 const UNAVAILABLE_COOLDOWN_MS = 5 * 60 * 1000
 const FAILED_EVENT_LIMIT = 100
 
-let failureSessionToken = ''
+let failureSessionKey = ''
 let authBlockedUntil = 0
 let unavailableUntil = 0
 const failedEvents = new Map()
@@ -31,12 +31,18 @@ function errorWithStatus(message, status, code = '') {
 
 function currentSessionToken() {
   const token = getActiveReaderToken()
-  if (token !== failureSessionToken) {
-    failureSessionToken = token
+  const identity = getReaderSessionIdentity(token)
+  const sessionKey = identity
+    ? [identity.userId, identity.sessionId, identity.deviceId, identity.jwtId].join(':')
+    : token
+
+  if (sessionKey !== failureSessionKey) {
+    failureSessionKey = sessionKey
     authBlockedUntil = 0
     unavailableUntil = 0
     failedEvents.clear()
   }
+
   return token
 }
 
@@ -97,7 +103,8 @@ async function studioRequest(path, { method = 'GET', body, signal, keepalive = f
       code
     )
 
-    if (token === currentSessionToken()) {
+   const activeToken = currentSessionToken()
+if (token === activeToken || isSameReaderSession(token, activeToken)) {
       if (response.status === 401 || response.status === 403) {
   const sessionRejected = [
     'READER_SESSION_REVOKED',
@@ -108,9 +115,15 @@ async function studioRequest(path, { method = 'GET', body, signal, keepalive = f
     'WRONG_TOKEN_TYPE',
   ].includes(code)
 
+  const staleExpiredToken =
+  token !== activeToken &&
+  ['TOKEN_EXPIRED', 'TOKEN_INVALID'].includes(code)
+
+if (!staleExpiredToken) {
   authBlockedUntil = sessionRejected
     ? Number.POSITIVE_INFINITY
     : Date.now() + AUTH_COOLDOWN_MS
+}
 } else if (code === 'STUDIO_ADVANCED_METRICS_NOT_INSTALLED') {
         unavailableUntil = Date.now() + UNAVAILABLE_COOLDOWN_MS
       } else if (eventKey && (response.status === 400 || response.status === 404)) {
