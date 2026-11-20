@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock3, Search, X } from 'lucide-react'
-import { getStoryLanguageId, getStoryLanguageLabel } from '../utils/storyLanguage'
+import { getStoryLanguageLabel } from '../utils/storyLanguage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import useGenreAutoLoad from '../hooks/useGenreAutoLoad'
+import useStoryLanguageId from '../hooks/useStoryLanguageId'
 
 registerTranslationNamespace('genresPage', {
   en: {
@@ -820,8 +821,9 @@ export default function GenresPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
+  const storyLanguageId = useStoryLanguageId()
   const isChatStoryMode = new URLSearchParams(location.search).get('story_type') === 'chat_story'
-  const genresStorageKey = isChatStoryMode ? 'shadow:genres-page:chat-story:v2' : 'shadow:genres-page:v2'
+  const genresStorageKey = `${isChatStoryMode ? 'shadow:genres-page:chat-story:v2' : 'shadow:genres-page:v2'}:${storyLanguageId}`
   const [savedState] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem(genresStorageKey) || '{}')
@@ -924,6 +926,7 @@ export default function GenresPage() {
     genresExpanded,
     query,
     searchOpen,
+    genresStorageKey,
   ])
 
   useEffect(() => {
@@ -980,7 +983,7 @@ export default function GenresPage() {
 
   const genreCacheKey = getHomeCacheKey({
     section: 'stories',
-    language: getStoryLanguageId(),
+    language: storyLanguageId,
     params: {
       page: isChatStoryMode ? 'genres-chat-story' : 'genres',
       genre: activeGenre,
@@ -1123,7 +1126,7 @@ export default function GenresPage() {
       controller.abort()
       loadMoreControllerRef.current?.abort()
     }
-  }, [activeGenre, storySetting, serverStoryStatus, serverAccessFilter, genreCacheMaxAge, query, isChatStoryMode])
+  }, [activeGenre, storySetting, serverStoryStatus, serverAccessFilter, genreCacheMaxAge, query, isChatStoryMode, storyLanguageId])
 
     const loadMoreBooks = async () => {
     if (
@@ -1234,7 +1237,7 @@ export default function GenresPage() {
 
 
   const { sentinelRef, showManualLoad } = useGenreAutoLoad({
-    resetKey: [isChatStoryMode, activeGenre, storySetting, serverStoryStatus, serverAccessFilter, query.trim(), activeQuickFilter, access, type, progress].join('|'),
+    resetKey: [storyLanguageId, isChatStoryMode, activeGenre, storySetting, serverStoryStatus, serverAccessFilter, query.trim(), activeQuickFilter, access, type, progress].join('|'),
     allowGuests: true,
     autoOnVisible: true,
     hasMore,
