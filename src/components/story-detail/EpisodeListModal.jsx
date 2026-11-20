@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { useNavigate } from 'react-router-dom'
 
 registerTranslationNamespace('episodeListModal', {
   en: {
@@ -331,6 +332,7 @@ const handleClick = () => {
 }
 
 export default function EpisodeListModal({ open, story, episodes = [], onClose, onOpenEpisode }) {
+  const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [newestFirst, setNewestFirst] = useState(true)
 
@@ -372,6 +374,7 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
           <button
   type="button"
+  onClick={() => navigate('/premium')}
   className="mt-4 flex min-h-[34px] w-full items-center gap-3 text-left active:scale-[0.995]"
 >
   <span className="flex h-7 shrink-0 items-center gap-1.5 rounded-tl-[11px] rounded-br-[11px] bg-[#111827] px-2.5 text-[11px] font-black italic text-white shadow-sm">
