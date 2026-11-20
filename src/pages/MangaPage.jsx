@@ -19,7 +19,6 @@ import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import { getCountryShopTarget, loadCountrySettings } from '../utils/countrySettings'
 
 registerTranslationNamespace('mangaPage', {
   en: {
