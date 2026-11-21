@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { formatFileSize } from '../../utils/mangaImageUtils'
 
@@ -11,10 +11,68 @@ function totalForPage(page) {
   return safeBytes(page.uploadTotalBytes || page.fileSize || page.sourceFile?.size || 0)
 }
 
+const STAGE_LABELS = {
+  queue: 'Waiting in local upload queue',
+  prepare: 'Reading or converting image on device',
+  read: 'Reading image on device',
+  convert: 'Converting image format',
+  init: 'Backend: requesting upload session',
+  put: 'Cloudflare R2: uploading image',
+  verify: 'Backend: verifying R2 image',
+  finalize: 'Backend: finalizing upload',
+  storage: 'Backend: checking R2 configuration',
+  worker: 'Server: processing image',
+  process: 'Server: processing image',
+  status: 'Backend: checking processing job',
+  auth: 'Account or upload authorization',
+  complete: 'Completed',
+  upload: 'Uploading image',
+}
+
+function parseUploadError(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return null
+  const match = raw.match(/\[([a-z][a-z\d_-]*):\s*([A-Z\d_]+)\]/i)
+  const code = String(match?.[2] || 'MANGA_UPLOAD_FAILED').toUpperCase()
+  const stage = String(match?.[1] || 'unknown').toLowerCase()
+  const uncertain = raw.includes('[MANGA_UPLOAD_UNCERTAIN]')
+  const message = raw.replace(/\[MANGA_UPLOAD_UNCERTAIN\]/gi, '').replace(/\[[a-z][a-z\d_-]*:\s*[A-Z\d_]+\]/gi, '').trim()
+  return { stage, code, message: message || 'Upload failed', uncertain }
+}
+
+function errorAdvice(code, uncertain) {
+  if (uncertain) return 'Upload result is not confirmed. Check server processing status before retrying, to avoid duplicate uploads.'
+  if (code === 'MANGA_DIRECT_UNAVAILABLE') return 'Backend reported incomplete R2 storage configuration. Verify the environment on the running Backend deployment.'
+  if (code === 'MANGA_DIRECT_DISABLED') return 'Backend direct-upload feature flag is disabled.'
+  if (/MANGA_DIRECT_PUT_NETWORK_ERROR|MANGA_DIRECT_PUT_FAILED/.test(code)) return 'The device could not complete the R2 request. Check connectivity and R2 CORS settings.'
+  if (/MANGA_DIRECT_INIT_NETWORK_ERROR|MANGA_DIRECT_FINALIZE_NETWORK_ERROR/.test(code)) return 'The browser could not reach the Backend. Check connectivity and Backend logs.'
+  if (code === 'MANGA_DIRECT_RATE_LIMIT') return 'Too many upload sessions were created in a short period. Avoid repeated taps and try later.'
+  if (/TOKEN_INVALID|UNAUTHORIZED|OWNER_MISMATCH/.test(code)) return 'Session or account mismatch. Sign in with the original author account.'
+  if (/MANGA_PROCESSING_TIMEOUT|MANGA_DIRECT_FINALIZE_TIMEOUT/.test(code)) return 'The final server result is unknown. Check job status before retrying.'
+  if (/MANGA_DIRECT_PUT_4\d\d|MANGA_DIRECT_PUT_5\d\d/.test(code)) return 'R2 returned an HTTP error. Check its status code and the upload policy.'
+  if (/IMAGE_FILE_READ|HEIC_CONVERSION|HEIC_PREVIEW|MANGA_DIRECT_TYPE_UNSUPPORTED/.test(code)) return 'The device could not prepare this image format. Check the original file.'
+  if (/MANGA_JOB_ID_MISSING|MANGA_DIRECT_JOB_MISSING/.test(code)) return 'Backend did not return a valid processing job. Inspect Backend finalize response.'
+  if (code === 'IMAGE_URL_MISSING') return 'The job finished without an image URL. Inspect the worker result.'
+  if (/MANGA_PROCESSING_FAILED|MANGA_DIRECT_JOB_LOOKUP_FAILED/.test(code)) return 'Server worker or database reported a problem. Check processing job logs.'
+  return 'Use the stage, code and message to locate the failing request in Backend logs.'
+}
+
+function fallbackStage(page) {
+  if (page?.status === 'done') return 'complete'
+  if (page?.serverProcessing) return 'worker'
+  if (page?.status === 'processing') return 'prepare'
+  if (page?.status === 'uploading') return 'put'
+  return 'queue'
+}
+
 export default function MangaUploadProgressModal({ pages, onCancel }) {
   const overlayRef = useRef(null)
   const dialogRef = useRef(null)
+  const [diagnostics, setDiagnostics] = useState({})
+  const [clock, setClock] = useState(Date.now())
+  const [copyStatus, setCopyStatus] = useState('')
   const items = Array.isArray(pages) ? pages : []
+  const itemIds = items.map((page) => String(page.id)).join('|')
   const active = items.length > 0
 
   useEffect(() => {
@@ -60,6 +118,27 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     }
   }, [active])
 
+  useEffect(() => {
+    if (!active) return undefined
+    const onDiagnostic = (event) => {
+      const detail = event?.detail
+      if (!detail?.pageId || !itemIds.split('|').includes(String(detail.pageId))) return
+      setDiagnostics((previous) => ({
+        ...previous,
+        [detail.pageId]: {
+          ...detail,
+          at: Number(detail.at || Date.now()),
+        },
+      }))
+    }
+    window.addEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+    const timer = window.setInterval(() => setClock(Date.now()), 10000)
+    return () => {
+      window.removeEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+      window.clearInterval(timer)
+    }
+  }, [active, itemIds])
+
   if (!active || typeof document === 'undefined') return null
 
   const totalBytes = items.reduce((sum, page) => sum + totalForPage(page), 0)
@@ -82,6 +161,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     items[items.length - 1]
 
   const serverProcessing = items.some((page) => page.status === 'processing' && page.serverProcessing)
+  const hasActiveTasks = items.some((page) => ['queued', 'uploading', 'processing'].includes(page.status))
   const canCancel = !serverProcessing
   const currentTotal = totalForPage(current)
   const currentLoaded = current?.status === 'done'
@@ -100,6 +180,44 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
         : current?.status === 'done'
           ? 'Ready'
           : 'Uploading'
+
+  const failedPages = items.map((page, index) => ({ page, index, error: parseUploadError(page.error) }))
+    .filter((entry) => entry.page.status === 'error' || entry.error)
+  const currentDiagnostic = diagnostics[String(current?.id)]
+  const currentError = parseUploadError(current?.error) ||
+    (currentDiagnostic?.status === 'error' || currentDiagnostic?.status === 'retry'
+      ? {
+          stage: String(currentDiagnostic.stage || 'unknown'),
+          code: String(currentDiagnostic.code || 'MANGA_UPLOAD_FAILED'),
+          message: String(currentDiagnostic.message || ''),
+          uncertain: Boolean(currentDiagnostic.uncertain),
+        }
+      : null)
+  const visibleStage = currentError?.stage || currentDiagnostic?.stage || fallbackStage(current)
+  const lastUpdate = Number(currentDiagnostic?.at || 0)
+  const silentSeconds = lastUpdate ? Math.max(0, Math.floor((clock - lastUpdate) / 1000)) : 0
+  const stalled = !currentError && lastUpdate > 0 && silentSeconds >= (visibleStage === 'worker' ? 120 : 75) &&
+    current?.status !== 'done'
+  const copyDetails = () => {
+    const lines = [
+      'Manga upload diagnostics',
+      `Completed: ${completedCount}/${items.length}`,
+      `Stage: ${visibleStage}`,
+      `Last update: ${lastUpdate ? new Date(lastUpdate).toISOString() : 'Not received'}`,
+      ...items.map((page, index) => {
+        const error = parseUploadError(page.error)
+        const diag = diagnostics[String(page.id)]
+        return `Page ${index + 1}: ${page.status} | ${error?.stage || diag?.stage || fallbackStage(page)} | ${error?.code || diag?.code || 'NO_CODE'} | ${(error?.message || diag?.message || '').slice(0, 250)}`
+      }),
+    ]
+    if (!navigator.clipboard?.writeText) {
+      setCopyStatus('Clipboard is unavailable on this device')
+      return
+    }
+    void navigator.clipboard.writeText(lines.join('\n'))
+      .then(() => setCopyStatus('Diagnostics copied'))
+      .catch(() => setCopyStatus('Copy failed'))
+  }
 
   const radius = 52
   const circumference = 2 * Math.PI * radius
@@ -133,7 +251,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           </div>
           <button type="button" onClick={onCancel} disabled={!canCancel}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
-            aria-label={canCancel ? 'Cancel Upload' : 'Processing on server'}>
+            aria-label={!hasActiveTasks ? 'Close diagnostics' : canCancel ? 'Cancel Upload' : 'Processing on server'}>
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
         </div>
@@ -203,9 +321,48 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           </div>
         </div>
 
+        <div className="mt-3 rounded-[16px] border border-[#dbe5f5] bg-[#f8faff] p-3 text-[#344054]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-extrabold text-[#111827]">Upload diagnostics</p>
+            <button type="button" onClick={copyDetails}
+              className="rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-bold text-[#175cd3] ring-1 ring-[#dbe5f5]">
+              Copy details
+            </button>
+          </div>
+          <p className="mt-2 text-[11px] font-semibold">Stage: {STAGE_LABELS[visibleStage] || visibleStage}</p>
+          {currentDiagnostic?.message && !currentError ? (
+            <p className="mt-1 break-words text-[10.5px] text-[#667085]">{currentDiagnostic.message}</p>
+          ) : null}
+          {stalled ? (
+            <div className="mt-2 rounded-lg bg-[#fff5e8] p-2 text-[10.5px] text-[#8a4b12]">
+              No new progress for {silentSeconds}s at this stage. This is a delay, not proof that the server failed.
+            </div>
+          ) : null}
+          {currentError ? (
+            <div className="mt-2 rounded-lg bg-[#fff0f0] p-2.5 text-[10.5px] text-[#a62121]">
+              <p className="font-extrabold">{currentError.stage}: {currentError.code}</p>
+              <p className="mt-1 break-words">{currentError.message}</p>
+              <p className="mt-1 text-[#8a3030]">{errorAdvice(currentError.code, currentError.uncertain)}</p>
+            </div>
+          ) : null}
+          {failedPages.length > 0 ? (
+            <div className="mt-2 border-t border-[#dbe5f5] pt-2">
+              <p className="text-[10.5px] font-bold text-[#b42318]">Failed images: {failedPages.length}</p>
+              <div className="mt-1 max-h-[105px] space-y-1 overflow-y-auto">
+                {failedPages.map(({ page, index, error }) => (
+                  <p key={page.id || index} className="break-words text-[10px] text-[#b42318]">
+                    Page {index + 1}: {error?.stage || 'unknown'} / {error?.code || 'MANGA_UPLOAD_FAILED'} — {error?.message || 'Upload failed'}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {copyStatus ? <p role="status" className="mt-2 text-[10px] font-medium">{copyStatus}</p> : null}
+        </div>
+
         <button type="button" onClick={onCancel} disabled={!canCancel}
           className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55">
-          {canCancel ? 'Cancel Upload' : 'Processing on server...'}
+          {!hasActiveTasks ? 'Close diagnostics' : canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
       </div>
     </div>,
