@@ -270,7 +270,7 @@ export async function claimNextMediaUpload(ownerId, workerId, leaseMs = DEFAULT_
 
 export async function renewMediaUploadLease(id, workerId, leaseMs = DEFAULT_LEASE_MS) {
   const worker = required(workerId, 'Worker ID')
-  return transaction([TASK_STORE], 'readwrite', (tx) => {
+  return transaction([TASK_STORE], 'readwrite', (tx, setResult) => {
     const store = tx.objectStore(TASK_STORE)
     const request = store.get(id)
     request.onsuccess = () => {
