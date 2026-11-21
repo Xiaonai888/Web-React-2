@@ -1302,7 +1302,7 @@ export default function AuthorCheckoutPage() {
   }
 
   navigate('/author/cart', { replace: true })
-}} className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] active:scale-95">
+}} className="flex h-10 w-10 items-center justify-center bg-transparent text-[var(--shadow-text-primary)] active:scale-95">
             <i className="fa-solid fa-chevron-left text-[15px]" />
           </button>
           <div className="min-w-0 flex-1 px-3 text-[18px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.checkout')}</div>
