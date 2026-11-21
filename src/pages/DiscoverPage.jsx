@@ -478,7 +478,7 @@ function mergeUniquePosts(current, incoming) {
   return merged
 }
 
-async function fetchFollowedPosts(token, cursor = '') {
+async function fetchFollowedPosts(token, cursor = '', trigger = 'unknown') {
   const params = new URLSearchParams({ limit: String(DISCOVER_AUTHOR_FEED_INITIAL_LIMIT) })
   if (typeof IntersectionObserver !== 'undefined') {
     params.set('boost_book_tracking', '1')
@@ -488,14 +488,15 @@ async function fetchFollowedPosts(token, cursor = '') {
     params.set('cursor', cursor)
   }
 
-  const response = await fetch(
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/authors/discover/posts/feed?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
-    }
+    },
+    trigger
   )
 
   const data = await response.json().catch(() => ({}))
@@ -509,21 +510,22 @@ async function fetchFollowedPosts(token, cursor = '') {
   return data
 }
 
-async function fetchReaderPosts(token) {
+async function fetchReaderPosts(token, trigger = 'unknown') {
   if (!token) {
     return {
       posts: [],
     }
   }
 
-  const response = await fetch(
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/reader-posts/feed?limit=20`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
-    }
+    },
+    trigger
   )
 
   const data = await response
@@ -908,10 +910,11 @@ function rotateDiscoverTimeline(timeline, rotationIndex) {
   }))
 }
 
-async function fetchShadowMallPromotionsRevision() {
-  const response = await fetch(
+async function fetchShadowMallPromotionsRevision(trigger = 'unknown') {
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/shadow-mall/promotions?meta=1`,
-    { cache: 'no-store' }
+    { cache: 'no-store' },
+    trigger
   )
   const data = await response.json().catch(() => ({}))
   if (!response.ok || data.ok === false || typeof data.revision !== 'string') {
@@ -920,10 +923,11 @@ async function fetchShadowMallPromotionsRevision() {
   return data.revision
 }
 
-async function fetchShadowMallPromotionsPage(page = 1) {
-  const response = await fetch(
+async function fetchShadowMallPromotionsPage(page = 1, trigger = 'unknown') {
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/shadow-mall/promotions?page=${page}&limit=${SHADOW_MALL_AD_PAGE_SIZE}`,
-    { cache: 'no-store' }
+    { cache: 'no-store' },
+    trigger
   )
   const data = await response.json().catch(() => ({}))
   if (!response.ok || data.ok === false) {
@@ -939,7 +943,8 @@ async function fetchShadowMallPromotionsPage(page = 1) {
 
 async function fetchShadowMallStorySaleStatuses(
   token,
-  promotions
+  promotions,
+  trigger = 'unknown'
 ) {
   const ids = [
     ...new Set(
@@ -965,14 +970,15 @@ async function fetchShadowMallStorySaleStatuses(
     ids: ids.join(','),
   })
 
-  const response = await fetch(
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/shadow-mall/promotions/story-sale/statuses?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
-    }
+    },
+    trigger
   )
 
   const data = await response
@@ -991,7 +997,8 @@ async function fetchShadowMallStorySaleStatuses(
 
 async function fetchShadowMallPromotionSocialStatuses(
   token,
-  promotions
+  promotions,
+  trigger = 'unknown'
 ) {
   const ids = [
     ...new Set(
@@ -1010,14 +1017,15 @@ async function fetchShadowMallPromotionSocialStatuses(
     ids: ids.join(','),
   })
 
-  const response = await fetch(
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/shadow-mall/promotions/social-statuses?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
-    }
+    },
+    trigger
   )
 
   const data = await response
@@ -1040,6 +1048,7 @@ async function loadShadowMallPrivateStatuses({
   section,
   maxAgeMs,
   fetcher,
+  trigger = 'unknown',
 }) {
   const cacheKey =
     getShadowMallPrivateStatusCacheKey(
@@ -1087,7 +1096,8 @@ async function loadShadowMallPrivateStatuses({
         () =>
           fetcher(
             token,
-            promotions
+            promotions,
+            trigger
           )
       )
 
@@ -1187,7 +1197,7 @@ async function setFollowedPostReaction(
     throw new Error(discoverText('loginFirst'))
   }
 
-  const response = await fetch(
+  const response = await discoverFetch(
     `${API_BASE_URL}/api/authors/me/posts/${encodeURIComponent(postId)}/react`,
     {
       method: 'POST',
@@ -1198,7 +1208,8 @@ async function setFollowedPostReaction(
       body: JSON.stringify({
         reaction_type: reactionType,
       }),
-    }
+    },
+    'user_action'
   )
 
   const data = await response.json().catch(() => ({}))
@@ -1532,7 +1543,7 @@ const isOwner = Boolean(
     setFollowBusy(true)
     setFollowError('')
 
-    const response = await fetch(
+    const response = await discoverFetch(
       `${API_BASE_URL}/api/authors/page/${encodeURIComponent(
         pageUsername
       )}/follow`,
@@ -1543,7 +1554,8 @@ const isOwner = Boolean(
     Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({ source_post_id: post.id }),
-}
+},
+      'user_action'
     )
 
     const data = await response
@@ -1802,7 +1814,7 @@ async function reportDiscoverBoostEngagement(token, post, eventType, details = {
   }
 
   try {
-    await fetch(`${API_BASE_URL}/api/authors/discover/posts/boost-engagement`, {
+    await discoverFetch(`${API_BASE_URL}/api/authors/discover/posts/boost-engagement`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1811,7 +1823,7 @@ async function reportDiscoverBoostEngagement(token, post, eventType, details = {
       body: JSON.stringify(payload),
       keepalive: true,
       cache: 'no-store',
-    })
+    }, eventType === 'click' ? 'user_action' : 'timer')
   } catch {}
 }
 
@@ -1935,7 +1947,7 @@ async function reportDiscoverBoostBookEngagement(token, book, eventType, details
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/authors/discover/books/boost-engagement`, {
+    const response = await discoverFetch(`${API_BASE_URL}/api/authors/discover/books/boost-engagement`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1944,7 +1956,7 @@ async function reportDiscoverBoostBookEngagement(token, book, eventType, details
       body: JSON.stringify(payload),
       keepalive: true,
       cache: 'no-store',
-    })
+    }, eventType === 'click' ? 'user_action' : 'timer')
     return response.ok
   } catch {
     return false
@@ -2442,7 +2454,7 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
     setFollowBusy(true)
     setFollowError('')
     try {
-      const response = await fetch(
+      const response = await discoverFetch(
         `${API_BASE_URL}/api/authors/page/${encodeURIComponent(authorUsername)}/follow`,
         {
           method: 'POST',
@@ -2451,7 +2463,8 @@ function AutoStoryAdCard({ ad, day, onMore, onImpression, onStoryOpen, isFollowi
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({}),
-        }
+        },
+        'user_action'
       )
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok === false) {
@@ -2717,7 +2730,7 @@ const [saleStatus, setSaleStatus] =
         setStatusLoading(true)
         setErrorMessage('')
 
-        const response = await fetch(
+        const response = await discoverFetch(
           `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(
             item.id
           )}/story-sale/status`,
@@ -2727,7 +2740,8 @@ const [saleStatus, setSaleStatus] =
             },
             cache: 'no-store',
             signal: controller.signal,
-          }
+          },
+          'mount'
         )
         const data = await response
           .json()
@@ -2833,7 +2847,7 @@ const [saleStatus, setSaleStatus] =
       setMessage('')
       setErrorMessage('')
 
-      const response = await fetch(
+      const response = await discoverFetch(
         `${API_BASE_URL}/api/shadow-mall/promotions/${encodeURIComponent(
           item.id
         )}/story-sale/purchase`,
@@ -2845,7 +2859,8 @@ const [saleStatus, setSaleStatus] =
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({}),
-        }
+        },
+        'user_action'
       )
       const data = await response
         .json()
@@ -3572,12 +3587,12 @@ useEffect(() => {
   let checkedAt = 0
   let boundaryTimer = null
 
-  async function syncAdControl(force = false) {
+  async function syncAdControl(force = false, trigger = 'unknown') {
     if (!alive || pending || document.hidden || (!force && Date.now() - checkedAt < 60000)) return
     pending = true
     checkedAt = Date.now()
     try {
-      const response = await fetch(`${API_BASE_URL}/api/shadow-mall/ad-control`, { cache: 'no-store' })
+      const response = await discoverFetch(`${API_BASE_URL}/api/shadow-mall/ad-control`, { cache: 'no-store' }, trigger)
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok !== true || !['manual', 'auto'].includes(data.mode)) {
         throw new Error('Invalid Ad control response')
@@ -3607,7 +3622,7 @@ useEffect(() => {
         const delay = remaining > 0
           ? remaining + 1000 + jitter
           : 60000 + jitter
-        boundaryTimer = window.setTimeout(() => { void syncAdControl(true) }, delay)
+        boundaryTimer = window.setTimeout(() => { void syncAdControl(true, 'timer') }, delay)
       }
     } catch {
       if (alive) setDiscoverAdControl(null)
@@ -3616,17 +3631,19 @@ useEffect(() => {
     }
   }
 
-  void syncAdControl()
-  const timer = window.setInterval(() => { void syncAdControl() }, 5 * 60 * 1000)
-  const refresh = () => { if (!document.hidden) void syncAdControl() }
-  window.addEventListener('focus', refresh)
-  document.addEventListener('visibilitychange', refresh)
+  void syncAdControl(false, 'mount')
+  const timer = window.setInterval(() => { void syncAdControl(false, 'timer') }, 5 * 60 * 1000)
+  const refresh = (trigger) => { if (!document.hidden) void syncAdControl(false, trigger) }
+  const onFocus = () => refresh('focus')
+  const onVisibilityChange = () => refresh('visibility')
+  window.addEventListener('focus', onFocus)
+  document.addEventListener('visibilitychange', onVisibilityChange)
   return () => {
     alive = false
     window.clearInterval(timer)
     if (boundaryTimer !== null) window.clearTimeout(boundaryTimer)
-    window.removeEventListener('focus', refresh)
-    document.removeEventListener('visibilitychange', refresh)
+    window.removeEventListener('focus', onFocus)
+    document.removeEventListener('visibilitychange', onVisibilityChange)
   }
 }, [])
   
@@ -3967,7 +3984,7 @@ useEffect(() => {
       )
     }
 
-    async function enrichPromotions(promotions) {
+    async function enrichPromotions(promotions, trigger = 'unknown') {
       const visiblePromotions = promotions.filter(isVisibleAd)
       if (!token || !visiblePromotions.length) return visiblePromotions
 
@@ -3981,6 +3998,7 @@ useEffect(() => {
             section: 'discover-promotion-story-sale-statuses',
             maxAgeMs: DISCOVER_SHADOW_MALL_SALE_STATUS_CACHE_MAX_AGE_MS,
             fetcher: fetchShadowMallStorySaleStatuses,
+            trigger,
           }),
           loadShadowMallPrivateStatuses({
             token,
@@ -3988,6 +4006,7 @@ useEffect(() => {
             section: 'discover-promotion-social-statuses',
             maxAgeMs: DISCOVER_SHADOW_MALL_SOCIAL_STATUS_CACHE_MAX_AGE_MS,
             fetcher: fetchShadowMallPromotionSocialStatuses,
+            trigger,
           }),
         ])
         const storyState = storyResult.status === 'fulfilled'
@@ -4019,12 +4038,12 @@ useEffect(() => {
       try {
         const result = await runDiscoverFeedRequest(
           `shadow-mall-page:${cacheKey}:${expectedRevision || 'fallback'}:${currentPage}`,
-          () => fetchShadowMallPromotionsPage(currentPage)
+          () => fetchShadowMallPromotionsPage(currentPage, 'navigation')
         )
         if (!alive || activeRevision !== expectedRevision) return
         const previousIds = new Set(publicPromotions.map((item) => String(item.id)))
         const extra = result.promotions.filter((item) => !previousIds.has(String(item.id)))
-        const extraEnriched = await enrichPromotions(extra)
+        const extraEnriched = await enrichPromotions(extra, 'navigation')
         if (!alive || activeRevision !== expectedRevision) return
 
         publicPromotions = combinePromotions(publicPromotions, extra)
@@ -4044,7 +4063,7 @@ useEffect(() => {
 
     shadowMallAdLoadMoreRef.current = loadMoreShadowMallPromotions
 
-    async function loadShadowMallPromotions() {
+    async function loadShadowMallPromotions(trigger = 'unknown') {
       if (loading || !alive) return
       loading = true
       try {
@@ -4062,7 +4081,7 @@ useEffect(() => {
         try {
           revision = await runDiscoverFeedRequest(
             'shadow-mall-public-revision',
-            fetchShadowMallPromotionsRevision
+            () => fetchShadowMallPromotionsRevision(trigger)
           )
         } catch {
           revision = null
@@ -4083,7 +4102,7 @@ useEffect(() => {
           try {
             fetchedPage = await runDiscoverFeedRequest(
               `shadow-mall-public:${cacheKey}:${revision || 'fallback'}:1`,
-              () => fetchShadowMallPromotionsPage(1)
+              () => fetchShadowMallPromotionsPage(1, trigger)
             )
             promotions = fetchedPage.promotions
             nextPage = fetchedPage.nextPage
@@ -4106,7 +4125,7 @@ useEffect(() => {
           try {
             page = await runDiscoverFeedRequest(
               `shadow-mall-public:${cacheKey}:${revision || 'fallback'}:${nextPage}`,
-              () => fetchShadowMallPromotionsPage(nextPage)
+              () => fetchShadowMallPromotionsPage(nextPage, trigger)
             )
           } catch {
             break
@@ -4120,7 +4139,7 @@ useEffect(() => {
         if (!alive) return
 
         const visible = rotateShadowMallAds(promotions.filter(isVisibleAd), [...seenHistory])
-        const enriched = await enrichPromotions(visible)
+        const enriched = await enrichPromotions(visible, trigger)
         if (!alive) return
 
         publicPromotions = promotions
@@ -4138,27 +4157,29 @@ useEffect(() => {
       }
     }
 
-    function checkForUpdates() {
+    function checkForUpdates(trigger = 'unknown') {
       if (!alive || document.hidden) return
       const now = Date.now()
       if (now - lastCheckAt < 5000) return
       lastCheckAt = now
-      loadShadowMallPromotions()
+      void loadShadowMallPromotions(trigger)
     }
 
+    const onVisibilityChange = () => checkForUpdates('visibility')
+    const onFocus = () => checkForUpdates('focus')
     shadowMallPromotionsRef.current = []
     setShadowMallPromotions([])
     setShadowMallAdPagination({ hasNext: false, nextPage: 1 })
-    checkForUpdates()
-    const timer = window.setInterval(checkForUpdates, DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS)
-    document.addEventListener('visibilitychange', checkForUpdates)
-    window.addEventListener('focus', checkForUpdates)
+    checkForUpdates('mount')
+    const timer = window.setInterval(() => checkForUpdates('timer'), DISCOVER_SHADOW_MALL_REVISION_INTERVAL_MS)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('focus', onFocus)
 
     return () => {
       alive = false
       window.clearInterval(timer)
-      document.removeEventListener('visibilitychange', checkForUpdates)
-      window.removeEventListener('focus', checkForUpdates)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('focus', onFocus)
       if (shadowMallAdLoadMoreRef.current === loadMoreShadowMallPromotions) {
         shadowMallAdLoadMoreRef.current = null
       }
@@ -4253,7 +4274,7 @@ useEffect(() => {
         const data =
           await runDiscoverFeedRequest(
             `reader:${cacheKey}`,
-            () => fetchReaderPosts(token)
+            () => fetchReaderPosts(token, 'mount')
           )
 
         if (!alive) return
@@ -4432,7 +4453,7 @@ useEffect(() => {
           await runDiscoverFeedRequest(
             `author:${cacheKey}`,
             () =>
-              fetchFollowedPosts(token)
+              fetchFollowedPosts(token, '', 'mount')
           )
 
         if (!alive) return
@@ -4666,7 +4687,8 @@ useEffect(() => {
           () =>
             fetchFollowedPosts(
               token,
-              realPostsCursor
+              realPostsCursor,
+              'navigation'
             )
         )
 
@@ -4712,7 +4734,7 @@ useEffect(() => {
       const data =
         await runDiscoverFeedRequest(
           `author:${cacheKey}`,
-          () => fetchFollowedPosts(token)
+          () => fetchFollowedPosts(token, '', 'retry')
         )
 
       const nextPosts =
@@ -4794,7 +4816,7 @@ useEffect(() => {
       const data =
         await runDiscoverFeedRequest(
           `reader:${cacheKey}`,
-          () => fetchReaderPosts(token)
+          () => fetchReaderPosts(token, 'retry')
         )
 
       const nextPosts =
