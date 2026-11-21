@@ -69,7 +69,9 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     return sum + Math.min(safeBytes(page.uploadedBytes), total)
   }, 0)
 
-  const overallPercent = totalBytes > 0
+  const completedCount = items.filter((page) => page.status === 'done').length
+  const overallPercent = Math.floor((completedCount / items.length) * 100)
+  const transferPercent = totalBytes > 0
     ? Math.min(100, Math.round((uploadedBytes / totalBytes) * 100))
     : 0
 
@@ -88,7 +90,6 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
   const currentPercent = currentTotal > 0
     ? Math.min(100, Math.round((currentLoaded / currentTotal) * 100))
     : 0
-  const speed = items.reduce((sum, page) => sum + safeBytes(page.uploadSpeed), 0)
   const currentName = current?.sourceFile?.name || 'Manga page'
   const currentLabel = current?.serverProcessing
     ? 'Processing'
@@ -126,7 +127,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
             <div className="min-w-0">
               <h2 className="truncate text-[16px] font-extrabold text-[#111827]">Uploading Manga Pages</h2>
               <p className="mt-1 text-[11px] font-medium text-[#8d94a1]">
-                Uploading {Math.max(1, items.indexOf(current) + 1)} of {items.length} images
+                Completed {completedCount} of {items.length} pages
               </p>
             </div>
           </div>
@@ -148,16 +149,38 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="text-[30px] font-black leading-none text-[#0b5cff]">{overallPercent}%</div>
               <div className="mt-2 text-[11px] font-bold text-[#555b66]">
-                {formatFileSize(uploadedBytes)} / {formatFileSize(totalBytes)}
+                {completedCount} / {items.length} pages ready
               </div>
               <div className="mt-1 text-[10px] font-medium text-[#8d94a1]">
-                {speed > 0 ? `Speed: ${formatFileSize(speed)}/s` : 'Preparing upload...'}
+                Server-confirmed completion
               </div>
             </div>
           </div>
         </div>
 
+        <div className="mt-4">
+          <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-[#475467]">
+            <span>All Manga pages</span>
+            <span className="text-[#0b5cff]">{overallPercent}% complete</span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Overall Manga upload completion"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={overallPercent}
+            className="mt-2 h-2 overflow-hidden rounded-full bg-[#e7eeff]"
+          >
+            <div className="h-full rounded-full bg-[#0b5cff] transition-all duration-200" style={{ width: `${overallPercent}%` }} />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-[#667085]">
+            <span>File transfer: {transferPercent}%</span>
+            <span>{formatFileSize(uploadedBytes)} / {formatFileSize(totalBytes)}</span>
+          </div>
+        </div>
+
         <div className="mt-4 rounded-[18px] bg-[#f5f8ff] p-3.5">
+          <p className="mb-2 text-[10.5px] font-bold text-[#667085]">Current page {Math.max(1, items.indexOf(current) + 1)} of {items.length}</p>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-white text-[#0b5cff] shadow-sm ring-1 ring-[#dfe8ff]">
               <i className="fa-regular fa-image text-[15px]" />
