@@ -1,3 +1,5 @@
+import { mangaApiOrigin, traceMangaUpload } from './mangaUploadConsoleTrace'
+
 const MAX_MANGA_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MANGA_DIRECT_ENDPOINT = '/api/story-media/manga-direct'
@@ -64,6 +66,12 @@ function requestTimeout(route) {
 async function postJson(baseUrl, route, token, body, signal) {
   if (signal?.aborted) throw canceled(route)
 
+  const startedAt = Date.now()
+  traceMangaUpload(`backend-${route}`, {
+    state: 'start',
+    route: `${MANGA_DIRECT_ENDPOINT}/${route}`,
+    apiOrigin: mangaApiOrigin(baseUrl),
+  })
   const controller = new AbortController()
   const abort = () => controller.abort()
   let timedOut = false
@@ -107,6 +115,14 @@ async function postJson(baseUrl, route, token, body, signal) {
       })
     }
 
+        traceMangaUpload(`backend-${route}`, {
+      state: 'response',
+      httpStatus: response.status,
+      code: String(data.code || ''),
+      elapsedMs: Date.now() - startedAt,
+      apiOrigin: mangaApiOrigin(baseUrl),
+    }, !response.ok || data.ok === false ? 'error' : 'info')
+
     if (!response.ok || data.ok === false) {
       const code = String(data.code || `HTTP_${response.status}`)
       const description = code === 'MANGA_DIRECT_DISABLED'
@@ -122,6 +138,15 @@ async function postJson(baseUrl, route, token, body, signal) {
 
     return data
   } catch (error) {
+    traceMangaUpload(`backend-${route}`, {
+      state: signal?.aborted ? 'canceled' : 'failed',
+      code: String(error?.code || 'NETWORK_OR_TIMEOUT'),
+      httpStatus: Number(error?.status || 0),
+      message: String(error?.message || ''),
+      errorName: String(error?.name || ''),
+      elapsedMs: Date.now() - startedAt,
+      apiOrigin: mangaApiOrigin(baseUrl),
+    }, signal?.aborted ? 'warn' : 'error')
     if (error?.code) throw error
     if (signal?.aborted) throw canceled(route)
     if (timedOut) {
@@ -147,10 +172,19 @@ function uploadSignedFile({ url, file, mimeType, signal, onProgress }) {
     const xhr = new XMLHttpRequest()
     let finished = false
     const startedAt = performance.now()
+    traceMangaUpload('r2-put', { state: 'start', bytes: file.size })
 
     const finish = (error) => {
       if (finished) return
       finished = true
+      traceMangaUpload('r2-put', {
+        state: error ? 'failed' : 'complete',
+        httpStatus: Number(xhr.status || 0),
+        code: String(error?.code || ''),
+        message: String(error?.message || ''),
+        bytes: file.size,
+        elapsedMs: performance.now() - startedAt,
+      }, error ? 'error' : 'info')
       signal?.removeEventListener('abort', onAbort)
       if (error) reject(error)
       else resolve()
@@ -174,6 +208,12 @@ function uploadSignedFile({ url, file, mimeType, signal, onProgress }) {
           : file.size
         const loaded = Math.max(0, Math.min(event.loaded, total))
         const seconds = Math.max((performance.now() - startedAt) / 1000, 0.001)
+        traceMangaUpload('r2-progress', {
+          state: 'sending',
+          loaded,
+          bytes: total,
+          percent: total > 0 ? Math.round(loaded * 100 / total) : 0,
+        })
         try {
           onProgress?.({
             loaded,
@@ -316,6 +356,13 @@ export async function stageMangaDirectUpload({
         permanent: true,
       })
     }
+
+        traceMangaUpload('finalize-job', {
+      state: 'queued',
+      jobStatus: String(result.status || 'queued'),
+      code: String(result.code || ''),
+      jobTag: jobId.slice(-8),
+    })
 
     try {
       onProgress?.({
