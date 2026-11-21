@@ -1,4 +1,5 @@
 import { createUploadQueueManager } from './uploadQueueManager'
+import { traceMangaUpload } from './mangaUploadConsoleTrace'
 import { readMediaUploadFile, requestUploadStoragePersistence } from './uploadQueueDB'
 import { MANGA_INPUT_MAX_BYTES, optimizeMangaImage, uploadMangaPageFile, validateMangaFile } from './mangaImageUtils'
 
@@ -74,6 +75,14 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
     if (status === 'working' && last?.stage === stage && now - last.at < 1000 &&
       (progress === null || progress === last.progress)) return
     recentDiagnostics.set(pageId, { stage, progress, at: now })
+    traceMangaUpload(`page-${stage}`, {
+      page: pageId.slice(-8),
+      stage,
+      state: status,
+      code: String(details.code || ''),
+      percent: progress,
+      message: String(details.message || ''),
+    }, status === 'error' ? 'error' : status === 'retry' ? 'warn' : 'info')
     window.dispatchEvent(new CustomEvent(DIAGNOSTIC_EVENT, {
       detail: {
         pageId,
@@ -111,6 +120,7 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
       }
 
       let stage = 'prepare'
+      const preparationStartedAt = Date.now()
       try {
         if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
         notifyDiagnostic(task, { stage, message: 'Reading and preparing image' })
@@ -129,6 +139,12 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
           }
         }
         const selected = prepared?.file
+        traceMangaUpload('device-image-prepared', {
+          page: String(task.context?.pageId || '').slice(-8),
+          bytes: Number(selected?.size || 0),
+          elapsedMs: Date.now() - preparationStartedAt,
+          state: 'prepared',
+        })
         if (!(selected instanceof Blob) || !selected.size || selected.size > MANGA_INPUT_MAX_BYTES) {
           const error = new Error('Manga optimization did not produce a valid file')
           error.permanent = true
@@ -235,7 +251,24 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
       }
     },
     onChange: (event) => {
+      if (event?.type === 'storage-error') {
+        traceMangaUpload('local-queue-storage-error', {
+          code: 'LOCAL_QUEUE_STORAGE_ERROR',
+          message: String(event?.task?.message || ''),
+        }, 'error')
+      }
       if (tokenUserId(getToken()) !== accountId || !matches(event?.task)) return
+      if (event.type === 'queued' || event.type === 'uploading' || event.type === 'uploaded' || event.type === 'failed') {
+        traceMangaUpload('local-queue-event', {
+          page: String(event.task.context?.pageId || '').slice(-8),
+          status: String(event.task.status || ''),
+          state: event.type,
+          percent: Number(event.task.progress || 0),
+          attempts: Number(event.task.attempts || 0),
+          waitSeconds: Math.max(0, Math.round((Date.now() - Number(event.task.createdAt || Date.now())) / 1000)),
+          message: String(event.task.lastError || ''),
+        }, event.type === 'failed' ? 'error' : 'info')
+      }
       const task = event.task
       if (event.type === 'failed' || (event.type === 'queued' && task.status === 'retry_wait')) {
         notifyDiagnostic(task, {
@@ -368,6 +401,13 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
   }
 
   function stop() {
+    traceMangaUpload('local-queue-stop', {
+      state: 'stopped',
+      message: 'Manga queue stop() called; any active upload can be aborted. Inspect caller stack.',
+    }, 'warn')
+    if (typeof console !== 'undefined' && typeof console.trace === 'function') {
+      try { console.trace('[MANGA UPLOAD] local queue stop() caller') } catch {}
+    }
     manager.stop()
     for (const url of previews.values()) URL.revokeObjectURL(url)
     previews.clear()
