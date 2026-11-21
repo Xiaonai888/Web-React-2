@@ -204,9 +204,6 @@ export function MangaUploadInlineStatus({ pages }) {
 export default function MangaUploadProgressModal({ pages, onCancel }) {
   const overlayRef = useRef(null)
   const dialogRef = useRef(null)
-  const [diagnostics, setDiagnostics] = useState({})
-  const [clock, setClock] = useState(Date.now())
-  const [copyStatus, setCopyStatus] = useState('')
   const [backgroundAccepted, setBackgroundAccepted] = useState(false)
   const items = Array.isArray(pages) ? pages : []
   const itemIds = items.map((page) => String(page.id)).join('|')
@@ -274,26 +271,6 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     }
   }, [active])
 
-  useEffect(() => {
-    if (!active) return undefined
-    const onDiagnostic = (event) => {
-      const detail = event?.detail
-      if (!detail?.pageId || !itemIds.split('|').includes(String(detail.pageId))) return
-      setDiagnostics((previous) => ({
-        ...previous,
-        [detail.pageId]: {
-          ...detail,
-          at: Number(detail.at || Date.now()),
-        },
-      }))
-    }
-    window.addEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
-    const timer = window.setInterval(() => setClock(Date.now()), 10000)
-    return () => {
-      window.removeEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
-      window.clearInterval(timer)
-    }
-  }, [active, itemIds])
 
   if (!active || typeof document === 'undefined') return null
 
@@ -337,44 +314,6 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           ? 'Ready'
           : 'Uploading'
 
-  const failedPages = items.map((page, index) => ({ page, index, error: parseUploadError(page.error) }))
-    .filter((entry) => entry.page.status === 'error' || entry.error)
-  const currentDiagnostic = diagnostics[String(current?.id)]
-  const currentError = parseUploadError(current?.error) ||
-    (currentDiagnostic?.status === 'error' || currentDiagnostic?.status === 'retry'
-      ? {
-          stage: String(currentDiagnostic.stage || 'unknown'),
-          code: String(currentDiagnostic.code || 'MANGA_UPLOAD_FAILED'),
-          message: String(currentDiagnostic.message || ''),
-          uncertain: Boolean(currentDiagnostic.uncertain),
-        }
-      : null)
-  const visibleStage = currentError?.stage || currentDiagnostic?.stage || fallbackStage(current)
-  const lastUpdate = Number(currentDiagnostic?.at || 0)
-  const silentSeconds = lastUpdate ? Math.max(0, Math.floor((clock - lastUpdate) / 1000)) : 0
-  const stalled = !currentError && lastUpdate > 0 && silentSeconds >= (visibleStage === 'worker' ? 120 : 75) &&
-    current?.status !== 'done'
-  const copyDetails = () => {
-    const lines = [
-      'Manga upload diagnostics',
-      `Completed: ${completedCount}/${items.length}`,
-      `Stage: ${visibleStage}`,
-      `Last update: ${lastUpdate ? new Date(lastUpdate).toISOString() : 'Not received'}`,
-      ...items.map((page, index) => {
-        const error = parseUploadError(page.error)
-        const diag = diagnostics[String(page.id)]
-        return `Page ${index + 1}: ${page.status} | ${error?.stage || diag?.stage || fallbackStage(page)} | ${error?.code || diag?.code || 'NO_CODE'} | ${(error?.message || diag?.message || '').slice(0, 250)}`
-      }),
-    ]
-    if (!navigator.clipboard?.writeText) {
-      setCopyStatus('Clipboard is unavailable on this device')
-      return
-    }
-    void navigator.clipboard.writeText(lines.join('\n'))
-      .then(() => setCopyStatus('Diagnostics copied'))
-      .catch(() => setCopyStatus('Copy failed'))
-  }
-
   const radius = 52
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (overallPercent / 100) * circumference
@@ -407,7 +346,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           </div>
           <button type="button" onClick={onCancel} disabled={!canCancel}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#111827] active:bg-[#f3f4f6] disabled:opacity-35"
-            aria-label={!hasActiveTasks ? 'Close diagnostics' : canCancel ? 'Cancel Upload' : 'Processing on server'}>
+            aria-label={!hasActiveTasks ? 'Close upload' : canCancel ? 'Cancel Upload' : 'Processing on server'}>
             <i className="fa-solid fa-xmark text-[15px]" />
           </button>
         </div>
@@ -477,48 +416,9 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           </div>
         </div>
 
-        <div className="mt-3 rounded-[16px] border border-[#dbe5f5] bg-[#f8faff] p-3 text-[#344054]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] font-extrabold text-[#111827]">Upload diagnostics</p>
-            <button type="button" onClick={copyDetails}
-              className="rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-bold text-[#175cd3] ring-1 ring-[#dbe5f5]">
-              Copy details
-            </button>
-          </div>
-          <p className="mt-2 text-[11px] font-semibold">Stage: {STAGE_LABELS[visibleStage] || visibleStage}</p>
-          {currentDiagnostic?.message && !currentError ? (
-            <p className="mt-1 break-words text-[10.5px] text-[#667085]">{currentDiagnostic.message}</p>
-          ) : null}
-          {stalled ? (
-            <div className="mt-2 rounded-lg bg-[#fff5e8] p-2 text-[10.5px] text-[#8a4b12]">
-              No new progress for {silentSeconds}s at this stage. This is a delay, not proof that the server failed.
-            </div>
-          ) : null}
-          {currentError ? (
-            <div className="mt-2 rounded-lg bg-[#fff0f0] p-2.5 text-[10.5px] text-[#a62121]">
-              <p className="font-extrabold">{currentError.stage}: {currentError.code}</p>
-              <p className="mt-1 break-words">{currentError.message}</p>
-              <p className="mt-1 text-[#8a3030]">{errorAdvice(currentError.code, currentError.uncertain)}</p>
-            </div>
-          ) : null}
-          {failedPages.length > 0 ? (
-            <div className="mt-2 border-t border-[#dbe5f5] pt-2">
-              <p className="text-[10.5px] font-bold text-[#b42318]">Failed images: {failedPages.length}</p>
-              <div className="mt-1 max-h-[105px] space-y-1 overflow-y-auto">
-                {failedPages.map(({ page, index, error }) => (
-                  <p key={page.id || index} className="break-words text-[10px] text-[#b42318]">
-                    Page {index + 1}: {error?.stage || 'unknown'} / {error?.code || 'MANGA_UPLOAD_FAILED'} — {error?.message || 'Upload failed'}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {copyStatus ? <p role="status" className="mt-2 text-[10px] font-medium">{copyStatus}</p> : null}
-        </div>
-
         <button type="button" onClick={onCancel} disabled={!canCancel}
           className="mt-5 h-12 w-full rounded-[14px] bg-[#FE526E] text-[13px] font-extrabold text-white shadow-[0_10px_24px_rgba(254,82,110,0.24)] active:scale-[0.99] disabled:opacity-55">
-          {!hasActiveTasks ? 'Close diagnostics' : canCancel ? 'Cancel Upload' : 'Processing on server...'}
+          {!hasActiveTasks ? 'Close upload' : canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
       </div>
     </div>,
