@@ -24,6 +24,8 @@ import AuthorPagePhotoViewer from '../../components/AuthorPagePhotoViewer'
 import ProfileSwitcherSheet from '../../components/shared/ProfileSwitcherSheet'
 import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificationProvider'
 import { API_BASE_URL, getAuthToken } from '../../config/api'
+import { loadCountrySettings } from '../../utils/countrySettings'
+import { canAccessAuthorPreOrder, authorPreOrderText } from '../../utils/authorPreOrderRules'
 
 
 registerTranslationNamespace('authorPublicPage', {
@@ -1350,7 +1352,35 @@ function CropImageModal({
   onClose,
   onSave,
 }) {
-  const { t } = useDisplayTranslation()
+  const { t, language } = useDisplayTranslation()
+  const navigate = useNavigate()
+  const [preOrderAllowed, setPreOrderAllowed] = useState(false)
+
+  useEffect(() => {
+    if (!open || !author?.is_owner) {
+      setPreOrderAllowed(false)
+      return undefined
+    }
+
+    let active = true
+    const token = getAuthToken()
+
+    setPreOrderAllowed(false)
+
+    loadCountrySettings()
+      .then(settings => {
+        if (active && token === getAuthToken()) {
+          setPreOrderAllowed(canAccessAuthorPreOrder(settings))
+        }
+      })
+      .catch(() => {
+        if (active) setPreOrderAllowed(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [open, author?.is_owner, author?.id])
 
   if (!open) return null
 
@@ -1604,11 +1634,30 @@ function AuthorOwnerMenuSheet({
         
 
 <div className="mt-5 space-y-1">
+  {preOrderAllowed ? (
+    <button
+      type="button"
+      onClick={() => {
+        onClose()
+        navigate('/author/page/pre-order')
+      }}
+      className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
+        <i className="fa-solid fa-book-open text-[17px]" />
+      </span>
+
+      <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
+        {authorPreOrderText(language, 'pageTitle')}
+      </span>
+    </button>
+  ) : null}
+
   <button
-    type="button"
-    onClick={onOpenFinance}
-    className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
-  >
+  type="button"
+  onClick={onOpenStoreSetting}
+  className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
+>
     <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
       <i className="fa-solid fa-wallet text-[17px]" />
     </span>
