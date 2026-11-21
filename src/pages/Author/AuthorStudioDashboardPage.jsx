@@ -2,12 +2,41 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { BarChart3, ChevronDown, ChevronRight, ChevronUp, Eye, MessageSquare, Heart } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getStudioDashboard } from '../../services/shadowStudioAnalyticsApi'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import {
   StudioCard, StudioFrame, StudioMetric, StudioMissing,
   StudioRetry, StudioThumbnail, StudioTimeLabel, formatStudioCount, studioVideoAge,
 } from '../../components/author/studio/ShadowStudioAnalyticsShared'
+
+registerTranslationNamespace('shadowStudioDashboardCoverage', {
+  en: {
+    partial: 'Views recorded during part of the last 30 days.',
+    unavailable: '30-day view history is not available yet.',
+    watchUnavailable: 'Watch time is shown when tracked playback data is available.',
+  },
+  km: {
+    partial: 'Views ដែលបានកត់ត្រាក្នុងផ្នែកមួយនៃ ៣០ ថ្ងៃចុងក្រោយ។',
+    unavailable: 'មិនទាន់មានប្រវត្តិ Views ក្នុង ៣០ ថ្ងៃចុងក្រោយ។',
+    watchUnavailable: 'Watch time បង្ហាញនៅពេលមានទិន្នន័យរយៈពេលមើលដែលបានកត់ត្រា។',
+  },
+  zh: {
+    partial: '显示最近30天内已记录的部分观看量。',
+    unavailable: '最近30天的观看记录暂不可用。',
+    watchUnavailable: '有已记录的播放时长后才显示观看时长。',
+  },
+  ja: {
+    partial: '過去30日間のうち記録済みの再生回数です。',
+    unavailable: '過去30日間の再生履歴はまだありません。',
+    watchUnavailable: '記録された視聴時間が利用可能になると表示されます。',
+  },
+  ko: {
+    partial: '최근 30일 중 기록된 일부 조회수입니다.',
+    unavailable: '최근 30일 조회 기록이 아직 없습니다.',
+    watchUnavailable: '기록된 시청 시간 데이터가 있을 때 표시됩니다.',
+  },
+})
 
 export default function AuthorStudioDashboardPage() {
   const { t } = useDisplayTranslation()
@@ -57,6 +86,10 @@ export default function AuthorStudioDashboardPage() {
     navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics?section=${section}`)
   }
 
+  const hasViews = channel?.views !== null && channel?.views !== undefined && Number.isFinite(Number(channel.views))
+  const watchValue = channel?.watch_seconds?.available === true && Number.isFinite(Number(channel.watch_seconds.value)) && channel.watch_seconds.value !== null
+    ? Number(channel.watch_seconds.value) / 3600 : null
+
   return <StudioFrame>
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-3">
@@ -64,11 +97,17 @@ export default function AuthorStudioDashboardPage() {
         <span className="text-xs text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.last30')}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <StudioMetric label={t('shadowStudioStats.views')} value={channel?.views ?? null} icon={Eye} />
-        <StudioMetric label={t('shadowStudioStats.watchTime')} value={channel?.watch_seconds?.available && channel.watch_seconds.value != null && Number.isFinite(Number(channel.watch_seconds.value)) ? Number(channel.watch_seconds.value) / 3600 : null} icon={BarChart3} />
+        <StudioMetric label={t('shadowStudioStats.views')} value={hasViews ? Number(channel.views) : null} icon={Eye} />
+        <StudioMetric label={t('shadowStudioStats.watchTime')} value={watchValue} icon={BarChart3} />
       </div>
-      {!loading && !error && !coverage?.complete ? <StudioMissing>{t('shadowStudioStats.insufficient')}</StudioMissing> : null}
-      {!loading && !error && !channel?.watch_seconds?.available ? <StudioMissing>{t('shadowStudioStats.notMeasured')}</StudioMissing> : null}
+      {!loading && !error && coverage?.complete === false ? (
+        <StudioMissing>
+          {t(hasViews ? 'shadowStudioDashboardCoverage.partial' : 'shadowStudioDashboardCoverage.unavailable')}
+        </StudioMissing>
+      ) : null}
+      {!loading && !error && watchValue === null ? (
+        <StudioMissing>{t('shadowStudioDashboardCoverage.watchUnavailable')}</StudioMissing>
+      ) : null}
     </section>
 
     <section className="space-y-3">
