@@ -167,6 +167,10 @@ const ColdMaleLeadGenrePage = lazy(() => import('./pages/Genre/ColdMaleLeadGenre
 const BLGenrePage = lazy(() => import('./pages/Genre/BLGenrePage'))
 const GLGenrePage = lazy(() => import('./pages/Genre/GLGenrePage'))
 const AuthorStoreManagerPage = lazy(() => import('./pages/Author/AuthorStoreManagerPage'))
+const AuthorPreOrderPage = lazy(() => import('./pages/Author/AuthorPreOrderPage'))
+const AuthorPreOrderCreatePage = lazy(() => import('./pages/Author/AuthorPreOrderCreatePage'))
+const AuthorPreOrderRecordPage = lazy(() => import('./pages/Author/AuthorPreOrderRecordPage'))
+const AuthorPreOrderOrdersPage = lazy(() => import('./pages/Author/AuthorPreOrderOrdersPage'))
 const AuthorStoreWithdrawalDetailsPage = lazy(() => import('./pages/Author/AuthorStoreWithdrawalDetailsPage'))
 const AuthorStorePendingBalancePage = lazy(() => import('./pages/Author/AuthorStorePendingBalancePage'))
 const AuthorEditPage = lazy(() => import('./pages/Author/AuthorEditPage'))
@@ -1255,6 +1259,31 @@ const shouldShowOpeningAds =
       <AuthorStoreManagerPage />
     </LazyPage>
   }
+/>
+
+<Route
+  path="/author/page/pre-order"
+  element={<LazyPage><AuthorPreOrderPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/pre-order/create"
+  element={<LazyPage><AuthorPreOrderCreatePage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/pre-order/orders"
+  element={<LazyPage><AuthorPreOrderOrdersPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/pre-order/:campaignId"
+  element={<LazyPage><AuthorPreOrderRecordPage /></LazyPage>}
+/>
+
+<Route
+  path="/author/page/pre-order/:campaignId/edit"
+  element={<LazyPage><AuthorPreOrderCreatePage /></LazyPage>}
 />
 
 <Route path="/author/page/ads" element={<LazyPage><AuthorAdsLandingPage /></LazyPage>} />
