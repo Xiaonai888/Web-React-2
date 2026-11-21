@@ -65,15 +65,171 @@ function fallbackStage(page) {
   return 'queue'
 }
 
+export function mangaTransferPercent(pages) {
+  const items = Array.isArray(pages) ? pages : []
+  const total = items.reduce((sum, page) => sum + totalForPage(page), 0)
+  if (!total) return 0
+  const transferred = items.reduce((sum, page) => {
+    const size = totalForPage(page)
+    const fraction = page.status === 'done'
+      ? 1
+      : page.status === 'uploading'
+        ? Math.max(0, Math.min(99, safeBytes(page.progress))) / 100
+        : 0
+    return sum + size * fraction
+  }, 0)
+  return Math.max(0, Math.min(100, Math.round(transferred * 100 / total)))
+}
+
+export function MangaUploadInlineStatus({ pages }) {
+  const items = Array.isArray(pages) ? pages : []
+  const [diagnostics, setDiagnostics] = useState({})
+  const [now, setNow] = useState(Date.now())
+  const [copyStatus, setCopyStatus] = useState('')
+  const ids = items.map((page) => String(page.id)).join('|')
+  const isUploading = items.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
+  const completed = items.filter((page) => page.status === 'done').length
+  const failed = items.map((page, index) => ({ page, index, error: parseUploadError(page.error) }))
+    .filter(({ page }) => page.status === 'error')
+  const percent = mangaTransferPercent(items)
+
+  useEffect(() => {
+    if (!ids || typeof window === 'undefined') return undefined
+    const pageIds = new Set(ids.split('|'))
+    const onDiagnostic = (event) => {
+      const detail = event?.detail
+      if (!pageIds.has(String(detail?.pageId || ''))) return
+      setDiagnostics((previous) => ({
+        ...previous,
+        [String(detail.pageId)]: {
+          stage: String(detail.stage || 'queue'),
+          code: String(detail.code || ''),
+          message: String(detail.message || ''),
+          status: String(detail.status || ''),
+          at: Number(detail.at || Date.now()),
+        },
+      }))
+    }
+    window.addEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+    const interval = window.setInterval(() => setNow(Date.now()), 10000)
+    return () => {
+      window.removeEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+      window.clearInterval(interval)
+    }
+  }, [ids])
+
+  if (!items.length || (!isUploading && !failed.length)) return null
+
+  const active = items.find((page) => page.status === 'uploading') ||
+    items.find((page) => page.status === 'processing') ||
+    items.find((page) => page.status === 'queued')
+  const activeDiagnostic = active && diagnostics[String(active.id)]
+  const stage = activeDiagnostic?.stage || fallbackStage(active)
+  const seconds = activeDiagnostic?.at ? Math.max(0, Math.floor((now - activeDiagnostic.at) / 1000)) : 0
+  const delayed = Boolean(isUploading && active && activeDiagnostic?.at && seconds >= 120 &&
+    (stage === 'worker' || stage === 'status' || stage === 'put' || stage === 'init'))
+
+  const copyDetails = async () => {
+    const details = [
+      `Manga upload: ${completed}/${items.length} ready; transfer ${percent}%`,
+      ...items.map((page, index) => {
+        const diagnostic = diagnostics[String(page.id)]
+        const error = parseUploadError(page.error)
+        return `Page ${index + 1}: ${page.status}; stage=${error?.stage || diagnostic?.stage || fallbackStage(page)}; code=${error?.code || diagnostic?.code || 'NONE'}; message=${(error?.message || diagnostic?.message || '').slice(0, 320)}`
+      }),
+    ].join('\n')
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText(details)
+      setCopyStatus('Copied')
+    } catch {
+      setCopyStatus('Copy unavailable on this device')
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2 text-left" role="status" aria-live="polite">
+      {isUploading ? (
+        <div className="rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
+            <span>File transfer: {percent}%</span>
+            <span>{completed}/{items.length} pages ready</span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--shadow-border)]"
+            role="progressbar" aria-label="Manga file transfer" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+            <div className="h-full rounded-full bg-[#7c4dea] transition-all" style={{ width: `${percent}%` }} />
+          </div>
+          {active ? (
+            <p className="mt-2 text-[11px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
+              Page {items.indexOf(active) + 1}: {STAGE_LABELS[stage] || stage}
+              {activeDiagnostic?.message ? ` — ${activeDiagnostic.message}` : ''}
+            </p>
+          ) : null}
+          {delayed ? (
+            <p className="mt-1 text-[11px] font-semibold leading-5 text-[#a56a00]">
+              No new progress for {seconds}s. The server may still be processing this image; this is not a confirmed error.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {failed.length > 0 ? (
+        <div className="rounded-[14px] border border-[#fecdca] bg-[#fff3f2] p-3 text-[#912018]">
+          <div className="flex items-center justify-between gap-2">
+            <strong className="text-[11px]">{failed.length} Manga page(s) failed</strong>
+            <button type="button" onClick={copyDetails} className="rounded-md bg-white px-2 py-1.5 text-[10px] font-bold text-[#912018] ring-1 ring-[#fecdca]">
+              Copy error
+            </button>
+          </div>
+          <div className="mt-2 space-y-2">
+            {failed.map(({ page, index, error }) => {
+              const diagnostic = diagnostics[String(page.id)]
+              const code = error?.code || diagnostic?.code || 'MANGA_UPLOAD_FAILED'
+              const stage = error?.stage && error.stage !== 'unknown' ? error.stage : diagnostic?.stage || 'unknown'
+              return (
+                <div key={page.id || index} className="break-words text-[11px] leading-5">
+                  <p className="font-bold">Page {index + 1} · {STAGE_LABELS[stage] || stage} · {code}</p>
+                  <p>{error?.message || diagnostic?.message || page.error || 'The upload failed without a detailed server message.'}</p>
+                  <p className="text-[#a33a31]">{errorAdvice(code, Boolean(error?.uncertain))}</p>
+                </div>
+              )
+            })}
+          </div>
+          {copyStatus ? <p className="mt-2 text-[10px] font-semibold">{copyStatus}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function MangaUploadProgressModal({ pages, onCancel }) {
   const overlayRef = useRef(null)
   const dialogRef = useRef(null)
   const [diagnostics, setDiagnostics] = useState({})
   const [clock, setClock] = useState(Date.now())
   const [copyStatus, setCopyStatus] = useState('')
+  const [backgroundAccepted, setBackgroundAccepted] = useState(false)
   const items = Array.isArray(pages) ? pages : []
   const itemIds = items.map((page) => String(page.id)).join('|')
-  const active = items.length > 0
+  const batchAccepted = items.some((page) => Boolean(page.serverProcessing) &&
+    (page.status === 'processing' || page.status === 'done'))
+  const active = items.length > 0 && !backgroundAccepted && !batchAccepted
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const pageIds = new Set(itemIds.split('|'))
+    const onAccepted = () => setBackgroundAccepted(true)
+    const onDiagnostic = (event) => {
+      const detail = event?.detail
+      if (!pageIds.has(String(detail?.pageId || ''))) return
+      if (detail.stage === 'worker' || detail.status === 'error') setBackgroundAccepted(true)
+    }
+    window.addEventListener('shadow-manga-r2-accepted', onAccepted)
+    window.addEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+    return () => {
+      window.removeEventListener('shadow-manga-r2-accepted', onAccepted)
+      window.removeEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
+    }
+  }, [itemIds])
 
   useEffect(() => {
     if (!active || typeof document === 'undefined') return undefined
