@@ -164,20 +164,38 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
             onProgress(progress)
           },
           onJobStatus: (data) => {
-            if (signal.aborted) return
-            const jobStatus = String(data?.status || 'queued').toLowerCase()
-            const detail = data?.queue_diagnostic || {}
-            const code = String(detail.code || `MANGA_JOB_${jobStatus.toUpperCase()}`)
-            const message = String(detail.message || `Server reports Manga job status: ${jobStatus}`)
-            stage = jobStatus === 'queued' ? 'status' : 'worker'
-            notifyDiagnostic(task, {
-              stage,
-              progress: 100,
-              code,
-              status: 'working',
-              message: `${code}: ${message}`,
-            })
-          },
+  if (signal.aborted) return
+  const jobStatus = String(data?.status || 'unknown').toLowerCase()
+  if (jobStatus !== 'queued' && jobStatus !== 'processing') return
+
+  const detail = data?.queue_diagnostic
+  const hasDetail = Boolean(detail && typeof detail === 'object' && String(detail.code || '').trim())
+  const code = hasDetail ? String(detail.code) : 'MANGA_QUEUE_DIAGNOSTIC_MISSING'
+  const attempts = Number.isFinite(Number(data?.attempt_count))
+    ? Number(data.attempt_count) : 'unknown'
+  const memory = detail?.memory
+
+  const context = [
+    `job_status=${jobStatus}`,
+    `attempts=${attempts}`,
+    `worker=${String(detail?.worker_state || 'unknown')}`,
+    `admission=${String(detail?.admission_reason || 'unknown')}`,
+    memory ? `RAM=${memory.used_mb ?? '?'}MB/${memory.limit_mb ?? '?'}MB` : '',
+  ].filter(Boolean).join('; ')
+
+  const explanation = hasDetail
+    ? String(detail.message || 'Backend returned a diagnostic code without a message')
+    : 'Backend job-status response did not contain queue_diagnostic.code. Verify the deployed Backend version and VITE_API_URL. Worker cause cannot be identified from this response.'
+
+  stage = jobStatus === 'queued' ? 'status' : 'worker'
+  notifyDiagnostic(task, {
+    stage,
+    progress: 100,
+    code,
+    status: 'working',
+    message: `${code}: ${explanation} (${context})`.slice(0, 420),
+  })
+},
           useV2: true,
         })
         if (!/^https:\/\//i.test(String(uploaded?.imageUrl || ''))) {
