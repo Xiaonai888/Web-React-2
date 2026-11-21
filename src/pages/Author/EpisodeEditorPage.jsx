@@ -28,7 +28,7 @@ import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import MangaUploadProgressModal from '../../components/author/MangaUploadProgressModal'
+import MangaUploadProgressModal, { MangaUploadInlineStatus, mangaTransferPercent } from '../../components/author/MangaUploadProgressModal'
 import {
   deleteEpisodeLocalDraft,
   getEpisodeLocalDraftKey,
@@ -6337,7 +6337,7 @@ const handleEditorCompositionEnd = (event) => {
       isManga ? 'manga-red-theme' : ''
     }`}
   >
-    {isManga && (mangaUploadPending || (mangaErrorCount > 0 && mangaUploadBatchIds.length > 0)) ? (
+    {isManga && mangaUploadPending ? (
   <MangaUploadProgressModal
     pages={mangaPages.filter((page) => mangaUploadBatchIds.includes(page.id))}
     onCancel={handlePauseMangaUpload}
@@ -6703,7 +6703,9 @@ releaseOption={releaseOption}
                       <i className="fa-solid fa-images text-[17px]" />
                     </div>
                     <div className="mt-3 text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
-                      {mangaUploadPending ? getDisplayText('episodeEditor.uploadingPages') : getDisplayText('episodeEditor.dropOrAddManga')}
+                      {mangaUploadPending
+  ? `${mangaTransferPercent(mangaPages)}% ${getDisplayText('episodeEditor.uploadingPages')}`
+  : getDisplayText('episodeEditor.dropOrAddManga')}
                     </div>
                     <div className="mt-1 text-[11px] text-[var(--shadow-text-tertiary)]">{getDisplayText('episodeEditor.mangaFileTypes')}</div>
                     <input
@@ -6718,7 +6720,8 @@ releaseOption={releaseOption}
                       }}
                     />
                   </label>
-                </ImageDropZone>
+                     </ImageDropZone>
+                <MangaUploadInlineStatus pages={mangaPages} />
 
                 {mangaPages.length ? (
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
