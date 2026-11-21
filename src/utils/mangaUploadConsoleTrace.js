@@ -46,11 +46,16 @@ export function traceMangaUpload(stage, detail = {}, severity = 'info') {
   const safeStage = scrub(stage).slice(0, 60)
   const data = sanitize(detail)
   const now = Date.now()
-  const key = `${safeStage}|${data.page || ''}|${data.state || ''}|${data.jobStatus || ''}|${data.code || ''}|${data.httpStatus ?? ''}`
+  const key = `${safeStage}|${data.page || data.jobTag || ''}|${data.state || ''}|${data.jobStatus || ''}|${data.code || ''}|${data.httpStatus ?? ''}`
   const last = lastLogged.get(key)
   const bucket = Number.isFinite(data.percent) ? Math.floor(data.percent / 10) : null
   const minIntervalMs = severity === 'warn' ? 60000 : severity === 'error' ? 10000 : 30000
-  const suppress = last && now - last.at < minIntervalMs && last.bucket === bucket
+  const canThrottle = safeStage === 'r2-progress' ||
+  safeStage === 'job-poll-response' ||
+  safeStage === 'job-diagnostics-missing' ||
+  safeStage.startsWith('page-')
+const suppress = canThrottle && last &&
+  now - last.at < minIntervalMs && last.bucket === bucket
   if (suppress) return
 
   lastLogged.set(key, { at: now, bucket })
