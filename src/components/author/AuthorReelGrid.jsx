@@ -217,6 +217,24 @@ function PublicReelGrid({ userId }) {
   const [retryCount, setRetryCount] = useState(0)
   const validUser = UUID.test(String(userId || ''))
 
+  useEffect(() => {
+    if (!validUser) return undefined
+    let lastCheck = Date.now()
+    const recheck = () => {
+      const now = Date.now()
+      if (document.visibilityState !== 'visible' || now - lastCheck < 30000) return
+      lastCheck = now
+      setPage(0)
+      setRetryCount(current => current + 1)
+    }
+    window.addEventListener('focus', recheck)
+    document.addEventListener('visibilitychange', recheck)
+    return () => {
+      window.removeEventListener('focus', recheck)
+      document.removeEventListener('visibilitychange', recheck)
+    }
+  }, [validUser])
+
   // Only unhide a reel after YouTube confirms playback (same rule as Fast).
   const hiddenLookupRef = useRef({ token: '', promise: null })
   const restoringIdsRef = useRef(new Set())
@@ -268,14 +286,14 @@ function PublicReelGrid({ userId }) {
     const controller = new AbortController()
     setLoading(true)
     setError('')
-    fetch(`${API_BASE_URL}/api/fast/videos?user_id=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`, { signal: controller.signal })
+    fetch(`${API_BASE_URL}/api/fast/videos?user_id=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`, { signal: controller.signal, cache: 'no-store' })
       .then(async response => {
         const result = await response.json().catch(() => ({}))
         if (!response.ok || result.ok !== true || !Array.isArray(result.videos)) throw new Error(result.message || 'Unable to load Reels')
         return result
       })
       .then(result => {
-        const rows = result.videos.filter(item => String(item.user_id) === String(userId) && getYouTubeId(item.video_url))
+        const rows = result.videos.filter(item => String(item.user_id) === String(userId) && getYouTubeId(item.video_url) && !item.deleted_at && (!item.studio_state || item.studio_state === 'active') && (!item.status || item.status === 'published'))
         setVideos(previous => {
           if (page === 0) return rows
           const known = new Set(previous.map(item => item.id))

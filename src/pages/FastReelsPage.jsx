@@ -57,7 +57,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
   (['localhost', '127.0.0.1'].includes(window.location.hostname)
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
 const PAGE_SIZE = 8
-const FEED_CACHE_MS = 60 * 1000
 const LONG_PRESS_MS = 520
 
 function formatActionCount(value) {
@@ -70,7 +69,6 @@ function formatActionCount(value) {
 
 
 const AUTO_SCROLL_KEY = 'shadow_fast_auto_scroll_v1'
-let cachedFeed = null
 
 function getToken() {
   try {
@@ -1048,7 +1046,7 @@ export default function FastReelsPage({ embedded = false }) {
   /^\/author\/(?:reel\/studio(?:\/[^?#]*)?|page(?:\/[^?#]*)?)(?:[?#].*)?$/.test(location.state.returnTo)
     ? location.state.returnTo
     : ''
-  const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)
+  const initialCacheRef = useRef(null)
   const initialCache = initialCacheRef.current
   const viewportRef = useRef(null)
   const loadingRef = useRef(false)
@@ -1148,14 +1146,15 @@ const {
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`${API_BASE_URL}/api/fast/videos?limit=${PAGE_SIZE}&offset=${nextOffset.current}`)
+      const response = await fetch(`${API_BASE_URL}/api/fast/videos?limit=${PAGE_SIZE}&offset=${nextOffset.current}`, { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) throw new Error(payload.message || 'Unable to load videos')
       const rows = payload.videos.filter(row => youtubeId(row.video_url))
+      const previousOffset = nextOffset.current
       const newOffset = Number(payload.pagination?.next_offset)
       nextOffset.current = Number.isSafeInteger(newOffset) && newOffset >= nextOffset.current
         ? newOffset : nextOffset.current + payload.videos.length
-      hasMoreRef.current = Boolean(payload.pagination?.has_more) && payload.videos.length > 0
+      hasMoreRef.current = Boolean(payload.pagination?.has_more) && nextOffset.current > previousOffset
       setHasMore(hasMoreRef.current)
       setVideos(current => {
         const seen = new Set(current.map(row => row.id))
@@ -1164,6 +1163,29 @@ const {
     } catch (err) { setError(err.message || 'Unable to load videos') }
     finally { loadingRef.current = false; setLoading(false) }
   }, [])
+
+  useEffect(() => {
+    if (requestedReelId) return undefined
+    let lastCheck = Date.now()
+    const recheck = () => {
+      const now = Date.now()
+      if (document.visibilityState !== 'visible' || now - lastCheck < 60000 || loadingRef.current) return
+      lastCheck = now
+      nextOffset.current = 0
+      hasMoreRef.current = true
+      activeIndexRef.current = 0
+      setHasMore(true)
+      setActiveIndex(0)
+      setVideos([])
+      void loadMore()
+    }
+    window.addEventListener('focus', recheck)
+    document.addEventListener('visibilitychange', recheck)
+    return () => {
+      window.removeEventListener('focus', recheck)
+      document.removeEventListener('visibilitychange', recheck)
+    }
+  }, [requestedReelId, loadMore])
 
   const loadFollowing = useCallback(async () => {
     const token = getToken()
@@ -1209,7 +1231,7 @@ useEffect(() => {
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(requestedReelId)}`,
-        { signal: controller.signal }
+        { signal: controller.signal, cache: 'no-store' }
       )
       const payload = await response.json().catch(() => ({}))
       if (!response.ok || payload.ok !== true || !payload.video?.id || !youtubeId(payload.video.video_url)) {
@@ -1246,9 +1268,6 @@ useEffect(() => {
 
   useEffect(() => { if (!initialCacheRef.current?.videos?.length) loadMore() }, [loadMore])
   useEffect(() => { if (feedTab === 'following' && !followingReady) loadFollowing() }, [feedTab, followingReady, loadFollowing])
-  useEffect(() => {
-    if (videos.length && feedTab === 'forYou') cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
-  }, [videos, hasMore, activeIndex, feedTab])
 
   
 

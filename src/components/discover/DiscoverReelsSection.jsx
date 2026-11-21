@@ -17,9 +17,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     ? 'http://localhost:5000' : 'https://shadow-backend-kucw.onrender.com')
 const HIDDEN_KEY = 'shadow_discover_reels_section_hidden_v1'
 const RETURN_KEY = 'shadow_discover_reels_return_v1'
-const CACHE_MS = 2 * 60 * 1000
-let cachedVideos = null
-let cachedAt = 0
 let pendingRequest = null
 
 function getYoutubeId(value) {
@@ -47,11 +44,10 @@ function getThumbnail(video) {
   return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : ''
 }
 
-async function fetchReels(force = false) {
-  if (!force && cachedVideos && Date.now() - cachedAt < CACHE_MS) return cachedVideos
+async function fetchReels() {
   if (pendingRequest) return pendingRequest
   pendingRequest = (async () => {
-    const response = await fetch(`${API_BASE_URL}/api/fast/videos?limit=18&offset=0`)
+    const response = await fetch(`${API_BASE_URL}/api/fast/videos?limit=18&offset=0`, { cache: 'no-store' })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || payload.ok !== true || !Array.isArray(payload.videos)) {
       throw new Error(payload.message || 'Unable to load Reels')
@@ -65,8 +61,6 @@ async function fetchReels(force = false) {
       selected.push(video)
       if (selected.length === 6) break
     }
-    cachedVideos = selected
-    cachedAt = Date.now()
     return selected
   })()
   try {
@@ -127,8 +121,8 @@ export default function DiscoverReelsSection() {
   const { t } = useDisplayTranslation()
   const carouselRef = useRef(null)
   const touchStartY = useRef(null)
-  const [videos, setVideos] = useState(() => cachedVideos || [])
-  const [loading, setLoading] = useState(!cachedVideos)
+  const [videos, setVideos] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [hidden, setHidden] = useState(isHidden)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -136,8 +130,26 @@ export default function DiscoverReelsSection() {
 
   useEffect(() => {
     if (hidden) return undefined
+    let lastCheck = Date.now()
+    const recheck = () => {
+      const now = Date.now()
+      if (document.visibilityState !== 'visible' || now - lastCheck < 30000) return
+      lastCheck = now
+      setLoading(true)
+      setRetryCount(current => current + 1)
+    }
+    window.addEventListener('focus', recheck)
+    document.addEventListener('visibilitychange', recheck)
+    return () => {
+      window.removeEventListener('focus', recheck)
+      document.removeEventListener('visibilitychange', recheck)
+    }
+  }, [hidden])
+
+  useEffect(() => {
+    if (hidden) return undefined
     let mounted = true
-    fetchReels(retryCount > 0).then(rows => {
+    fetchReels().then(rows => {
       if (mounted) {
         setVideos(rows)
         setError('')
