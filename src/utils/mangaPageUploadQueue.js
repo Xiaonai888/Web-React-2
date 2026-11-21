@@ -4,6 +4,7 @@ import { MANGA_INPUT_MAX_BYTES, optimizeMangaImage, uploadMangaPageFile, validat
 
 const CATEGORY = 'manga_episode_page'
 const UNCERTAIN_MARKER = '[MANGA_UPLOAD_UNCERTAIN]'
+const DIAGNOSTIC_EVENT = 'shadow-manga-upload-diagnostic'
 
 function tokenUserId(token) {
   try {
@@ -32,6 +33,15 @@ function uncertainUpload(error) {
     /MANGA_PROCESSING_TIMEOUT|MANGA_JOB_ID_MISSING|IMAGE_URL_MISSING|IMAGE_REQUEST_FAILED|IMAGE_UPLOAD_INTERRUPTED|IMAGE_UPLOAD_TIMEOUT|MANGA_DIRECT_JOB_MISSING/.test(message)
 }
 
+function diagnosticFromError(error, fallbackStage = 'upload') {
+  const message = String(error?.message || 'Manga upload failed').slice(0, 420)
+  const marker = message.match(/\[([a-z][a-z\d_-]*):\s*([A-Z\d_]+)\]/i)
+  const code = String(error?.code || marker?.[2] || 'MANGA_UPLOAD_FAILED').replace(/[^A-Z\d_]/gi, '').slice(0, 90)
+  const stage = String(error?.stage || marker?.[1] || fallbackStage).replace(/[^a-z\d_-]/gi, '').slice(0, 40)
+  const uncertain = message.includes(UNCERTAIN_MARKER) || uncertainUpload(error)
+  return { stage, code, message, uncertain }
+}
+
 export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChange } = {}) {
   const story = String(storyId || '').trim()
   const draft = String(draftKey || '').trim()
@@ -44,10 +54,40 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
   const ownerId = `${accountId}:manga:${story}:${draft}`
   const pendingEnqueues = new Map()
   const previews = new Map()
+  const recentDiagnostics = new Map()
   const matches = (task) => Boolean(
     task?.ownerId === ownerId && task.category === CATEGORY &&
     task.context?.storyId === story && task.context?.draftKey === draft
   )
+
+  function notifyDiagnostic(task, details = {}) {
+    if (!matches(task) || typeof window === 'undefined' || typeof CustomEvent !== 'function') return
+    const pageId = String(task.context?.pageId || '')
+    if (!pageId) return
+    const stage = String(details.stage || 'queue')
+    const status = String(details.status || 'working')
+    const progress = Number.isFinite(Number(details.progress))
+      ? Math.max(0, Math.min(100, Math.round(Number(details.progress))))
+      : null
+    const now = Date.now()
+    const last = recentDiagnostics.get(pageId)
+    if (status === 'working' && last?.stage === stage && now - last.at < 1000 &&
+      (progress === null || progress === last.progress)) return
+    recentDiagnostics.set(pageId, { stage, progress, at: now })
+    window.dispatchEvent(new CustomEvent(DIAGNOSTIC_EVENT, {
+      detail: {
+        pageId,
+        taskId: String(task.id || ''),
+        stage,
+        status,
+        progress,
+        code: String(details.code || '').slice(0, 90),
+        message: String(details.message || '').slice(0, 420),
+        uncertain: Boolean(details.uncertain),
+        at: now,
+      },
+    }))
+  }
 
   function requireCurrentAccount() {
     const currentToken = typeof getToken === 'function' ? getToken() : ''
@@ -70,8 +110,10 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
         throw error
       }
 
+      let stage = 'prepare'
       try {
         if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
+        notifyDiagnostic(task, { stage, message: 'Reading and preparing image' })
 
         let prepared
         const previousWidth = Number(task.context?.width || 0)
@@ -94,15 +136,37 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
         }
         if (signal.aborted) throw new DOMException('Upload interrupted', 'AbortError')
 
+        stage = 'init'
+        notifyDiagnostic(task, { stage, message: 'Requesting a signed upload session from Backend' })
         const uploaded = await uploadMangaPageFile({
           token: requireCurrentAccount(),
           file: selected,
           signal,
-          onProgress,
+          onProgress: (progress) => {
+            if (signal.aborted) return
+            const value = typeof progress === 'number' ? { percent: progress } : (progress || {})
+            const percent = Number(value.percent || 0)
+            if (value.processing) {
+              stage = 'worker'
+              notifyDiagnostic(task, {
+                stage,
+                progress: 100,
+                message: 'R2 upload accepted; waiting for image-processing job',
+              })
+            } else if (percent > 0 || Number(value.loaded || 0) > 0) {
+              stage = 'put'
+              notifyDiagnostic(task, {
+                stage,
+                progress: percent,
+                message: percent >= 100 ? 'File transfer reached 100%; waiting for server response' : 'Sending image to Cloudflare R2',
+              })
+            }
+            onProgress(progress)
+          },
           useV2: true,
         })
         if (!/^https:\/\//i.test(String(uploaded?.imageUrl || ''))) {
-          const error = new Error('Manga processing returned no valid image URL')
+          const error = new Error('Manga processing returned no valid image URL [complete: IMAGE_URL_MISSING]')
           error.permanent = true
           throw error
         }
@@ -111,6 +175,7 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
           error.status = 401
           throw error
         }
+        notifyDiagnostic(task, { stage: 'complete', status: 'done', progress: 100, message: 'Server returned a valid Manga image URL' })
         return {
           imageUrl: uploaded.imageUrl,
           storagePath: uploaded.storagePath || null,
@@ -121,15 +186,34 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
           parts: Array.isArray(uploaded.parts) ? uploaded.parts : [],
         }
       } catch (error) {
-        if (!signal.aborted && uncertainUpload(error)) {
+        const diagnostic = diagnosticFromError(error, stage)
+        if (!signal.aborted && diagnostic.uncertain) {
           error.permanent = true
-          error.message = `${UNCERTAIN_MARKER} ${String(error.message || 'Manga upload status is unknown')}`
+          if (!String(error.message || '').includes(UNCERTAIN_MARKER)) {
+            error.message = `${UNCERTAIN_MARKER} ${String(error.message || 'Manga upload status is unknown')}`
+          }
         }
+        const displayError = diagnosticFromError(error, stage)
+        if (!/\[[a-z][a-z\d_-]*:\s*[A-Z\d_]+\]/i.test(String(error.message || ''))) {
+          error.message = `${String(error.message || 'Manga upload failed')} [${displayError.stage}: ${displayError.code}]`
+        }
+        notifyDiagnostic(task, { ...displayError, status: signal.aborted ? 'canceled' : 'error' })
         throw error
       }
     },
     onChange: (event) => {
-      if (tokenUserId(getToken()) === accountId && matches(event?.task) && typeof onChange === 'function') onChange(event)
+      if (tokenUserId(getToken()) !== accountId || !matches(event?.task)) return
+      const task = event.task
+      if (event.type === 'failed' || (event.type === 'queued' && task.status === 'retry_wait')) {
+        notifyDiagnostic(task, {
+          ...diagnosticFromError({ message: task.lastError || 'Upload failed' }),
+          status: event.type === 'failed' ? 'error' : 'retry',
+        })
+      }
+      if (event.type === 'uploaded') {
+        notifyDiagnostic(task, { stage: 'complete', status: 'done', progress: 100 })
+      }
+      if (typeof onChange === 'function') onChange(event)
     },
   })
 
@@ -230,12 +314,14 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
 
   async function remove(taskId) {
     requireCurrentAccount()
-    if (!await get(taskId)) return false
+    const task = await get(taskId)
+    if (!task) return false
     const removed = await manager.remove(taskId)
     if (removed) {
       const url = previews.get(taskId)
       if (url) URL.revokeObjectURL(url)
       previews.delete(taskId)
+      recentDiagnostics.delete(String(task.context?.pageId || ''))
     }
     return removed
   }
@@ -252,6 +338,7 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
     manager.stop()
     for (const url of previews.values()) URL.revokeObjectURL(url)
     previews.clear()
+    recentDiagnostics.clear()
   }
 
   return {
