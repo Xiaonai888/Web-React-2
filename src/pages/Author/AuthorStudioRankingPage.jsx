@@ -1,127 +1,88 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { BarChart3, ChevronRight, Clock3, Eye } from 'lucide-react'
+import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { getStudioRanking } from '../../services/shadowStudioAnalyticsApi'
-import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
-import {
-  StudioBackHeader,
-  StudioCard,
-  StudioFrame,
-  StudioMissing,
-  StudioRetry,
-  StudioThumbnail,
-  formatStudioCount,
-} from '../../components/author/studio/ShadowStudioAnalyticsShared'
+import { StudioThumbnail, formatStudioCount } from '../../components/author/studio/ShadowStudioAnalyticsShared'
 
-registerTranslationNamespace('shadowStudioRankingDetail', {
+registerTranslationNamespace('shadowStudioRecentRanking', {
   en: {
-    comparable: 'Views at the same time after publishing',
-    elapsed: 'Comparison window',
-    available: 'Ranking based on actual Shadow view history',
-    unavailable: 'An accurate ranking is not available yet. Some videos have no complete view history for this comparison window.',
-    recent: 'Latest long videos — newest first (not ranked)',
-    ranked: 'Latest long videos — ranked by equal-age views',
-    selected: 'Selected video',
-    notRecent: 'Your selected video is not among the 10 latest long videos.',
-    noSelection: 'Select a video from Dashboard to see its ranking.',
-    recentOnly: 'Only published long videos are included; Shorts are excluded.',
-    viewCount: 'Views at matching age',
-    noResult: 'No eligible published long videos were found.',
-    elapsedUnknown: 'Comparison duration is not available.',
+    title: 'Top recent videos', first: 'First {{duration}}', total: 'Views since publishing',
+    compared: 'Comparing views of {{count}} recent long videos (excluding Shorts)',
+    totalCompared: 'Comparing total views of {{count}} recent long videos (excluding Shorts)',
+    empty: 'No published long videos found.', loading: 'Loading videos...', retry: 'Retry',
+    unknown: 'View data unavailable',
   },
   km: {
-    comparable: 'ចំនួនមើលក្នុងអាយុវីដេអូស្មើគ្នា',
-    elapsed: 'រយៈពេលប្រៀបធៀប',
-    available: 'ចំណាត់ថ្នាក់ផ្អែកលើប្រវត្តិ Views ពិតរបស់ Shadow',
-    unavailable: 'មិនទាន់អាចគណនាចំណាត់ថ្នាក់បានត្រឹមត្រូវ ព្រោះវីដេអូមួយចំនួនមិនមានប្រវត្តិ Views គ្រប់រយៈពេលសម្រាប់ប្រៀបធៀប។',
-    recent: 'វីដេអូវែង ១០ ចុងក្រោយ — តាមថ្ងៃផ្សាយថ្មី (មិនមែន Ranking)',
-    ranked: 'វីដេអូវែង ១០ ចុងក្រោយ — តាម Views ក្នុងអាយុស្មើគ្នា',
-    selected: 'វីដេអូដែលបានជ្រើស',
-    notRecent: 'វីដេអូដែលបានជ្រើសមិនស្ថិតក្នុងវីដេអូវែង ១០ ចុងក្រោយទេ។',
-    noSelection: 'ជ្រើសវីដេអូពី Dashboard ដើម្បីមើលចំណាត់ថ្នាក់។',
-    recentOnly: 'បង្ហាញតែវីដេអូវែងដែលបានផ្សាយ មិនរាប់ Shorts។',
-    viewCount: 'Views នៅអាយុស្មើគ្នា',
-    noResult: 'មិនមានវីដេអូវែងដែលបានផ្សាយ និងមានសិទ្ធិប្រៀបធៀបទេ។',
-    elapsedUnknown: 'មិនទាន់ដឹងរយៈពេលប្រៀបធៀប។',
+    title: 'វីដេអូថ្មីៗលំដាប់កំពូល', first: 'រយៈពេលដំបូង {{duration}}', total: 'Views សរុបតាំងពីផ្សាយ',
+    compared: 'ប្រៀបធៀប Views វីដេអូវែងថ្មីៗ {{count}} (មិនរាប់ Shorts)',
+    totalCompared: 'ប្រៀបធៀប Views សរុបវីដេអូវែងថ្មីៗ {{count}} (មិនរាប់ Shorts)',
+    empty: 'រកមិនឃើញវីដេអូវែងដែលបានផ្សាយ។', loading: 'កំពុងទាញវីដេអូ...', retry: 'ព្យាយាមម្ដងទៀត',
+    unknown: 'មិនទាន់មានទិន្នន័យ Views',
   },
   zh: {
-    comparable: '发布后相同时间内的观看量', elapsed: '对比时长',
-    available: '按 Shadow 实际观看历史排名',
-    unavailable: '部分视频缺少完整观看记录，因此暂时无法准确排名。',
-    recent: '最近10个长视频 — 按发布时间排列（非排名）', ranked: '最近10个长视频 — 按同龄观看量排名',
-    selected: '当前视频', notRecent: '所选视频不在最近10个长视频中。',
-    noSelection: '请从控制面板选择视频查看排名。', recentOnly: '仅包含已发布的长视频，不包含 Shorts。',
-    viewCount: '相同时长观看量', noResult: '未找到符合条件的已发布长视频。', elapsedUnknown: '对比时长不可用。',
+    title: '近期热门视频', first: '前 {{duration}}', total: '发布以来的观看量',
+    compared: '比较最近 {{count}} 个长视频的观看量（不包括 Shorts）',
+    totalCompared: '比较最近 {{count}} 个长视频的总观看量（不包括 Shorts）',
+    empty: '暂无已发布的长视频', loading: '正在加载视频...', retry: '重试', unknown: '暂无观看量数据',
   },
   ja: {
-    comparable: '公開から同じ時間内の視聴回数', elapsed: '比較期間',
-    available: 'Shadow の実際の視聴履歴に基づくランキング',
-    unavailable: '一部の動画の視聴履歴が不足しているため、正確なランキングを表示できません。',
-    recent: '最近の長編動画10本 — 新着順（順位ではありません）', ranked: '最近の長編動画10本 — 同じ経過時間での視聴回数順',
-    selected: '選択中の動画', notRecent: '選択した動画は最近の長編動画10本に含まれません。',
-    noSelection: 'ダッシュボードから動画を選択してください。', recentOnly: '公開中の長編動画のみ対象、Shorts は除外します。',
-    viewCount: '同じ経過時間の視聴回数', noResult: '対象の長編動画がありません。', elapsedUnknown: '比較期間がありません。',
+    title: '最近の人気動画', first: '公開後 {{duration}}', total: '公開以来の視聴回数',
+    compared: '最近の長編動画 {{count}} 本を比較（Shorts 除外）',
+    totalCompared: '最近の長編動画 {{count}} 本の累計視聴回数を比較（Shorts 除外）',
+    empty: '公開済みの長編動画がありません', loading: '動画を読み込み中...', retry: '再試行', unknown: '視聴回数データなし',
   },
   ko: {
-    comparable: '게시 후 동일 경과 시간의 조회수', elapsed: '비교 기간',
-    available: 'Shadow 실제 조회 기록을 기준으로 산정한 순위',
-    unavailable: '일부 동영상의 조회 기록이 부족해 정확한 순위를 표시할 수 없습니다.',
-    recent: '최근 긴 동영상 10개 — 최신순 (순위 아님)', ranked: '최근 긴 동영상 10개 — 동일 기간 조회수 순위',
-    selected: '선택한 동영상', notRecent: '선택한 동영상은 최근 긴 동영상 10개에 포함되지 않습니다.',
-    noSelection: '대시보드에서 동영상을 선택하세요.', recentOnly: '게시된 긴 동영상만 포함하며 Shorts는 제외합니다.',
-    viewCount: '동일 기간 조회수', noResult: '대상 긴 동영상이 없습니다.', elapsedUnknown: '비교 기간이 없습니다.',
+    title: '최근 인기 동영상', first: '게시 후 첫 {{duration}}', total: '게시 이후 총 조회수',
+    compared: '최근 긴 동영상 {{count}}개 조회수 비교 (Shorts 제외)',
+    totalCompared: '최근 긴 동영상 {{count}}개 총 조회수 비교 (Shorts 제외)',
+    empty: '게시된 긴 동영상이 없습니다', loading: '동영상 불러오는 중...', retry: '다시 시도', unknown: '조회수 데이터 없음',
   },
 })
 
-function formatAgeWindow(minutes) {
-  const value = Number(minutes)
-  if (!Number.isSafeInteger(value) || value < 0) return null
-  const days = Math.floor(value / 1440)
-  const hours = Math.floor((value % 1440) / 60)
-  const remaining = value % 60
-  if (days) return `${days}d ${hours}h ${remaining}m`
-  if (hours) return `${hours}h ${remaining}m`
-  return `${remaining}m`
+function ageLabel(minutes) {
+  const total = Number(minutes)
+  if (!Number.isSafeInteger(total) || total < 0) return null
+  const days = Math.floor(total / 1440)
+  const hours = Math.floor((total % 1440) / 60)
+  const mins = total % 60
+  if (days) return `${days} days ${hours} hours`
+  if (hours) return `${hours} hours ${mins} minutes`
+  return `${mins} minutes`
 }
 
-function publishedTime(video) {
-  const time = Date.parse(video.published_at || '')
-  return Number.isFinite(time) ? time : 0
+function viewNumber(value) {
+  if (value === null || value === undefined || value === '') return null
+  const count = Number(value)
+  return Number.isSafeInteger(count) && count >= 0 ? count : null
 }
 
-function validRankingPosition(position) {
-  const value = Number(position)
-  return position !== null && position !== undefined && Number.isSafeInteger(value) && value >= 1 && value <= 10
-    ? value
-    : null
+function rowViews(video, equalAge) {
+  if (equalAge) return viewNumber(video.views_at_equal_age)
+  return viewNumber(video.display_views ?? video.view_count)
 }
 
 export default function AuthorStudioRankingPage() {
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const selectedId = (searchParams.get('videoId') || '').trim()
+  const videoId = (searchParams.get('videoId') || '').trim()
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [reload, setReload] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [revision, setRevision] = useState(0)
 
   useEffect(() => {
-    if (!selectedId) {
-      setData(null)
-      setError('')
-      setLoading(false)
-      return undefined
-    }
-
     const controller = new AbortController()
-    setData(null)
-    setError('')
     setLoading(true)
-
-    getStudioRanking(selectedId, { signal: controller.signal })
+    setError('')
+    setData(null)
+    if (!videoId) {
+      setLoading(false)
+      return () => controller.abort()
+    }
+    getStudioRanking(videoId, { signal: controller.signal, force: revision > 0 })
       .then(result => {
         if (!controller.signal.aborted) setData(result)
       })
@@ -131,130 +92,88 @@ export default function AuthorStudioRankingPage() {
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
-
     return () => controller.abort()
-  }, [selectedId, reload])
+  }, [videoId, revision])
 
-  const hasRanking = data?.comparison_complete === true
-  const videos = Array.isArray(data?.ranking) ? data.ranking.slice(0, 10) : []
-  const orderedVideos = [...videos].sort((a, b) => {
-    if (hasRanking) {
-      const difference = Number(a.position) - Number(b.position)
-      if (Number.isFinite(difference) && difference) return difference
-    }
-    return publishedTime(b) - publishedTime(a) || String(b.id).localeCompare(String(a.id))
-  })
-  const timeWindow = formatAgeWindow(data?.age_minutes)
-  const selectedVisible = orderedVideos.some(video => video.id === selectedId)
-
-  const footerNavigate = tab => {
-    if (tab === 'dashboard') navigate('/author/reel/studio/dashboard')
-    if (tab === 'content') navigate('/author/reel/studio')
-  }
+  const equalAge = data?.view_basis === 'equal_age' || (data?.view_basis == null && data?.comparison_complete === true)
+  const videos = useMemo(() => {
+    const rows = Array.isArray(data?.ranking) ? data.ranking.slice(0, 10) : []
+    return [...rows].sort((a, b) => {
+      const ap = Number(a?.position)
+      const bp = Number(b?.position)
+      if (Number.isSafeInteger(ap) && ap > 0 && Number.isSafeInteger(bp) && bp > 0) return ap - bp
+      const av = rowViews(a, equalAge)
+      const bv = rowViews(b, equalAge)
+      if (av !== bv) return (bv ?? -1) - (av ?? -1)
+      return Date.parse(b?.published_at || '') - Date.parse(a?.published_at || '') || 0
+    })
+  }, [data, equalAge])
+  const duration = equalAge ? ageLabel(data?.age_minutes) : null
 
   return (
-    <StudioFrame>
-      <StudioBackHeader
-        title={t('shadowStudioStats.ranking')}
-        onBack={() => navigate('/author/reel/studio/dashboard')}
-      />
+    <main className="min-h-[100dvh] bg-[var(--shadow-bg-base,var(--shadow-bg-surface))] text-[var(--shadow-text-primary)]">
+      <div className="mx-auto w-full max-w-[800px] pb-[calc(28px+env(safe-area-inset-bottom,0px))]">
+        <header className="flex h-[72px] items-center gap-4 px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => navigate('/author/reel/studio/dashboard')}
+            aria-label="Back"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-[var(--shadow-bg-soft)]"
+          >
+            <ArrowLeft size={26} strokeWidth={1.8} />
+          </button>
+          <h1 className="truncate text-[20px] font-medium">{t('shadowStudioRecentRanking.title')}</h1>
+        </header>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-bold">{t('shadowStudioRankingDetail.comparable')}</h2>
-        <p className="flex items-center gap-2 text-sm text-[var(--shadow-text-secondary)]">
-          <Clock3 size={17} aria-hidden="true" />
-          {t('shadowStudioRankingDetail.elapsed')}: {timeWindow || t('shadowStudioRankingDetail.elapsedUnknown')}
-        </p>
-        <p className="text-xs text-[var(--shadow-text-secondary)]">
-          {t('shadowStudioStats.compare')}
-        </p>
-      </section>
-
-      {!selectedId ? <StudioMissing>{t('shadowStudioRankingDetail.noSelection')}</StudioMissing> : null}
-      {loading ? (
-        <StudioCard>
-          <p className="text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioStats.loading')}</p>
-        </StudioCard>
-      ) : null}
-      {!loading && error ? (
-        <StudioRetry
-          message={error}
-          label={t('shadowStudioStats.retry')}
-          onRetry={() => setReload(current => current + 1)}
-        />
-      ) : null}
-
-      {!loading && !error && data ? (
-        <section className="space-y-3">
-          {hasRanking ? (
-            <p className="flex items-start gap-2 text-sm text-[var(--shadow-text-secondary)]">
-              <BarChart3 size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
-              {t('shadowStudioRankingDetail.available')}
+        {!loading && !error && data ? (
+          <section className="px-5 pb-8 pt-6 sm:px-6">
+            <h2 className="text-[20px] font-bold leading-7">
+              {duration ? t('shadowStudioRecentRanking.first', { duration }) : t('shadowStudioRecentRanking.total')}
+            </h2>
+            <p className="mt-1 text-[13px] text-[var(--shadow-text-secondary)]">
+              {t(equalAge ? 'shadowStudioRecentRanking.compared' : 'shadowStudioRecentRanking.totalCompared', { count: videos.length })}
             </p>
-          ) : (
-            <StudioMissing>{t('shadowStudioRankingDetail.unavailable')}</StudioMissing>
-          )}
+          </section>
+        ) : null}
 
-          {videos.length && !selectedVisible ? (
-            <StudioMissing>{t('shadowStudioRankingDetail.notRecent')}</StudioMissing>
-          ) : null}
+        {loading ? <p className="px-6 py-8 text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioRecentRanking.loading')}</p> : null}
+        {!loading && error ? (
+          <div className="space-y-3 px-6 py-8">
+            <p role="alert" className="break-words text-sm text-[var(--shadow-text-secondary)]">{error}</p>
+            <button type="button" onClick={() => setRevision(value => value + 1)} className="inline-flex items-center gap-2 rounded-full border border-[var(--shadow-border)] px-4 py-2 text-sm">
+              <RefreshCw size={16} />{t('shadowStudioRecentRanking.retry')}
+            </button>
+          </div>
+        ) : null}
+        {!loading && !error && videos.length === 0 ? (
+          <p className="px-6 py-8 text-sm text-[var(--shadow-text-secondary)]">{t('shadowStudioRecentRanking.empty')}</p>
+        ) : null}
 
-          <h3 className="text-sm font-semibold">
-            {t(hasRanking ? 'shadowStudioRankingDetail.ranked' : 'shadowStudioRankingDetail.recent')}
-          </h3>
-          {orderedVideos.length === 0 ? (
-            <StudioCard>{t('shadowStudioRankingDetail.noResult')}</StudioCard>
-          ) : (
-            <StudioCard className="!p-0">
-              <div className="divide-y divide-[var(--shadow-border)]">
-                {orderedVideos.map(video => {
-                  const position = hasRanking ? validRankingPosition(video.position) : null
-                  const views = hasRanking && position != null ? Number(video.views_at_equal_age) : null
-                  const isSelected = video.id === selectedId
-                  return (
-                    <button
-                      key={video.id}
-                      type="button"
-                      onClick={() => navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics`)}
-                      className={`flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-[var(--shadow-bg-soft)] sm:px-5 ${isSelected ? 'bg-[var(--shadow-bg-soft)] ring-1 ring-inset ring-[var(--shadow-border)]' : ''}`}
-                    >
-                      <span className="w-8 shrink-0 text-center text-sm font-bold tabular-nums">
-                        {position != null ? `#${position}` : '—'}
-                      </span>
-                      <StudioThumbnail video={video} className="h-[51px] w-[88px]" />
-                      <span className="min-w-0 flex-1 space-y-1">
-                        <span className="block truncate text-sm font-semibold">{video.title || '—'}</span>
-                        {isSelected ? (
-                          <span className="block text-xs text-[var(--shadow-text-secondary)]">
-                            {t('shadowStudioRankingDetail.selected')}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="flex shrink-0 flex-col items-end gap-0.5 text-sm tabular-nums">
-                        <span className="inline-flex items-center gap-1 font-semibold">
-                          <Eye size={14} aria-hidden="true" />
-                          {views != null && Number.isSafeInteger(views) && views >= 0 ? formatStudioCount(views) : '—'}
-                        </span>
-                        <span className="max-w-[100px] text-right text-[10px] text-[var(--shadow-text-secondary)]">
-                          {t('shadowStudioRankingDetail.viewCount')}
-                        </span>
-                      </span>
-                      <ChevronRight size={16} className="shrink-0 text-[var(--shadow-text-secondary)]" aria-hidden="true" />
-                    </button>
-                  )
-                })}
-              </div>
-            </StudioCard>
-          )}
-          <StudioMissing>{t('shadowStudioRankingDetail.recentOnly')}</StudioMissing>
-        </section>
-      ) : null}
-
-      <ShadowStudioFooter
-        activeTab="dashboard"
-        enabledTabs={['dashboard', 'content']}
-        onTabChange={footerNavigate}
-      />
-    </StudioFrame>
+        {!loading && !error ? (
+          <ol aria-label={t('shadowStudioRecentRanking.title')}>
+            {videos.map((video, index) => {
+              const count = rowViews(video, equalAge)
+              return (
+                <li key={video.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/author/reel/studio/videos/${encodeURIComponent(video.id)}/analytics`)}
+                    className={`flex min-h-[78px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--shadow-bg-soft)] sm:gap-4 sm:px-6 ${video.id === videoId ? 'bg-[var(--shadow-bg-soft)]' : ''}`}
+                    aria-label={`${index + 1}. ${video.title || 'Video'}: ${count === null ? t('shadowStudioRecentRanking.unknown') : formatStudioCount(count)}`}
+                  >
+                    <span className="w-5 shrink-0 text-center text-[15px] tabular-nums text-[var(--shadow-text-secondary)]">{index + 1}</span>
+                    <StudioThumbnail video={video} className="h-[49px] w-[85px] rounded-md sm:h-[60px] sm:w-[105px]" />
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-normal sm:text-base">{video.title || '—'}</span>
+                    <span className="w-[54px] shrink-0 text-right text-[15px] tabular-nums sm:w-[72px] sm:text-base">
+                      {count === null ? '—' : formatStudioCount(count)}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        ) : null}
+      </div>
+    </main>
   )
 }
