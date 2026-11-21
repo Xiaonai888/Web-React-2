@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: shadow-reader-request-origin-build
@@ -86,3 +86,13 @@ jobs:
           path: src/pages/ReaderPage.jsx
           retention-days: 7
           if-no-files-found: error
+
+      - name: Commit ReaderPage to GitHub
+        shell: bash
+        run: |
+          git add src/pages/ReaderPage.jsx
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add Reader request origin diagnostics'
+          git push origin HEAD:${{ github.event.repository.default_branch }}
