@@ -41,7 +41,7 @@ export function emptyPreOrderCampaign() {
     title: '', description: '', genre: '', author_note: '', banner_url: '',
     open_at: '', close_at: '', expected_ship_at: '',
     signature_enabled: false, signature_fee_usd: '0', signature_note: '',
-    delivery_company_keys: ['jnt', 'vet'], delivery_note: '', buyer_note_instruction: '',
+    delivery_company_keys: [], delivery_note: '', buyer_note_instruction: '',
     books: [emptyPreOrderBook()], status: 'draft',
   }
 }
@@ -111,7 +111,12 @@ export function preOrderCampaignPayload(campaign) {
     signature_enabled: Boolean(campaign.signature_enabled),
     signature_fee_usd: Number(campaign.signature_fee_usd || 0),
     signature_note: String(campaign.signature_note || '').trim(),
-    delivery_company_keys: [...new Set(campaign.delivery_company_keys || [])].filter(item => ['jnt', 'vet'].includes(item)),
+    delivery_company_keys: [...new Set(
+      (Array.isArray(campaign.delivery_company_keys) ? campaign.delivery_company_keys : [])
+        .filter(key => typeof key === 'string')
+        .map(key => key.trim().toLowerCase())
+        .filter(key => /^[a-z0-9][a-z0-9_-]{0,63}$/.test(key))
+    )],
     delivery_note: String(campaign.delivery_note || '').trim(),
     buyer_note_instruction: String(campaign.buyer_note_instruction || '').trim(),
     books: (campaign.books || []).map(book => ({
