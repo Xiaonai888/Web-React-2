@@ -11,6 +11,11 @@ import {
   fetchAuthorPreOrder, publishAuthorPreOrder, saveAuthorPreOrderDraft,
   uploadAuthorPreOrderImage, verifyAuthorPreOrderAccess,
 } from '../../services/authorPreOrder.service'
+import AuthorPreOrderDeliverySection from '../../components/author/preorder/AuthorPreOrderDeliverySection'
+import {
+  fetchAuthorPreOrderDeliveryCompanies,
+  findUnavailablePreOrderDeliveryKeys,
+} from '../../services/authorPreOrderDelivery.service'
 
 const FIELD = 'w-full min-w-0 rounded-[12px] border border-[#dedede] bg-white px-3.5 py-3 text-[13px] text-[#202020] outline-none placeholder:text-[#a0a0a0] focus:border-[#b1b1b1]'
 const CARD = 'rounded-[18px] border border-[#e9e9e9] bg-white p-4'
@@ -198,6 +203,19 @@ export default function AuthorPreOrderCreatePage() {
     }
     setBusy(true)
     try {
+      const selectedKeys = Array.isArray(campaign.delivery_company_keys)
+        ? [...new Set(campaign.delivery_company_keys)]
+        : []
+      if (selectedKeys.length) {
+        const companies = await fetchAuthorPreOrderDeliveryCompanies()
+        const missingKeys = findUnavailablePreOrderDeliveryKeys(selectedKeys, companies)
+        if (missingKeys.length) {
+          const explanation = language === 'km'
+            ? 'ក្រុមហ៊ុនដឹកជញ្ជូនដែលបានជ្រើសមិនមាន ឬលែងសកម្ម។ សូមផ្ទុកបញ្ជីឡើងវិញហើយជ្រើសម្ដងទៀត'
+            : 'Some selected delivery companies are no longer active. Refresh the list and select again'
+          throw new Error(`${explanation}: ${missingKeys.join(', ')}`)
+        }
+      }
       const ready = await uploadPendingImages(campaign)
       const saved = await saveAuthorPreOrderDraft(ready, { id: recordId })
       setRecordId(saved.id)
@@ -273,8 +291,11 @@ export default function AuthorPreOrderCreatePage() {
               </> : null}
             </Section>
             <Section icon={UploadCloud} title={text('delivery')}>
-              <p className="text-[12px] font-semibold">{text('deliveryCompany')}</p>
-              {['jnt', 'vet'].map(company => <Toggle key={company} checked={campaign.delivery_company_keys.includes(company)} label={text(company)} onChange={checked => patch({ delivery_company_keys: checked ? [...new Set([...campaign.delivery_company_keys, company])] : campaign.delivery_company_keys.filter(item => item !== company) })} />)}
+              <AuthorPreOrderDeliverySection
+                selectedKeys={campaign.delivery_company_keys}
+                onChange={delivery_company_keys => patch({ delivery_company_keys })}
+                disabled={busy}
+              />
               <Field label={`${text('deliveryNote')} (${text('optional')})`} multiline value={campaign.delivery_note} onChange={delivery_note => patch({ delivery_note })} placeholder={text('deliveryHint')} maxLength={300} />
               <Field label={`${text('buyerNote')} (${text('optional')})`} multiline value={campaign.buyer_note_instruction} onChange={buyer_note_instruction => patch({ buyer_note_instruction })} placeholder={text('buyerHint')} maxLength={300} />
             </Section>
