@@ -12,6 +12,8 @@ import AuthorStoreAvailableWithdrawalCard from './AuthorStoreAvailableWithdrawal
 import AuthorPdfUploadProgress from '../../components/author/AuthorPdfUploadProgress'
 import { LanguageWheelPicker } from './EpisodeEditorPage'
 import StorySettingSheet from '../../components/author/StorySettingSheet'
+import CustomDeliveryCompanySheet from '../../components/author/CustomDeliveryCompanySheet'
+import { fetchCustomDeliveryCompany } from '../../services/customDeliveryCompanyApi'
 import { getCountryFeature, loadCountrySettings } from '../../utils/countrySettings'
 import {
   AUTHOR_STORE_PRODUCT_PAGE_SIZE,
@@ -26,6 +28,54 @@ import {
   invalidateAuthorStoreResourceCache,
   writeAuthorStoreResourceCache,
 } from '../../utils/authorStoreResourceCache'
+
+const CUSTOM_DELIVERY_UI_LABELS = Object.freeze({
+  en: {
+    title: 'My Delivery Company',
+    description: 'Add one delivery company for your store.',
+    add: 'Add Company',
+    edit: 'Edit Company',
+    loading: 'Loading company...',
+    retry: 'Retry',
+    unavailable: 'Could not load your delivery company.',
+  },
+  km: {
+    title: 'ក្រុមហ៊ុនដឹកជញ្ជូនផ្ទាល់ខ្លួន',
+    description: 'បន្ថែមក្រុមហ៊ុនដឹកជញ្ជូនផ្ទាល់ខ្លួនបានមួយ។',
+    add: 'បន្ថែមក្រុមហ៊ុន',
+    edit: 'កែព័ត៌មានក្រុមហ៊ុន',
+    loading: 'កំពុងផ្ទុកក្រុមហ៊ុន...',
+    retry: 'ព្យាយាមម្ដងទៀត',
+    unavailable: 'មិនអាចផ្ទុកក្រុមហ៊ុនរបស់អ្នកបានទេ។',
+  },
+  zh: {
+    title: '我的配送公司',
+    description: '为店铺添加一家自定义配送公司。',
+    add: '添加公司',
+    edit: '编辑公司',
+    loading: '正在加载公司...',
+    retry: '重试',
+    unavailable: '无法加载您的配送公司。',
+  },
+  ja: {
+    title: 'マイ配送会社',
+    description: 'ショップ専用の配送会社を1社登録できます。',
+    add: '会社を追加',
+    edit: '会社を編集',
+    loading: '会社を読み込み中...',
+    retry: '再試行',
+    unavailable: '配送会社を読み込めませんでした。',
+  },
+  ko: {
+    title: '내 배송사',
+    description: '상점에 배송사 한 곳을 추가할 수 있습니다.',
+    add: '배송사 추가',
+    edit: '배송사 수정',
+    loading: '배송사를 불러오는 중...',
+    retry: '다시 시도',
+    unavailable: '배송사를 불러오지 못했습니다.',
+  },
+})
 
 registerTranslationNamespace('authorStoreManager', {
   "en": {
@@ -3188,7 +3238,13 @@ const [searchParams] = useSearchParams()
 const initialSettingsView = ['categories', 'delivery', 'sales-reports', 'telegram'].includes(searchParams.get('settings'))
   ? searchParams.get('settings')
   : 'home'
-const [settingsView, setSettingsView] = useState(initialSettingsView)
+  const [settingsView, setSettingsView] = useState(initialSettingsView)
+  const [customDeliveryCompany, setCustomDeliveryCompany] = useState(null)
+  const [customDeliveryLoading, setCustomDeliveryLoading] = useState(false)
+  const [customDeliveryError, setCustomDeliveryError] = useState('')
+  const [customDeliverySheetOpen, setCustomDeliverySheetOpen] = useState(false)
+  const [customDeliveryRefreshKey, setCustomDeliveryRefreshKey] = useState(0)
+  const customDeliveryText = CUSTOM_DELIVERY_UI_LABELS[getDisplayLanguageId()] || CUSTOM_DELIVERY_UI_LABELS.en
   const [jtDeliveryFee, setJtDeliveryFee] = useState('2')
   const [vetDeliveryFee, setVetDeliveryFee] = useState('2')
   const [deliverySaving, setDeliverySaving] = useState(false)
@@ -3204,6 +3260,34 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
   const [telegramMessage, setTelegramMessage] = useState('')
   const customCategoryCount = storeCategories.filter((category) => !category.isDefault).length
   const canCreateCustomCategory = customCategoryCount < 5
+  useEffect(() => {
+    if (activeTab !== 'Settings' || settingsView !== 'delivery') return undefined
+
+    const controller = new AbortController()
+
+    setCustomDeliveryCompany(null)
+    setCustomDeliveryLoading(true)
+    setCustomDeliveryError('')
+
+    void fetchCustomDeliveryCompany({ signal: controller.signal })
+      .then((company) => {
+        if (!controller.signal.aborted) {
+          setCustomDeliveryCompany(company)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        setCustomDeliveryError(error.message || 'Could not load the delivery company.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setCustomDeliveryLoading(false)
+        }
+      })
+
+    return () => controller.abort()
+  }, [activeTab, settingsView, storeAccountId, customDeliveryRefreshKey])
+
   useEffect(() => {
     if (activeTab !== 'Settings' || settingsView !== 'delivery') return undefined
     let cancelled = false
@@ -3908,7 +3992,10 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
       <div className="flex h-14 items-center gap-3 px-4">
         <button
           type="button"
-          onClick={() => setSettingsView('home')}
+         onClick={() => {
+  setCustomDeliverySheetOpen(false)
+  setSettingsView('home')
+}}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f0f8] text-[var(--shadow-text-primary)] active:scale-95"
         >
           <i className="fa-solid fa-chevron-left text-[14px]" />
@@ -3979,6 +4066,83 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         </div>
       </section>
 
+      <section className="overflow-hidden rounded-[26px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+        <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
+          <div className="min-w-0">
+            <h2 className="text-[16px] font-black text-[var(--shadow-text-primary)]">
+              {customDeliveryText.title}
+            </h2>
+            <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--shadow-text-tertiary)]">
+              {customDeliveryText.description}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={customDeliveryLoading || Boolean(customDeliveryError)}
+            onClick={() => setCustomDeliverySheetOpen(true)}
+            className="shrink-0 rounded-xl bg-[var(--shadow-text-primary)] px-4 py-2.5 text-[12px] font-black text-[var(--shadow-bg-surface)] disabled:opacity-50"
+          >
+            {customDeliveryCompany ? customDeliveryText.edit : customDeliveryText.add}
+          </button>
+        </div>
+
+        {customDeliveryLoading ? (
+          <p className="px-4 pb-4 text-[12px] text-[var(--shadow-text-tertiary)]">
+            {customDeliveryText.loading}
+          </p>
+        ) : customDeliveryError ? (
+          <div className="px-4 pb-4">
+            <p role="alert" className="text-[12px] text-red-600">
+              {customDeliveryText.unavailable} {customDeliveryError}
+            </p>
+            <button
+              type="button"
+              onClick={() => setCustomDeliveryRefreshKey((value) => value + 1)}
+              className="mt-2 rounded-xl border border-[var(--shadow-border)] px-3 py-2 text-[12px] font-bold"
+            >
+              {customDeliveryText.retry}
+            </button>
+          </div>
+        ) : customDeliveryCompany ? (
+          <div className="flex items-center gap-3 border-t border-[var(--shadow-border)] px-4 py-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--shadow-bg-soft)] ring-1 ring-[var(--shadow-border)]">
+              {customDeliveryCompany.logo_url ? (
+                <img
+                  src={customDeliveryCompany.logo_url}
+                  alt={customDeliveryCompany.company_name}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <i
+                  className="fa-solid fa-truck text-[19px] text-[var(--shadow-text-secondary)]"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-black text-[var(--shadow-text-primary)]">
+                {customDeliveryCompany.company_name}
+              </p>
+              <p className="mt-0.5 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">
+                ${Number(customDeliveryCompany.fee_usd || 0).toFixed(2)}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              aria-label={customDeliveryText.edit}
+              onClick={() => setCustomDeliverySheetOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]"
+            >
+              <i className="fa-solid fa-pen text-[13px]" aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+      </section>
+
       {deliveryMessage ? (
         <button
           type="button"
@@ -4000,6 +4164,20 @@ const [settingsView, setSettingsView] = useState(initialSettingsView)
         {deliverySaving ? storeText('saving') : storeText('saveDeliveryFees')}
       </button>
     </div>
+
+    <CustomDeliveryCompanySheet
+      open={customDeliverySheetOpen}
+      company={customDeliveryCompany}
+      onClose={() => setCustomDeliverySheetOpen(false)}
+      onSaved={(company) => {
+        setCustomDeliveryCompany(company)
+        setCustomDeliveryError('')
+      }}
+      onDeleted={() => {
+        setCustomDeliveryCompany(null)
+        setCustomDeliveryError('')
+      }}
+    />
   </div>
 ) : null}
 
