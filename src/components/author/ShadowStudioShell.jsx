@@ -74,8 +74,11 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
     state: { activeTab: 'Reel' },
   })
 
+  const hideStudioHeader = location.pathname === `${STUDIO_ROOT}/notifications` ||
+    location.pathname === `${STUDIO_ROOT}/ranking`
+
   return <>
-    {location.pathname !== `${STUDIO_ROOT}/notifications` ? <ShadowStudioHeader
+    {!hideStudioHeader ? <ShadowStudioHeader
       avatarUrl={avatarUrl || profileAvatar}
       videoUnreadCount={unread}
       onAddVideo={location.pathname === '/author/reel/add' ? undefined : handleAddVideo}
