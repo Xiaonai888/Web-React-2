@@ -389,16 +389,7 @@ const DELIVERY_COMPANIES = [
     name: 'J&T',
     label: 'J&T Express',
     fee: 2,
-    logo: '/assets/Icons/J%26T.svg',
-    "pdf_method": "결제 수단",
-    "pdf_aba": "ABA / PayWay",
-    "pdf_binance": "Binance Pay",
-    "pdf_binancePrice": "Binance 총액 (수수료 1 USDT 포함)",
-    "pdf_binanceBonus": "확인 후 100 Vouchers 지급",
-    "pdf_binanceReceiver": "검증된 Binance 수취인에게만 송금",
-    "pdf_binanceUnavailable": "Binance PDF 결제를 사용할 수 없습니다.",
-    "pdf_binanceProfile": "Binance 이름과 UID를 먼저 저장하세요.",
-    "pdf_binanceWait": "이미 송금했다면 중복 송금하지 말고 확인을 기다려 주세요."
+    logo: '/assets/Icons/J&T.svg',
   },
   {
     id: 'vet',
@@ -408,6 +399,92 @@ const DELIVERY_COMPANIES = [
     logo: '/assets/Icons/VET.svg',
   },
 ]
+
+const DELIVERY_CHECKOUT_LABELS = Object.freeze({
+  en: {
+    loading: 'Loading delivery companies...',
+    error: 'Could not load delivery companies. Please retry.',
+    retry: 'Retry',
+    changed: 'Delivery company details or fees changed. Please review before paying.',
+    missing: 'The cart does not identify this author store. Please add this book to the cart again.',
+  },
+  km: {
+    loading: 'កំពុងផ្ទុកក្រុមហ៊ុនដឹកជញ្ជូន...',
+    error: 'មិនអាចផ្ទុកក្រុមហ៊ុនដឹកជញ្ជូនបានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    retry: 'ព្យាយាមម្ដងទៀត',
+    changed: 'ព័ត៌មាន ឬថ្លៃដឹកជញ្ជូនបានផ្លាស់ប្ដូរ។ សូមពិនិត្យមុនទូទាត់។',
+    missing: 'មិនអាចកំណត់ហាងអ្នកនិពន្ធពីកន្ត្រកបានទេ។ សូមដាក់សៀវភៅចូលកន្ត្រកម្ដងទៀត។',
+  },
+  zh: {
+    loading: '正在加载配送公司...', error: '无法加载配送公司，请重试。', retry: '重试',
+    changed: '配送公司信息或费用已变更，请付款前重新确认。', missing: '购物车中缺少作者商店信息。请重新加入该书。',
+  },
+  ja: {
+    loading: '配送会社を読み込み中...', error: '配送会社を読み込めません。再試行してください。', retry: '再試行',
+    changed: '配送会社の情報または料金が変更されました。支払い前に確認してください。', missing: 'カートに作者ストア情報がありません。再度追加してください。',
+  },
+  ko: {
+    loading: '배송사를 불러오는 중...', error: '배송사를 불러오지 못했습니다. 다시 시도하세요.', retry: '다시 시도',
+    changed: '배송사 정보 또는 요금이 변경되었습니다. 결제 전에 확인하세요.', missing: '장바구니에 작가 상점 정보가 없습니다. 책을 다시 추가해 주세요.',
+  },
+})
+
+async function fetchCheckoutDeliveryCompanies({ pageUsername, productId, authorPageId, signal }) {
+  if (!pageUsername || !productId) {
+    const error = new Error('Missing author store information in the cart.')
+    error.code = 'DELIVERY_STORE_MISSING'
+    throw error
+  }
+
+  const url = `${API_URL}/api/author-store/page/${encodeURIComponent(pageUsername)}/products?product_id=${encodeURIComponent(productId)}&include_delivery_settings=1`
+  const response = await fetch(url, { cache: 'no-store', signal })
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || data.ok !== true) {
+    throw new Error(data.message || 'Could not load delivery settings.')
+  }
+  if (!Array.isArray(data.products) || data.products.length !== 1 ||
+      String(data.products[0]?.id) !== String(productId) ||
+      (authorPageId && String(data.author_page_id) !== authorPageId) ||
+      !Array.isArray(data.delivery_settings)) {
+    throw new Error('Invalid author store delivery response.')
+  }
+
+  const companies = []
+  for (const setting of data.delivery_settings) {
+    if (setting?.is_active !== true) continue
+    const id = String(setting.company_key || '').trim().toLowerCase()
+    const known = DELIVERY_COMPANIES.find((item) => item.id === id)
+    if (id !== 'custom' && !known) continue
+
+    const label = String(setting.company_name || '').trim()
+    const fee = Number(setting.fee_usd)
+    const logo = id === 'custom' ? String(setting.logo_url || '').trim() : known.logo
+    if (!label || !Number.isFinite(fee) || fee < 0 || fee > 9999.99 ||
+        Math.abs(fee * 100 - Math.round(fee * 100)) > 1e-6) {
+      throw new Error('Invalid delivery company information.')
+    }
+    if (id === 'custom') {
+      try {
+        const imageUrl = new URL(logo)
+        if (imageUrl.protocol !== 'https:' || imageUrl.username || imageUrl.password) throw new Error()
+      } catch {
+        throw new Error('Invalid company logo URL.')
+      }
+    }
+    if (companies.some((item) => item.id === id)) throw new Error('Duplicate delivery company.')
+    companies.push({
+      id,
+      name: id === 'custom' ? label : known.name,
+      label,
+      fee,
+      logo,
+    })
+  }
+
+  if (!companies.length) throw new Error('No delivery companies are available for this author store.')
+  return companies
+}
 
 function safeCheckoutCoverUrl(value) {
   const source = String(value || '').trim()
@@ -696,6 +773,21 @@ export default function AuthorCheckoutPage() {
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
   const [buyerOpen, setBuyerOpen] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState(DELIVERY_COMPANIES[0].id)
+  const [deliveryCompanies, setDeliveryCompanies] = useState([])
+  const [deliveryStatus, setDeliveryStatus] = useState('loading')
+  const [deliveryLoadError, setDeliveryLoadError] = useState('')
+  const [deliveryReloadKey, setDeliveryReloadKey] = useState(0)
+  const deliveryCopy = DELIVERY_CHECKOUT_LABELS[getDisplayLanguageId()] || DELIVERY_CHECKOUT_LABELS.en
+  const deliveryCartBook = items.find((item) =>
+    String(item.type || item.product_type || '').toLowerCase() === 'book'
+  )
+  const deliveryProductId = String(deliveryCartBook?.id || deliveryCartBook?.product_id || '').trim()
+  const deliveryAuthorPageId = String(deliveryCartBook?.author_page_id || '').trim()
+  const deliveryPageUsername = String(
+    deliveryCartBook?.author_page_username ||
+    items.find((item) => String(item.author_page_id || '') === deliveryAuthorPageId && item.author_page_username)?.author_page_username ||
+    ''
+  ).trim()
   const [deliveryNote, setDeliveryNote] = useState(() => getBuyerProfile().delivery_note || '')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -748,6 +840,38 @@ export default function AuthorCheckoutPage() {
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
+
+  useEffect(() => {
+    if (!deliveryCartBook) {
+      setDeliveryCompanies([])
+      setDeliveryStatus('idle')
+      setDeliveryLoadError('')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    setDeliveryStatus('loading')
+    setDeliveryCompanies([])
+    setDeliveryLoadError('')
+
+    void fetchCheckoutDeliveryCompanies({
+      pageUsername: deliveryPageUsername,
+      productId: deliveryProductId,
+      authorPageId: deliveryAuthorPageId,
+      signal: controller.signal,
+    }).then((companies) => {
+      if (controller.signal.aborted) return
+      setDeliveryCompanies(companies)
+      setSelectedCompanyId((current) => companies.some((company) => company.id === current) ? current : companies[0].id)
+      setDeliveryStatus('ready')
+    }).catch((error) => {
+      if (controller.signal.aborted) return
+      setDeliveryLoadError(error.code === 'DELIVERY_STORE_MISSING' ? deliveryCopy.missing : error.message || deliveryCopy.error)
+      setDeliveryStatus('error')
+    })
+
+    return () => controller.abort()
+  }, [deliveryProductId, deliveryAuthorPageId, deliveryPageUsername, deliveryReloadKey])
 
   useEffect(() => {
     try {
@@ -946,13 +1070,14 @@ export default function AuthorCheckoutPage() {
     }
   }
 
-  const selectedCompany = DELIVERY_COMPANIES.find((company) => company.id === selectedCompanyId) || DELIVERY_COMPANIES[0]
+  const selectedCompany = deliveryCompanies.find((company) => company.id === selectedCompanyId) || null
   const subtotal = useMemo(() => items.reduce((sum, item) => {
     const price = Number(item.price_value)
     return sum + (Number.isFinite(price) && price >= 0 ? price : 0) * validCheckoutQuantity(item.quantity)
   }, 0), [items])
-  const needsDelivery = items.some((item) => String(item.type || item.product_type || '').toLowerCase() === 'book')
-  const deliveryFee = needsDelivery ? Number(selectedCompany.fee || 0) : 0
+  const needsDelivery = Boolean(deliveryCartBook)
+  const deliveryReady = !needsDelivery || (deliveryStatus === 'ready' && Boolean(selectedCompany))
+  const deliveryFee = needsDelivery && selectedCompany ? selectedCompany.fee : 0
   const total = subtotal + deliveryFee
   const itemCount = items.reduce((sum, item) => sum + validCheckoutQuantity(item.quantity), 0)
   const hasBuyerProfile = Boolean(
@@ -998,6 +1123,11 @@ export default function AuthorCheckoutPage() {
 
   if (!items.length) {
     setMessage(t('authorCheckout.cartEmpty'))
+    return
+  }
+
+  if (needsDelivery && !deliveryReady) {
+    setMessage(deliveryLoadError || deliveryCopy.error)
     return
   }
 
@@ -1066,6 +1196,25 @@ export default function AuthorCheckoutPage() {
     }
     if (hasExpiredDiscoverPromotion(verifiedItems)) throw new Error(discoverPromotionExpiryMessage())
 
+    let verifiedDeliveryCompany = null
+    if (needsDelivery) {
+      const latestCompanies = await fetchCheckoutDeliveryCompanies({
+        pageUsername: deliveryPageUsername,
+        productId: deliveryProductId,
+        authorPageId: deliveryAuthorPageId,
+      })
+      verifiedDeliveryCompany = latestCompanies.find((company) => company.id === selectedCompany.id)
+      if (!verifiedDeliveryCompany ||
+          verifiedDeliveryCompany.fee !== selectedCompany.fee ||
+          verifiedDeliveryCompany.label !== selectedCompany.label ||
+          verifiedDeliveryCompany.logo !== selectedCompany.logo) {
+        setDeliveryCompanies(latestCompanies)
+        setSelectedCompanyId(verifiedDeliveryCompany?.id || latestCompanies[0].id)
+        setDeliveryStatus('ready')
+        throw new Error(deliveryCopy.changed)
+      }
+    }
+
     const useBinance = !needsDelivery && paymentMethod === 'binance'
     const orderResponse = await fetch(`${API_URL}/api/author-store/orders/${useBinance ? 'binance-pdf/checkout' : 'create-payment'}`, {
       method: 'POST',
@@ -1076,14 +1225,15 @@ export default function AuthorCheckoutPage() {
       },
       body: JSON.stringify({
         items,
-        delivery_company: needsDelivery
-  ? {
-      key: selectedCompany.id,
-      name: selectedCompany.label,
-      shortName: selectedCompany.name,
-      fee: selectedCompany.fee,
-    }
-  : null,
+        delivery_company: verifiedDeliveryCompany
+          ? {
+              key: verifiedDeliveryCompany.id,
+              name: verifiedDeliveryCompany.label,
+              shortName: verifiedDeliveryCompany.name,
+              fee: verifiedDeliveryCompany.fee,
+              logo: verifiedDeliveryCompany.logo,
+            }
+          : null,
       }),
     })
 
@@ -1177,11 +1327,21 @@ export default function AuthorCheckoutPage() {
               <h2 className="text-[17px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.deliveryCompany')}</h2>
               <p className="mt-1 text-[12px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorCheckout.deliveryCompanyHelp')}</p>
             </div>
-            <span className="rounded-full bg-[#fff4cc] px-3 py-1.5 text-[11px] font-black text-[#9a6a00]">{money(deliveryFee)}</span>
+            <span className="rounded-full bg-[#fff4cc] px-3 py-1.5 text-[11px] font-black text-[#9a6a00]">{deliveryReady ? money(deliveryFee) : '—'}</span>
           </div>
 
+          {deliveryStatus !== 'ready' ? (
+            <div role={deliveryStatus === 'error' ? 'alert' : 'status'} className="rounded-2xl bg-[var(--shadow-bg-soft)] px-4 py-4 text-[12px] font-semibold text-[var(--shadow-text-secondary)]">
+              <p>{deliveryStatus === 'loading' ? deliveryCopy.loading : deliveryLoadError || deliveryCopy.error}</p>
+              {deliveryStatus === 'error' ? (
+                <button type="button" onClick={() => setDeliveryReloadKey((value) => value + 1)} className="mt-3 rounded-xl border border-[var(--shadow-border)] px-4 py-2 font-bold text-[var(--shadow-text-primary)]">
+                  {deliveryCopy.retry}
+                </button>
+              ) : null}
+            </div>
+          ) : (
           <div className="space-y-3">
-            {DELIVERY_COMPANIES.map((company) => {
+            {deliveryCompanies.map((company) => {
               const active = selectedCompanyId === company.id
 
               return (
@@ -1195,11 +1355,12 @@ export default function AuthorCheckoutPage() {
                 >
                   <span className="flex min-w-0 items-center gap-3">
                    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[var(--shadow-bg-surface)] ring-1 ring-[var(--shadow-border)]">
-  <img src={company.logo} alt={company.name} className="h-9 w-9 object-contain" />
+  <img src={company.logo} alt={company.label} className={company.id === 'custom' ? 'h-full w-full object-cover' : 'h-9 w-9 object-contain'} />
 </span>
                     <span className="min-w-0">
                       <span className="block text-[13px] font-black text-[var(--shadow-text-primary)]">{company.name}</span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{company.label}</span>
+                      <span className="mt-1 block text-[11px] font-bold text-[var(--shadow-text-secondary)]">{money(company.fee)}</span>
                     </span>
                   </span>
                   {active ? (
@@ -1211,6 +1372,7 @@ export default function AuthorCheckoutPage() {
               )
             })}
           </div>
+          )}
 
           <div className="mt-4">
             <label className="mb-2 block text-[12px] font-black text-[var(--shadow-text-primary)]">{t('authorCheckout.deliveryNote')}</label>
@@ -1321,18 +1483,18 @@ export default function AuthorCheckoutPage() {
   <>
     <div className="flex justify-between text-[var(--shadow-text-secondary)]">
       <span>{t('authorCheckout.deliveryFee')}</span>
-      <span className="font-black text-[var(--shadow-text-primary)]">{money(deliveryFee)}</span>
+      <span className="font-black text-[var(--shadow-text-primary)]">{deliveryReady ? money(deliveryFee) : '—'}</span>
     </div>
     <div className="flex justify-between text-[var(--shadow-text-secondary)]">
       <span>{t('authorCheckout.deliveryCompany')}</span>
-      <span className="font-black text-[var(--shadow-text-primary)]">{selectedCompany.name}</span>
+      <span className="font-black text-[var(--shadow-text-primary)]">{selectedCompany?.name || '—'}</span>
     </div>
   </>
 ) : null}
             <div className="border-t border-[var(--shadow-border)] pt-3">
               <div className="flex justify-between text-[14px] font-black text-[var(--shadow-text-primary)]">
                 <span>{t('authorCheckout.total')}</span>
-                <span className="text-[#e5484d]">{promotionExpired ? '—' : money(total)}</span>
+                <span className="text-[#e5484d]">{promotionExpired || !deliveryReady ? '—' : money(total)}</span>
               </div>
             </div>
           </div>
@@ -1343,13 +1505,13 @@ export default function AuthorCheckoutPage() {
         <div className="mx-auto flex h-[82px] max-w-[980px] items-center justify-between px-4">
           <div>
             <div className="text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{t('authorCheckout.total')}</div>
-            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{promotionExpired ? '—' : money(total)}</div>
+            <div className="mt-1 text-[17px] font-black text-[#e5484d]">{promotionExpired || !deliveryReady ? '—' : money(total)}</div>
           </div>
           
         <button
   type="button"
   onClick={handleContinuePayment}
-  disabled={saving || promotionExpired || !items.length || (!needsDelivery &&
+  disabled={saving || promotionExpired || !items.length || !deliveryReady || (!needsDelivery &&
     (!methodAvailability.ready || (paymentMethod === 'aba' ? !methodAvailability.aba : !methodAvailability.binance)))}
   className="h-12 rounded-full bg-[var(--shadow-text-primary)] px-8 text-[13px] font-black text-[var(--shadow-bg-surface)] shadow-xl active:scale-95 disabled:bg-[var(--shadow-text-disabled)]"
 >
