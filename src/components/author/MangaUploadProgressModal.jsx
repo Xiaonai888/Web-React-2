@@ -17,10 +17,10 @@ const STAGE_LABELS = {
   read: 'Reading image on device',
   convert: 'Converting image format',
   init: 'Backend: requesting upload session',
-  put: 'Cloudflare R2: uploading image',
-  verify: 'Backend: verifying R2 image',
+  put: 'Uploading image',
+  verify: 'Verifying image',
   finalize: 'Backend: finalizing upload',
-  storage: 'Backend: checking R2 configuration',
+  storage: 'Checking upload',
   worker: 'Server: processing image',
   process: 'Server: processing image',
   status: 'Backend: checking processing job',
@@ -81,10 +81,56 @@ export function mangaTransferPercent(pages) {
   return Math.max(0, Math.min(100, Math.round(transferred * 100 / total)))
 }
 
+function normalizeUploadPercent(value) {
+  const percent = Number(value)
+  return Number.isFinite(percent) ? Math.max(0, Math.min(100, Math.round(percent))) : 0
+}
+
+function useSmoothMangaPercent(value) {
+  const target = normalizeUploadPercent(value)
+  const shownRef = useRef(target)
+  const [shown, setShown] = useState(target)
+
+  useEffect(() => {
+    if (target <= shownRef.current ||
+        (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)) {
+      shownRef.current = target
+      setShown(target)
+      return undefined
+    }
+
+    const startValue = shownRef.current
+    const difference = target - startValue
+    const durationMs = Math.min(1500, Math.max(280, difference * 65))
+    const startedAt = performance.now()
+    let frame = 0
+
+    const animate = (timestamp) => {
+      const elapsed = Math.max(0, timestamp - startedAt)
+      const fraction = Math.min(1, elapsed / durationMs)
+      const next = Math.min(target, startValue + Math.floor(difference * fraction))
+      if (next !== shownRef.current) {
+        shownRef.current = next
+        setShown(next)
+      }
+      if (fraction < 1) frame = window.requestAnimationFrame(animate)
+    }
+
+    frame = window.requestAnimationFrame(animate)
+    return () => window.cancelAnimationFrame(frame)
+  }, [target])
+
+  return shown
+}
+
+export function MangaSmoothUploadPercent({ percent }) {
+  const shown = useSmoothMangaPercent(percent)
+  return <>{shown}%</>
+}
+
 export function MangaUploadInlineStatus({ pages }) {
   const items = Array.isArray(pages) ? pages : []
   const [diagnostics, setDiagnostics] = useState({})
-  const [now, setNow] = useState(Date.now())
   const [copyStatus, setCopyStatus] = useState('')
   const ids = items.map((page) => String(page.id)).join('|')
   const isUploading = items.some((page) => ['queued', 'processing', 'uploading'].includes(page.status))
@@ -92,6 +138,7 @@ export function MangaUploadInlineStatus({ pages }) {
   const failed = items.map((page, index) => ({ page, index, error: parseUploadError(page.error) }))
     .filter(({ page }) => page.status === 'error')
   const percent = mangaTransferPercent(items)
+  const smoothPercent = useSmoothMangaPercent(percent)
 
   useEffect(() => {
     if (!ids || typeof window === 'undefined') return undefined
@@ -111,23 +158,12 @@ export function MangaUploadInlineStatus({ pages }) {
       }))
     }
     window.addEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
-    const interval = window.setInterval(() => setNow(Date.now()), 10000)
     return () => {
       window.removeEventListener('shadow-manga-upload-diagnostic', onDiagnostic)
-      window.clearInterval(interval)
     }
   }, [ids])
 
   if (!items.length || (!isUploading && !failed.length)) return null
-
-  const active = items.find((page) => page.status === 'uploading') ||
-    items.find((page) => page.status === 'processing') ||
-    items.find((page) => page.status === 'queued')
-  const activeDiagnostic = active && diagnostics[String(active.id)]
-  const stage = activeDiagnostic?.stage || fallbackStage(active)
-  const seconds = activeDiagnostic?.at ? Math.max(0, Math.floor((now - activeDiagnostic.at) / 1000)) : 0
-  const delayed = Boolean(isUploading && active && activeDiagnostic?.at && seconds >= 120 &&
-    (stage === 'worker' || stage === 'status' || stage === 'put' || stage === 'init'))
 
   const copyDetails = async () => {
     const details = [
@@ -148,32 +184,20 @@ export function MangaUploadInlineStatus({ pages }) {
   }
 
   return (
-    <div className="mt-2 space-y-2 text-left" role="status" aria-live="polite">
+    <div className="mt-2 space-y-2 text-left" aria-live="off">
       {isUploading ? (
         <div className="rounded-[14px] border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-2.5">
-          <div className="flex items-center justify-between gap-3 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
-            <span>File transfer: {percent}%</span>
-            <span>{completed}/{items.length} pages ready</span>
+          <div className="text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
+            Uploading {smoothPercent}%
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--shadow-border)]"
             role="progressbar" aria-label="Manga file transfer" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
-            <div className="h-full rounded-full bg-[#7c4dea] transition-all" style={{ width: `${percent}%` }} />
+            <div className="h-full rounded-full bg-[#7c4dea] transition-[width] duration-75 ease-linear" style={{ width: `${smoothPercent}%` }} />
           </div>
-          {active ? (
-            <p className="mt-2 text-[11px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
-              Page {items.indexOf(active) + 1}: {STAGE_LABELS[stage] || stage}
-              {activeDiagnostic?.message ? ` — ${activeDiagnostic.message}` : ''}
-            </p>
-          ) : null}
-          {delayed ? (
-            <p className="mt-1 text-[11px] font-semibold leading-5 text-[#a56a00]">
-              No new progress for {seconds}s. The server may still be processing this image; this is not a confirmed error.
-            </p>
-          ) : null}
         </div>
       ) : null}
       {failed.length > 0 ? (
-        <div className="rounded-[14px] border border-[#fecdca] bg-[#fff3f2] p-3 text-[#912018]">
+        <div role="alert" className="rounded-[14px] border border-[#fecdca] bg-[#fff3f2] p-3 text-[#912018]">
           <div className="flex items-center justify-between gap-2">
             <strong className="text-[11px]">{failed.length} Manga page(s) failed</strong>
             <button type="button" onClick={copyDetails} className="rounded-md bg-white px-2 py-1.5 text-[10px] font-bold text-[#912018] ring-1 ring-[#fecdca]">
