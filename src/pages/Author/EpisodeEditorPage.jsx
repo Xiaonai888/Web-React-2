@@ -6337,7 +6337,7 @@ const handleEditorCompositionEnd = (event) => {
       isManga ? 'manga-red-theme' : ''
     }`}
   >
-    {isManga && mangaUploadPending ? (
+    {isManga && (mangaUploadPending || (mangaErrorCount > 0 && mangaUploadBatchIds.length > 0)) ? (
   <MangaUploadProgressModal
     pages={mangaPages.filter((page) => mangaUploadBatchIds.includes(page.id))}
     onCancel={handlePauseMangaUpload}
