@@ -1,0 +1,88 @@
+name: Build Reader Request Origin Tracing File
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shadow-reader-request-origin-build
+  cancel-in-progress: false
+
+jobs:
+  prepare-reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Update ReaderPage request tracing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/ReaderPage.jsx')
+          original = path.read_text(encoding='utf-8')
+          old_import = "import { redeemShadowReadEventFeaturedCards } from '../services/shadowReadEventRewardsClient'\n"
+          new_import = "import { traceRequestOrigin } from '../utils/requestOriginDiagnostics'\n"
+          marker = "registerTranslationNamespace('readerPage', {"
+
+          if new_import in original or 'function readerFetch(' in original:
+              raise SystemExit('READER_ORIGIN_ALREADY_INSTRUMENTED: ReaderPage already contains tracing. No change made.')
+          if original.count(old_import) != 1 or original.count(marker) != 1:
+              raise SystemExit('READER_ORIGIN_ANCHOR_MISMATCH: ReaderPage changed; no change made.')
+          if original.count('fetch(') != 21:
+              raise SystemExit(f'READER_ORIGIN_FETCH_COUNT_MISMATCH: Expected 21 original calls, found {original.count("fetch(")}. No change made.')
+
+          helper = r'''function readerRequestOriginTrigger(input, init) {
+            try {
+              const url = new URL(input instanceof Request ? input.url : String(input), window.location.origin)
+              const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase()
+              const route = url.pathname
+              if (route === '/api/tasks/reading-session/progress' || /^\/api\/public\/stories\/[^/]+\/episodes\/[^/]+\/view\/?$/.test(route)) return 'timer'
+              if (route === '/api/tasks/reading-reward/claim' || /^\/api\/tasks\/reading-missions\/[^/]+\/claim\/?$/.test(route)) return 'timer'
+              if (method === 'POST' && (/^\/api\/reactions\/episode\/[^/]+\/toggle\/?$/.test(route) || /^\/api\/reader\/subscriptions\/[^/]+\/?$/.test(route) || /^\/api\/unlocks\/stories\/[^/]+\/episodes\/[^/]+\/(gem|voucher|package)\/?$/.test(route))) return 'user_action'
+            } catch {}
+            return 'unknown'
+          }
+
+          function readerFetch(input, init) {
+            return traceRequestOrigin(
+              { source_file: 'src/pages/ReaderPage.jsx', trigger: readerRequestOriginTrigger(input, init) },
+              input,
+              init
+            )
+          }
+
+          '''
+
+          output = original.replace('fetch(', 'readerFetch(')
+          output = output.replace(old_import, old_import + new_import, 1)
+          output = output.replace(marker, helper + marker, 1)
+
+          if output.count('readerFetch(') != 22 or output.count('function readerFetch(') != 1 or output.count('fetch(') != 0:
+              raise SystemExit('READER_ORIGIN_TRANSFORM_FAILED: Unexpected output; no change made.')
+
+          path.write_text(output, encoding='utf-8')
+          print('READER_ORIGIN_READY: 21 ReaderPage fetch callsites traced, unchanged request semantics.')
+          PY
+      - name: Validate code and build
+        shell: bash
+        run: |
+          git diff --check
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Download full ReaderPage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReaderPage-RequestOrigin-REPLACE
+          path: src/pages/ReaderPage.jsx
+          retention-days: 7
+          if-no-files-found: error
