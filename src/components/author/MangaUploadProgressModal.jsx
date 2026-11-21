@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { formatFileSize } from '../../utils/mangaImageUtils'
 
 function safeBytes(value) {
@@ -11,16 +12,55 @@ function totalForPage(page) {
 }
 
 export default function MangaUploadProgressModal({ pages, onCancel }) {
-  const [accepted, setAccepted] = useState(false)
+  const overlayRef = useRef(null)
+  const dialogRef = useRef(null)
   const items = Array.isArray(pages) ? pages : []
+  const active = items.length > 0
 
   useEffect(() => {
-    const onAccepted = () => setAccepted(true)
-    window.addEventListener('shadow-manga-r2-accepted', onAccepted)
-    return () => window.removeEventListener('shadow-manga-r2-accepted', onAccepted)
-  }, [])
+    if (!active || typeof document === 'undefined') return undefined
 
-  if (!items.length) return null
+    const body = document.body
+    const html = document.documentElement
+    const scrollY = window.scrollY
+    const previousFocus = document.activeElement
+    const bodyStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    }
+    const htmlOverflow = html.style.overflow
+    const inertElements = Array.from(body.children)
+      .filter((element) => element !== overlayRef.current)
+      .map((element) => ({ element, inert: element.inert }))
+
+    for (const { element } of inertElements) element.inert = true
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+    dialogRef.current?.focus({ preventScroll: true })
+
+    return () => {
+      for (const { element, inert } of inertElements) element.inert = inert
+      html.style.overflow = htmlOverflow
+      for (const [property, value] of Object.entries(bodyStyles)) {
+        body.style[property] = value
+      }
+      window.scrollTo(0, scrollY)
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') {
+        previousFocus.focus({ preventScroll: true })
+      }
+    }
+  }, [active])
+
+  if (!active || typeof document === 'undefined') return null
 
   const totalBytes = items.reduce((sum, page) => sum + totalForPage(page), 0)
   const uploadedBytes = items.reduce((sum, page) => {
@@ -40,8 +80,6 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
     items[items.length - 1]
 
   const serverProcessing = items.some((page) => page.status === 'processing' && page.serverProcessing)
-  const batchAccepted = accepted || items.some((page) => Boolean(page.serverProcessing) &&
-    (page.status === 'processing' || page.status === 'done'))
   const canCancel = !serverProcessing
   const currentTotal = totalForPage(current)
   const currentLoaded = current?.status === 'done'
@@ -62,15 +100,24 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           ? 'Ready'
           : 'Uploading'
 
-  if (batchAccepted) return null
-
   const radius = 52
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (overallPercent / 100) * circumference
 
-  return (
-    <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/30 px-4 backdrop-blur-[1px]">
-      <div className="w-full max-w-[360px] rounded-[26px] bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.24)]">
+  return createPortal(
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-[260] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/30 px-4 py-4 backdrop-blur-[1px]"
+      role="presentation"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Uploading Manga Pages"
+        tabIndex={-1}
+        className="my-auto w-full max-w-[360px] max-h-[calc(100dvh-32px)] overflow-y-auto overscroll-contain rounded-[26px] bg-white p-5 shadow-[0_24px_70px_rgba(17,24,39,0.24)] outline-none"
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef4ff] text-[#0b5cff]">
@@ -138,6 +185,7 @@ export default function MangaUploadProgressModal({ pages, onCancel }) {
           {canCancel ? 'Cancel Upload' : 'Processing on server...'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
