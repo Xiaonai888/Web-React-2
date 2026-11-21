@@ -1,3 +1,5 @@
+import { mangaApiOrigin, traceMangaUpload } from './mangaUploadConsoleTrace'
+
 export const MANGA_MAX_PAGES = 100
 export const MANGA_MIN_PUBLISH_PAGES = 10
 export const MANGA_MAX_FILES_PER_PICK = 30
@@ -513,6 +515,12 @@ async function waitForMangaV2Job({
       : `${apiBaseUrl}${relativeStatusUrl}`
 
   const startedAt = Date.now()
+  let networkFailures = 0
+  traceMangaUpload('job-poll', {
+    state: 'start',
+    jobTag: safeJobId.slice(-8),
+    apiOrigin: mangaApiOrigin(requestUrl),
+  })
 
   while (
     Date.now() - startedAt <
@@ -537,6 +545,16 @@ async function waitForMangaV2Job({
       if (signal?.aborted) {
         throw new Error('Upload canceled.')
       }
+      networkFailures += 1
+      traceMangaUpload('job-poll-network', {
+        state: 'retry',
+        jobTag: safeJobId.slice(-8),
+        errorName: String(error?.name || ''),
+        message: String(error?.message || ''),
+        retryCount: networkFailures,
+        waitSeconds: Math.round((Date.now() - startedAt) / 1000),
+        apiOrigin: mangaApiOrigin(requestUrl),
+      }, 'warn')
 
       await waitForMangaPoll(
         mangaV2PollDelay(startedAt),
@@ -545,10 +563,40 @@ async function waitForMangaV2Job({
       continue
     }
 
-    const data =
+      const data =
       await response
         .json()
         .catch(() => ({}))
+
+    const jobStatus = String(data?.status || data?.stage || 'unknown').toLowerCase()
+    const diagnostics = data?.queue_diagnostic
+    const hasDiagnostic = Boolean(diagnostics && typeof diagnostics === 'object' && diagnostics.code)
+    traceMangaUpload('job-poll-response', {
+      state: 'received',
+      jobTag: safeJobId.slice(-8),
+      apiOrigin: mangaApiOrigin(requestUrl),
+      httpStatus: response.status,
+      jobStatus,
+      code: String(diagnostics?.code || data?.error?.code || data?.code || ''),
+      attempts: Number(data?.attempt_count || 0),
+      maxAttempts: Number(data?.max_attempts || 0),
+      diagnosticPresent: hasDiagnostic,
+      workerState: String(diagnostics?.worker_state || 'unknown'),
+      admissionReason: String(diagnostics?.admission_reason || 'unknown'),
+      memoryUsedMb: Number(diagnostics?.memory?.used_mb || 0),
+      memoryLimitMb: Number(diagnostics?.memory?.limit_mb || 0),
+      waitSeconds: Math.round((Date.now() - startedAt) / 1000),
+    }, !response.ok || data?.ok === false ? 'warn' : 'info')
+    if (response.ok && jobStatus === 'queued' && !hasDiagnostic) {
+      traceMangaUpload('job-diagnostics-missing', {
+        state: 'backend-response-missing-field',
+        jobTag: safeJobId.slice(-8),
+        apiOrigin: mangaApiOrigin(requestUrl),
+        httpStatus: response.status,
+        code: 'MANGA_QUEUE_DIAGNOSTIC_MISSING',
+        message: 'Job is queued, but Backend response has no queue_diagnostic.code. This does NOT identify the reason Worker did not claim it.',
+      }, 'warn')
+    }
 
     if (response.ok && data?.ok !== false && typeof onJobStatus === 'function') {
       try { onJobStatus(data) } catch {}
@@ -595,6 +643,11 @@ async function waitForMangaV2Job({
         .toLowerCase()
 
     if (status === 'done') {
+      traceMangaUpload('job-complete', {
+        jobTag: safeJobId.slice(-8),
+        state: 'done',
+        waitSeconds: Math.round((Date.now() - startedAt) / 1000),
+      })
       return normalizeMangaUploadResult(
         data
       )
@@ -620,6 +673,13 @@ async function waitForMangaV2Job({
         data.message ||
         'The manga page could not be processed.'
 
+      traceMangaUpload('job-failed', {
+        jobTag: safeJobId.slice(-8),
+        state: 'failed',
+        code,
+        message,
+        waitSeconds: Math.round((Date.now() - startedAt) / 1000),
+      }, 'error')
       throw new Error(
         `${message} [process: ${code}]`
       )
@@ -631,6 +691,13 @@ async function waitForMangaV2Job({
     )
   }
 
+  traceMangaUpload('job-timeout', {
+    state: 'timeout',
+    code: 'MANGA_PROCESSING_TIMEOUT',
+    jobTag: safeJobId.slice(-8),
+    waitSeconds: Math.round((Date.now() - startedAt) / 1000),
+    apiOrigin: mangaApiOrigin(requestUrl),
+  }, 'error')
   throw new Error(
     'Manga processing is taking longer than expected. Please try again later. [queue: MANGA_PROCESSING_TIMEOUT]'
   )
