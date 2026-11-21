@@ -22,6 +22,7 @@ import {
 import { installStorySyncResume } from './utils/storySyncResume'
 import { installImageLoadDiagnostics } from './utils/installImageLoadDiagnostics'
 import { installReaderHealthMonitor } from './utils/installReaderHealthMonitor'
+import { installRequestOriginDiagnostics } from './utils/requestOriginDiagnostics'
 
 installApiAuthFetch()
 installPaidContentRequirementFetch()
@@ -38,6 +39,7 @@ void initializeCommentQueue()
 installStorySyncResume()
 installImageLoadDiagnostics()
 installReaderHealthMonitor()
+installRequestOriginDiagnostics()
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault()
