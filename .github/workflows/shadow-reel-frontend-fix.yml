@@ -1,0 +1,239 @@
+name: Shadow Reel Visibility Fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shadow-reel-visibility-fix
+  cancel-in-progress: false
+
+jobs:
+  update-reel-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Update three frontend files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+
+          class PatchError(Exception):
+              pass
+
+          def once(text, old, new, name):
+              if old == new:
+                  raise PatchError(f'{name}: invalid replacement')
+              count = text.count(old)
+              if count == 1:
+                  if new and old in new and new in text:
+                      return text
+                  return text.replace(old, new, 1)
+              if count == 0 and (not new or new in text):
+                  return text
+              raise PatchError(f'{name}: expected one matching original block; found {count}')
+
+          def patch_discover(source):
+              name = 'DiscoverReelsSection.jsx'
+              source = once(source,
+                  "const CACHE_MS = 2 * 60 * 1000\nlet cachedVideos = null\nlet cachedAt = 0\nlet pendingRequest = null",
+                  'let pendingRequest = null', name)
+              source = once(source,
+                  "async function fetchReels(force = false) {\n  if (!force && cachedVideos && Date.now() - cachedAt < CACHE_MS) return cachedVideos",
+                  'async function fetchReels() {', name)
+              source = once(source,
+                  'fetch(`${API_BASE_URL}/api/fast/videos?limit=18&offset=0`)',
+                  "fetch(`${API_BASE_URL}/api/fast/videos?limit=18&offset=0`, { cache: 'no-store' })", name)
+              source = once(source,
+                  '    cachedVideos = selected\n    cachedAt = Date.now()\n    return selected',
+                  '    return selected', name)
+              source = once(source,
+                  '  const [videos, setVideos] = useState(() => cachedVideos || [])\n  const [loading, setLoading] = useState(!cachedVideos)',
+                  '  const [videos, setVideos] = useState([])\n  const [loading, setLoading] = useState(true)', name)
+              source = once(source,
+                  'fetchReels(retryCount > 0).then(rows => {',
+                  'fetchReels().then(rows => {', name)
+              source = once(source,
+                  '  const [retryCount, setRetryCount] = useState(0)\n\n  useEffect(() => {',
+                  """  const [retryCount, setRetryCount] = useState(0)
+
+            useEffect(() => {
+              if (hidden) return undefined
+              let lastCheck = Date.now()
+              const recheck = () => {
+                const now = Date.now()
+                if (document.visibilityState !== 'visible' || now - lastCheck < 30000) return
+                lastCheck = now
+                setLoading(true)
+                setRetryCount(current => current + 1)
+              }
+              window.addEventListener('focus', recheck)
+              document.addEventListener('visibilitychange', recheck)
+              return () => {
+                window.removeEventListener('focus', recheck)
+                document.removeEventListener('visibilitychange', recheck)
+              }
+            }, [hidden])
+
+            useEffect(() => {""", name)
+              return source
+
+          def patch_author(source):
+              name = 'AuthorReelGrid.jsx'
+              source = once(source,
+                  '  const validUser = UUID.test(String(userId || \'\'))\n\n  // Only unhide a reel',
+                  """  const validUser = UUID.test(String(userId || ''))
+
+            useEffect(() => {
+              if (!validUser) return undefined
+              let lastCheck = Date.now()
+              const recheck = () => {
+                const now = Date.now()
+                if (document.visibilityState !== 'visible' || now - lastCheck < 30000) return
+                lastCheck = now
+                setPage(0)
+                setRetryCount(current => current + 1)
+              }
+              window.addEventListener('focus', recheck)
+              document.addEventListener('visibilitychange', recheck)
+              return () => {
+                window.removeEventListener('focus', recheck)
+                document.removeEventListener('visibilitychange', recheck)
+              }
+            }, [validUser])
+
+            // Only unhide a reel""", name)
+              source = once(source,
+                  'fetch(`${API_BASE_URL}/api/fast/videos?user_id=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`, { signal: controller.signal })',
+                  "fetch(`${API_BASE_URL}/api/fast/videos?user_id=${encodeURIComponent(userId)}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`, { signal: controller.signal, cache: 'no-store' })", name)
+              source = once(source,
+                  'const rows = result.videos.filter(item => String(item.user_id) === String(userId) && getYouTubeId(item.video_url))',
+                  "const rows = result.videos.filter(item => String(item.user_id) === String(userId) && getYouTubeId(item.video_url) && !item.deleted_at && (!item.studio_state || item.studio_state === 'active') && (!item.status || item.status === 'published'))", name)
+              return source
+
+          def patch_fast(source):
+              name = 'FastReelsPage.jsx'
+              source = once(source, 'const FEED_CACHE_MS = 60 * 1000\n', '', name)
+              source = once(source, 'let cachedFeed = null\n', '', name)
+              source = once(source,
+                  'const initialCacheRef = useRef(cachedFeed && Date.now() - cachedFeed.savedAt < FEED_CACHE_MS ? cachedFeed : null)',
+                  'const initialCacheRef = useRef(null)', name)
+              source = once(source,
+                  'fetch(`${API_BASE_URL}/api/fast/videos?limit=${PAGE_SIZE}&offset=${nextOffset.current}`)',
+                  "fetch(`${API_BASE_URL}/api/fast/videos?limit=${PAGE_SIZE}&offset=${nextOffset.current}`, { cache: 'no-store' })", name)
+              source = once(source,
+                  '      const newOffset = Number(payload.pagination?.next_offset)\n      nextOffset.current =',
+                  '      const previousOffset = nextOffset.current\n      const newOffset = Number(payload.pagination?.next_offset)\n      nextOffset.current =', name)
+              source = once(source,
+                  'hasMoreRef.current = Boolean(payload.pagination?.has_more) && payload.videos.length > 0',
+                  'hasMoreRef.current = Boolean(payload.pagination?.has_more) && nextOffset.current > previousOffset', name)
+              source = once(source,
+                  "  }, [])\n\n  const loadFollowing = useCallback(async () => {",
+                  """  }, [])
+
+            useEffect(() => {
+              if (requestedReelId) return undefined
+              let lastCheck = Date.now()
+              const recheck = () => {
+                const now = Date.now()
+                if (document.visibilityState !== 'visible' || now - lastCheck < 60000 || loadingRef.current) return
+                lastCheck = now
+                nextOffset.current = 0
+                hasMoreRef.current = true
+                activeIndexRef.current = 0
+                setHasMore(true)
+                setActiveIndex(0)
+                setVideos([])
+                void loadMore()
+              }
+              window.addEventListener('focus', recheck)
+              document.addEventListener('visibilitychange', recheck)
+              return () => {
+                window.removeEventListener('focus', recheck)
+                document.removeEventListener('visibilitychange', recheck)
+              }
+            }, [requestedReelId, loadMore])
+
+            const loadFollowing = useCallback(async () => {""", name)
+              source = once(source,
+                  """  useEffect(() => {
+              if (videos.length && feedTab === 'forYou') cachedFeed = { videos, offset: nextOffset.current, hasMore, index: activeIndex, savedAt: Date.now() }
+            }, [videos, hasMore, activeIndex, feedTab])
+          """, '', name)
+              source = once(source,
+                  """        `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(requestedReelId)}`,
+                  { signal: controller.signal }
+          """,
+                  """        `${API_BASE_URL}/api/fast/videos/${encodeURIComponent(requestedReelId)}`,
+                  { signal: controller.signal, cache: 'no-store' }
+          """, name)
+              return source
+
+          def main():
+              targets = [
+                  ('src/components/discover/DiscoverReelsSection.jsx', patch_discover),
+                  ('src/components/author/AuthorReelGrid.jsx', patch_author),
+                  ('src/pages/FastReelsPage.jsx', patch_fast),
+              ]
+              updates = []
+              for file_name, transform in targets:
+                  path = Path(file_name)
+                  if not path.is_file():
+                      raise PatchError(f'Cannot find {file_name} in this GitHub repository')
+                  original = path.read_text(encoding='utf-8')
+                  updated = transform(original)
+                  if not updated.strip():
+                      raise PatchError(f'Empty result: {file_name}')
+                  updates.append((path, original, updated))
+              for path, original, updated in updates:
+                  if original != updated:
+                      path.write_text(updated, encoding='utf-8')
+                      print(f'REPLACE: {path}')
+                  else:
+                      print(f'UNCHANGED: {path}')
+              print('Done: 3 GitHub frontend files processed')
+
+          if __name__ == '__main__':
+              try:
+                  main()
+              except (OSError, PatchError) as exc:
+                  print(f'PATCH ERROR: {exc}', file=sys.stderr)
+                  sys.exit(1)
+
+          PY
+      - name: Validate changes
+        shell: bash
+        run: |
+          git diff --check
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Export full GitHub-ready files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shadow-Reel-Frontend-3-Full-Files
+          path: |
+            src/components/discover/DiscoverReelsSection.jsx
+            src/components/author/AuthorReelGrid.jsx
+            src/pages/FastReelsPage.jsx
+          retention-days: 7
+      - name: Commit fixes to GitHub
+        shell: bash
+        run: |
+          git add src/components/discover/DiscoverReelsSection.jsx src/components/author/AuthorReelGrid.jsx src/pages/FastReelsPage.jsx
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Fix stale deleted reels in public frontend views'
+          git push origin HEAD:${{ github.event.repository.default_branch }}
