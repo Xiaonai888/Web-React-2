@@ -163,6 +163,21 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
             }
             onProgress(progress)
           },
+          onJobStatus: (data) => {
+            if (signal.aborted) return
+            const jobStatus = String(data?.status || 'queued').toLowerCase()
+            const detail = data?.queue_diagnostic || {}
+            const code = String(detail.code || `MANGA_JOB_${jobStatus.toUpperCase()}`)
+            const message = String(detail.message || `Server reports Manga job status: ${jobStatus}`)
+            stage = jobStatus === 'queued' ? 'status' : 'worker'
+            notifyDiagnostic(task, {
+              stage,
+              progress: 100,
+              code,
+              status: 'working',
+              message: `${code}: ${message}`,
+            })
+          },
           useV2: true,
         })
         if (!/^https:\/\//i.test(String(uploaded?.imageUrl || ''))) {
