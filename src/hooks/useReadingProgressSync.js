@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { traceRequestOrigin } from '../utils/requestOriginDiagnostics'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -148,21 +149,28 @@ export default function useReadingProgressSync({
     let saved = false
     let permanentFailure = false
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/reading-progress`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${current.token}`,
-          'Content-Type': 'application/json',
-          'X-Shadow-Reading-Progress-Source': 'reader-sync',
+      try {
+      const response = await traceRequestOrigin(
+        {
+          source_file: 'src/hooks/useReadingProgressSync.js',
+          trigger: 'unknown',
         },
-        body: JSON.stringify({
-          story_id: current.storyId,
-          episode_id: current.episodeId,
-          reading_percent: current.percent,
-        }),
-        keepalive: true,
-      })
+        `${API_BASE_URL}/api/reading-progress`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${current.token}`,
+            'Content-Type': 'application/json',
+            'X-Shadow-Reading-Progress-Source': 'reader-sync',
+          },
+          body: JSON.stringify({
+            story_id: current.storyId,
+            episode_id: current.episodeId,
+            reading_percent: current.percent,
+          }),
+          keepalive: true,
+        }
+      )
 
       const data = await response.json().catch(() => ({}))
       if (!response.ok || data.ok === false) {
