@@ -493,6 +493,7 @@ async function waitForMangaV2Job({
   jobId,
   statusUrl,
   signal,
+  onJobStatus,
 }) {
   const safeJobId = String(jobId || '').trim()
 
@@ -548,6 +549,10 @@ async function waitForMangaV2Job({
       await response
         .json()
         .catch(() => ({}))
+
+    if (response.ok && data?.ok !== false && typeof onJobStatus === 'function') {
+      try { onJobStatus(data) } catch {}
+    }
 
     if (
       !response.ok ||
@@ -635,6 +640,7 @@ export async function uploadMangaPageFile({
   token,
   file,
   onProgress,
+  onJobStatus,
   signal,
   useV2 = true,
 }) {
@@ -678,6 +684,7 @@ export async function uploadMangaPageFile({
     jobId: staged.job_id,
     statusUrl: staged.status_url,
     signal,
+    onJobStatus,
   })
 }
 
