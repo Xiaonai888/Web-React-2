@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Search, AlertCircle, RefreshCw, PackageOpen } from 'lucide-react'
+import { ArrowLeft, Plus, Search, AlertCircle, RefreshCw, PackageOpen, FileSpreadsheet, ChevronRight } from 'lucide-react'
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { authorPreOrderText } from '../../utils/authorPreOrderRules'
@@ -107,9 +107,30 @@ export default function AuthorPreOrderPage() {
         </header>
         {access === 'checking' ? <div className="py-20 text-center text-[13px] text-[#757575]">{text('loading')}</div> : access === 'denied' ? <AccessMessage icon={AlertCircle} title={accessText} retryText={text('retry')} onRetry={() => setAccessRetry(n => n + 1)} /> : (
           <>
-            <button type="button" onClick={() => navigate('/author/page/pre-order/create')} className="mt-5 flex w-full items-center justify-center gap-2 rounded-[14px] bg-[#ffcc28] px-4 py-3.5 text-[14px] font-bold text-black active:scale-[0.99]">
-              <Plus size={19} /> {text('create')}
-            </button>
+            <div className="mt-5 space-y-2.5">
+  <button
+    type="button"
+    onClick={() => navigate('/author/page/pre-order/create')}
+    className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-[#ffcc28] px-4 py-3.5 text-[14px] font-bold text-black active:scale-[0.99]"
+  >
+    <Plus size={19} />
+    {text('create')}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => navigate('/author/page/pre-order/orders')}
+    className="flex w-full items-center gap-3 rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-3.5 text-left active:bg-[#fafafa]"
+  >
+    <FileSpreadsheet size={20} className="shrink-0 text-[#555]" />
+
+    <span className="min-w-0 flex-1 text-[13px] font-semibold text-[#272727]">
+      {text('orders')} · Excel
+    </span>
+
+    <ChevronRight size={17} className="shrink-0 text-[#888]" />
+  </button>
+</div>
             {summary ? (
               <div className="mt-4 grid grid-cols-4 gap-2">
                 {['all', 'active', 'scheduled', 'completed'].map(key => (
@@ -131,7 +152,16 @@ export default function AuthorPreOrderPage() {
             </div>
             {loading ? <div className="py-16 text-center text-[13px] text-[#757575]">{text('loading')}</div> : error ? <AccessMessage icon={AlertCircle} title={error} retryText={text('retry')} onRetry={() => setReload(v => v + 1)} /> : items.length ? (
               <div className="mt-4 space-y-3">
-                {items.map(item => <AuthorPreOrderCampaignCard key={item.id} campaign={item} language={lang} onOpen={() => navigate(`/author/page/pre-order/${encodeURIComponent(item.id)}/edit`)} />)}
+                {items.map(item => (
+  <AuthorPreOrderCampaignCard
+    key={item.id}
+    campaign={item}
+    language={lang}
+    onOpen={() =>
+      navigate(`/author/page/pre-order/${encodeURIComponent(item.id)}`)
+    }
+  />
+))}
                 {hasMore ? <button type="button" onClick={loadMore} disabled={loadingMore} className="w-full rounded-[12px] border border-[#dedede] py-3 text-[13px] font-semibold disabled:opacity-50">{loadingMore ? text('loading') : text('loadMore')}</button> : null}
               </div>
             ) : <AccessMessage icon={PackageOpen} title={delayedSearch ? text('noResults') : text('noCampaignsHint')} />}
