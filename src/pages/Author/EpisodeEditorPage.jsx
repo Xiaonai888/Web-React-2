@@ -28,7 +28,7 @@ import ImageDropZone from '../../components/common/ImageDropZone'
 import ScheduleReleasePicker from '../../components/author/ScheduleReleasePicker'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
-import MangaUploadProgressModal, { MangaUploadInlineStatus, mangaTransferPercent } from '../../components/author/MangaUploadProgressModal'
+import MangaUploadProgressModal, { MangaUploadInlineStatus, MangaSmoothUploadPercent, mangaTransferPercent } from '../../components/author/MangaUploadProgressModal'
 import {
   deleteEpisodeLocalDraft,
   getEpisodeLocalDraftKey,
@@ -6703,9 +6703,9 @@ releaseOption={releaseOption}
                       <i className="fa-solid fa-images text-[17px]" />
                     </div>
                     <div className="mt-3 text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
-                      {mangaUploadPending
-  ? `${mangaTransferPercent(mangaPages)}% ${getDisplayText('episodeEditor.uploadingPages')}`
-  : getDisplayText('episodeEditor.dropOrAddManga')}
+                     {mangaUploadPending ? (
+  <><MangaSmoothUploadPercent percent={mangaTransferPercent(mangaPages)} /> {getDisplayText('episodeEditor.uploadingPages')}</>
+) : getDisplayText('episodeEditor.dropOrAddManga')}
                     </div>
                     <div className="mt-1 text-[11px] text-[var(--shadow-text-tertiary)]">{getDisplayText('episodeEditor.mangaFileTypes')}</div>
                     <input
