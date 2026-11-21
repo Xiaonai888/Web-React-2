@@ -74,14 +74,6 @@ registerTranslationNamespace('discoverPage', {
 
 const DISPLAY_LOCALES = { en: 'en-US', km: 'km-KH', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR' }
 
-function discoverFetch(input, init, trigger = 'unknown') {
-  return traceRequestOrigin(
-    { source_file: 'src/pages/DiscoverPage.jsx', trigger },
-    input,
-    init
-  )
-}
-
 function discoverText(key, options) {
   return getDisplayText(`discoverPage.${key}`, options)
 }
@@ -131,10 +123,11 @@ async function fetchDiscoverFeedVersion(entryKey = '') {
   const request = runDiscoverFeedRequest(
     'discover-content-version',
     async () => {
-      const response = await fetch(
-  `${API_BASE_URL}/api/public/content-versions?keys=discover`,
-  { cache: 'default' }
-)
+      const response = await discoverFetch(
+        `${API_BASE_URL}/api/public/content-versions?keys=discover`,
+        { cache: 'default' },
+        'unknown'
+      )
       if (!response.ok) throw new Error('Version request failed')
       const data = await response.json()
       if (data?.ok === false) throw new Error('Version request failed')
