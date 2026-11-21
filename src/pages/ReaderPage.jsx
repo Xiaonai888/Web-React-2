@@ -43,9 +43,30 @@ import {
 import { Share2 } from 'lucide-react'
 import SharedChatThemePage from './SharedChatThemePage'
 import { redeemShadowReadEventFeaturedCards } from '../services/shadowReadEventRewardsClient'
+import { traceRequestOrigin } from '../utils/requestOriginDiagnostics'
 
 const SHADOW_READ_EVENT_CARDS_UI_ENABLED = import.meta.env.VITE_SHADOW_READ_EVENT_CARDS_UI_ENABLED === 'true'
 const EVENT_CARD_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function readerRequestOriginTrigger(input, init) {
+  try {
+    const url = new URL(input instanceof Request ? input.url : String(input), window.location.origin)
+    const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase()
+    const route = url.pathname
+    if (route === '/api/tasks/reading-session/progress' || /^\/api\/public\/stories\/[^/]+\/episodes\/[^/]+\/view\/?$/.test(route)) return 'timer'
+    if (route === '/api/tasks/reading-reward/claim' || /^\/api\/tasks\/reading-missions\/[^/]+\/claim\/?$/.test(route)) return 'timer'
+    if (method === 'POST' && (/^\/api\/reactions\/episode\/[^/]+\/toggle\/?$/.test(route) || /^\/api\/reader\/subscriptions\/[^/]+\/?$/.test(route) || /^\/api\/unlocks\/stories\/[^/]+\/episodes\/[^/]+\/(gem|voucher|package)\/?$/.test(route))) return 'user_action'
+  } catch {}
+  return 'unknown'
+}
+
+function readerFetch(input, init) {
+  return traceRequestOrigin(
+    { source_file: 'src/pages/ReaderPage.jsx', trigger: readerRequestOriginTrigger(input, init) },
+    input,
+    init
+  )
+}
 
 registerTranslationNamespace('readerPage', {
   "en": {
@@ -2277,7 +2298,7 @@ function ReaderEndPanel({
       loadedReactionStatusRef.current = reactionKey
 
       try {
-        const response = await fetch(
+        const response = await readerFetch(
           `${API_BASE_URL}/api/reactions/episode/${episodeId}/status`,
           {
             headers: readerAuthHeaders(),
@@ -2362,7 +2383,7 @@ function ReaderEndPanel({
     )
 
     try {
-      const response = await fetch(
+      const response = await readerFetch(
         `${API_BASE_URL}/api/reactions/episode/${episodeId}/toggle`,
         {
           method: 'POST',
@@ -2668,7 +2689,7 @@ function FeaturedReadEventCardOption({ storyId, episodeId, unlocking, onUnlocked
     setFailed(false)
     setEvents([])
 
-    fetch(`${API_BASE_URL}/api/read-event/rewards/available?story_id=${encodeURIComponent(storyId)}`, {
+    readerFetch(`${API_BASE_URL}/api/read-event/rewards/available?story_id=${encodeURIComponent(storyId)}`, {
       headers: readerAuthHeaders(),
       cache: 'no-store',
       signal: controller.signal,
@@ -5962,7 +5983,7 @@ export default function ReaderPage() {
       const timer = window.setTimeout(() => controller?.abort(), 1500)
 
       try {
-        const response = await fetch(`/app-version.json?t=${Date.now()}`, {
+        const response = await readerFetch(`/app-version.json?t=${Date.now()}`, {
           cache: 'no-store',
           signal: controller.signal,
         })
@@ -6366,7 +6387,7 @@ useEffect(() => {
       try {
         if (!pending) {
           pending = (async () => {
-            const response = await fetch(
+            const response = await readerFetch(
               `${API_BASE_URL}/api/comments/episode/${targetEpisodeId}/hot-summary`,
               {
                 headers: readerAuthHeaders(),
@@ -6497,7 +6518,7 @@ useEffect(() => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/reader/status/${storyId}`, {
+      const response = await readerFetch(`${API_BASE_URL}/api/reader/status/${storyId}`, {
   headers: readerAuthHeaders(),
   cache: 'no-store',
 })
@@ -6534,7 +6555,7 @@ const handleSubscribe = async () => {
   setSavingSubscribe(true)
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/reader/subscriptions/${storyId}`, {
+    const response = await readerFetch(`${API_BASE_URL}/api/reader/subscriptions/${storyId}`, {
       method: 'POST',
       headers: readerAuthHeaders(),
     })
@@ -6721,7 +6742,7 @@ useEffect(() => {
     return unlockStatusRequestRef.current.get(key)
   }
 
-  const request = fetch(
+  const request = readerFetch(
     `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/status`,
     {
       headers: readerAuthHeaders(),
@@ -6763,7 +6784,7 @@ async function loadReaderAdStatus(targetEpisodeId = episodeId) {
 
   const request = (async () => {
     try {
-      const response = await fetch(
+      const response = await readerFetch(
         `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/read-gate`,
         { headers: readerAuthHeaders(), cache: 'no-store' }
       )
@@ -6826,7 +6847,7 @@ async function loadContinuousEpisode(targetEpisode) {
 
   if (!targetId) return null
 
-  const fetchNext = () => fetch(
+  const fetchNext = () => readerFetch(
     `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${targetId}`,
     { headers: readerAuthHeaders(), cache: 'no-store' }
   )
@@ -7092,7 +7113,7 @@ useEffect(() => {
       const observedFetch = async (name, url) => {
         const started = Date.now()
         try {
-          const nativeFetch = () => fetch(url, {
+          const nativeFetch = () => readerFetch(url, {
             headers: readerAuthHeaders(),
             cache: 'no-store',
           })
@@ -7336,7 +7357,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           const timeout = window.setTimeout(() => controller.abort(), 8000)
           const started = Date.now()
           try {
-            const response = await fetch(url, {
+            const response = await readerFetch(url, {
               cache: 'no-store',
               signal: controller.signal,
             })
@@ -7515,7 +7536,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
     async function requestView(mode) {
       const startedAt = Date.now()
-      const response = await fetch(
+      const response = await readerFetch(
         `${API_BASE_URL}/api/public/stories/${storyId}/episodes/${episodeId}/view`,
         {
           method: 'POST',
@@ -7665,10 +7686,10 @@ if (!episodesResponse.ok || episodesData.ok === false) {
 
       try {
         const [missionsResponse, dailyResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
+          readerFetch(`${API_BASE_URL}/api/tasks/reading-missions`, {
             headers: readerAuthHeaders(),
           }),
-          fetch(`${API_BASE_URL}/api/tasks/reading-reward`, {
+          readerFetch(`${API_BASE_URL}/api/tasks/reading-reward`, {
             headers: readerAuthHeaders(),
           }),
         ])
@@ -7854,7 +7875,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
           : 'auto-only'
         : 'manual-active'
 
-      const progressResponse = await fetch(
+      const progressResponse = await readerFetch(
         `${API_BASE_URL}/api/tasks/reading-session/progress`,
         {
           method: 'POST',
@@ -7909,7 +7930,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       let needsReload = false
 
       if (dailyCoins > 0) {
-        const dailyClaimResponse = await fetch(
+        const dailyClaimResponse = await readerFetch(
           `${API_BASE_URL}/api/tasks/reading-reward/claim`,
           {
             method: 'POST',
@@ -7943,7 +7964,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       }
 
       for (const missionId of missionIds) {
-        const missionClaimResponse = await fetch(
+        const missionClaimResponse = await readerFetch(
           `${API_BASE_URL}/api/tasks/reading-missions/${missionId}/claim`,
           {
             method: 'POST',
@@ -8397,7 +8418,7 @@ async function handleLockedCoinUnlock(
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(
+    const response = await readerFetch(
       `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/gem`,
       {
         method: 'POST',
@@ -8450,7 +8471,7 @@ async function handleLockedVoucherUnlock(
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(
+    const response = await readerFetch(
       `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/voucher`,
       {
         method: 'POST',
@@ -8550,7 +8571,7 @@ async function handleLockedDiamondUnlock(
   try {
     setUnlockingEpisode(true)
 
-    const response = await fetch(
+    const response = await readerFetch(
       `${API_BASE_URL}/api/unlocks/stories/${storyId}/episodes/${targetEpisodeId}/package`,
       {
         method: 'POST',
