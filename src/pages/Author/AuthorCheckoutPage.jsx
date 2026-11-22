@@ -352,20 +352,72 @@ const API_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const FALLBACK_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
 const PAYMENT_SUCCESS_SEEN_KEY = 'shadow_author_checkout_success_seen_v1'
-const PAYMENT_CHECK_MIN_INTERVAL_MS = 15000
+const PAYMENT_CHECK_MIN_INTERVAL_MS = 30000
 const PAYMENT_CHECK_MAX_AGE_MS = 24 * 60 * 60 * 1000
+
+const PDF_CHECKOUT_COPY = Object.freeze({
+  en: {
+    maybeLater: 'Maybe Later',
+    saved: 'Your PDF is ready and saved in your Library. Read it anytime.',
+    ownedTitle: 'PDF Already Purchased',
+    ownedBody: 'You already own this PDF. It is available in your Library.',
+    checking: 'Checking your existing PDF payment. Do not pay again.',
+    expired: 'This payment QR has expired. Check the previous payment before attempting anything else. Do not pay again.',
+    blocked: 'This PDF has an existing payment. Please check the previous order.',
+    unavailable: 'A secure payment link is unavailable. Do not use an unrelated payment link.',
+  },
+  km: {
+    maybeLater: 'ពេលក្រោយ',
+    saved: 'PDF របស់អ្នកមានក្នុងបណ្ណាល័យរួចហើយ។ អ្នកអាចអានពេលណាក៏បាន។',
+    ownedTitle: 'អ្នកបានទិញ PDF នេះរួចហើយ',
+    ownedBody: 'PDF នេះមានក្នុងបណ្ណាល័យរបស់អ្នក។ មិនចាំបាច់ទិញម្ដងទៀតទេ។',
+    checking: 'កំពុងពិនិត្យការទូទាត់ចាស់។ សូមកុំទូទាត់ម្ដងទៀត។',
+    expired: 'QR ផុតកំណត់ហើយ។ សូមពិនិត្យការទូទាត់ចាស់ជាមុន កុំទិញម្ដងទៀត។',
+    blocked: 'PDF នេះមាន Order ចាស់រួចហើយ។ សូមពិនិត្យការទូទាត់មុន។',
+    unavailable: 'មិនមានតំណទូទាត់ដែលភ្ជាប់នឹង Order នេះទេ។ សូមកុំប្រើតំណផ្សេង។',
+  },
+  zh: {
+    maybeLater: '稍后再说',
+    saved: 'PDF 已保存到您的书库，随时可以阅读。',
+    ownedTitle: '您已购买此 PDF',
+    ownedBody: '此 PDF 已在您的书库，无需再次购买。',
+    checking: '正在核实之前的付款，请勿重复支付。',
+    expired: '付款二维码已过期，请先核实原付款，不要重复支付。',
+    blocked: '此 PDF 已有待核实的订单，请先查看原订单。',
+    unavailable: '无法提供与此订单对应的安全付款链接。',
+  },
+  ja: {
+    maybeLater: 'あとで',
+    saved: 'PDF はライブラリに保存されています。いつでも読めます。',
+    ownedTitle: 'この PDF は購入済みです',
+    ownedBody: 'ライブラリからいつでも読めます。再購入は不要です。',
+    checking: '以前のお支払いを確認中です。再度支払わないでください。',
+    expired: '決済 QR の期限が切れました。以前のお支払いを確認してください。',
+    blocked: 'この PDF には確認待ちの注文があります。',
+    unavailable: 'この注文に対応する安全な決済リンクがありません。',
+  },
+  ko: {
+    maybeLater: '나중에',
+    saved: 'PDF가 라이브러리에 저장되었습니다. 언제든 읽을 수 있습니다.',
+    ownedTitle: '이미 구매한 PDF입니다',
+    ownedBody: '라이브러리에서 읽을 수 있습니다. 다시 구매하지 마세요.',
+    checking: '기존 결제를 확인 중입니다. 다시 결제하지 마세요.',
+    expired: '결제 QR이 만료되었습니다. 기존 결제를 먼저 확인하세요.',
+    blocked: '이 PDF에 기존 주문이 있습니다. 결제 상태를 먼저 확인하세요.',
+    unavailable: '이 주문에 연결된 안전한 결제 링크가 없습니다.',
+  },
+})
 
 function currentPendingAuthorPayment() {
   try {
     const saved = JSON.parse(localStorage.getItem('shadow_author_current_order_payment') || 'null')
     const order = saved?.order
-    const expiresAt = Date.parse(order?.expires_at || '')
-    if (!order?.order_id || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
+    const createdAt = Date.parse(saved?.created_at || '')
+    if (!order?.order_id || !Number.isFinite(createdAt)) return null
+    if (Date.now() - createdAt > PAYMENT_CHECK_MAX_AGE_MS) return null
     if (localStorage.getItem(PAYMENT_SUCCESS_SEEN_KEY) === String(order.order_id)) return null
-    if (String(order.payment_status || '').toLowerCase() === 'paid') return null
-    return order.qr_image || order.checkout_url || order.deeplink ? order : null
+    return order
   } catch {
     return null
   }
@@ -657,7 +709,8 @@ function saveAuthorOrder({ items, subtotal, deliveryFee, deliveryCompany, delive
 
 function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   const { t } = useDisplayTranslation()
-  const readerUser = getReaderUser()
+  const pdfCopy = PDF_CHECKOUT_COPY[getDisplayLanguageId()] || PDF_CHECKOUT_COPY.en
+  const [items, setItems] = useState(getCartItems)
    const [name, setName] = useState(profile.name || readerUser?.name || '')
   const [phone, setPhone] = useState(profile.phone_number || '')
   const [telegram, setTelegram] = useState(profile.telegram_username || '')
@@ -961,24 +1014,70 @@ export default function AuthorCheckoutPage() {
         }
 
         const data = await response.json().catch(() => ({}))
-        const order = data.order
+        let order = data.order
         if (!active) return
         if (data.ok === false || String(order?.order_id || '') !== orderId) {
           if (manual) setPaymentMessage(t('authorCheckout.paymentUnavailable'))
           return
         }
-        if (String(order.payment_status || '').toLowerCase() !== 'paid') {
-          if (manual) setPaymentMessage(t('authorCheckout.paymentPending'))
-          return
-        }
-
+        
         const orderItems = Array.isArray(order.items) && order.items.length
           ? order.items
           : Array.isArray(saved.order?.items) ? saved.order.items : []
         const hasBook = orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')
         const pdfOnly = orderItems.length > 0 && orderItems.every((item) => String(item.product_type || item.type || '').toLowerCase() === 'pdf')
-        const confirmedPdfPurchase = pdfOnly
+                const confirmedPdfPurchase = pdfOnly
         if (!hasBook && !confirmedPdfPurchase) return
+
+        if (
+          confirmedPdfPurchase &&
+          (
+            String(order.payment_status || '').toLowerCase() !== 'paid' ||
+            String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked'
+          )
+        ) {
+          const recoveryResponse = await fetch(
+            `${API_URL}/api/author-store/orders/${encodeURIComponent(orderId)}/recheck-pdf-payment`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              signal: controller.signal,
+            }
+          )
+
+          const recovery = await recoveryResponse.json().catch(() => ({}))
+
+          if (!recoveryResponse.ok || recovery.state !== 'purchased') {
+            if (manual) setPaymentMessage(pdfCopy.checking)
+            return
+          }
+
+          const refreshed = await fetch(
+            `${API_URL}/api/author-store/orders/status/${encodeURIComponent(orderId)}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              signal: controller.signal,
+            }
+          )
+
+          const refreshedData = await refreshed.json().catch(() => ({}))
+
+          if (!refreshed.ok || !refreshedData.order || !active) {
+            if (manual) setPaymentMessage(pdfCopy.checking)
+            return
+          }
+
+          order = refreshedData.order
+        }
+
+        if (String(order.payment_status || '').toLowerCase() !== 'paid') {
+          if (manual) setPaymentMessage(pdfCopy.checking)
+          return
+        }
 
         let pdfItem = null
         let pdfProductId = ''
@@ -1102,6 +1201,93 @@ export default function AuthorCheckoutPage() {
     saveCartItems(nextItems)
   }
 
+    function handleExistingPdfCheckoutResult(result, selectedItems) {
+    const restrictions = Array.isArray(result?.products)
+      ? result.products.filter((row) => row.product_type === 'pdf' && row.state !== 'available')
+      : []
+
+    if (!restrictions.length) return false
+
+    if (
+      selectedItems.length !== 1 ||
+      String(selectedItems[0].type || selectedItems[0].product_type || '').toLowerCase() === 'book'
+    ) {
+      setMessage(result.message || pdfCopy.blocked)
+      return true
+    }
+
+    const selected = selectedItems[0]
+    const productId = String(selected.id || selected.product_id || '')
+    const restriction = restrictions.find((row) => String(row.product_id) === productId)
+
+    if (!restriction) {
+      setMessage(result.message || pdfCopy.blocked)
+      return true
+    }
+
+    if (restriction.state === 'purchased') {
+      saveCartItems(
+        getCartItems().filter(
+          (item) => String(item.id || item.product_id) !== productId
+        )
+      )
+
+      setPaymentModal(null)
+
+      setPaidPdfOrder({
+        orderId: restriction.order_id || '',
+        productId,
+        title: selected.title || 'PDF',
+        returnPath: getCheckoutReturnPath(selectedItems),
+        alreadyOwned: true,
+      })
+
+      return true
+    }
+
+    if (restriction.order_id) {
+      const previous = {
+        order_id: restriction.order_id,
+        payment_method:
+          restriction.payment_method === 'binance'
+            ? 'binance_personal_pay'
+            : 'aba_payway',
+        payment_status: restriction.payment_status || 'pending',
+        pdf_unlock_status: restriction.pdf_unlock_status || 'pending',
+        expires_at: restriction.expires_at || '',
+        items: [
+          {
+            product_id: productId,
+            product_type: 'pdf',
+            quantity: 1,
+            product_title: selected.title || 'PDF',
+          },
+        ],
+      }
+
+      localStorage.setItem(
+        'shadow_author_current_order_payment',
+        JSON.stringify({
+          order: previous,
+          created_at: new Date().toISOString(),
+          return_path: getCheckoutReturnPath(selectedItems),
+          checkout_items: [{ id: productId, quantity: 1 }],
+        })
+      )
+
+      setPaymentModal(previous)
+      setPaymentMessage(pdfCopy.checking)
+      window.dispatchEvent(new Event('shadow-author-payment-check'))
+
+      return true
+    }
+
+    setMessage(result.message || pdfCopy.blocked)
+    return true
+  }
+
+ async function handleContinuePayment() {
+   
  async function handleContinuePayment() {
   if (paymentSubmissionRef.current) return
   const latestItems = getCartItems()
@@ -1196,6 +1382,35 @@ export default function AuthorCheckoutPage() {
     }
     if (hasExpiredDiscoverPromotion(verifiedItems)) throw new Error(discoverPromotionExpiryMessage())
 
+    if (!needsDelivery) {
+      const pdfIds = [
+        ...new Set(
+          verifiedItems.map((item) =>
+            String(item.id || item.product_id || '').trim()
+          )
+        ),
+      ]
+
+      const ownershipResponse = await fetch(
+        `${API_URL}/api/author-store/orders/pdf-ownership?product_ids=${encodeURIComponent(pdfIds.join(','))}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const ownershipData = await ownershipResponse.json().catch(() => ({}))
+
+      if (!ownershipResponse.ok || ownershipData.ok !== true) {
+        throw new Error(ownershipData.message || pdfCopy.blocked)
+      }
+
+      if (handleExistingPdfCheckoutResult(ownershipData, verifiedItems)) {
+        return
+      }
+    }
+
     let verifiedDeliveryCompany = null
     if (needsDelivery) {
       const latestCompanies = await fetchCheckoutDeliveryCompanies({
@@ -1240,10 +1455,21 @@ export default function AuthorCheckoutPage() {
     const orderData = await orderResponse.json().catch(() => ({}))
 
     if (!orderResponse.ok || orderData.ok === false) {
+      if (
+        !needsDelivery &&
+        orderResponse.status === 409 &&
+        handleExistingPdfCheckoutResult(orderData, verifiedItems)
+      ) {
+        return
+      }
+
       if (useBinance && orderData.code === 'BINANCE_PROFILE_REQUIRED') {
         setBinanceProfileOpen(true)
       }
-      throw new Error(orderData.message || t('authorCheckout.failedCreatePayment'))
+
+      throw new Error(
+        orderData.message || t('authorCheckout.failedCreatePayment')
+      )
     }
 
     if (!orderData.order) {
@@ -1254,6 +1480,12 @@ export default function AuthorCheckoutPage() {
       ...orderData.order,
       payment_method: 'binance_personal_pay',
       payment_status: 'pending',
+      items: verifiedItems.map((item) => ({
+        product_id: item.id || item.product_id,
+        product_type: 'pdf',
+        product_title: item.title || 'PDF',
+        quantity: 1,
+      })),
       qr_image: orderData.order.checkout_ready === true &&
         orderData.order.qr_path === '/api/purchase/binance/receiver/qr'
         ? `${API_URL}${orderData.order.qr_path}` : '',
@@ -1277,9 +1509,21 @@ export default function AuthorCheckoutPage() {
       setPaymentModal(nextOrder)
       setPaymentMessage('')
     } else {
-      const paywayUrl = nextOrder.checkout_url || nextOrder.deeplink || FALLBACK_PAYWAY_LINK
-      window.location.assign(paywayUrl)
-      navigationStarted = true
+      const paywayUrl = String(
+        nextOrder.checkout_url || nextOrder.deeplink || ''
+      ).trim()
+
+      if (
+        /^https:\/\//i.test(paywayUrl) ||
+        /^abamobilebank:\/\//i.test(paywayUrl)
+      ) {
+        window.location.assign(paywayUrl)
+        navigationStarted = true
+      } else {
+        setPaymentClock(Date.now())
+        setPaymentModal(nextOrder)
+        setPaymentMessage(nextOrder.qr_image ? '' : pdfCopy.unavailable)
+      }
     }
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
@@ -1553,7 +1797,7 @@ export default function AuthorCheckoutPage() {
                 {paymentModal.receiver?.uid ? <div>Binance UID: {paymentModal.receiver.uid} ({paymentModal.receiver.name})</div> : null}
               </div>
             ) : null}
-            {getPaymentQrImage(paymentModal) ? (
+            {getPaymentQrImage(paymentModal) && Date.parse(paymentModal.expires_at || '') > paymentClock ? (
               <div className="mx-auto mt-4 flex w-fit max-w-full justify-center rounded-2xl bg-white p-3">
                 <img src={getPaymentQrImage(paymentModal)} alt={t('authorCheckout.paymentTitle')} className="max-h-[260px] max-w-[260px] object-contain" />
               </div>
@@ -1568,7 +1812,7 @@ export default function AuthorCheckoutPage() {
             ) : null}
             {Date.parse(paymentModal.expires_at || '') <= paymentClock ? (
               <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900">
-                {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binanceWait') : t('authorCheckout.paymentExpired')}
+                {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binanceWait') : pdfCopy.expired}
               </p>
             ) : null}
             {paymentMessage ? <p role="status" className="mt-3 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-left text-[12px] text-[var(--shadow-text-primary)]">{paymentMessage}</p> : null}
@@ -1612,14 +1856,18 @@ export default function AuthorCheckoutPage() {
           aria-labelledby="author-order-success-title"
         >
           <div className="w-full max-w-[380px] rounded-[26px] bg-[var(--shadow-bg-surface)] px-6 pb-6 pt-7 text-center shadow-2xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
-              <i className="fa-solid fa-check text-[26px]" aria-hidden="true" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff5ca] text-[#b18a00]">
+              <i className="fa-solid fa-book-open text-[26px]" aria-hidden="true" />
             </div>
-            <h2 id="author-order-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
-              {t('authorCheckout.orderSuccessful')}
+            <h2 id="author-pdf-purchase-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
+              {paidPdfOrder.alreadyOwned
+                ? pdfCopy.ownedTitle
+                : t('authorCheckout.pdfPurchaseSuccessful')}
             </h2>
             <p className="mt-3 text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
-              {t('authorCheckout.orderSuccessMessage')}
+              {paidPdfOrder.alreadyOwned
+                ? pdfCopy.ownedBody
+                : pdfCopy.saved}
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <button
@@ -1662,7 +1910,7 @@ export default function AuthorCheckoutPage() {
               <button
                 type="button"
                 onClick={() => closePdfSuccess(true)}
-                className="h-12 w-full rounded-full bg-[#FE526E] text-[14px] font-medium text-white transition active:scale-[0.98]"
+                className="h-12 w-full rounded-full bg-gradient-to-r from-[#FFD13B] to-[#FFDD3F] text-[14px] font-semibold text-[#171717] transition active:scale-[0.98]"
               >
                 {t('authorCheckout.readNow')}
               </button>
@@ -1671,7 +1919,7 @@ export default function AuthorCheckoutPage() {
                 onClick={() => closePdfSuccess(false)}
                 className="h-12 w-full rounded-full border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] text-[14px] font-medium text-[var(--shadow-text-primary)] transition active:scale-[0.98]"
               >
-                {t(`authorCheckout.${checkoutReturnLabel(paidPdfOrder.returnPath)}`)}
+                {pdfCopy.maybeLater}
               </button>
             </div>
           </div>
