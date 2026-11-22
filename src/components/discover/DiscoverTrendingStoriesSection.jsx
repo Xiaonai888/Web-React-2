@@ -108,7 +108,7 @@ export default function DiscoverTrendingStoriesSection() {
 
       const response = await fetch(
         addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=10&sort=trending`
+                    `${API_BASE_URL}/api/public/stories?limit=10&sort=trending&view=compact`
         )
       )
 
