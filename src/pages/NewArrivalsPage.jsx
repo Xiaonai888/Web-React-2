@@ -356,15 +356,15 @@ export default function NewArrivalsPage() {
       section: 'stories',
       language: getStoryLanguageId(),
       params: {
-        page: 'new-arrivals',
-        tab,
-        offset,
-        limit,
-        sort: config.sort,
-        genre: config.genre || '',
-        story_status: config.storyStatus || '',
-        schema: 3,
-      },
+  page: 'new-arrivals',
+  tab,
+  offset,
+  limit,
+  sort: config.sort,
+  genre: config.genre || '',
+  story_status: config.storyStatus || '',
+  schema: 4,
+},
     })
 
     try {
