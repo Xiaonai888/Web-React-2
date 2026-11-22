@@ -1040,9 +1040,10 @@ function RequestPanel({
           <p className="mt-1 text-[11px] font-semibold text-[#705b9d]">
             {Math.min(limit, Math.max(0, sent))}/{limit}
           </p>
-        ) : null}
+               ) : null}
       </section>
     )
+  }
 
   if (conversation.request_status === 'declined') {
     return (
