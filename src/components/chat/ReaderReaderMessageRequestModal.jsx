@@ -12,7 +12,7 @@ import {
   createReaderReaderMessageRequest,
   getChatConversations,
 } from '../../services/chatApi'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { useDisplayTranslation } from '../..helper: 'You can send up to 5 messages before this reader accepts your request. After acceptance, you can chat normally.',/utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('readerMessageRequest', {
@@ -25,7 +25,7 @@ registerTranslationNamespace('readerMessageRequest', {
     title: 'Message request',
     readerProfile: 'Reader profile',
     close: 'Close',
-    helper: 'You can send one message request. More messages become available after this reader accepts it.',
+    helper: 'You can send up to 5 messages before this reader accepts your request. After acceptance, you can chat normally.',
     placeholder: 'Write a message to {{name}}...',
     sendRequest: 'Send request',
   },
@@ -38,7 +38,7 @@ registerTranslationNamespace('readerMessageRequest', {
     title: 'សំណើសារ',
     readerProfile: 'ប្រវត្តិរូបអ្នកអាន',
     close: 'បិទ',
-    helper: 'អ្នកអាចផ្ញើសំណើសារបានមួយ។ អ្នកអាចផ្ញើសារបន្ថែមបាន បន្ទាប់ពីអ្នកអាននេះទទួលយកសំណើ។',
+    helper: 'អ្នកអាចផ្ញើបានអតិបរមា ៥ សារ មុនពេលអ្នកអាននេះទទួលយកសំណើ។ បន្ទាប់ពីទទួលយក អ្នកអាចឆាតបានធម្មតា។',
     placeholder: 'សរសេរសារទៅ {{name}}...',
     sendRequest: 'ផ្ញើសំណើ',
   },
@@ -51,7 +51,7 @@ registerTranslationNamespace('readerMessageRequest', {
     title: '消息请求',
     readerProfile: '读者资料',
     close: '关闭',
-    helper: '你可以发送一条消息请求。对方接受后即可发送更多消息。',
+    helper: '对方接受请求前，你最多可以发送5条消息。接受后即可正常聊天。',
     placeholder: '给 {{name}} 写消息...',
     sendRequest: '发送请求',
   },
@@ -64,7 +64,7 @@ registerTranslationNamespace('readerMessageRequest', {
     title: 'メッセージリクエスト',
     readerProfile: '読者プロフィール',
     close: '閉じる',
-    helper: 'メッセージリクエストを1件送信できます。この読者が承認すると、さらにメッセージを送れるようになります。',
+    helper: '相手がリクエストを承認する前に、最大5件のメッセージを送信できます。承認後は通常どおりチャットできます。',
     placeholder: '{{name}} にメッセージを書く...',
     sendRequest: 'リクエストを送信',
   },
@@ -77,7 +77,7 @@ registerTranslationNamespace('readerMessageRequest', {
     title: '메시지 요청',
     readerProfile: '독자 프로필',
     close: '닫기',
-    helper: '메시지 요청을 한 번 보낼 수 있습니다. 이 독자가 요청을 수락하면 더 많은 메시지를 보낼 수 있습니다.',
+    helper: '상대방이 요청을 수락하기 전까지 최대 5개의 메시지를 보낼 수 있습니다. 수락 후에는 자유롭게 채팅할 수 있습니다.',
     placeholder: '{{name}}님에게 메시지 쓰기...',
     sendRequest: '요청 보내기',
   },
