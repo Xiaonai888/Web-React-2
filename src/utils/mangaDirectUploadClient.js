@@ -58,11 +58,16 @@ function isPermanentResponse(code, status, stage) {
 }
 
 function requestTimeout(route) {
-  if (route === 'init') return INIT_TIMEOUT_MS
-  if (route === 'finalize') return FINALIZE_TIMEOUT_MS
+  if (route === 'init' || route === 'device-parts/init') {
+    return INIT_TIMEOUT_MS
+  }
+
+  if (route === 'finalize' || route === 'device-parts/finalize') {
+    return FINALIZE_TIMEOUT_MS
+  }
+
   return CANCEL_TIMEOUT_MS
 }
-
 async function postJson(baseUrl, route, token, body, signal) {
   if (signal?.aborted) throw canceled(route)
 
@@ -393,4 +398,165 @@ export async function stageMangaDirectUpload({
     }
     throw error
   }
+}
+
+
+function isTrustedMangaDeviceUploadUrl(value) {
+  try {
+    const url = new URL(String(value || ''))
+    return url.protocol === 'https:' &&
+      /^[a-z0-9-]+\.r2\.cloudflarestorage\.com$/i.test(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+export async function stageMangaDevicePartsUpload({
+  token,
+  file,
+  apiBaseUrl,
+  signal,
+  onProgress,
+} = {}) {
+  const baseUrl = backendBaseUrl(apiBaseUrl)
+
+  if (import.meta.env.VITE_MANGA_DEVICE_PARTS_ENABLED !== 'true') {
+    const error = uploadError('Manga device-first is not enabled in this build.', {
+      code: 'MANGA_DEVICE_PARTS_DISABLED',
+      stage: 'init',
+      permanent: true,
+    })
+    error.fallbackSafe = true
+    throw error
+  }
+
+  if (!token) {
+    throw uploadError('Sign in before uploading Manga pages.', {
+      code: 'MANGA_DEVICE_UNAUTHORIZED',
+      stage: 'auth',
+      permanent: true,
+    })
+  }
+
+  if (signal?.aborted) throw canceled('device_process')
+
+  const { prepareMangaDeviceParts } = await import('./mangaDevicePartProcessor')
+  const prepared = await prepareMangaDeviceParts(file, { signal, onProgress })
+  const sourceParts = prepared.parts
+
+  const manifest = {
+    sourceWidth: prepared.sourceWidth,
+    sourceHeight: prepared.sourceHeight,
+    width: prepared.width,
+    height: prepared.height,
+    parts: sourceParts.map((part) => ({
+      partIndex: part.partIndex,
+      top: part.top,
+      width: part.width,
+      height: part.height,
+      size: part.size,
+      quality: part.quality,
+    })),
+  }
+
+  let session
+
+  try {
+    session = await postJson(baseUrl, 'device-parts/init', token, { manifest }, signal)
+  } catch (error) {
+    if (['MANGA_DEVICE_PARTS_DISABLED', 'HTTP_404'].includes(String(error?.code))) {
+      error.fallbackSafe = true
+    }
+    throw error
+  }
+
+  const uploadToken = String(session.upload_token || '')
+  const signedParts = Array.isArray(session.parts) ? session.parts : []
+
+  if (!uploadToken || signedParts.length !== sourceParts.length) {
+    throw uploadError('Manga device upload session is incomplete.', {
+      code: 'MANGA_DEVICE_SESSION_INVALID',
+      stage: 'init',
+      permanent: true,
+    })
+  }
+
+  const uploads = signedParts.map((signed, index) => {
+    const part = sourceParts[index]
+
+    if (
+      Number(signed.part_index) !== index ||
+      Number(signed.file_size) !== part.file.size ||
+      String(signed.required_headers?.['Content-Type'] || '').toLowerCase() !== 'image/webp' ||
+      !isTrustedMangaDeviceUploadUrl(signed.upload_url)
+    ) {
+      throw uploadError('Manga device part upload URL is invalid.', {
+        code: 'MANGA_DEVICE_SIGNED_URL_INVALID',
+        stage: 'init',
+        permanent: true,
+      })
+    }
+
+    return { url: signed.upload_url, file: part.file }
+  })
+
+  let uploadedBytes = 0
+  const totalBytes = uploads.reduce((total, item) => total + item.file.size, 0)
+
+  for (const item of uploads) {
+    if (signal?.aborted) throw canceled('put')
+
+    await uploadSignedFile({
+      url: item.url,
+      file: item.file,
+      mimeType: 'image/webp',
+      signal,
+      onProgress: (progress) => {
+        if (signal?.aborted) return
+
+        const loaded = Math.min(
+          totalBytes,
+          uploadedBytes + Number(progress.loaded || 0)
+        )
+
+        onProgress?.({
+          loaded,
+          total: totalBytes,
+          percent: totalBytes ? Math.round((loaded * 100) / totalBytes) : 0,
+          processing: false,
+          deviceFirst: true,
+        })
+      },
+    })
+
+    uploadedBytes += item.file.size
+  }
+
+  let result
+
+  try {
+    result = await postJson(baseUrl, 'device-parts/finalize', token, {
+      upload_token: uploadToken,
+    }, signal)
+  } catch (error) {
+    error.stage = 'finalize'
+    error.permanent = true
+    throw error
+  }
+
+  if (
+    result.status !== 'done' ||
+    result.processed_by !== 'device' ||
+    !/^https:\/\//i.test(String(result.image_url || '')) ||
+    !Array.isArray(result.parts) ||
+    result.parts.length !== sourceParts.length
+  ) {
+    throw uploadError('Manga device completion response is incomplete.', {
+      code: 'MANGA_DEVICE_RESULT_INVALID',
+      stage: 'finalize',
+      permanent: true,
+    })
+  }
+
+  return result
 }
