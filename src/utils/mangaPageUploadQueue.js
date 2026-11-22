@@ -134,8 +134,21 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
           try {
             prepared = await optimizeMangaImage(file)
           } catch (error) {
-            if (!signal.aborted) error.permanent = true
-            throw error
+            if (signal.aborted) throw error
+
+            const mimeType = String(file?.type || '').toLowerCase()
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
+              error.permanent = true
+              throw error
+            }
+
+            prepared = { file, width: null, height: null }
+            traceMangaUpload('device-prepare-fallback', {
+              page: String(task.context?.pageId || '').slice(-8),
+              state: 'fallback',
+              code: 'MANGA_BROWSER_PREPARE_FAILED',
+              message: String(error?.message || '').slice(0, 160),
+            }, 'warn')
           }
         }
         const selected = prepared?.file
@@ -162,7 +175,20 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
             if (signal.aborted) return
             const value = typeof progress === 'number' ? { percent: progress } : (progress || {})
             const percent = Number(value.percent || 0)
-            if (value.processing) {
+
+            if (value.stage === 'device_process') {
+              stage = 'device_process'
+
+              const finished = Number(value.processedParts || 0)
+              const remaining = Number(value.remainingParts || 0)
+
+              notifyDiagnostic(task, {
+                stage,
+                message: finished > 0
+                  ? `Preparing Manga on device: ${finished} parts ready${remaining > 0 ? `, ${remaining} remaining` : ''}`
+                  : 'Preparing Manga parts on your device',
+              })
+            } else if (value.processing) {
               stage = 'worker'
               notifyDiagnostic(task, {
                 stage,
@@ -171,12 +197,16 @@ export function createMangaPageUploadQueue({ storyId, draftKey, getToken, onChan
               })
             } else if (percent > 0 || Number(value.loaded || 0) > 0) {
               stage = 'put'
+
               notifyDiagnostic(task, {
                 stage,
                 progress: percent,
-                message: percent >= 100 ? 'File transfer reached 100%; waiting for server response' : 'Sending image to Cloudflare R2',
+                message: percent >= 100
+                  ? 'File transfer reached 100%; waiting for server response'
+                  : 'Sending image to Cloudflare R2',
               })
             }
+
             onProgress(progress)
           },
           onJobStatus: (data) => {
