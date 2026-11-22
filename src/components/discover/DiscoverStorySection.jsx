@@ -610,6 +610,23 @@ function OwnerStoryMenu({
   )
 }
 
+FILE: src/components/discover/DiscoverStorySection.jsx
+TYPE: PARTIAL EDIT (existing file; do not create a new JSX file)
+
+STEP 1: ADD THE FOLLOWING IMPORT JUST BELOW THE react-router-dom IMPORT.
+
+import {
+  CircleCheck,
+  CircleMinus,
+  CirclePlus,
+  Link2,
+  Share2,
+  TriangleAlert,
+  VolumeX,
+} from 'lucide-react'
+
+STEP 2: REPLACE THE ENTIRE EXISTING `function ViewerStoryMenu({ ... }) { ... }` BLOCK WITH THE BLOCK BELOW.
+STOP BEFORE `function MutedStoriesSheet(`. LEAVE ALL OTHER CODE UNCHANGED.
 
 function ViewerStoryMenu({
   open,
@@ -632,14 +649,14 @@ function ViewerStoryMenu({
     [
       {
         key: 'interested',
-        icon: interested ? 'fa-circle-check' : 'fa-circle-plus',
-        title: interested ? 'Interested ✓' : 'Interested',
+        icon: interested ? CircleCheck : CirclePlus,
+        title: 'Interested',
         description: 'Show more stories from this creator.',
         action: onInterested,
       },
       {
         key: 'not-interested',
-        icon: 'fa-circle-minus',
+        icon: CircleMinus,
         title: 'Not interested',
         description: 'Show fewer stories like this.',
         action: onNotInterested,
@@ -648,33 +665,33 @@ function ViewerStoryMenu({
     [
       {
         key: 'share',
-        icon: 'fa-share',
+        icon: Share2,
         title: 'Share this story',
         action: onShare,
       },
       {
         key: 'mute',
-        icon: 'fa-volume-xmark',
+        icon: VolumeX,
         title: `Mute ${creatorName || 'this creator'}'s stories`,
         description: 'Stop seeing their stories in Discover.',
         action: onMute,
       },
       {
         key: 'report',
-        icon: 'fa-triangle-exclamation',
+        icon: TriangleAlert,
         title: 'Find Support or Report',
         action: onReport,
       },
       {
         key: 'copy',
-        icon: 'fa-link',
+        icon: Link2,
         title: 'Copy link to share this story',
         description: 'Stories are available for 24 hours.',
         action: onCopyLink,
       },
       {
         key: 'create',
-        icon: 'fa-circle-plus',
+        icon: CirclePlus,
         title: 'Create a story',
         action: onCreate,
       },
@@ -694,7 +711,7 @@ function ViewerStoryMenu({
         role="dialog"
         aria-modal="true"
         aria-label="Story options"
-        className="absolute inset-x-0 bottom-0 mx-auto max-h-[88dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-[#f3f4f7] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 text-[#14161d] shadow-2xl dark:bg-[#202128] dark:text-white"
+        className="absolute inset-x-0 bottom-0 mx-auto max-h-[88dvh] w-full max-w-[520px] overflow-y-auto overscroll-contain rounded-t-[24px] bg-[#f3f4f7] px-3 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 text-[#292d33] shadow-2xl dark:bg-[#202128] dark:text-[#f3f4f6]"
         {...dragHandlers}
       >
         <div className="mx-auto mb-3 h-[5px] w-12 rounded-full bg-[#a0a4ad]" />
@@ -705,33 +722,34 @@ function ViewerStoryMenu({
               key={sectionIndex}
               className="overflow-hidden rounded-[17px] bg-white px-1 py-1 dark:bg-[#30313a]"
             >
-              {items.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={item.action}
-                  className="flex min-h-[60px] w-full items-center gap-3 rounded-[13px] px-3 py-2.5 text-left active:bg-black/5 dark:active:bg-white/10"
-                >
-                  <span className="flex w-9 shrink-0 justify-center text-[21px]">
-                    <i
-                      className={`fa-solid ${item.icon}`}
-                      aria-hidden="true"
-                    />
-                  </span>
+              {items.map((item) => {
+                const Icon = item.icon
 
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-semibold leading-5">
-                      {item.title}
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={item.action}
+                    className="flex min-h-[60px] w-full items-center gap-3 rounded-[13px] px-3 py-2.5 text-left active:bg-black/5 dark:active:bg-white/10"
+                  >
+                    <span className="flex w-9 shrink-0 items-center justify-center text-[#292d33] dark:text-[#e5e7eb]">
+                      <Icon size={25} strokeWidth={1.9} aria-hidden="true" />
                     </span>
 
-                    {item.description ? (
-                      <span className="mt-0.5 block text-[12px] leading-4 text-[#677184] dark:text-[#aeb4c0]">
-                        {item.description}
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-normal leading-6 tracking-normal">
+                        {item.title}
                       </span>
-                    ) : null}
-                  </span>
-                </button>
-              ))}
+
+                      {item.description ? (
+                        <span className="mt-0.5 block text-[13px] font-normal leading-[19px] text-[#737983] dark:text-[#b9bec8]">
+                          {item.description}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           ))}
         </div>
@@ -739,6 +757,7 @@ function ViewerStoryMenu({
     </div>
   )
 }
+
 
 
 function MutedStoriesSheet({ open, creators, onClose, onUnmute }) {
