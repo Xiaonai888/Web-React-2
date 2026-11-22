@@ -331,6 +331,7 @@ const AuthorStudioLibraryPage = lazy(() => import('./pages/Author/AuthorStudioLi
 const AuthorStudioPlaylistsPage = lazy(() => import('./pages/Author/AuthorStudioPlaylistsPage'))
 const AuthorStudioArchivePage = lazy(() => import('./pages/Author/AuthorStudioArchivePage'))
 const AuthorStudioTrashPage = lazy(() => import('./pages/Author/AuthorStudioTrashPage'))
+const AuthorStudioUnavailablePage = lazy(() => import('./pages/Author/AuthorStudioUnavailablePage'))
 const AuthorStudioAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioAnalyticsPage'))
 const AuthorStudioVideoAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioVideoAnalyticsPage'))
 const AuthorStudioRankingPage = lazy(() => import('./pages/Author/AuthorStudioRankingPage'))
@@ -1697,6 +1698,7 @@ const shouldShowOpeningAds =
 <Route path="/author/reel/studio/library" element={<LazyPage><AuthorStudioLibraryPage /></LazyPage>} />
 <Route path="/author/reel/studio/playlists" element={<LazyPage><AuthorStudioPlaylistsPage /></LazyPage>} />
 <Route path="/author/reel/studio/archive" element={<LazyPage><AuthorStudioArchivePage /></LazyPage>} />
+<Route path="/author/reel/studio/unavailable" element={<LazyPage><AuthorStudioUnavailablePage /></LazyPage>} />
 <Route path="/author/reel/studio/trash" element={<LazyPage><AuthorStudioTrashPage /></LazyPage>} />
 
 
