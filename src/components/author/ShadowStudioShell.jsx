@@ -10,6 +10,7 @@ const OWN_PAGES = new Set([
   `${STUDIO_ROOT}/library`,
   `${STUDIO_ROOT}/playlists`,
   `${STUDIO_ROOT}/archive`,
+  `${STUDIO_ROOT}/unavailable`,
   `${STUDIO_ROOT}/trash`,
 ])
 
