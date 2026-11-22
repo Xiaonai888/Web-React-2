@@ -3,8 +3,15 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import ShadowStudioHeader from './ShadowStudioHeader'
 import { getStudioVideoNotificationUnreadCount } from '../../services/shadowStudioNotificationsApi'
 import { fetchMyAuthorPageCached, getMyAuthorPageCachedSnapshot } from '../../services/myAuthorPageClientCache'
+import './ShadowStudioOwnPages.css'
 
 const STUDIO_ROOT = '/author/reel/studio'
+const OWN_PAGES = new Set([
+  `${STUDIO_ROOT}/library`,
+  `${STUDIO_ROOT}/playlists`,
+  `${STUDIO_ROOT}/archive`,
+  `${STUDIO_ROOT}/trash`,
+])
 
 export default function ShadowStudioShell({ children, avatarUrl = '' }) {
   const navigate = useNavigate()
@@ -74,8 +81,12 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
     state: { activeTab: 'Reel' },
   })
 
-  const hideStudioHeader = location.pathname === `${STUDIO_ROOT}/notifications` ||
+  const isOwnPage = OWN_PAGES.has(location.pathname)
+  const hideStudioHeader = isOwnPage ||
+    location.pathname === `${STUDIO_ROOT}/notifications` ||
     location.pathname === `${STUDIO_ROOT}/ranking`
+
+  const pageContent = children ?? <Outlet />
 
   return <>
     {!hideStudioHeader ? <ShadowStudioHeader
@@ -85,6 +96,8 @@ export default function ShadowStudioShell({ children, avatarUrl = '' }) {
       onOpenNotifications={handleNotifications}
       onOpenProfile={handleProfile}
     /> : null}
-    {children ?? <Outlet />}
+    {isOwnPage
+      ? <div className="shadow-studio-own-page">{pageContent}</div>
+      : pageContent}
   </>
 }
