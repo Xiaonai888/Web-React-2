@@ -1022,14 +1022,27 @@ function RequestPanel({
       )
     }
 
+       const sent = Number(conversation.pending_messages_sent)
+    const limit = Number(conversation.pending_message_limit)
+    const showCounter =
+      Number.isFinite(sent) &&
+      Number.isFinite(limit) &&
+      limit > 0
+
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#f4efff] px-4 py-3 text-center">
-        <p className="text-[11px] font-bold leading-5 text-[#705b9d]">
-          {t('chatRoomPage.waitingRequest')}
+        <p className="text-[11px] font-normal leading-5 text-[#705b9d]">
+          {conversation.can_send
+            ? t('chatRoomPage.messagePlaceholder')
+            : t('chatRoomPage.waitingRequest')}
         </p>
+        {showCounter ? (
+          <p className="mt-1 text-[11px] font-semibold text-[#705b9d]">
+            {Math.min(limit, Math.max(0, sent))}/{limit}
+          </p>
+        ) : null}
       </section>
     )
-  }
 
   if (conversation.request_status === 'declined') {
     return (
@@ -1184,6 +1197,7 @@ function MessageActionMenu({
   busy,
   onClose,
   onAction,
+  allowInteractions = true,
 }) {
   const { t } = useDisplayTranslation()
 
@@ -1218,6 +1232,12 @@ function MessageActionMenu({
         ['report', Flag, t('chatRoomPage.report')],
       ]
 
+    const visibleActions = allowInteractions
+    ? actions
+    : actions.filter(
+        ([key]) => !['reply', 'edit', 'forward', 'pin', 'unpin'].includes(key)
+      )
+
   return (
     <>
       <button
@@ -1234,7 +1254,7 @@ function MessageActionMenu({
           top: state.y,
         }}
       >
-        {actions.map(([key, Icon, label]) => {
+        {visibleActions.map(([key, Icon, label]) => {
           const destructive =
             key === 'delete' || key === 'report'
 
@@ -2735,10 +2755,35 @@ export default function ChatRoomPage() {
           message
         )
 
-        if (data.message) {
+                if (data.message) {
           setMessages((current) =>
             mergeMessages(current, [data.message])
           )
+
+          setConversation((current) => {
+            if (
+              !current ||
+              current.conversation_type !== 'reader_reader' ||
+              current.request_status !== 'pending' ||
+              current.pending_messages_remaining == null
+            ) {
+              return current
+            }
+
+            const limit = Number(current.pending_message_limit) || 5
+            const sent = Math.min(
+              limit,
+              Number(current.pending_messages_sent || 0) + 1
+            )
+            const remaining = Math.max(0, limit - sent)
+
+            return {
+              ...current,
+              pending_messages_sent: sent,
+              pending_messages_remaining: remaining,
+              can_send: remaining > 0,
+            }
+          })
         }
       }
 
@@ -3866,6 +3911,7 @@ export default function ChatRoomPage() {
 
       <MessageActionMenu
         state={messageMenu}
+        allowInteractions={conversation?.request_status === 'accepted'}
         isPinned={
           messageMenu?.message
             ? pinIds.has(
