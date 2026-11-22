@@ -333,7 +333,6 @@ const AuthorStudioArchivePage = lazy(() => import('./pages/Author/AuthorStudioAr
 const AuthorStudioUnavailablePage = lazy(() => import('./pages/Author/AuthorStudioUnavailablePage'))
 const AuthorStudioTrashPage = lazy(() => import('./pages/Author/AuthorStudioTrashPage'))
 const AuthorStudioAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioAnalyticsPage'))
-const AuthorStudioAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioAnalyticsPage'))
 const AuthorStudioVideoAnalyticsPage = lazy(() => import('./pages/Author/AuthorStudioVideoAnalyticsPage'))
 const AuthorStudioRankingPage = lazy(() => import('./pages/Author/AuthorStudioRankingPage'))
 const AuthorStudioNotificationsPage = lazy(() => import('./pages/Author/AuthorStudioNotificationsPage'))
