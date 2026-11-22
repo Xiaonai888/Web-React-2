@@ -6,27 +6,27 @@ registerTranslationNamespace('promotionBookShelf', {
   en: {
     storyTitle: 'Special Promotion', storeTitle: 'PDF Promotion', ends: 'Ends in',
     episodes: '{{count}} locked episodes', book: 'Book', pdf: 'PDF', read: 'Read',
-    buy: 'Buy now',
+    readNow: 'Read Now', checking: 'Checking Payment', buy: 'Buy now',
   },
   km: {
     storyTitle: 'ប្រូម៉ូសិនពិសេស', storeTitle: 'ប្រូម៉ូសិន PDF', ends: 'នៅសល់',
     episodes: '{{count}} ភាគចាក់សោ', book: 'សៀវភៅ', pdf: 'PDF', read: 'អាន',
-    buy: 'ទិញឥឡូវនេះ',
+    readNow: 'អានឥឡូវនេះ', checking: 'ពិនិត្យការទូទាត់', buy: 'ទិញឥឡូវនេះ',
   },
   zh: {
     storyTitle: '特别优惠', storeTitle: 'PDF 优惠', ends: '剩余时间',
     episodes: '{{count}} 章待解锁', book: '图书', pdf: 'PDF', read: '阅读',
-    buy: '立即购买',
+    readNow: '立即阅读', checking: '核实付款', buy: '立即购买',
   },
   ja: {
     storyTitle: '特別セール', storeTitle: 'PDF セール', ends: '残り時間',
     episodes: 'ロック中の{{count}}話', book: '書籍', pdf: 'PDF', read: '読む',
-    buy: '今すぐ購入',
+    readNow: '今すぐ読む', checking: '支払いを確認', buy: '今すぐ購入',
   },
   ko: {
     storyTitle: '특별 프로모션', storeTitle: 'PDF 프로모션', ends: '남은 시간',
     episodes: '잠긴 에피소드 {{count}}개', book: '도서', pdf: 'PDF', read: '읽기',
-    buy: '지금 구매',
+    readNow: '지금 읽기', checking: '결제 확인', buy: '지금 구매',
   },
 })
 
@@ -51,6 +51,7 @@ export default function PromotionBookShelf({
   onBuy,
   onRead,
   isPurchased,
+  getPurchaseState,
 }) {
   const { t } = useDisplayTranslation()
   const isStory = kind === 'story'
@@ -85,8 +86,16 @@ export default function PromotionBookShelf({
           const cover = String(offer.cover_url || '')
           const { discounted, original } = getPrice(offer, isStory)
           const discount = Math.max(0, Math.min(99, Number(offer.discount_percent) || 0))
-          const purchased = isStory && typeof isPurchased === 'function' && isPurchased(offer)
+          const pdfState = !isStory && offer.product_type === 'pdf' && typeof getPurchaseState === 'function'
+            ? getPurchaseState(offer) : 'available'
+          const purchased = isStory
+            ? typeof isPurchased === 'function' && isPurchased(offer)
+            : pdfState === 'purchased'
+          const pending = !isStory && offer.product_type === 'pdf' && pdfState !== 'available' && !purchased
           const canClick = purchased ? typeof onRead === 'function' : typeof onBuy === 'function'
+          const action = purchased
+            ? t(isStory ? 'promotionBookShelf.read' : 'promotionBookShelf.readNow')
+            : pending ? t('promotionBookShelf.checking') : t('promotionBookShelf.buy')
           const typeLabel = isStory
             ? t('promotionBookShelf.episodes', { count: Number(offer.locked_episode_count || 0) })
             : t(offer.product_type === 'pdf' ? 'promotionBookShelf.pdf' : 'promotionBookShelf.book')
@@ -100,7 +109,7 @@ export default function PromotionBookShelf({
               key={`${kind}-${id}`}
               disabled={!canClick}
               onClick={() => purchased ? onRead(offer) : onBuy(offer)}
-              aria-label={`${purchased ? t('promotionBookShelf.read') : t('promotionBookShelf.buy')}: ${title}`}
+              aria-label={`${action}: ${title}`}
               className="group block min-w-0 border-0 bg-transparent p-0 text-left disabled:cursor-default"
             >
               <div className="relative aspect-[2/3] overflow-hidden rounded-[8px] bg-[var(--shadow-bg-soft)] shadow-sm">
@@ -117,8 +126,8 @@ export default function PromotionBookShelf({
                 <span className="truncate">{typeLabel}</span>
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                {purchased ? (
-                  <span className="text-[12px] font-bold text-[#a57817] dark:text-[#f0c86e]">{t('promotionBookShelf.read')}</span>
+                {purchased || pending ? (
+                  <span className="text-[12px] font-bold text-[#a57817] dark:text-[#f0c86e]">{action}</span>
                 ) : (
                   <>
                     <span className="inline-flex items-center gap-0.5 text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
