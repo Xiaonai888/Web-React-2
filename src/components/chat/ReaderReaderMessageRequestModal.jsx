@@ -12,7 +12,7 @@ import {
   createReaderReaderMessageRequest,
   getChatConversations,
 } from '../../services/chatApi'
-import { useDisplayTranslation } from '../..helper: 'You can send up to 5 messages before this reader accepts your request. After acceptance, you can chat normally.',/utils/displayLanguage'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 
 registerTranslationNamespace('readerMessageRequest', {
