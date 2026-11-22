@@ -440,10 +440,31 @@ export async function stageMangaDevicePartsUpload({
 
   if (signal?.aborted) throw canceled('device_process')
 
-  const { prepareMangaDeviceParts } = await import('./mangaDevicePartProcessor')
-  const prepared = await prepareMangaDeviceParts(file, { signal, onProgress })
-  const sourceParts = prepared.parts
+  let prepared
 
+  try {
+    const { prepareMangaDeviceParts } = await import('./mangaDevicePartProcessor')
+
+    prepared = await prepareMangaDeviceParts(file, {
+      signal,
+      onProgress: (progress) => {
+        try { onProgress?.(progress) } catch {}
+      },
+    })
+
+    if (!Array.isArray(prepared?.parts) || prepared.parts.length === 0) {
+      throw uploadError('Manga device did not produce any image parts.', {
+        code: 'MANGA_DEVICE_PARTS_EMPTY',
+        stage: 'device_process',
+      })
+    }
+  } catch (error) {
+    if (signal?.aborted || error?.name === 'AbortError') throw error
+    if (error && typeof error === 'object') error.fallbackSafe = true
+    throw error
+  }
+
+  const sourceParts = prepared.parts
   const manifest = {
     sourceWidth: prepared.sourceWidth,
     sourceHeight: prepared.sourceHeight,
@@ -474,11 +495,14 @@ export async function stageMangaDevicePartsUpload({
   const signedParts = Array.isArray(session.parts) ? session.parts : []
 
   if (!uploadToken || signedParts.length !== sourceParts.length) {
-    throw uploadError('Manga device upload session is incomplete.', {
+    const error = uploadError('Manga device upload session is incomplete.', {
       code: 'MANGA_DEVICE_SESSION_INVALID',
       stage: 'init',
       permanent: true,
     })
+
+    error.fallbackSafe = true
+    throw error
   }
 
   const uploads = signedParts.map((signed, index) => {
@@ -490,11 +514,14 @@ export async function stageMangaDevicePartsUpload({
       String(signed.required_headers?.['Content-Type'] || '').toLowerCase() !== 'image/webp' ||
       !isTrustedMangaDeviceUploadUrl(signed.upload_url)
     ) {
-      throw uploadError('Manga device part upload URL is invalid.', {
+      const error = uploadError('Manga device part upload URL is invalid.', {
         code: 'MANGA_DEVICE_SIGNED_URL_INVALID',
         stage: 'init',
         permanent: true,
       })
+
+      error.fallbackSafe = true
+      throw error
     }
 
     return { url: signed.upload_url, file: part.file }
@@ -549,7 +576,14 @@ export async function stageMangaDevicePartsUpload({
     result.processed_by !== 'device' ||
     !/^https:\/\//i.test(String(result.image_url || '')) ||
     !Array.isArray(result.parts) ||
-    result.parts.length !== sourceParts.length
+    result.parts.length !== sourceParts.length ||
+    result.parts.some((part, index) =>
+      Number(part?.part_index) !== index ||
+      !/^https:\/\//i.test(String(part?.image_url || '')) ||
+      Number(part?.file_size) !== sourceParts[index].size ||
+      Number(part?.width) !== sourceParts[index].width ||
+      Number(part?.height) !== sourceParts[index].height
+    )
   ) {
     throw uploadError('Manga device completion response is incomplete.', {
       code: 'MANGA_DEVICE_RESULT_INVALID',
