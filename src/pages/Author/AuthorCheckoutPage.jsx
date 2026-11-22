@@ -709,9 +709,7 @@ function saveAuthorOrder({ items, subtotal, deliveryFee, deliveryCompany, delive
 
 function BuyerProfileSheet({ open, profile, onClose, onSave }) {
   const { t } = useDisplayTranslation()
-  const pdfCopy = PDF_CHECKOUT_COPY[getDisplayLanguageId()] || PDF_CHECKOUT_COPY.en
-  const [items, setItems] = useState(getCartItems)
-   const [name, setName] = useState(profile.name || readerUser?.name || '')
+  const [name, setName] = useState(profile.name || getReaderUser()?.name || '')
   const [phone, setPhone] = useState(profile.phone_number || '')
   const [telegram, setTelegram] = useState(profile.telegram_username || '')
   const [facebook, setFacebook] = useState(profile.facebook_link || '')
@@ -722,7 +720,7 @@ function BuyerProfileSheet({ open, profile, onClose, onSave }) {
 
   useEffect(() => {
     if (!open) return
-    setName(profile.name || readerUser?.name || '')
+    setName(profile.name || getReaderUser()?.name || '')
     setPhone(profile.phone_number || '')
     setTelegram(profile.telegram_username || '')
     setFacebook(profile.facebook_link || '')
@@ -821,6 +819,7 @@ export default function AuthorCheckoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useDisplayTranslation()
+  const pdfCopy = PDF_CHECKOUT_COPY[getDisplayLanguageId()] || PDF_CHECKOUT_COPY.en
   const [items, setItems] = useState(getCartItems)
   const promotionExpired = useDiscoverPromotionExpiry(items)
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
@@ -1026,7 +1025,7 @@ export default function AuthorCheckoutPage() {
           : Array.isArray(saved.order?.items) ? saved.order.items : []
         const hasBook = orderItems.some((item) => String(item.product_type || item.type || '').toLowerCase() === 'book')
         const pdfOnly = orderItems.length > 0 && orderItems.every((item) => String(item.product_type || item.type || '').toLowerCase() === 'pdf')
-                const confirmedPdfPurchase = pdfOnly
+        const confirmedPdfPurchase = pdfOnly
         if (!hasBook && !confirmedPdfPurchase) return
 
         if (
@@ -1134,6 +1133,7 @@ export default function AuthorCheckoutPage() {
     }
 
     void checkPayment()
+    const paymentPollTimer = window.setInterval(checkVisiblePayment, PAYMENT_CHECK_MIN_INTERVAL_MS)
     window.addEventListener('focus', checkVisiblePayment)
     window.addEventListener('pageshow', checkVisiblePayment)
     window.addEventListener('shadow-author-payment-check', requestPaymentCheck)
@@ -1141,6 +1141,7 @@ export default function AuthorCheckoutPage() {
     return () => {
       active = false
       controller.abort()
+      window.clearInterval(paymentPollTimer)
       window.removeEventListener('focus', checkVisiblePayment)
       window.removeEventListener('pageshow', checkVisiblePayment)
       window.removeEventListener('shadow-author-payment-check', requestPaymentCheck)
@@ -1201,7 +1202,7 @@ export default function AuthorCheckoutPage() {
     saveCartItems(nextItems)
   }
 
-    function handleExistingPdfCheckoutResult(result, selectedItems) {
+  function handleExistingPdfCheckoutResult(result, selectedItems) {
     const restrictions = Array.isArray(result?.products)
       ? result.products.filter((row) => row.product_type === 'pdf' && row.state !== 'available')
       : []
@@ -1286,9 +1287,7 @@ export default function AuthorCheckoutPage() {
     return true
   }
 
- async function handleContinuePayment() {
-   
- async function handleContinuePayment() {
+  async function handleContinuePayment() {
   if (paymentSubmissionRef.current) return
   const latestItems = getCartItems()
   if (JSON.stringify(latestItems) !== JSON.stringify(items)) {
@@ -1856,18 +1855,14 @@ export default function AuthorCheckoutPage() {
           aria-labelledby="author-order-success-title"
         >
           <div className="w-full max-w-[380px] rounded-[26px] bg-[var(--shadow-bg-surface)] px-6 pb-6 pt-7 text-center shadow-2xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff5ca] text-[#b18a00]">
-              <i className="fa-solid fa-book-open text-[26px]" aria-hidden="true" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
+              <i className="fa-solid fa-check text-[26px]" aria-hidden="true" />
             </div>
-            <h2 id="author-pdf-purchase-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
-              {paidPdfOrder.alreadyOwned
-                ? pdfCopy.ownedTitle
-                : t('authorCheckout.pdfPurchaseSuccessful')}
+            <h2 id="author-order-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
+              {t('authorCheckout.orderSuccessful')}
             </h2>
             <p className="mt-3 text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
-              {paidPdfOrder.alreadyOwned
-                ? pdfCopy.ownedBody
-                : pdfCopy.saved}
+              {t('authorCheckout.orderSuccessMessage')}
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <button
@@ -1897,14 +1892,18 @@ export default function AuthorCheckoutPage() {
           aria-labelledby="author-pdf-purchase-success-title"
         >
           <div className="w-full max-w-[380px] rounded-[26px] bg-[var(--shadow-bg-surface)] px-6 pb-6 pt-7 text-center shadow-2xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f2] text-[#FE526E]">
-              <i className="fa-solid fa-check text-[26px]" aria-hidden="true" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#fff5ca] text-[#b18a00]">
+              <i className="fa-solid fa-book-open text-[26px]" aria-hidden="true" />
             </div>
             <h2 id="author-pdf-purchase-success-title" className="mt-4 text-[20px] font-bold text-[var(--shadow-text-primary)]">
-              {t('authorCheckout.pdfPurchaseSuccessful')}
+              {paidPdfOrder.alreadyOwned
+                ? pdfCopy.ownedTitle
+                : t('authorCheckout.pdfPurchaseSuccessful')}
             </h2>
             <p className="mt-3 text-[13px] font-normal leading-6 text-[var(--shadow-text-secondary)]">
-              {t('authorCheckout.pdfPurchaseSuccessMessage')}
+              {paidPdfOrder.alreadyOwned
+                ? pdfCopy.ownedBody
+                : pdfCopy.saved}
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <button
