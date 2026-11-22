@@ -1,4 +1,15 @@
 import {
+  CircleCheck,
+  CircleMinus,
+  CirclePlus,
+  Link2,
+  Share2,
+  TriangleAlert,
+  VolumeX,
+} from 'lucide-react'
+
+
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -610,23 +621,7 @@ function OwnerStoryMenu({
   )
 }
 
-FILE: src/components/discover/DiscoverStorySection.jsx
-TYPE: PARTIAL EDIT (existing file; do not create a new JSX file)
 
-STEP 1: ADD THE FOLLOWING IMPORT JUST BELOW THE react-router-dom IMPORT.
-
-import {
-  CircleCheck,
-  CircleMinus,
-  CirclePlus,
-  Link2,
-  Share2,
-  TriangleAlert,
-  VolumeX,
-} from 'lucide-react'
-
-STEP 2: REPLACE THE ENTIRE EXISTING `function ViewerStoryMenu({ ... }) { ... }` BLOCK WITH THE BLOCK BELOW.
-STOP BEFORE `function MutedStoriesSheet(`. LEAVE ALL OTHER CODE UNCHANGED.
 
 function ViewerStoryMenu({
   open,
