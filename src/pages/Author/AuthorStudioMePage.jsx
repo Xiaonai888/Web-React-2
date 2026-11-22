@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Archive, ChevronRight, Clapperboard, FolderOpen, ListVideo, Trash2 } from 'lucide-react'
+import { Archive, ChevronRight, Clapperboard, EyeOff, FolderOpen, ListVideo, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import ShadowStudioFooter from '../../components/author/ShadowStudioFooter'
 import { getStudioMeSummary } from '../../services/shadowStudioMeApi'
@@ -7,17 +7,18 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 
 registerTranslationNamespace('shadowStudioMe', {
-  en: { me: 'Me', studio: 'Shadow Studio', total: 'Total Videos', long: 'Long', short: 'Short', library: 'Library', librarySub: 'Browse your videos', playlists: 'Playlists', playlistsSub: 'Organize video collections', archive: 'Archive', archiveSub: 'Keep videos out of your library', trash: 'Trash', trashSub: 'Recover deleted videos within 30 days', loadError: 'Unable to load video totals', retry: 'Retry' },
-  km: { me: 'Me', studio: 'Shadow Studio', total: 'វីដេអូសរុប', long: 'វីដេអូវែង', short: 'វីដេអូខ្លី', library: 'បណ្ណាល័យ', librarySub: 'រកមើលវីដេអូរបស់អ្នក', playlists: 'Playlists', playlistsSub: 'រៀបចំក្រុមវីដេអូ', archive: 'Archive', archiveSub: 'រក្សាវីដេអូទុកដោយលាក់ពីបណ្ណាល័យ', trash: 'ធុងសម្រាម', trashSub: 'ស្តារវីដេអូដែលបានលុបក្នុងរយៈពេល ៣០ ថ្ងៃ', loadError: 'មិនអាចទាញចំនួនវីដេអូបាន', retry: 'សាកល្បងម្ដងទៀត' },
-  zh: { me: '我的', studio: 'Shadow Studio', total: '视频总数', long: '长视频', short: '短视频', library: '视频库', librarySub: '浏览您的视频', playlists: '播放列表', playlistsSub: '整理视频合集', archive: '归档', archiveSub: '从视频库中隐藏视频', trash: '回收站', trashSub: '30 天内恢复已删除视频', loadError: '无法加载视频统计', retry: '重试' },
-  ja: { me: 'マイページ', studio: 'Shadow Studio', total: '動画の合計', long: '長編', short: 'ショート', library: 'ライブラリ', librarySub: '動画を閲覧', playlists: 'プレイリスト', playlistsSub: '動画を整理', archive: 'アーカイブ', archiveSub: 'ライブラリから動画を非表示', trash: 'ゴミ箱', trashSub: '30 日以内に動画を復元', loadError: '動画数を取得できません', retry: '再試行' },
-  ko: { me: '내 정보', studio: 'Shadow Studio', total: '전체 동영상', long: '긴 동영상', short: '쇼츠', library: '라이브러리', librarySub: '내 동영상 보기', playlists: '재생목록', playlistsSub: '동영상 모음 정리', archive: '보관함', archiveSub: '라이브러리에서 동영상 숨기기', trash: '휴지통', trashSub: '30일 이내에 삭제한 동영상 복구', loadError: '동영상 수를 불러오지 못했습니다', retry: '다시 시도' },
+  en: { me: 'Me', studio: 'Shadow Studio', total: 'Total Videos', long: 'Long', short: 'Short', library: 'Library', librarySub: 'Browse your videos', playlists: 'Playlists', playlistsSub: 'Organize video collections', archive: 'Archive', archiveSub: 'Keep videos out of your library', unavailable: 'Unavailable Videos', unavailableSub: 'YouTube videos that cannot be played', trash: 'Trash', trashSub: 'Recover deleted videos within 30 days', loadError: 'Unable to load video totals', retry: 'Retry' },
+  km: { me: 'Me', studio: 'Shadow Studio', total: 'វីដេអូសរុប', long: 'វីដេអូវែង', short: 'វីដេអូខ្លី', library: 'បណ្ណាល័យ', librarySub: 'រកមើលវីដេអូរបស់អ្នក', playlists: 'Playlists', playlistsSub: 'រៀបចំក្រុមវីដេអូ', archive: 'Archive', archiveSub: 'រក្សាវីដេអូទុកដោយលាក់ពីបណ្ណាល័យ', unavailable: 'Unavailable Videos', unavailableSub: 'វីដេអូ YouTube ដែលមិនអាចចាក់បាន', trash: 'ធុងសម្រាម', trashSub: 'ស្តារវីដេអូដែលបានលុបក្នុងរយៈពេល ៣០ ថ្ងៃ', loadError: 'មិនអាចទាញចំនួនវីដេអូបាន', retry: 'សាកល្បងម្ដងទៀត' },
+  zh: { me: '我的', studio: 'Shadow Studio', total: '视频总数', long: '长视频', short: '短视频', library: '视频库', librarySub: '浏览您的视频', playlists: '播放列表', playlistsSub: '整理视频合集', archive: '归档', archiveSub: '从视频库中隐藏视频', unavailable: 'Unavailable Videos', unavailableSub: '无法播放的 YouTube 视频', trash: '回收站', trashSub: '30 天内恢复已删除视频', loadError: '无法加载视频统计', retry: '重试' },
+  ja: { me: 'マイページ', studio: 'Shadow Studio', total: '動画の合計', long: '長編', short: 'ショート', library: 'ライブラリ', librarySub: '動画を閲覧', playlists: 'プレイリスト', playlistsSub: '動画を整理', archive: 'アーカイブ', archiveSub: 'ライブラリから動画を非表示', unavailable: 'Unavailable Videos', unavailableSub: '再生できない YouTube 動画', trash: 'ゴミ箱', trashSub: '30 日以内に動画を復元', loadError: '動画数を取得できません', retry: '再試行' },
+  ko: { me: '내 정보', studio: 'Shadow Studio', total: '전체 동영상', long: '긴 동영상', short: '쇼츠', library: '라이브러리', librarySub: '내 동영상 보기', playlists: '재생목록', playlistsSub: '동영상 모음 정리', archive: '보관함', archiveSub: '라이브러리에서 동영상 숨기기', unavailable: 'Unavailable Videos', unavailableSub: '재생할 수 없는 YouTube 영상', trash: '휴지통', trashSub: '30일 이내에 삭제한 동영상 복구', loadError: '동영상 수를 불러오지 못했습니다', retry: '다시 시도' },
 })
 
 const MENU = [
   { key: 'library', Icon: FolderOpen, path: '/author/reel/studio/library' },
   { key: 'playlists', Icon: ListVideo, path: '/author/reel/studio/playlists' },
   { key: 'archive', Icon: Archive, path: '/author/reel/studio/archive' },
+  { key: 'unavailable', Icon: EyeOff, path: '/author/reel/studio/unavailable' },
   { key: 'trash', Icon: Trash2, path: '/author/reel/studio/trash' },
 ]
 
