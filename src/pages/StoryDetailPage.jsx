@@ -3,7 +3,6 @@ import StoryHeroSection from '../components/story-detail/StoryHeroSection'
 import StoryStatsSection from '../components/story-detail/StoryStatsSection'
 import StoryInfoSection from '../components/story-detail/StoryInfoSection'
 import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSection'
-import UpcomingEpisodeSection from '../components/story-detail/UpcomingEpisodeSection'
 import EpisodeListModal from '../components/story-detail/EpisodeListModal'
 import LockedEpisodeModal from '../components/story-detail/LockedEpisodeModal'
 import SignUpRequiredPopup from './SignUpRequiredPopup'
@@ -516,6 +515,7 @@ export default function StoryDetailPage() {
   const [story, setStory] = useState(null)
   const [episodes, setEpisodes] = useState([])
   const [upcomingEpisode, setUpcomingEpisode] = useState(null)
+  const episodesLastFetchedRef = useRef(0)
   const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -639,6 +639,8 @@ export default function StoryDetailPage() {
         setEpisodesLoading(false)
         return
       }
+      episodesLastFetchedRef.current = Date.now()
+
       const episodesPromise = fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`, {
   headers: authHeaders(),
   cache: 'no-store',
@@ -726,6 +728,42 @@ setMessage(
       ignore = true
     }
   }, [realStoryId])
+
+    useEffect(() => {
+    if (!episodeListOpen || episodesLoading || !isValidStoryUuid(realStoryId)) return undefined
+    if (String(story?.id || '') !== String(realStoryId)) return undefined
+    if (Date.now() - episodesLastFetchedRef.current < 60000) return undefined
+
+    const controller = new AbortController()
+
+    fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}/episodes`, {
+      headers: authHeaders(),
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || data.ok === false) {
+          throw new Error('Episodes refresh failed')
+        }
+        return data
+      })
+      .then((data) => {
+        if (controller.signal.aborted) return
+
+        setEpisodes(Array.isArray(data.episodes) ? data.episodes : [])
+        setUpcomingEpisode(data.upcoming_episode || null)
+        episodesLastFetchedRef.current = Date.now()
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return
+
+        setUpcomingEpisode(null)
+        episodesLastFetchedRef.current = Date.now()
+      })
+
+    return () => controller.abort()
+  }, [episodeListOpen, episodesLoading, realStoryId, story?.id])
 
 useEffect(() => {
   if (!story?.id || !sectionRankSource) return
@@ -1032,12 +1070,6 @@ if (message || !story) {
         />
 
         <StoryInfoSection story={story} />
-
-        <UpcomingEpisodeSection
-          episode={upcomingEpisode}
-          story={story}
-        />
-
         <EpisodePreviewSection
           story={story}
           episodes={newestEpisodes}
@@ -1087,6 +1119,7 @@ if (message || !story) {
         open={episodeListOpen}
         story={story}
         episodes={episodes}
+        upcomingEpisode={upcomingEpisode}
         onClose={() => setEpisodeListOpen(false)}
         onOpenEpisode={handleOpenEpisode}
       />
