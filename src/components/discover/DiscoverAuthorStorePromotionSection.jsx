@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Clock3, ShoppingCart } from 'lucide-react'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { fetchAuthorStorePdfOwnership, hasAuthorStoreReaderSession, recheckAuthorStorePdfPayment } from '../../services/authorStorePdfOwnershipApi'
 
 registerTranslationNamespace('discoverAuthorStorePromotion', {
   en: {
@@ -10,6 +11,9 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     book: 'Book',
     pdf: 'PDF',
     buy: 'Buy Now',
+    readNow: 'Read Now',
+    checking: 'Checking Payment',
+    verifyUnavailable: 'PDF ownership could not be verified. No new payment was created.',
     endsIn: 'Ends in',
     slide: 'View product {{count}}',
     cartConflict: 'Your cart contains books from another author. Replace those items with this product?',
@@ -24,6 +28,9 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     book: 'សៀវភៅ',
     pdf: 'PDF',
     buy: 'ទិញឥឡូវនេះ',
+    readNow: 'អានឥឡូវនេះ',
+    checking: 'ពិនិត្យការទូទាត់',
+    verifyUnavailable: 'មិនអាចពិនិត្យសិទ្ធិ PDF បានទេ។ មិនមានការបង្កើត Payment ថ្មីទេ។',
     endsIn: 'បញ្ចប់ក្នុង',
     slide: 'មើលផលិតផលទី {{count}}',
     cartConflict: 'ក្នុងកន្ត្រកមានទំនិញពីអ្នកនិពន្ធផ្សេង។ តើចង់ជំនួសទំនិញទាំងនោះដោយផលិតផលនេះឬទេ?',
@@ -38,6 +45,9 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     book: '图书',
     pdf: 'PDF',
     buy: '立即购买',
+    readNow: '立即阅读',
+    checking: '核实付款',
+    verifyUnavailable: '无法核实 PDF 购买状态。未创建新付款。',
     endsIn: '剩余时间',
     slide: '查看第 {{count}} 个商品',
     cartConflict: '购物车中有其他作者的商品。要替换为此商品吗？',
@@ -52,6 +62,9 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     book: '書籍',
     pdf: 'PDF',
     buy: '今すぐ購入',
+    readNow: '今すぐ読む',
+    checking: '支払いを確認',
+    verifyUnavailable: 'PDF の購入状況を確認できません。新しい決済は作成していません。',
     endsIn: '終了まで',
     slide: '商品 {{count}} を表示',
     cartConflict: 'カートに別の著者の商品があります。この商品に置き換えますか？',
@@ -66,6 +79,9 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     book: '도서',
     pdf: 'PDF',
     buy: '지금 구매',
+    readNow: '지금 읽기',
+    checking: '결제 확인',
+    verifyUnavailable: 'PDF 구매 상태를 확인할 수 없습니다. 새 결제는 생성되지 않았습니다.',
     endsIn: '종료까지',
     slide: '{{count}}번 상품 보기',
     cartConflict: '장바구니에 다른 작가의 상품이 있습니다. 이 상품으로 교체하시겠습니까?',
@@ -216,6 +232,9 @@ export default function DiscoverAuthorStorePromotionSection() {
   const [now, setNow] = useState(Date.now())
   const [conflict, setConflict] = useState(null)
   const [error, setError] = useState('')
+  const [pdfOwnership, setPdfOwnership] = useState({ status: 'loading', states: {} })
+  const [busyId, setBusyId] = useState('')
+  const actionRef = useRef(false)
   const initializedRef = useRef('')
   const lastRefreshRef = useRef(0)
   const touchStartRef = useRef(null)
@@ -232,6 +251,55 @@ export default function DiscoverAuthorStorePromotionSection() {
 
   const rotationKey = rotation?.rotationKey || ''
   const promotionCount = rotation?.promotions?.length || 0
+  const pdfIdsKey = [...new Set((rotation?.promotions || [])
+    .filter((product) => product.product_type === 'pdf')
+    .map((product) => String(product.product_id || '').trim())
+    .filter(Boolean))].sort().join(',')
+
+  useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    let lastCheckedAt = 0
+    let inFlight = false
+
+    async function refresh(force = false) {
+      if (!active || inFlight || (!force && document.visibilityState === 'hidden')) return
+      if (!force && Date.now() - lastCheckedAt < 10000) return
+      lastCheckedAt = Date.now()
+      if (!pdfIdsKey || !hasAuthorStoreReaderSession()) {
+        setPdfOwnership({ status: 'ready', states: {} })
+        return
+      }
+      inFlight = true
+      try {
+        const result = await fetchAuthorStorePdfOwnership(pdfIdsKey.split(','), { signal: controller.signal })
+        if (!active || controller.signal.aborted) return
+        const states = Object.fromEntries((result.products || [])
+          .filter((product) => product?.product_type === 'pdf')
+          .map((product) => [String(product.product_id), product]))
+        setPdfOwnership({ status: 'ready', states })
+      } catch {
+        if (active && !controller.signal.aborted) setPdfOwnership({ status: 'unavailable', states: {} })
+      } finally {
+        inFlight = false
+      }
+    }
+
+    setPdfOwnership({ status: 'loading', states: {} })
+    void refresh(true)
+    const onVisible = () => { if (document.visibilityState === 'visible') void refresh() }
+    const onFocus = () => { void refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onFocus)
+    return () => {
+      active = false
+      controller.abort()
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onFocus)
+    }
+  }, [pdfIdsKey])
 
   useEffect(() => {
     if (!rotationKey || !promotionCount || initializedRef.current === rotationKey) return
@@ -339,7 +407,7 @@ export default function DiscoverAuthorStorePromotionSection() {
         ? current.map((cartItem) => {
           if (String(cartItem.id) !== productId) return cartItem
           const quantity = Number(cartItem.quantity || 1)
-          const max = product.product_type === 'book' ? Number(product.stock_quantity || 1) : 99
+          const max = product.product_type === 'book' ? Number(product.stock_quantity || 1) : 1
           return { ...item, quantity: Math.min(quantity + 1, max) }
         })
         : [...current, item]
@@ -355,20 +423,92 @@ export default function DiscoverAuthorStorePromotionSection() {
     }
   }
 
-  function buyProduct(product) {
-    if (!product || remainingSeconds <= 0 || Date.now() < suppressClickRef.current) return
-    const others = readCart().some((item) => {
-      const otherPageId = String(item.author_page_id || '').trim()
-      const otherUsername = String(item.author_page_username || '').trim()
-      return otherPageId
-        ? otherPageId !== String(product.author_page_id)
-        : !otherUsername || otherUsername !== String(product.page_username)
-    })
-    if (others) {
-      setConflict(product)
-      return
+  function readPdf(product) {
+    const productId = String(product.product_id)
+    const existing = readCart()
+    const next = existing.filter((item) => String(item.id) !== productId)
+    if (next.length !== existing.length) {
+      localStorage.setItem(CART_KEY, JSON.stringify(next))
+      window.dispatchEvent(new Event('shadow-author-cart-updated'))
     }
-    saveProductToCart(product)
+    setConflict(null)
+    setError('')
+    navigate(`/discover/pdf/${encodeURIComponent(productId)}`, {
+      state: { title: product.title, from: location.pathname + location.search + location.hash },
+    })
+  }
+
+  async function buyProduct(product, replace = false) {
+    if (!product || remainingSeconds <= 0 || Date.now() < suppressClickRef.current || actionRef.current) return
+    actionRef.current = true
+    setBusyId(String(product.product_id))
+    setError('')
+    try {
+      if (product.product_type === 'pdf' && hasAuthorStoreReaderSession()) {
+        const result = await fetchAuthorStorePdfOwnership([product.product_id])
+        const current = (result.products || []).find((row) => String(row.product_id) === String(product.product_id))
+        if (!current || current.product_type !== 'pdf') {
+          setError(t('discoverAuthorStorePromotion.verifyUnavailable'))
+          return
+        }
+        setPdfOwnership((previous) => ({
+          status: 'ready',
+          states: { ...previous.states, [String(product.product_id)]: current },
+        }))
+        if (current.state === 'purchased') {
+          readPdf(product)
+          return
+        }
+        if (current.state !== 'available') {
+          if (current.order_id) {
+            try {
+              const recovered = await recheckAuthorStorePdfPayment(current.order_id)
+              if (recovered.state === 'purchased') {
+                const confirmed = await fetchAuthorStorePdfOwnership([product.product_id])
+                const owned = (confirmed.products || []).find((row) => String(row.product_id) === String(product.product_id))
+                if (owned?.state === 'purchased') {
+                  setPdfOwnership((previous) => ({
+                    status: 'ready',
+                    states: { ...previous.states, [String(product.product_id)]: owned },
+                  }))
+                  readPdf(product)
+                  return
+                }
+              }
+            } catch {
+              setError(t('discoverAuthorStorePromotion.checking'))
+              return
+            }
+          }
+          setError(t('discoverAuthorStorePromotion.checking'))
+          return
+        }
+      }
+      const others = !replace && readCart().some((item) => {
+        const otherPageId = String(item.author_page_id || '').trim()
+        const otherUsername = String(item.author_page_username || '').trim()
+        return otherPageId
+          ? otherPageId !== String(product.author_page_id)
+          : !otherUsername || otherUsername !== String(product.page_username)
+      })
+      if (others) {
+        setConflict(product)
+        return
+      }
+      saveProductToCart(product, replace)
+    } catch {
+      setError(t('discoverAuthorStorePromotion.verifyUnavailable'))
+    } finally {
+      actionRef.current = false
+      setBusyId('')
+    }
+  }
+
+  function getPdfAction(product) {
+    if (product.product_type !== 'pdf' || !hasAuthorStoreReaderSession()) return 'buy'
+    if (pdfOwnership.status !== 'ready') return 'checking'
+    const state = pdfOwnership.states[String(product.product_id)]?.state
+    return state === 'purchased' ? 'readNow' : state === 'available' ? 'buy' : 'checking'
   }
 
   if (!offer || remainingSeconds <= 0) return null
@@ -376,6 +516,7 @@ export default function DiscoverAuthorStorePromotionSection() {
   const discount = Math.max(0, Math.min(99, Number(offer.discount_percent || 0)))
   const original = Number(offer.original_price_usd || 0)
   const sale = Number(offer.promotion_price_usd || 0)
+  const action = getPdfAction(offer)
 
   return (
     <>
@@ -385,11 +526,11 @@ export default function DiscoverAuthorStorePromotionSection() {
           <div
             role="button"
             tabIndex={0}
-            onClick={() => buyProduct(offer)}
+            onClick={() => { void buyProduct(offer) }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                buyProduct(offer)
+                void buyProduct(offer)
               }
             }}
             onTouchStart={touchStart}
@@ -464,7 +605,7 @@ export default function DiscoverAuthorStorePromotionSection() {
                     <span className="dasp-buy-inside bg-[#111111] px-2 py-1 text-center text-[11px] font-extrabold text-white">
                       <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
                         <ShoppingCart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span>{t('discoverAuthorStorePromotion.buy')}</span>
+                        <span>{t(`discoverAuthorStorePromotion.${action}`)}</span>
                       </span>
                     </span>
                   </div>
@@ -487,6 +628,7 @@ export default function DiscoverAuthorStorePromotionSection() {
             </div>
           ) : null}
         </article>
+        {busyId ? <p className="px-3 py-2 text-[12px] text-[var(--shadow-text-secondary)]" role="status">{t('discoverAuthorStorePromotion.checking')}</p> : null}
         {error ? <p className="px-3 py-2 text-[12px] font-semibold text-red-600" role="alert">{error}</p> : null}
       </section>
       {conflict ? (
@@ -497,7 +639,7 @@ export default function DiscoverAuthorStorePromotionSection() {
               <button type="button" onClick={() => setConflict(null)} className="flex-1 rounded-full border border-gray-300 px-3 py-3 text-[12px] font-bold dark:border-white/20">
                 {t('discoverAuthorStorePromotion.cancel')}
               </button>
-              <button type="button" onClick={() => saveProductToCart(conflict, true)} className="flex-[1.5] rounded-full border border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white">
+              <button type="button" onClick={() => { void buyProduct(conflict, true) }} className="flex-[1.5] rounded-full border border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white">
                 {t('discoverAuthorStorePromotion.replace')}
               </button>
             </div>
