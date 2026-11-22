@@ -265,60 +265,74 @@ async function convertMangaHeicToWebp(file, loaded) {
       loaded.height,
       maxWidth
     )
+
     const canvas = document.createElement('canvas')
-    const context = canvas.getContext('2d')
 
-    if (!context) {
-      throw new Error(
-        'Image processing is unavailable in this browser.'
+    try {
+      const context = canvas.getContext('2d')
+
+      if (!context) {
+        throw new Error(
+          'Image processing is unavailable in this browser.'
+        )
+      }
+
+      canvas.width = dimensions.width
+      canvas.height = dimensions.height
+
+      context.drawImage(
+        loaded.image,
+        0,
+        0,
+        dimensions.width,
+        dimensions.height
       )
-    }
 
-    canvas.width = dimensions.width
-    canvas.height = dimensions.height
+      for (const quality of QUALITIES) {
+        const blob = await canvasToWebp(canvas, quality)
 
-    context.drawImage(
-      loaded.image,
-      0,
-      0,
-      dimensions.width,
-      dimensions.height
-    )
+        const candidate = {
+          file: new File(
+            [blob],
+            safeWebpName(file.name),
+            {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            }
+          ),
+          width: dimensions.width,
+          height: dimensions.height,
+          fileSize: blob.size,
+          mimeType: 'image/webp',
+          compressed: true,
+        }
 
-    for (const quality of QUALITIES) {
-      const blob = await canvasToWebp(canvas, quality)
-      const candidate = {
-        file: new File(
-          [blob],
-          safeWebpName(file.name),
-          {
-            type: 'image/webp',
-            lastModified: Date.now(),
-          }
-        ),
-        width: dimensions.width,
-        height: dimensions.height,
-        fileSize: blob.size,
-        mimeType: 'image/webp',
-        compressed: true,
+        if (!smallest || candidate.fileSize < smallest.fileSize) {
+          smallest = candidate
+        }
+
+        if (candidate.fileSize <= TARGET_MAX_BYTES) {
+          return candidate
+        }
       }
 
-      if (!smallest || candidate.fileSize < smallest.fileSize) {
-        smallest = candidate
+      if (smallest?.fileSize <= HARD_MAX_BYTES) {
+        return smallest
       }
-
-      if (candidate.fileSize <= TARGET_MAX_BYTES) {
-        return candidate
-      }
-    }
-
-    canvas.width = 0
-    canvas.height = 0
-
-    if (smallest?.fileSize <= HARD_MAX_BYTES) {
-      return smallest
+    } finally {
+      canvas.width = 0
+      canvas.height = 0
     }
   }
+
+  if (smallest?.fileSize <= HARD_MAX_BYTES) {
+    return smallest
+  }
+
+  throw new Error(
+    'This HEIC/HEIF image could not be converted below the required size.'
+  )
+}
 
   if (smallest?.fileSize <= HARD_MAX_BYTES) {
     return smallest
