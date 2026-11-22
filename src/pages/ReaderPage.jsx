@@ -2047,9 +2047,13 @@ function MangaEpisodePages({
 fetchPriority={pageIndex === 0 && partIndex === 0 ? 'high' : 'auto'}
 decoding="async"
                   draggable={false}
-                  style={
+                                    style={
                     partIndex > 0
-                      ? { marginTop: '-1px' }
+                      ? {
+                          marginTop: width > 0
+                            ? `-${(200 / width).toFixed(6)}%`
+                            : '-1px',
+                        }
                       : undefined
                   }
                   className="m-0 block h-auto w-full border-0 p-0 align-top"
