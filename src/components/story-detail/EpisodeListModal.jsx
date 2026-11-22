@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { useNavigate } from 'react-router-dom'
@@ -29,6 +29,12 @@ registerTranslationNamespace('episodeListModal', {
     reverseEpisodes: 'Reverse episodes',
     noEpisodesYet: 'No episodes yet',
     publishedAppearHere: 'Published episodes will appear here.',
+    upcoming: 'Upcoming',
+    scheduledEpisode: 'Scheduled episode',
+    remainingDaysHours: '{{days}}d {{hours}}h left',
+    remainingHoursMinutes: '{{hours}}h {{minutes}}m left',
+    remainingMinutes: '{{minutes}}m left',
+    remainingSoon: 'Less than 1 minute left',
   },
   km: {
     completed: 'បានបញ្ចប់',
@@ -55,6 +61,12 @@ registerTranslationNamespace('episodeListModal', {
     reverseEpisodes: 'បញ្ច្រាសលំដាប់ភាគ',
     noEpisodesYet: 'មិនទាន់មានភាគ',
     publishedAppearHere: 'ភាគដែលបានបោះពុម្ពនឹងបង្ហាញនៅទីនេះ។',
+    upcoming: 'Upcoming',
+    scheduledEpisode: 'ភាគដែលបានកំណត់ពេលចេញផ្សាយ',
+    remainingDaysHours: 'នៅសល់ {{days}} ថ្ងៃ {{hours}} ម៉ោង',
+    remainingHoursMinutes: 'នៅសល់ {{hours}} ម៉ោង {{minutes}} នាទី',
+    remainingMinutes: 'នៅសល់ {{minutes}} នាទី',
+    remainingSoon: 'នៅសល់តិចជាង ១ នាទី',
   },
   zh: {
     completed: '已完结',
@@ -81,6 +93,12 @@ registerTranslationNamespace('episodeListModal', {
     reverseEpisodes: '反转章节顺序',
     noEpisodesYet: '暂无章节',
     publishedAppearHere: '已发布的章节会显示在这里。',
+    upcoming: 'Upcoming',
+    scheduledEpisode: '即将发布的章节',
+    remainingDaysHours: '还剩 {{days}} 天 {{hours}} 小时',
+    remainingHoursMinutes: '还剩 {{hours}} 小时 {{minutes}} 分钟',
+    remainingMinutes: '还剩 {{minutes}} 分钟',
+    remainingSoon: '不到 1 分钟',
   },
   ja: {
     completed: '完結',
@@ -107,6 +125,12 @@ registerTranslationNamespace('episodeListModal', {
     reverseEpisodes: 'エピソード順を反転',
     noEpisodesYet: 'エピソードはまだありません',
     publishedAppearHere: '公開されたエピソードがここに表示されます。',
+    upcoming: 'Upcoming',
+    scheduledEpisode: '公開予定のエピソード',
+    remainingDaysHours: 'あと{{days}}日{{hours}}時間',
+    remainingHoursMinutes: 'あと{{hours}}時間{{minutes}}分',
+    remainingMinutes: 'あと{{minutes}}分',
+    remainingSoon: '残り1分未満',
   },
   ko: {
     completed: '완결',
@@ -133,6 +157,12 @@ registerTranslationNamespace('episodeListModal', {
     reverseEpisodes: '에피소드 순서 뒤집기',
     noEpisodesYet: '아직 에피소드가 없습니다',
     publishedAppearHere: '게시된 에피소드가 여기에 표시됩니다.',
+    upcoming: 'Upcoming',
+    scheduledEpisode: '게시 예정 에피소드',
+    remainingDaysHours: '{{days}}일 {{hours}}시간 남음',
+    remainingHoursMinutes: '{{hours}}시간 {{minutes}}분 남음',
+    remainingMinutes: '{{minutes}}분 남음',
+    remainingSoon: '1분 미만 남음',
   },
 })
 
@@ -331,10 +361,95 @@ const handleClick = () => {
   )
 }
 
-export default function EpisodeListModal({ open, story, episodes = [], onClose, onOpenEpisode }) {
+function UpcomingEpisodeRow({ episode, story, now }) {
+  const { t } = useDisplayTranslation()
+  const publishTime = Date.parse(episode?.scheduled_at || '')
+
+  if (!Number.isFinite(publishTime) || publishTime <= now) return null
+  if (episode?.status && String(episode.status).toLowerCase() !== 'scheduled') return null
+  if (episode?.deleted_at || episode?.published_at) return null
+
+  const displayLanguage = getDisplayLanguageId() || 'en'
+  const date = formatDate(episode.scheduled_at, displayLanguage)
+  const cover = episode.cover_url || story?.cover_url || ''
+  const remainingMs = publishTime - now
+  const remainingMinutes = Math.max(1, Math.ceil(remainingMs / 60000))
+  const days = Math.floor(remainingMinutes / 1440)
+  const hours = Math.floor((remainingMinutes % 1440) / 60)
+  const minutes = remainingMinutes % 60
+  const remaining = remainingMs < 60000
+    ? t('episodeListModal.remainingSoon')
+    : days > 0
+      ? t('episodeListModal.remainingDaysHours', { days, hours })
+      : hours > 0
+        ? t('episodeListModal.remainingHoursMinutes', { hours, minutes })
+        : t('episodeListModal.remainingMinutes', { minutes })
+
+  return (
+    <div aria-label={t('episodeListModal.scheduledEpisode')}>
+      <div className="flex items-center gap-2 px-4 pb-1 pt-4 text-[13px] font-medium text-[var(--shadow-text-primary)] sm:px-5">
+        <i className="fa-regular fa-clock text-[13px] text-[var(--shadow-text-secondary)]" aria-hidden="true" />
+        <span>{t('episodeListModal.upcoming')}</span>
+      </div>
+      <div className="flex w-full gap-3 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3.5 text-left sm:gap-4 sm:px-5">
+        <div className="relative h-[76px] w-[108px] shrink-0 overflow-hidden rounded-[14px] bg-[var(--shadow-bg-soft)] sm:h-[86px] sm:w-[128px]">
+          {cover ? (
+            <img
+              src={cover}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[11px] font-medium text-[var(--shadow-text-secondary)]">
+              {t('episodeListModal.cover')}
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 py-1">
+          <h3 className="line-clamp-2 text-[14px] font-bold leading-5 text-[var(--shadow-text-primary)]">
+            {episode.title || t('episodeListModal.untitledEpisode')}
+          </h3>
+          <div className="mt-1.5 flex flex-col gap-1 text-[11.5px] font-medium text-[var(--shadow-text-secondary)]">
+            {date ? <time dateTime={episode.scheduled_at}>{date}</time> : null}
+            <span className="inline-flex items-center gap-1.5">
+              <i className="fa-regular fa-clock text-[11px]" aria-hidden="true" />
+              {remaining}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function EpisodeListModal({ open, story, episodes = [], upcomingEpisode = null, onClose, onOpenEpisode }) {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
   const [newestFirst, setNewestFirst] = useState(true)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!open || !upcomingEpisode?.scheduled_at) return undefined
+
+    const updateTime = () => setNow(Date.now())
+    updateTime()
+
+    const timer = window.setInterval(() => {
+      if (!document.hidden) updateTime()
+    }, 60000)
+
+    document.addEventListener('visibilitychange', updateTime)
+    window.addEventListener('focus', updateTime)
+
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', updateTime)
+      window.removeEventListener('focus', updateTime)
+    }
+  }, [open, upcomingEpisode?.scheduled_at])
 
   const visibleEpisodes = useMemo(() => {
     return [...episodes].sort((a, b) => {
@@ -351,8 +466,8 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 
   return (
     <div className="fixed inset-0 z-[140] bg-black/45 sm:flex sm:items-center sm:justify-center sm:px-6">
-      <section className="absolute bottom-0 left-0 right-0 top-[64px] overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
-        <header className="sticky top-0 z-20 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-4 backdrop-blur sm:px-5">
+      <section className="absolute bottom-0 left-0 right-0 top-[64px] flex flex-col overflow-hidden rounded-t-[28px] bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-2xl sm:relative sm:left-auto sm:right-auto sm:top-auto sm:h-[82vh] sm:w-full sm:max-w-[720px] sm:rounded-[30px]">
+        <header className="sticky top-0 z-20 shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-nav-bg)] px-4 py-4 backdrop-blur sm:px-5">
           <div className="flex items-center justify-between gap-3">
             <div className="h-10 w-10" />
 
@@ -396,6 +511,9 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
 </button>
         </header>
 
+        <main className="min-h-0 flex-1 overflow-y-auto pb-8">
+          <UpcomingEpisodeRow episode={upcomingEpisode} story={story} now={now} />
+
         <div className="flex items-center justify-between gap-4 border-b border-[var(--shadow-border)] px-4 py-4 sm:px-5">
           <div className="font-['Roboto'] text-[14px] font-medium text-[var(--shadow-text-primary)]">
   {status}, {updateText}
@@ -415,7 +533,6 @@ export default function EpisodeListModal({ open, story, episodes = [], onClose, 
           </button>
         </div>
 
-        <main className="h-[calc(100%-142px)] overflow-y-auto pb-8">
           {visibleEpisodes.length ? (
             visibleEpisodes.map((episode) => (
               <EpisodeListItem
