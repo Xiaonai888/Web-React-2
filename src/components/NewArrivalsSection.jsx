@@ -238,12 +238,12 @@ export default function NewArrivalsSection({
       section: 'stories',
       language: getStoryLanguageId(),
       params: {
-        home_section: 'new-arrivals',
-        sort: 'latest',
-        limit: 24,
-        story_type: normalizedStoryType || 'all',
-        schema: 1,
-      },
+  home_section: 'new-arrivals',
+  sort: 'latest',
+  limit: 24,
+  story_type: normalizedStoryType || 'all',
+  schema: 2,
+},
     })
 
     const cached = await loadHomeCache(cacheKey, {
