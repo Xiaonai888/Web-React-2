@@ -329,16 +329,7 @@ async function convertMangaHeicToWebp(file, loaded) {
     return smallest
   }
 
-  throw new Error(
-    'This HEIC/HEIF image could not be converted below the required size.'
-  )
-}
-
-  if (smallest?.fileSize <= HARD_MAX_BYTES) {
-    return smallest
-  }
-
-  throw new Error(
+   throw new Error(
     'This HEIC/HEIF image could not be converted below the required size.'
   )
 }
@@ -428,6 +419,7 @@ function normalizeMangaUploadResult(data) {
   return {
     imageUrl,
     storagePath:
+      data?.storage_path ||
       data?.path ||
       page.storage_path ||
       null,
@@ -717,6 +709,7 @@ async function waitForMangaV2Job({
   )
 }
 
+
 export async function uploadMangaPageFile({
   token,
   file,
@@ -750,7 +743,57 @@ export async function uploadMangaPageFile({
       : 'https://shadow-backend-kucw.onrender.com'
   )).replace(/\/+$/, '')
 
-  const { stageMangaDirectUpload } = await import('./mangaDirectUploadClient')
+  const {
+    stageMangaDirectUpload,
+    stageMangaDevicePartsUpload,
+  } = await import('./mangaDirectUploadClient')
+
+  if (import.meta.env.VITE_MANGA_DEVICE_PARTS_ENABLED === 'true') {
+    try {
+      const deviceResult = await stageMangaDevicePartsUpload({
+        token,
+        file,
+        apiBaseUrl,
+        signal,
+        onProgress,
+      })
+
+      const normalized = normalizeMangaUploadResult(deviceResult)
+
+      traceMangaUpload('device-first-complete', {
+        state: 'done',
+        partCount: normalized.parts?.length || 0,
+      })
+
+      try {
+        onProgress?.({
+          loaded: normalized.fileSize || file.size,
+          total: normalized.fileSize || file.size,
+          percent: 100,
+          processing: false,
+          deviceFirst: true,
+        })
+      } catch {}
+
+      return normalized
+    } catch (error) {
+      if (signal?.aborted) throw error
+
+      if (error?.fallbackSafe !== true) {
+        if (error && typeof error === 'object') {
+          error.permanent = true
+        }
+        throw error
+      }
+
+      traceMangaUpload('device-first-fallback', {
+        state: 'fallback',
+        code: String(error?.code || 'DEVICE_NOT_SUPPORTED'),
+        message: String(error?.message || '').slice(0, 160),
+      }, 'warn')
+    }
+  }
+
   const staged = await stageMangaDirectUpload({
     token,
     file,
@@ -768,6 +811,7 @@ export async function uploadMangaPageFile({
     onJobStatus,
   })
 }
+
 
 export async function runWithConcurrency(
   items,
