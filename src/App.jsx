@@ -1701,7 +1701,6 @@ const shouldShowOpeningAds =
 <Route path="/author/reel/studio/archive" element={<LazyPage><AuthorStudioArchivePage /></LazyPage>} />
 <Route path="/author/reel/studio/unavailable" element={<LazyPage><AuthorStudioUnavailablePage /></LazyPage>} />
 <Route path="/author/reel/studio/trash" element={<LazyPage><AuthorStudioTrashPage /></LazyPage>} />
-<Route path="/author/reel/studio/trash" element={<LazyPage><AuthorStudioTrashPage /></LazyPage>} />
 
 
           <Route
