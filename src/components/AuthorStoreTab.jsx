@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import {
+  fetchAuthorStorePdfOwnership,
+  hasAuthorStoreReaderSession,
+} from '../services/authorStorePdfOwnershipApi'
 
 registerTranslationNamespace('authorStoreTab', {
   en: {
