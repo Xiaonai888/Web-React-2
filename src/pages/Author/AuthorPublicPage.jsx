@@ -1352,9 +1352,7 @@ function CropImageModal({
   onClose,
   onSave,
 }) {
-  const { t, language } = useDisplayTranslation()
-  const navigate = useNavigate()
-  const [preOrderAllowed, setPreOrderAllowed] = useState(false)
+  const { t } = useDisplayTranslation()
 
   useEffect(() => {
     if (!open || !author?.is_owner) {
@@ -1585,9 +1583,39 @@ function AuthorOwnerMenuSheet({
   onOpenFinance,
   onOpenStoreSetting,
 }) {
-  const { t } = useDisplayTranslation()
+  
+const { t, language } = useDisplayTranslation()
+const navigate = useNavigate()
+const [preOrderAllowed, setPreOrderAllowed] = useState(false)
 
-  if (!open) return null
+useEffect(() => {
+  if (!open || !author?.is_owner) {
+    setPreOrderAllowed(false)
+    return undefined
+  }
+
+  let active = true
+  const token = getAuthToken()
+
+  setPreOrderAllowed(false)
+
+  loadCountrySettings()
+    .then(settings => {
+      if (active && token === getAuthToken()) {
+        setPreOrderAllowed(canAccessAuthorPreOrder(settings))
+      }
+    })
+    .catch(() => {
+      if (active) setPreOrderAllowed(false)
+    })
+
+  return () => {
+    active = false
+  }
+}, [open, author?.is_owner, author?.id])
+
+if (!open) return null
+
 
   const pageName = author?.page_name || t('authorPublicPage.authorPage')
   const pageLogo = author?.avatar_url || ''
