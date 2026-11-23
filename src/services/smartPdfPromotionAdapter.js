@@ -9,12 +9,40 @@ import {
 import { queueSmartPdfPromotionEvent } from './smartPdfPromotionTracking'
 
 const VALID_PLACEMENTS = new Set(['stories', 'manga', 'discover'])
+const PROOF = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const inFlight = new Map()
 const RETRY_MS = 10000
 const retryAfter = new Map()
+const issuedProofs = new Map()
 
 function validatePlacement(placement) {
   if (!VALID_PLACEMENTS.has(placement)) throw new TypeError('Invalid PDF placement')
+}
+
+function hasTrackingProofs(promotions) {
+  return Array.isArray(promotions) && promotions.every((offer) => {
+    const value = offer?.smart_pdf_event_proof
+    return typeof value === 'string' && value.length >= 70 && value.length <= 1024 && PROOF.test(value)
+  })
+}
+
+function storeIssuedProofs(scope, selection) {
+  if (!hasTrackingProofs(selection.promotions)) throw new Error('PDF tracking proofs are missing')
+  const key = `${scope.readerKey}:${scope.language}:${scope.placement}`
+  if (issuedProofs.size >= 15) issuedProofs.delete(issuedProofs.keys().next().value)
+  issuedProofs.set(key, {
+    rotationKey: String(selection.rotation_key),
+    proofs: new Map(selection.promotions.map((offer) => [String(offer.product_id), offer.smart_pdf_event_proof])),
+  })
+}
+
+function eventProofFor(placement, rotationKey, productId) {
+  const readerKey = getSmartPdfPromotionReaderKey()
+  const language = getStoryLanguageId()
+  const key = `${readerKey}:${language}:${placement}`
+  const record = issuedProofs.get(key)
+  if (!record || record.rotationKey !== String(rotationKey)) return ''
+  return record.proofs.get(String(productId)) || ''
 }
 
 async function remainingOwnedSafe(promotions) {
@@ -42,10 +70,11 @@ export async function getPersonalizedSmartPdfPromotion({
     if (scope.readerKey !== getSmartPdfPromotionReaderKey() || scope.language !== getStoryLanguageId()) {
       throw new Error('PDF reader identity changed during loading')
     }
-    const cached = readSmartPdfPromotionQueue({ ...scope, rotationKey: version.rotation_key })
+    const loaded = readSmartPdfPromotionQueue({ ...scope, rotationKey: version.rotation_key })
+    const cached = loaded && hasTrackingProofs(loaded.promotions) ? loaded : null
     const survivors = cached ? await remainingOwnedSafe(cached.promotions) : []
-    const retained = survivors
     if (cached && survivors.length === cached.promotions.length) {
+      storeIssuedProofs(scope, cached)
       return { ok: true, ...cached, promotion: cached.promotions[0] || null }
     }
     const reserve = getSmartPdfReservedIds({
@@ -55,7 +84,11 @@ export async function getPersonalizedSmartPdfPromotion({
     const excluded = [...new Set([...survivors.map((offer) => offer.product_id),
       ...(cached ? cached.promotions.map((offer) => offer.product_id) : []), ...reserve])].slice(0, 90)
     if (Date.now() < (retryAfter.get(scopeKey) || 0)) {
-      if (survivors.length) return { ok: true, ...cached, promotions: survivors, promotion: survivors[0] }
+      if (survivors.length) {
+        const result = { ok: true, ...cached, promotions: survivors, promotion: survivors[0] }
+        storeIssuedProofs(scope, result)
+        return result
+      }
       throw new Error('PDF recommendation is temporarily unavailable')
     }
     let fresh
@@ -72,13 +105,14 @@ export async function getPersonalizedSmartPdfPromotion({
     }
     const seen = new Set()
     const combined = []
-    for (const offer of [...retained, ...fresh.promotions]) {
+    for (const offer of [...survivors, ...fresh.promotions]) {
       if (seen.has(offer.product_id)) continue
       seen.add(offer.product_id)
       combined.push({ ...offer, slot_position: combined.length + 1 })
       if (combined.length === 3) break
     }
     const selection = { ...fresh, promotions: combined, promotion: combined[0] || null }
+    storeIssuedProofs(scope, selection)
     saveSmartPdfPromotionQueue({ ...scope, selection })
     return selection
   })().finally(() => { if (inFlight.get(scopeKey) === request) inFlight.delete(scopeKey) })
@@ -89,11 +123,15 @@ export async function getPersonalizedSmartPdfPromotion({
 export function queueSmartPdfVisibleOffers({ placement, rotationKey, productIds = [] } = {}) {
   validatePlacement(placement)
   for (const id of [...new Set(productIds)]) {
-    queueSmartPdfPromotionEvent({ placement, rotationKey, eventType: 'impression', productId: id })
+    const eventProof = eventProofFor(placement, rotationKey, id)
+    if (!eventProof) continue
+    queueSmartPdfPromotionEvent({ placement, rotationKey, eventType: 'impression', productId: id, eventProof })
   }
 }
 
 export function queueSmartPdfOfferClick({ placement, rotationKey, productId } = {}) {
   validatePlacement(placement)
-  return queueSmartPdfPromotionEvent({ placement, rotationKey, eventType: 'click', productId })
+  const eventProof = eventProofFor(placement, rotationKey, productId)
+  if (!eventProof) return false
+  return queueSmartPdfPromotionEvent({ placement, rotationKey, eventType: 'click', productId, eventProof })
 }
