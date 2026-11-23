@@ -103,7 +103,7 @@ export default function AuthorPreOrderPage() {
         <header className="flex h-12 items-center gap-3">
           <button type="button" onClick={() => navigate('/author/page')} aria-label={text('back')} className="flex h-10 w-9 items-center justify-center rounded-full hover:bg-[#f5f5f5]"><ArrowLeft size={21} /></button>
           <h1 className="flex-1 text-[20px] font-bold">{text('pageTitle')}</h1>
-          {access === 'allowed' ? <button type="button" onClick={() => setReload(v => v + 1)} aria-label={text('retry')} className="flex h-9 w-9 items-center justify-center rounded-full text-[#666] hover:bg-[#f5f5f5]"><RefreshCw size={17} /></button> : null}
+          
         </header>
         {access === 'checking' ? <div className="py-20 text-center text-[13px] text-[#757575]">{text('loading')}</div> : access === 'denied' ? <AccessMessage icon={AlertCircle} title={accessText} retryText={text('retry')} onRetry={() => setAccessRetry(n => n + 1)} /> : (
           <>
