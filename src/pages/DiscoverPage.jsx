@@ -5236,6 +5236,21 @@ const visibleBoostPosts = useMemo(() => {
     }).slice(0, 3)
   }, [boostBooks])
 
+  const firstAuthorPostIndex = discoverTimeline.findIndex(
+    (entry) => entry.kind === 'author_post'
+  )
+
+  const authorsAfterIndex = firstAuthorPostIndex < 0
+    ? -1
+    : firstAuthorPostIndex === discoverTimeline.length - 1 && firstAuthorPostIndex > 0
+      ? firstAuthorPostIndex - 1
+      : firstAuthorPostIndex
+
+  const trendingAfterIndex =
+    authorsAfterIndex >= 0 && authorsAfterIndex + 1 < discoverTimeline.length
+      ? authorsAfterIndex + 1
+      : -1
+
   const firstReaderPostIndex =
   discoverTimeline.findIndex(
     (entry) =>
@@ -5858,7 +5873,6 @@ authorFollowOverridesRef.current.set(
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
             <DiscoverSpecialPromotionSection />
-            <DiscoverAuthorStorePromotionSection />
             {realPostsLoading ||
             readerPostsLoading ? (
               <>
@@ -5884,6 +5898,8 @@ authorFollowOverridesRef.current.set(
             !discoverTimeline.length ? (
              <>
   <RealFeedEmptyState />
+
+  <DiscoverAuthorStorePromotionSection />
 
   <DeferredDiscoverSection>
   <DiscoverYouMightLikeSection />
@@ -5936,7 +5952,13 @@ authorFollowOverridesRef.current.set(
   onComment={openPostComments}
   onMore={setOptionsPost}
 />
-                )}
+                         )}
+
+                {entry.timelineIndex === 0 ? (
+                  <div className="pt-2">
+                    <DiscoverAuthorStorePromotionSection />
+                  </div>
+                ) : null}
 
                 {visibleBoostPosts
   .filter((_, index) =>
@@ -5974,11 +5996,10 @@ authorFollowOverridesRef.current.set(
 ) : null}
 
 
-                {entry.kind === 'author_post' &&
-                entry.authorIndex === 0 ? (
+                {entry.timelineIndex === authorsAfterIndex ? (
                   <DeferredDiscoverSection>
-  <DiscoverAuthorsYouMayLikeSection />
-</DeferredDiscoverSection>
+                    <DiscoverAuthorsYouMayLikeSection />
+                  </DeferredDiscoverSection>
                 ) : null}
 
                 {entry.kind === 'reader_post' &&
@@ -5996,11 +6017,10 @@ entry.timelineIndex === firstReaderPostIndex ? (
   </DeferredDiscoverSection>
 ) : null}
 
-                {entry.kind === 'author_post' &&
-                entry.authorIndex === 0 ? (
+                {entry.timelineIndex === trendingAfterIndex ? (
                   <DeferredDiscoverSection>
-  <DiscoverTrendingStoriesSection />
-</DeferredDiscoverSection>
+                    <DiscoverTrendingStoriesSection />
+                  </DeferredDiscoverSection>
                 ) : null}
 
                 
