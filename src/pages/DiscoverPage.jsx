@@ -3993,8 +3993,6 @@ useEffect(() => {
       ? visibleAutoAds[index % visibleAutoAds.length]
       : null
   }
-    }
-
   function revealMoreSmartAutoAds(readySlots, naturalSlots) {
     if (discoverAdControl?.mode !== 'auto' ||
         smartAdActiveVisitRef.current !== smartAdVisitKey) return
