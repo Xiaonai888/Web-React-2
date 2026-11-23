@@ -12,6 +12,10 @@ import {
   getSmartAdReservedIds,
 } from '../smartAdQueue'
 import {
+  getCachedSmartAdReadingProgress,
+  smartAdCachedStoryPriority,
+} from '../smartAdReadingProgressGuard'
+import {
   getSmartFreeUnlockInterests,
   toSmartFreeUnlockAdvertisement,
 } from './smartFreeUnlockPresentation'
@@ -19,7 +23,7 @@ import {
 import { getStoryLanguageId } from '../../utils/storyLanguage'
 
 const PLACEMENTS = new Set(['opening', 'me'])
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const pending = new Map()
 const emptyRetry = new Map()
 const impressions = new Map()
@@ -29,7 +33,8 @@ function assertPlacement(placement) {
   return placement
 }
 
-function findNext(readerKey, placement, version) {
+function findNext(readerKey, placement, version, progressRows) {
+  let replay = null
   for (let i = 0; i < 10; i += 1) {
     const story = nextSmartAdFromQueue({
       readerKey,
@@ -37,17 +42,21 @@ function findNext(readerKey, placement, version) {
       slotKey: version.slot_key,
       catalogVersion: version.catalog_version,
     })
-    if (!story) return null
+    if (!story) break
+    const priority = smartAdCachedStoryPriority(story, progressRows)
+    if (priority === 2) continue
     const original = toSmartFreeUnlockAdvertisement(story, version.slot_key)
     if (!original) continue
-    return {
+    const advertisement = {
       ...original,
       placement,
       frequency: 'once_per_session',
       updated_at: 'auto_system_v1',
     }
+    if (priority === 0) return advertisement
+    if (!replay) replay = advertisement
   }
-  return null
+  return replay
 }
 
 export async function takeSmartPlacementAdvertisement(placement, signal) {
@@ -58,6 +67,8 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
   }
   const readerKey = getSmartAdReaderKey()
   const language = getStoryLanguageId()
+  const progressRows = await getCachedSmartAdReadingProgress()
+  if (readerKey !== getSmartAdReaderKey() || language !== getStoryLanguageId()) return null
   const options = {
     readerKey,
     placement,
@@ -65,7 +76,7 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
     catalogVersion: version.catalog_version,
   }
   const existing = readSmartAdQueue(options)
-  const cachedAd = findNext(readerKey, placement, version)
+  const cachedAd = findNext(readerKey, placement, version, progressRows)
   if (cachedAd) return cachedAd
   if (existing?.exhausted && !existing.next_cursor) return null
 
@@ -106,8 +117,8 @@ export async function takeSmartPlacementAdvertisement(placement, signal) {
     pending.set(key, request)
   }
   const result = await pending.get(key)
-  if (!result || getStoryLanguageId() !== language) return null
-  return findNext(readerKey, placement, version)
+  if (!result || getStoryLanguageId() !== language || getSmartAdReaderKey() !== readerKey) return null
+  return findNext(readerKey, placement, version, progressRows)
 }
 
 export async function recordSmartPlacementImpression(advertisement) {
