@@ -10,7 +10,7 @@ import {
   queueSmartPdfVisibleOffers,
   queueSmartPdfOfferClick,
 } from '../../services/smartPdfPromotionAdapter'
-import { buildSmartPdfCartItem, planSmartPdfCart } from '../../services/smartPdfPromotionCart'
+import { buildSmartPdfCartItem } from '../../services/smartPdfPromotionCart'
 
 registerTranslationNamespace('smartPdfStoreShelf', {
   en: {
@@ -72,8 +72,7 @@ export default function SmartPdfStoreShelf() {
   const [selection, setSelection] = useState(null)
   const [now, setNow] = useState(Date.now)
   const [error, setError] = useState('')
-  const [conflict, setConflict] = useState(null)
-  const [busy, setBusy] = useState(false)
+const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
   const sectionRef = useRef(null)
   const visibleRef = useRef(false)
@@ -177,7 +176,7 @@ export default function SmartPdfStoreShelf() {
     return () => { stopped = true; observer.disconnect() }
   }, [placement, selection?.rotation_key, productsKey])
 
-  async function handleBuy(product, replace = false) {
+  async function handleBuy(product) {
     if (busyRef.current || !selection || remainingSeconds <= 0 || !product) return
     if (!hasAuthorStoreReaderSession()) {
       navigate('/login', { state: { from: location.pathname + location.search + location.hash } })
@@ -193,28 +192,50 @@ export default function SmartPdfStoreShelf() {
         setError(t('smartPdfStoreShelf.unavailable'))
         return
       }
-      if (itemState.state !== 'available') {
-        setSelection(null)
-        setError(t(itemState.state === 'purchased' ? 'smartPdfStoreShelf.unavailable' : 'smartPdfStoreShelf.checking'))
-        refreshRef.current = { last: 0, retryAt: 0 }
-        void load(true)
-        return
-      }
+      if (itemState.state === 'purchased') {
+  const current = getCart()
+  const remaining = current.filter(
+    (item) => String(item.id) !== String(product.product_id)
+  )
+
+  if (remaining.length !== current.length) {
+    localStorage.setItem(CART_KEY, JSON.stringify(remaining))
+    window.dispatchEvent(new Event('shadow-author-cart-updated'))
+  }
+
+  navigate(`/discover/pdf/${encodeURIComponent(product.product_id)}`, {
+    state: {
+      title: product.title,
+      from: location.pathname + location.search + location.hash,
+    },
+  })
+  return
+}
+
+if (itemState.state !== 'available') {
+  setError(t('smartPdfStoreShelf.checking'))
+  return
+}
       const cartItem = buildSmartPdfCartItem(product, {
         rotationKey: selection.rotation_key,
         expiresAt: selection.expires_at,
         source: placement,
       })
-      const planned = planSmartPdfCart(getCart(), cartItem, { replace })
-      if (planned.conflict) {
-        setConflict(product)
-        return
-      }
-      localStorage.setItem(CART_KEY, JSON.stringify(planned.items))
-      window.dispatchEvent(new Event('shadow-author-cart-updated'))
-      queueSmartPdfOfferClick({ placement, rotationKey: selection.rotation_key, productId: product.product_id })
-      setConflict(null)
-      navigate('/author/cart', { state: { from: location.pathname + location.search + location.hash } })
+      queueSmartPdfOfferClick({
+  placement,
+  rotationKey: selection.rotation_key,
+  productId: product.product_id,
+})
+
+navigate(
+  `/author/page/${encodeURIComponent(product.page_username)}/store/product/${encodeURIComponent(product.product_id)}`,
+  {
+    state: {
+      from: location.pathname + location.search + location.hash,
+      discoverPurchaseOffer: cartItem,
+    },
+  }
+)
     } catch {
       setError(t('smartPdfStoreShelf.failed'))
     } finally {
@@ -235,17 +256,6 @@ export default function SmartPdfStoreShelf() {
       />
       {busy ? <p role="status" className="mx-3 mt-2 text-[12px] text-[var(--shadow-text-secondary)]">{t('smartPdfStoreShelf.checking')}</p> : null}
       {error ? <p role="alert" className="mx-3 mt-2 text-[12px] font-semibold text-red-600 dark:text-red-300">{error}</p> : null}
-      {conflict ? (
-        <div className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={t('promotionBookShelf.storeTitle')}>
-          <div className="w-full max-w-[410px] rounded-2xl bg-white p-5 text-[#25142f] shadow-xl dark:bg-[#241d2b] dark:text-white">
-            <p className="text-[14px] font-bold leading-relaxed">{t('smartPdfStoreShelf.conflict')}</p>
-            <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setConflict(null)} className="flex-1 rounded-full border border-gray-300 px-3 py-3 text-[12px] font-bold dark:border-white/20">{t('smartPdfStoreShelf.cancel')}</button>
-              <button type="button" onClick={() => { void handleBuy(conflict, true) }} className="flex-[1.5] rounded-full border border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white">{t('smartPdfStoreShelf.replace')}</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
