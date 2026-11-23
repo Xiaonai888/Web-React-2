@@ -5726,7 +5726,8 @@ authorFollowOverridesRef.current.set(
           </div>
 
           <section className="space-y-1 py-1 sm:space-y-1.5 sm:px-3 sm:py-1.5">
-          <DiscoverSpecialPromotionSection />
+            <DiscoverSpecialPromotionSection />
+            <DiscoverAuthorStorePromotionSection />
             {realPostsLoading ||
             readerPostsLoading ? (
               <>
@@ -5841,9 +5842,6 @@ authorFollowOverridesRef.current.set(
   ) : null
 ) : null}
 
-                {entry.timelineIndex === 0 ? (
-  <DiscoverAuthorStorePromotionSection />
-) : null}
 
                 {entry.kind === 'author_post' &&
                 entry.authorIndex === 0 ? (
