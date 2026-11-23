@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getPromotionShelfCache, loadPromotionShelf } from '../../services/promotionShelfData'
 import { getStoryLanguageId } from '../../utils/storyLanguage'
 import StoryPromotionShelf from './StoryPromotionShelf'
-import StorePromotionShelf from './StorePromotionShelf'
+import SmartPdfStoreShelf from './SmartPdfStoreShelf'
 
 const RETRY_MS = 30000
 
