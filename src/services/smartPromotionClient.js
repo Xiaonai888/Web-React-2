@@ -3,7 +3,7 @@ import { getSmartAdAuthToken, getSmartAdReaderKey, getSmartAdVisitorId } from '.
 import { getSmartFreeUnlockInterests } from './advertisements/smartFreeUnlockPresentation'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com').replace(/\/$/, '')
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ko', 'ja'])
 const PREFIX = 'shadow_smart_special_promotion_v1'
 const RETRY_MS = 30000
