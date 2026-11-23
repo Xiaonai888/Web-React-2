@@ -564,6 +564,10 @@ function validCheckoutQuantity(value) {
   return Number.isFinite(quantity) ? Math.max(1, Math.min(99, Math.trunc(quantity))) : 1
 }
 
+function isPdfCheckoutItem(item) {
+  return String(item?.type || item?.product_type || '').toLowerCase() === 'pdf' || Boolean(item?.smart_pdf_offer_token)
+}
+
 function getCartItems() {
   try {
     const raw = localStorage.getItem('shadow_author_cart_items') || '[]'
@@ -571,7 +575,7 @@ function getCartItems() {
     return Array.isArray(parsed)
       ? parsed.filter((item) => item && typeof item === 'object' && item.id !== null && item.id !== undefined && String(item.id).trim()).map((item) => ({
           ...item,
-          quantity: validCheckoutQuantity(item.quantity),
+          quantity: isPdfCheckoutItem(item) ? 1 : validCheckoutQuantity(item.quantity),
         }))
       : []
   } catch {
@@ -1250,7 +1254,7 @@ export default function AuthorCheckoutPage() {
   function updateQuantity(id, nextQuantity) {
     if (paymentSubmissionRef.current) return
     const nextItems = getCartItems().map((item) => (
-      String(item.id) === String(id) ? { ...item, quantity: validCheckoutQuantity(nextQuantity) } : item
+      String(item.id) === String(id) ? { ...item, quantity: isPdfCheckoutItem(item) ? 1 : validCheckoutQuantity(nextQuantity) } : item
     ))
     setItems(nextItems)
     saveCartItems(nextItems)
@@ -1727,10 +1731,12 @@ export default function AuthorCheckoutPage() {
                     <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(Number(item.price_value || 0) * Number(item.quantity || 1))}</div>
                     <div className="flex items-center gap-2">
                       <button type="button" aria-label={t('authorCheckout.decreaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
+                        disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) <= 1}
                         <i className="fa-solid fa-minus text-[11px]" />
                       </button>
                       <span className="w-5 text-center text-[13px] font-black text-[var(--shadow-text-primary)]">{number(item.quantity || 1)}</span>
                       <button type="button" aria-label={t('authorCheckout.increaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
+                        disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) >= 99}
                         <i className="fa-solid fa-plus text-[11px]" />
                       </button>
                     </div>
