@@ -13,6 +13,7 @@ const PDF_DETAIL_COPY = Object.freeze({
   en: {
     read: 'Read Now',
     checking: 'Check Payment',
+    waiting: 'Payment Pending',
     verifying: 'Checking PDF ownership...',
     retry: 'Retry Verification',
     pending: 'This PDF has a previous payment awaiting verification. Do not pay again.',
@@ -21,6 +22,7 @@ const PDF_DETAIL_COPY = Object.freeze({
   km: {
     read: 'អានឥឡូវនេះ',
     checking: 'ពិនិត្យការទូទាត់',
+    waiting: 'កំពុងរង់ចាំបង់ប្រាក់',
     verifying: 'កំពុងពិនិត្យសិទ្ធិ PDF...',
     retry: 'ពិនិត្យឡើងវិញ',
     pending: 'PDF នេះមានការទូទាត់ចាស់កំពុងផ្ទៀងផ្ទាត់។ សូមកុំបង់ប្រាក់ម្ដងទៀត។',
@@ -29,6 +31,7 @@ const PDF_DETAIL_COPY = Object.freeze({
   zh: {
     read: '立即阅读',
     checking: '核实付款',
+    waiting: '等待付款确认',
     verifying: '正在检查 PDF 购买状态...',
     retry: '重新核实',
     pending: '此 PDF 有待核实的旧付款。请勿重复支付。',
@@ -37,6 +40,7 @@ const PDF_DETAIL_COPY = Object.freeze({
   ja: {
     read: '今すぐ読む',
     checking: '支払いを確認',
+    waiting: '決済確認待ち',
     verifying: 'PDF の購入状況を確認中...',
     retry: '再確認する',
     pending: '以前の PDF 決済を確認中です。再度支払わないでください。',
@@ -45,6 +49,7 @@ const PDF_DETAIL_COPY = Object.freeze({
   ko: {
     read: '지금 읽기',
     checking: '결제 확인',
+    waiting: '결제 확인 대기',
     verifying: 'PDF 구매 상태 확인 중...',
     retry: '다시 확인',
     pending: '이 PDF의 기존 결제를 확인하고 있습니다. 다시 결제하지 마세요.',
@@ -788,6 +793,28 @@ function addToAuthorCart(product, quantity, promotionOffer = null) {
 }
 
 
+const PDF_PENDING_MAX_MS = 15 * 60 * 1000
+
+function getPdfPaymentDeadline(order) {
+  const expiresAt = Date.parse(String(order?.expires_at || ''))
+  const createdAt = Date.parse(String(order?.created_at || ''))
+
+  return Math.min(
+    Number.isFinite(expiresAt) ? expiresAt : Infinity,
+    Number.isFinite(createdAt) ? createdAt + PDF_PENDING_MAX_MS : Infinity
+  )
+}
+
+function getPdfPaymentState(ownership, now = Date.now()) {
+  const state = String(ownership?.state || '')
+  if (state !== 'checking_payment') return state
+
+  const deadline = getPdfPaymentDeadline(ownership)
+  return Number.isFinite(deadline) && deadline > now
+    ? 'checking_payment'
+    : 'payment_recheck_required'
+}
+
 export default function AuthorStoreProductDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -800,6 +827,7 @@ export default function AuthorStoreProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [pdfOwnership, setPdfOwnership] = useState({ status: 'loading', state: null, orderId: '' })
+  const [pdfClock, setPdfClock] = useState(() => Date.now())
   const [pdfChecking, setPdfChecking] = useState(false)
   const pdfActionRef = useRef(false)
 
@@ -854,48 +882,101 @@ export default function AuthorStoreProductDetailPage() {
 
     let active = true
     let lastCheckedAt = 0
-    const controller = new AbortController()
+    let checking = false
+    let currentRequest = null
+
     const checkOwnership = async (force = false) => {
-      if (!active || (!force && document.visibilityState === 'hidden')) return
+      if (!active || checking) return
+      if (!force && document.visibilityState === 'hidden') return
       if (!force && Date.now() - lastCheckedAt < 15000) return
+
       lastCheckedAt = Date.now()
+
       if (!hasAuthorStoreReaderSession()) {
         setPdfOwnership({ status: 'ready', state: 'available', orderId: '' })
         return
       }
+
+      checking = true
+      const controller = new AbortController()
+      currentRequest = controller
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000)
+
       try {
-        const result = await fetchAuthorStorePdfOwnership([product.id], { signal: controller.signal })
-        if (!active) return
-        const row = result.products.find((item) => String(item.product_id) === String(product.id) && item.product_type === 'pdf')
-        if (!row) {
-          setPdfOwnership({ status: 'unavailable', state: null, orderId: '' })
-          return
-        }
-        setPdfOwnership({ status: 'ready', state: row.state, orderId: row.order_id || '' })
+        const result = await fetchAuthorStorePdfOwnership([product.id], {
+          signal: controller.signal,
+        })
+        if (!active || controller.signal.aborted) return
+
+        const row = (result.products || []).find(
+          (item) => String(item.product_id) === String(product.id) && item.product_type === 'pdf'
+        )
+
+        if (!row?.state) throw new Error('PDF ownership missing')
+
+        setPdfOwnership({
+          status: 'ready',
+          state: row.state,
+          orderId: row.order_id || '',
+          created_at: row.created_at || null,
+          expires_at: row.expires_at || null,
+        })
+        setPdfClock(Date.now())
       } catch {
-        if (active && !controller.signal.aborted) {
+        if (active) {
           setPdfOwnership({ status: 'unavailable', state: null, orderId: '' })
         }
+      } finally {
+        window.clearTimeout(timeoutId)
+        if (currentRequest === controller) currentRequest = null
+        checking = false
       }
     }
 
     setPdfOwnership({ status: 'loading', state: null, orderId: '' })
     void checkOwnership(true)
-    const refreshVisible = () => { void checkOwnership() }
+
+    const refreshVisible = () => {
+      void checkOwnership()
+    }
     const refreshOnVisibility = () => {
       if (document.visibilityState === 'visible') void checkOwnership()
     }
+
     window.addEventListener('focus', refreshVisible)
     window.addEventListener('pageshow', refreshVisible)
     document.addEventListener('visibilitychange', refreshOnVisibility)
+
     return () => {
       active = false
-      controller.abort()
+      currentRequest?.abort()
       window.removeEventListener('focus', refreshVisible)
       window.removeEventListener('pageshow', refreshVisible)
       document.removeEventListener('visibilitychange', refreshOnVisibility)
     }
   }, [product?.id, product?.type])
+
+  useEffect(() => {
+    if (pdfOwnership.status !== 'ready' || pdfOwnership.state !== 'checking_payment') {
+      return undefined
+    }
+
+    const deadline = getPdfPaymentDeadline(pdfOwnership)
+    const now = Date.now()
+    if (!Number.isFinite(deadline) || deadline <= now) return undefined
+
+    const timer = window.setTimeout(() => {
+      setPdfClock(Date.now())
+    }, Math.max(1, deadline - now + 50))
+
+    return () => window.clearTimeout(timer)
+  }, [
+    pdfOwnership.status,
+    pdfOwnership.state,
+    pdfOwnership.created_at,
+    pdfOwnership.expires_at,
+    pdfClock,
+  ])
 
   if (loading) {
     return (
@@ -960,8 +1041,9 @@ const hasDiscount = originalDisplayPrice > displayPrice
   const decreaseQuantity = () => setQuantity((value) => Math.max(value - 1, 1))
 
   const isPdf = product.type === 'PDF'
-  const pdfOwned = isPdf && pdfOwnership.status === 'ready' && pdfOwnership.state === 'purchased'
-  const pdfHasPendingPayment = isPdf && pdfOwnership.status === 'ready' && pdfOwnership.state !== 'available' && !pdfOwned
+  const pdfPaymentState = getPdfPaymentState(pdfOwnership, pdfClock)
+  const pdfOwned = isPdf && pdfOwnership.status === 'ready' && pdfPaymentState === 'purchased'
+  const pdfHasPendingPayment = isPdf && pdfOwnership.status === 'ready' && pdfPaymentState !== 'available' && !pdfOwned
   const pdfOwnershipUnavailable = isPdf && pdfOwnership.status === 'unavailable'
   const pdfOwnershipLoading = isPdf && pdfOwnership.status === 'loading'
   const fromPath = location.pathname + location.search + location.hash
@@ -983,11 +1065,24 @@ const hasDiscount = originalDisplayPrice > displayPrice
     pdfActionRef.current = true
     setPdfChecking(true)
     setError('')
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), 12000)
+
     try {
-      const result = await fetchAuthorStorePdfOwnership([product.id])
+      const result = await fetchAuthorStorePdfOwnership([product.id], {
+        signal: controller.signal,
+      })
       const row = result.products.find((item) => String(item.product_id) === String(product.id) && item.product_type === 'pdf')
       if (!row) throw new Error('PDF ownership status missing')
-      setPdfOwnership({ status: 'ready', state: row.state, orderId: row.order_id || '' })
+      setPdfOwnership({
+        status: 'ready',
+        state: row.state,
+        orderId: row.order_id || '',
+        created_at: row.created_at || null,
+        expires_at: row.expires_at || null,
+      })
+      setPdfClock(Date.now())
       if (row.state === 'purchased') {
         openOwnedPdf()
         return
@@ -995,9 +1090,9 @@ const hasDiscount = originalDisplayPrice > displayPrice
       if (row.state !== 'available') {
         if (row.order_id) {
           try {
-            const recovery = await recheckAuthorStorePdfPayment(row.order_id)
+            const recovery = await recheckAuthorStorePdfPayment(row.order_id, { signal: controller.signal })
             if (recovery.state === 'purchased') {
-              const confirmed = await fetchAuthorStorePdfOwnership([product.id])
+              const confirmed = await fetchAuthorStorePdfOwnership([product.id], { signal: controller.signal })
               const owned = confirmed.products.find((item) => String(item.product_id) === String(product.id) && item.product_type === 'pdf')
               if (owned?.state === 'purchased') {
                 setPdfOwnership({ status: 'ready', state: 'purchased', orderId: owned.order_id || row.order_id })
@@ -1024,6 +1119,7 @@ navigate(destination, { state: { from: fromPath } })
       setPdfOwnership({ status: 'unavailable', state: null, orderId: '' })
       setError(pdfCopy.unavailable)
     } finally {
+      window.clearTimeout(timeoutId)
       pdfActionRef.current = false
       setPdfChecking(false)
     }
@@ -1240,7 +1336,8 @@ const handleBuyNow = () => {
               {isPdf
                 ? pdfChecking || pdfOwnershipLoading ? pdfCopy.verifying
                   : pdfOwned ? pdfCopy.read
-                    : pdfHasPendingPayment ? pdfCopy.checking
+                    : pdfHasPendingPayment
+                      ? pdfPaymentState === 'checking_payment' ? pdfCopy.waiting : pdfCopy.checking
                       : pdfOwnershipUnavailable ? pdfCopy.retry
                         : t('authorStoreProductDetail.buyNow')
                 : t('authorStoreProductDetail.buyNow')}
