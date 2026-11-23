@@ -389,10 +389,22 @@ export default function DiscoverSpecialPromotionSection() {
       }
 
       if (!response.ok || result.ok === false) {
-        setPurchaseError(t('discoverSpecialPromotionCheckout.failed'))
+        const errorCode =
+          typeof result?.code === 'string' &&
+          /^[A-Z0-9_]{3,64}$/.test(result.code)
+            ? result.code
+            : `HTTP_${response.status}`
+
+        console.error('SPECIAL_PROMOTION_PURCHASE_FAILED', {
+          status: response.status,
+          code: errorCode,
+        })
+
+        setPurchaseError(
+          `${t('discoverSpecialPromotionCheckout.failed')} (${errorCode})`
+        )
         return
       }
-
       setQuote(null)
       setPurchasedStoryId(quote.storyId)
       const nextPurchasedStoryIds = new Set(purchasedStoryIds)
@@ -418,8 +430,11 @@ export default function DiscoverSpecialPromotionSection() {
           new CustomEvent('shadow-wallet-updated', { detail: result.wallet })
         )
       }
-    } catch {
-      setPurchaseError(t('discoverSpecialPromotionCheckout.failed'))
+    } catch (error) {
+      console.error('SPECIAL_PROMOTION_REQUEST_ERROR', error)
+      setPurchaseError(
+        `${t('discoverSpecialPromotionCheckout.failed')} (REQUEST_ERROR)`
+      )
     } finally {
       purchaseInFlightRef.current = false
       setPurchaseBusy(false)
