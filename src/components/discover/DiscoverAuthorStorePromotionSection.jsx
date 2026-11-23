@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Clock3, ShoppingCart } from 'lucide-react'
-import { useDisplayTranslation } from '../../utils/displayLanguage'
+import { getDisplayLanguageId, useDisplayTranslation } from '../../utils/displayLanguage'
+import { loadCountrySettings } from '../../utils/countrySettings'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { fetchAuthorStorePdfOwnership, hasAuthorStoreReaderSession, recheckAuthorStorePdfPayment } from '../../services/authorStorePdfOwnershipApi'
 
@@ -92,6 +93,34 @@ registerTranslationNamespace('discoverAuthorStorePromotion', {
     stock: '재고 {{count}}',
   },
 })
+
+const BOOK_COUNTRY_COPY = {
+  en: {
+    blocked: 'Paper books are available in Cambodia only.',
+    unknown: 'Could not verify your country. Please try again.',
+    close: 'OK',
+  },
+  km: {
+    blocked: 'សៀវភៅក្រដាសអាចទិញបានតែនៅកម្ពុជាប៉ុណ្ណោះ។',
+    unknown: 'មិនអាចផ្ទៀងផ្ទាត់ប្រទេសអ្នកបានទេ។ សូមសាកល្បងម្ដងទៀត។',
+    close: 'យល់ព្រម',
+  },
+  zh: {
+    blocked: '纸质书目前仅在柬埔寨出售。',
+    unknown: '无法验证您的国家，请重试。',
+    close: '确定',
+  },
+  ja: {
+    blocked: '紙の本はカンボジア国内でのみ購入できます。',
+    unknown: '国を確認できません。もう一度お試しください。',
+    close: 'OK',
+  },
+  ko: {
+    blocked: '종이책은 캄보디아에서만 구매할 수 있습니다.',
+    unknown: '국가를 확인할 수 없습니다. 다시 시도해 주세요.',
+    close: '확인',
+  },
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 const CACHE_KEY = 'shadow_discover_author_store_rotation_v1'
@@ -230,7 +259,8 @@ export default function DiscoverAuthorStorePromotionSection() {
   const [rotation, setRotation] = useState(readCachedRotation)
   const [activeIndex, setActiveIndex] = useState(0)
   const [now, setNow] = useState(Date.now())
-  const [conflict, setConflict] = useState(null)
+  const [bookCountryNotice, setBookCountryNotice] = useState(false)
+  const bookCountryCopy = BOOK_COUNTRY_COPY[getDisplayLanguageId()] || BOOK_COUNTRY_COPY.en
   const [error, setError] = useState('')
   const [pdfOwnership, setPdfOwnership] = useState({ status: 'loading', states: {} })
   const [busyId, setBusyId] = useState('')
@@ -337,7 +367,7 @@ export default function DiscoverAuthorStorePromotionSection() {
   const remainingSeconds = rotation?.expiresAt ? Math.max(0, Math.ceil((rotation.expiresAt - now) / 1000)) : 0
 
   function switchSlide(delta) {
-    if (offers.length < 2 || conflict) return
+    if (offers.length < 2 || bookCountryNotice) return
     setActiveIndex((current) => (current + delta + offers.length) % offers.length)
   }
 
@@ -359,7 +389,7 @@ export default function DiscoverAuthorStorePromotionSection() {
   }
 
   function handlePointerDown(event) {
-    if (event.pointerType !== 'mouse' || event.button !== 0 || offers.length < 2 || conflict) return
+    if (event.pointerType !== 'mouse' || event.button !== 0 || offers.length < 2 || bookCountryNotice) return
     pointerStartRef.current = { x: event.clientX, y: event.clientY, id: event.pointerId, captured: false }
   }
 
@@ -385,43 +415,61 @@ export default function DiscoverAuthorStorePromotionSection() {
     switchSlide(dx < 0 ? 1 : -1)
   }
 
-  function saveProductToCart(product, replace = false) {
-    try {
-      const current = replace ? [] : readCart()
-      const productId = String(product.product_id)
-      const item = {
-        id: productId,
-        title: product.title,
-        type: product.product_type === 'pdf' ? 'PDF' : 'Book',
-        cover_url: product.cover_url || '',
-        price_value: Number(product.promotion_price_usd),
-        quantity: 1,
-        author_page_id: String(product.author_page_id),
-        author_page_name: product.page_name || product.author_name || '',
-        author_page_username: product.page_username,
-        discover_promotion_rotation_key: rotation.rotationKey,
-        discover_promotion_expires_at: rotation.expires_at,
-      }
-      const existing = current.find((cartItem) => String(cartItem.id) === productId)
-      const next = existing
-        ? current.map((cartItem) => {
-          if (String(cartItem.id) !== productId) return cartItem
-          const quantity = Number(cartItem.quantity || 1)
-          const max = product.product_type === 'book' ? Number(product.stock_quantity || 1) : 1
-          return { ...item, quantity: Math.min(quantity + 1, max) }
-        })
-        : [...current, item]
-      localStorage.setItem(CART_KEY, JSON.stringify(next))
-      window.dispatchEvent(new Event('shadow-author-cart-updated'))
-      setConflict(null)
-      setError('')
-      navigate('/author/cart', {
-        state: { from: location.pathname + location.search + location.hash },
-      })
-    } catch {
-      setError(t('discoverAuthorStorePromotion.cartFailed'))
+  function saveProductToCart(product) {
+  try {
+    const current = readCart()
+    const productId = String(product.product_id)
+
+    const item = {
+      id: productId,
+      title: product.title,
+      type: product.product_type === 'pdf' ? 'PDF' : 'Book',
+      cover_url: product.cover_url || '',
+      price_value: Number(product.promotion_price_usd),
+      quantity: 1,
+      author_page_id: String(product.author_page_id),
+      author_page_name: product.page_name || product.author_name || '',
+      author_page_username: product.page_username,
+      discover_promotion_rotation_key: rotation.rotationKey,
+      discover_promotion_expires_at: rotation.expires_at,
     }
+
+    const existing = current.find(
+      (cartItem) => String(cartItem.id) === productId
+    )
+
+    const next = existing
+      ? current.map((cartItem) =>
+          String(cartItem.id) === productId
+            ? {
+                ...cartItem,
+                ...item,
+                quantity: product.product_type === 'pdf'
+                  ? 1
+                  : Math.max(1, Number(cartItem.quantity || 1)),
+              }
+            : cartItem
+        )
+      : [...current, item]
+
+    localStorage.setItem(CART_KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event('shadow-author-cart-updated'))
+
+    setError('')
+
+    navigate(
+      `/author/page/${encodeURIComponent(product.page_username)}/store/product/${encodeURIComponent(productId)}`,
+      {
+        state: {
+          from: location.pathname + location.search + location.hash,
+          discoverPurchaseOffer: item,
+        },
+      }
+    )
+  } catch {
+    setError(t('discoverAuthorStorePromotion.cartFailed'))
   }
+}
 
   function readPdf(product) {
     const productId = String(product.product_id)
@@ -431,20 +479,39 @@ export default function DiscoverAuthorStorePromotionSection() {
       localStorage.setItem(CART_KEY, JSON.stringify(next))
       window.dispatchEvent(new Event('shadow-author-cart-updated'))
     }
-    setConflict(null)
-    setError('')
-    navigate(`/discover/pdf/${encodeURIComponent(productId)}`, {
+setBookCountryNotice(false)
+setError('')
+navigate(`/discover/pdf/${encodeURIComponent(productId)}`, {
       state: { title: product.title, from: location.pathname + location.search + location.hash },
     })
   }
 
-  async function buyProduct(product, replace = false) {
+  async function buyProduct(product) {
     if (!product || remainingSeconds <= 0 || Date.now() < suppressClickRef.current || actionRef.current) return
     actionRef.current = true
     setBusyId(String(product.product_id))
-    setError('')
-    try {
-      if (product.product_type === 'pdf' && hasAuthorStoreReaderSession()) {
+setError('')
+try {
+  if (product.product_type === 'book') {
+    const country = await loadCountrySettings()
+
+    if (country?.countryVerified !== true) {
+      setError(bookCountryCopy.unknown)
+      return
+    }
+
+    const allowed =
+      country.country === 'KH' ||
+      (country.hasException === true &&
+       country.effective?.physicalBooks === true)
+
+    if (!allowed) {
+      setBookCountryNotice(true)
+      return
+    }
+  }
+
+  if (product.product_type === 'pdf' && hasAuthorStoreReaderSession()) {
         const result = await fetchAuthorStorePdfOwnership([product.product_id])
         const current = (result.products || []).find((row) => String(row.product_id) === String(product.product_id))
         if (!current || current.product_type !== 'pdf') {
@@ -484,18 +551,7 @@ export default function DiscoverAuthorStorePromotionSection() {
           return
         }
       }
-      const others = !replace && readCart().some((item) => {
-        const otherPageId = String(item.author_page_id || '').trim()
-        const otherUsername = String(item.author_page_username || '').trim()
-        return otherPageId
-          ? otherPageId !== String(product.author_page_id)
-          : !otherUsername || otherUsername !== String(product.page_username)
-      })
-      if (others) {
-        setConflict(product)
-        return
-      }
-      saveProductToCart(product, replace)
+      saveProductToCart(product)
     } catch {
       setError(t('discoverAuthorStorePromotion.verifyUnavailable'))
     } finally {
@@ -631,21 +687,28 @@ export default function DiscoverAuthorStorePromotionSection() {
         {busyId ? <p className="px-3 py-2 text-[12px] text-[var(--shadow-text-secondary)]" role="status">{t('discoverAuthorStorePromotion.checking')}</p> : null}
         {error ? <p className="px-3 py-2 text-[12px] font-semibold text-red-600" role="alert">{error}</p> : null}
       </section>
-      {conflict ? (
-        <div className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={t('discoverAuthorStorePromotion.heading')}>
-          <div className="w-full max-w-[410px] rounded-2xl bg-white p-5 text-[#25142f] shadow-xl dark:bg-[#241d2b] dark:text-white">
-            <p className="text-[14px] font-bold leading-relaxed">{t('discoverAuthorStorePromotion.cartConflict')}</p>
-            <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setConflict(null)} className="flex-1 rounded-full border border-gray-300 px-3 py-3 text-[12px] font-bold dark:border-white/20">
-                {t('discoverAuthorStorePromotion.cancel')}
-              </button>
-              <button type="button" onClick={() => { void buyProduct(conflict, true) }} className="flex-[1.5] rounded-full border border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white">
-                {t('discoverAuthorStorePromotion.replace')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+     {bookCountryNotice ? (
+  <div
+    className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 p-3 sm:items-center"
+    role="dialog"
+    aria-modal="true"
+    aria-label={t('discoverAuthorStorePromotion.heading')}
+  >
+    <div className="w-full max-w-[410px] rounded-2xl bg-white p-5 text-[#25142f] shadow-xl dark:bg-[#241d2b] dark:text-white">
+      <p className="text-[14px] font-medium leading-relaxed">
+        {bookCountryCopy.blocked}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setBookCountryNotice(false)}
+        className="mt-5 h-11 w-full rounded-full bg-[#111111] text-[13px] font-medium text-white"
+      >
+        {bookCountryCopy.close}
+      </button>
+    </div>
+  </div>
+) : null}
     </>
   )
 }
