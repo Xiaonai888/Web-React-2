@@ -220,7 +220,18 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
         return
       }
       if (!response.ok || result.ok === false) {
-        setError(t('storyShelfCheckout.failed'))
+        const errorCode =
+          typeof result?.code === 'string' &&
+          /^[A-Z0-9_]{3,64}$/.test(result.code)
+            ? result.code
+            : `HTTP_${response.status}`
+
+        console.error('SPECIAL_PROMOTION_PURCHASE_FAILED', {
+          status: response.status,
+          code: errorCode,
+        })
+
+        setError(`${t('storyShelfCheckout.failed')} (${errorCode})`)
         return
       }
       const next = new Set(purchasedIds)
@@ -237,8 +248,9 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
         clearSmartPromotionCache(rotation.language)
         onStale?.()
       }
-    } catch {
-      setError(t('storyShelfCheckout.failed'))
+    } catch (error) {
+      console.error('SPECIAL_PROMOTION_REQUEST_ERROR', error)
+      setError(`${t('storyShelfCheckout.failed')} (REQUEST_ERROR)`)
     } finally {
       inFlightRef.current = false
       setBusy(false)
