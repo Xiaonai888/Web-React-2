@@ -44,8 +44,8 @@ export async function getPersonalizedSmartPdfPromotion({
     }
     const cached = readSmartPdfPromotionQueue({ ...scope, rotationKey: version.rotation_key })
     const survivors = cached ? await remainingOwnedSafe(cached.promotions) : []
-    const retained = force ? [] : survivors
-    if (!force && cached && survivors.length === cached.promotions.length) {
+    const retained = survivors
+    if (cached && survivors.length === cached.promotions.length) {
       return { ok: true, ...cached, promotion: cached.promotions[0] || null }
     }
     const reserve = getSmartPdfReservedIds({
