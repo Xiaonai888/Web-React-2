@@ -3942,40 +3942,7 @@ useEffect(() => {
     sharedSmartAdVersion?.catalog_version,
     smartAdReadingReady,
     smartAdReadingRows,
-  ])
-    smartAdActiveVisitRef.current = smartAdVisitKey
-    smartAdGenerationRef.current += 1
-    smartAdRequestRef.current = null
-    const stored = readSmartAdQueue(token)
-    const validStored = stored?.slot_key === autoAdSlotKey &&
-      Number(stored?.catalog_version) === Number(sharedSmartAdVersion.catalog_version)
-    const sameVisit = validStored && stored?.locationKey === location.key && stored?.scope === smartAdScope
-    const seenIds = new Set(readSmartAdSeen(token, autoAdSlotKey))
-    let batches = validStored ? (stored?.batches?.filter(Array.isArray) || []) : []
-    if (!sameVisit) {
-      // Navigating to Discover afresh advances the queue; returning from an
-      // episode via Back retains the original location key and all cards.
-      batches = batches.filter((batch) => !isSmartAdBatchFinished(batch, seenIds, autoAdSlotKey)).slice(-1)
-      if (batches.length) batches = [sortAutoAdsByImpressions(batches[0], readSmartAdSeen(token, autoAdSlotKey))]
-    }
-    commitSmartAdQueue({
-      cursor: validStored && typeof stored?.cursor === 'string' ? stored.cursor : '0',
-      atEnd: validStored && Boolean(stored?.atEnd),
-      batches,
-      loopCatalog: validStored
-        ? (Array.isArray(stored?.loopCatalog) ? stored.loopCatalog : stored.batches.flat())
-        : [],
-      loopOffset: validStored && Number.isSafeInteger(stored?.loopOffset) ? stored.loopOffset : 0,
-      loopSourceLength: validStored && Number.isSafeInteger(stored?.loopSourceLength) ? stored.loopSourceLength : 0,
-    })
-    if (!batches.length || isSmartAdBatchFinished(batches[batches.length - 1], seenIds, autoAdSlotKey)) {
-      void loadNextSmartAdBatch()
-    }
-    return () => {
-      if (smartAdActiveVisitRef.current === smartAdVisitKey) smartAdActiveVisitRef.current = ''
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, location.key, storyLanguage, discoverAdControl?.mode, sharedSmartAdVersion?.slot_key, sharedSmartAdVersion?.catalog_version])
+   ])
 
   const smartAutoAdBatches = useMemo(() => {
     if (smartAdQueueState?.visitKey !== smartAdVisitKey || discoverAdControl?.mode !== 'auto') return null
@@ -4026,23 +3993,9 @@ useEffect(() => {
       ? visibleAutoAds[index % visibleAutoAds.length]
       : null
   }
-    if (smartAutoAdBatches?.length) {
-      return smartAutoAdBatches[0].filter((ad) =>
-        ad?.story_id && !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey))
-      )
     }
-    // An expired legacy Ad must never bypass the Shared Pool eligibility gate.
-    return []
-  }, [discoverAdControl, autoHiddenRevision, token, autoAdSlotKey, smartAutoAdBatches])
 
-  function getSmartAutoAdForPosition(index) {
-    if (smartAutoAdBatches?.length) {
-      const ad = smartAutoAdFlat[index]
-      return ad && !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey)) ? ad : null
-    }
-    return visibleAutoAds.length ? visibleAutoAds[index % visibleAutoAds.length] : null
-  }
-
+  function revealMoreSmartAutoAds(readySlots, naturalSlots) {
   function revealMoreSmartAutoAds(readySlots, naturalSlots) {
     if (discoverAdControl?.mode !== 'auto' ||
         smartAdActiveVisitRef.current !== smartAdVisitKey) return
