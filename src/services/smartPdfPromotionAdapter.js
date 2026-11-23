@@ -52,9 +52,10 @@ async function remainingOwnedSafe(promotions) {
   if (!hasAuthorStoreReaderSession() || !promotions.length) return promotions
   const result = await fetchAuthorStorePdfOwnership(promotions.map((offer) => offer.product_id))
   if (result.authenticated !== true) throw new Error('PDF purchase status could not be verified')
-  const allowed = new Set(result.products.filter((entry) => entry.product_type === 'pdf' && entry.state === 'available')
-    .map((entry) => String(entry.product_id)))
-  return promotions.filter((offer) => allowed.has(String(offer.product_id)))
+  const visible = new Set(result.products.filter((entry) =>
+    entry.product_type === 'pdf' && entry.state !== 'purchased'
+  ).map((entry) => String(entry.product_id)))
+  return promotions.filter((offer) => visible.has(String(offer.product_id)))
 }
 
 function identityScope(placement) {
