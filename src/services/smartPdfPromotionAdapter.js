@@ -13,7 +13,9 @@ const VALID_PLACEMENTS = new Set(['stories', 'manga', 'discover'])
 const PROOF = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const inFlight = new Map()
 const RETRY_MS = 10000
+const PARTIAL_RETRY_MS = 5 * 60 * 1000
 const retryAfter = new Map()
+const partialRetryAfter = new Map()
 const issuedProofs = new Map()
 
 function validatePlacement(placement) {
@@ -74,7 +76,10 @@ export async function getPersonalizedSmartPdfPromotion({
     const loaded = readSmartPdfPromotionQueue({ ...scope, rotationKey: version.rotation_key })
     const cached = loaded && hasTrackingProofs(loaded.promotions) ? loaded : null
     const survivors = cached ? await remainingOwnedSafe(cached.promotions) : []
-    if (cached && survivors.length === cached.promotions.length) {
+    const fullyCached = cached && cached.promotions.length === 3 && survivors.length === 3
+    const recentlyCheckedPartial = cached && cached.promotions.length > 0 &&
+      survivors.length === cached.promotions.length && Date.now() < (partialRetryAfter.get(scopeKey) || 0)
+    if (fullyCached || recentlyCheckedPartial) {
       storeIssuedProofs(scope, cached)
       return { ok: true, ...cached, promotion: cached.promotions[0] || null }
     }
@@ -109,7 +114,7 @@ fresh = await fetchSmartPdfPromotion({ placement, interests: selectedInterests, 
     }
     const seen = new Set()
     const combined = []
-    for (const offer of [...survivors, ...fresh.promotions]) {
+    for (const offer of [...fresh.promotions, ...survivors]) {
       if (seen.has(offer.product_id)) continue
       seen.add(offer.product_id)
       combined.push({ ...offer, slot_position: combined.length + 1 })
@@ -117,7 +122,8 @@ fresh = await fetchSmartPdfPromotion({ placement, interests: selectedInterests, 
     }
     const selection = { ...fresh, promotions: combined, promotion: combined[0] || null }
     storeIssuedProofs(scope, selection)
-    saveSmartPdfPromotionQueue({ ...scope, selection })
+    if (combined.length) saveSmartPdfPromotionQueue({ ...scope, selection })
+    partialRetryAfter.set(scopeKey, combined.length < 3 ? Date.now() + PARTIAL_RETRY_MS : 0)
     return selection
   })().finally(() => { if (inFlight.get(scopeKey) === request) inFlight.delete(scopeKey) })
   inFlight.set(scopeKey, request)
