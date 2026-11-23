@@ -4,6 +4,7 @@ import { useDisplayTranslation } from '../utils/displayLanguage'
 import { getStoryLanguageLabel } from '../utils/storyLanguage'
 import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 
 registerTranslationNamespace('searchPage', {
   en: {
@@ -122,6 +123,7 @@ const TAB_LABEL_KEYS = {
 }
 
 const SEARCH_HISTORY_KEY = 'shadow_search_history'
+const SEARCH_TAB_CACHE_MS = 30 * 60 * 1000
 
 const RANK_STYLE = {
   1: 'linear-gradient(135deg,#fbbf24,#f59e0b)',
@@ -198,29 +200,64 @@ const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ?
     setSearchHistory(loadSearchHistory())
   }, [])
 
-  useEffect(() => {
+   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadStories() {
       setLoading(true)
       setMessage('')
 
-      try {
-        const params = new URLSearchParams({
-          limit: '10',
-          sort: activeTabConfig.sort,
+      const searchQuery = activeSearch.trim()
+      const params = new URLSearchParams({
+        limit: '10',
+        sort: activeTabConfig.sort,
+      })
+
+      params.set('language', getStoryLanguageLabel())
+      if (filteredStoryType) params.set('story_type', filteredStoryType)
+      if (searchQuery) params.set('search', searchQuery)
+
+      let cacheKey = null
+      let hasCached = false
+
+      if (!searchQuery) {
+        cacheKey = getHomeCacheKey({
+          section: 'stories',
+          language: storyLanguage,
+          params: {
+            page: 'search-tabs',
+            sort: activeTabConfig.sort,
+            story_type: filteredStoryType || 'all',
+            limit: 10,
+            schema: 1,
+          },
         })
 
-        params.set('language', getStoryLanguageLabel())
-        if (filteredStoryType) params.set('story_type', filteredStoryType)
+        try {
+          const cached = await loadHomeCache(cacheKey, {
+            maxAgeMs: SEARCH_TAB_CACHE_MS,
+            allowExpired: true,
+          })
 
-        if (activeSearch.trim()) {
-          params.set('search', activeSearch.trim())
-        }
+          if (ignore) return
 
+          if (Array.isArray(cached?.data)) {
+            hasCached = true
+            setStories(cached.data)
+            setLoading(false)
+
+            if (cached.isFresh) return
+          }
+        } catch {}
+      }
+
+      try {
         const response = await fetch(
-  `${API_BASE_URL}/api/public/stories?${params.toString()}`
-)
+          `${API_BASE_URL}/api/public/stories?${params.toString()}`,
+          { signal: controller.signal }
+        )
+
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
@@ -229,12 +266,24 @@ const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ?
 
         if (ignore) return
 
-        setStories(Array.isArray(data.stories) ? data.stories.slice(0, 10) : [])
-      } catch (error) {
-        if (ignore) return
+        const nextStories = Array.isArray(data.stories)
+          ? data.stories.slice(0, 10)
+          : []
 
-        setStories([])
-        setMessage(error.message || t('searchPage.loadFailed'))
+        setStories(nextStories)
+
+        if (cacheKey) {
+          saveHomeCache(cacheKey, nextStories, {
+            maxAgeMs: SEARCH_TAB_CACHE_MS,
+          }).catch(() => {})
+        }
+      } catch (error) {
+        if (ignore || controller.signal.aborted) return
+
+        if (!hasCached) {
+          setStories([])
+          setMessage(error.message || t('searchPage.loadFailed'))
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -244,9 +293,10 @@ const filteredStoryType = ['chat_story', 'manga'].includes(requestedStoryType) ?
 
     return () => {
       ignore = true
+      controller.abort()
     }
   }, [activeTabConfig.sort, activeSearch, filteredStoryType, storyLanguage, t])
-
+  
   const handleSearchSubmit = (event) => {
     event.preventDefault()
 
