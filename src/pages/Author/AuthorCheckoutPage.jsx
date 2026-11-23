@@ -354,6 +354,8 @@ const API_URL =
 
 const PAYMENT_SUCCESS_SEEN_KEY = 'shadow_author_checkout_success_seen_v1'
 const PAYMENT_CHECK_MIN_INTERVAL_MS = 30000
+const PAYMENT_MANUAL_CHECK_MIN_INTERVAL_MS = 8000
+const PAYMENT_RECHECK_MIN_INTERVAL_MS = 15000
 const PAYMENT_CHECK_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 const PDF_CHECKOUT_COPY = Object.freeze({
@@ -974,12 +976,13 @@ export default function AuthorCheckoutPage() {
     let lastCheckedAt = 0
     let requestPending = false
     let verifiedOrderId = ''
+    let nextPaymentRecheckAt = 0
     const controller = new AbortController()
 
     async function checkPayment(force = false) {
       const manual = force === true
       if (!active || requestPending || document.visibilityState === 'hidden') return
-      if (Date.now() - lastCheckedAt < (manual ? 2500 : PAYMENT_CHECK_MIN_INTERVAL_MS)) return
+      if (Date.now() - lastCheckedAt < (manual ? PAYMENT_MANUAL_CHECK_MIN_INTERVAL_MS : PAYMENT_CHECK_MIN_INTERVAL_MS)) return
 
       let saved
       try {
@@ -1035,6 +1038,44 @@ export default function AuthorCheckoutPage() {
             String(order.pdf_unlock_status || '').toLowerCase() !== 'unlocked'
           )
         ) {
+          const recheckKey = `shadow_author_pdf_recheck_after_v1:${orderId}`
+          const now = Date.now()
+          let savedNextRecheckAt = 0
+          try {
+            savedNextRecheckAt = Number(localStorage.getItem(recheckKey) || 0)
+          } catch {
+            savedNextRecheckAt = 0
+          }
+
+          const validSavedRecheckAt = Number.isFinite(savedNextRecheckAt)
+            && savedNextRecheckAt > now
+            && savedNextRecheckAt <= now + 120000
+            ? savedNextRecheckAt
+            : 0
+
+          if (now < Math.max(nextPaymentRecheckAt, validSavedRecheckAt)) {
+            if (manual) setPaymentMessage(pdfCopy.checking)
+            return
+          }
+
+          const reserveRecheckUntil = (delayMs) => {
+            const until = Date.now() + Math.max(PAYMENT_RECHECK_MIN_INTERVAL_MS, delayMs)
+            nextPaymentRecheckAt = Math.max(nextPaymentRecheckAt, until)
+            try {
+              const previous = Number(localStorage.getItem(recheckKey) || 0)
+              const validPrevious = Number.isFinite(previous)
+                && previous > Date.now()
+                && previous <= Date.now() + 120000
+                ? previous
+                : 0
+              localStorage.setItem(recheckKey, String(Math.max(nextPaymentRecheckAt, validPrevious)))
+            } catch {
+              nextPaymentRecheckAt = Math.max(nextPaymentRecheckAt, until)
+            }
+          }
+
+          reserveRecheckUntil(PAYMENT_RECHECK_MIN_INTERVAL_MS)
+
           const recoveryResponse = await fetch(
             `${API_URL}/api/author-store/orders/${encodeURIComponent(orderId)}/recheck-pdf-payment`,
             {
@@ -1048,10 +1089,30 @@ export default function AuthorCheckoutPage() {
 
           const recovery = await recoveryResponse.json().catch(() => ({}))
 
+          if (recoveryResponse.status === 429) {
+            const retryAfter = Number(recoveryResponse.headers.get('Retry-After'))
+            reserveRecheckUntil(Number.isFinite(retryAfter) && retryAfter > 0
+              ? Math.min(120000, retryAfter * 1000)
+              : 60000)
+          } else if (recovery.state === 'verification_unavailable') {
+            const retryAfter = Number(recovery.retry_after_seconds)
+            reserveRecheckUntil(Number.isFinite(retryAfter) && retryAfter > 0
+              ? Math.min(120000, retryAfter * 1000)
+              : 30000)
+          } else if (recovery.state === 'payment_recheck_required') {
+            reserveRecheckUntil(60000)
+          }
+
           if (!recoveryResponse.ok || recovery.state !== 'purchased') {
             if (manual) setPaymentMessage(pdfCopy.checking)
             return
           }
+
+          try {
+            localStorage.removeItem(recheckKey)
+          } catch {
+          }
+          nextPaymentRecheckAt = 0
 
           const refreshed = await fetch(
             `${API_URL}/api/author-store/orders/status/${encodeURIComponent(orderId)}`,
