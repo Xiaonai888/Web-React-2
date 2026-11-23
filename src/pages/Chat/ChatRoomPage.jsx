@@ -2764,25 +2764,35 @@ export default function ChatRoomPage() {
           setConversation((current) => {
             if (
               !current ||
-              current.conversation_type !== 'reader_reader' ||
-              current.request_status !== 'pending' ||
-              current.pending_messages_remaining == null
-            ) {
+          setConversation((current) => {
+            if (!current || !current.chat_send_limit_mode) {
               return current
             }
 
-            const limit = Number(current.pending_message_limit) || 5
+            const limit = Number(current.chat_send_limit || 0)
+            if (limit < 1) return current
+
             const sent = Math.min(
               limit,
-              Number(current.pending_messages_sent || 0) + 1
+              Number(current.chat_send_sent || 0) + 1
             )
             const remaining = Math.max(0, limit - sent)
+            const firstReply = current.chat_send_limit_mode === 'first_reply'
 
             return {
               ...current,
-              pending_messages_sent: sent,
-              pending_messages_remaining: remaining,
+              chat_send_sent: sent,
+              chat_send_remaining: remaining,
               can_send: remaining > 0,
+              ...(firstReply
+                ? {
+                    pending_messages_sent: sent,
+                    pending_messages_remaining: remaining,
+                  }
+                : {
+                    daily_unanswered_sent: sent,
+                    daily_unanswered_remaining: remaining,
+                  }),
             }
           })
         }
@@ -3804,6 +3814,14 @@ export default function ChatRoomPage() {
               </div>
             ) : null}
 
+                        {conversation?.request_status === 'accepted' &&
+              conversation?.chat_send_limit_mode ? (
+                <div className="mb-1.5 text-right text-[10px] font-medium text-[#705b9d]">
+                  {Number(conversation.chat_send_sent || 0)}/
+                  {Number(conversation.chat_send_limit || 0)}
+                </div>
+              ) : null}
+
             <div className="relative">
               <textarea
   ref={textareaRef}
@@ -3823,9 +3841,15 @@ export default function ChatRoomPage() {
         : replyTarget
           ? t('chatRoomPage.replyPlaceholder')
           : t('chatRoomPage.messagePlaceholder')
-      : conversation?.request_status === 'pending'
+      : conversation?.request_status === 'pending' && conversation?.can_decide
         ? t('chatRoomPage.waitingApproval')
-        : t('chatRoomPage.messagesUnavailable')
+        : conversation?.chat_send_limit_mode === 'first_reply'
+          ? t('chatRoomPage.waitFirstReply')
+          : conversation?.chat_send_limit_mode === 'daily_unanswered'
+            ? t('chatRoomPage.waitNextDayOrReply')
+            : conversation?.request_status === 'pending'
+              ? t('chatRoomPage.waitingApproval')
+              : t('chatRoomPage.messagesUnavailable')
   }
   style={{
     fontFamily: ENABLE_READER_CHAT_APPEARANCE
