@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { loadCountrySettings } from '../../utils/countrySettings'
 import {
   fetchAuthorStorePdfOwnership,
   hasAuthorStoreReaderSession,
@@ -50,6 +51,34 @@ const PDF_DETAIL_COPY = Object.freeze({
     unavailable: 'PDF 구매 상태를 확인할 수 없습니다. 새 결제를 만들지 않았습니다.',
   },
 })
+
+const PURCHASE_COPY = {
+  en: {
+    differentAuthor: 'Your cart contains products from another author. Complete that order first.',
+    countryUnknown: 'Could not verify your country. Please try again.',
+    bookUnavailable: 'Paper books are available in Cambodia only.',
+  },
+  km: {
+    differentAuthor: 'រទេះមានទំនិញពីអ្នកនិពន្ធផ្សេង។ សូមបញ្ចប់ការបញ្ជាទិញនោះជាមុន។',
+    countryUnknown: 'មិនអាចផ្ទៀងផ្ទាត់ប្រទេសអ្នកបានទេ។ សូមសាកល្បងម្ដងទៀត។',
+    bookUnavailable: 'សៀវភៅក្រដាសអាចទិញបានតែនៅកម្ពុជាប៉ុណ្ណោះ។',
+  },
+  zh: {
+    differentAuthor: '购物车中有其他作者的商品，请先完成该订单。',
+    countryUnknown: '无法验证您的国家，请重试。',
+    bookUnavailable: '纸质书目前仅在柬埔寨出售。',
+  },
+  ja: {
+    differentAuthor: 'カートに別の作家の商品があります。先にその注文を完了してください。',
+    countryUnknown: '国を確認できません。もう一度お試しください。',
+    bookUnavailable: '紙の本はカンボジア国内でのみ購入できます。',
+  },
+  ko: {
+    differentAuthor: '장바구니에 다른 작가의 상품이 있습니다. 먼저 해당 주문을 완료하세요.',
+    countryUnknown: '국가를 확인할 수 없습니다. 다시 시도해 주세요.',
+    bookUnavailable: '종이책은 캄보디아에서만 구매할 수 있습니다.',
+  },
+}
 
 registerTranslationNamespace('authorStoreProductDetail', {
   "en": {
@@ -657,32 +686,111 @@ function ImageSlider({ images, title }) {
   )
 }
 
+function getActivePromotionOffer(product, offer) {
+  if (!product || !offer || typeof offer !== 'object') return null
+
+  const amount = Number(offer.price_value)
+  const expiry = Date.parse(String(offer.discover_promotion_expires_at || ''))
+
+  if (
+    String(offer.id) !== String(product.id) ||
+    String(offer.author_page_id) !== String(product.author_page_id) ||
+    String(offer.type).toLowerCase() !== String(product.type).toLowerCase() ||
+    !String(offer.discover_promotion_rotation_key || '').trim() ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    amount > Number(product.price) ||
+    !Number.isFinite(expiry) ||
+    expiry <= Date.now()
+  ) {
+    return null
+  }
+
+  return offer
+}
+
 function addToAuthorCart(product, quantity) {
   const current = getCartItems()
   const maxQuantity = product.type === 'PDF' ? 1 : product.preOrder ? 99 : Math.max(1, Math.min(99, product.stockQuantity))
   const safeQuantity = Math.min(Math.max(1, quantity), maxQuantity)
   const item = {
     id: product.id,
+function addToAuthorCart(product, quantity, promotionOffer = null) {
+  const current = getCartItems()
+
+  const differentAuthor = current.some((entry) => {
+    const authorId = String(entry.author_page_id || '').trim()
+    const username = String(entry.author_page_username || '').trim().toLowerCase()
+
+    return authorId
+      ? authorId !== String(product.author_page_id)
+      : username !== String(product.author_page_username || '').toLowerCase()
+  })
+
+  if (differentAuthor) return false
+
+  const maxQuantity = product.type === 'PDF'
+    ? 1
+    : product.preOrder
+      ? 99
+      : Math.max(1, Math.min(99, product.stockQuantity))
+
+  const safeQuantity = Math.min(
+    Math.max(1, Number(quantity) || 1),
+    maxQuantity
+  )
+
+  const offer = getActivePromotionOffer(product, promotionOffer)
+
+  const item = {
+    id: product.id,
     title: product.title,
     type: product.type,
     cover_url: product.cover_url,
-    price_value: Number(product.price || 0),
+    price_value: offer
+      ? Number(offer.price_value)
+      : Number(product.price || 0),
     quantity: safeQuantity,
     author_page_id: product.author_page_id || '',
     author_page_name: product.author || '',
     author_page_username: product.author_page_username || '',
+    ...(offer ? {
+      discover_promotion_rotation_key: offer.discover_promotion_rotation_key,
+      discover_promotion_expires_at: offer.discover_promotion_expires_at,
+      ...(offer.discover_promotion_story_language ? {
+        discover_promotion_story_language: offer.discover_promotion_story_language,
+      } : {}),
+      ...(offer.promotion_entry_source ? {
+        promotion_entry_source: offer.promotion_entry_source,
+      } : {}),
+      ...(offer.smart_pdf_offer_token ? {
+        smart_pdf_offer_token: offer.smart_pdf_offer_token,
+      } : {}),
+    } : {}),
   }
 
-  const existing = current.find((cartItem) => String(cartItem.id) === String(product.id))
+  const existing = current.find(
+    (entry) => String(entry.id) === String(product.id)
+  )
+
   const next = existing
-    ? current.map((cartItem) => (
-        String(cartItem.id) === String(product.id)
-          ? { ...cartItem, quantity: Math.min(maxQuantity, Number(cartItem.quantity || 1) + safeQuantity) }
-          : cartItem
-      ))
+    ? current.map((entry) => {
+        if (String(entry.id) !== String(product.id)) return entry
+
+        return {
+          ...item,
+          quantity: product.type === 'PDF'
+            ? 1
+            : Math.min(
+                maxQuantity,
+                Number(entry.quantity || 1) + safeQuantity
+              ),
+        }
+      })
     : [...current, item]
 
   saveCartItems(next)
+  return true
 }
 
 
@@ -834,7 +942,24 @@ export default function AuthorStoreProductDetailPage() {
     )
   }
 
-  const hasDiscount = product.salePrice && product.originalPrice && product.salePrice !== product.originalPrice
+  const purchaseCopy = PURCHASE_COPY[getDisplayLanguageId()] || PURCHASE_COPY.en
+
+const activePromotion = getActivePromotionOffer(
+  product,
+  location.state?.discoverPurchaseOffer
+)
+
+const displayPrice = activePromotion
+  ? Number(activePromotion.price_value)
+  : Number(product.price)
+
+const originalDisplayPrice = Number(product.originalPrice) > displayPrice
+  ? Number(product.originalPrice)
+  : Number(product.price) > displayPrice
+    ? Number(product.price)
+    : 0
+
+const hasDiscount = originalDisplayPrice > displayPrice
   const isSoldOut = product.stockStatus === 'OUT OF STOCK'
   const maxQuantity = product.type === 'PDF' ? 1 : product.preOrder ? 99 : Math.max(1, Math.min(99, product.stockQuantity))
   const increaseQuantity = () => setQuantity((value) => Math.min(value + 1, maxQuantity))
@@ -985,11 +1110,11 @@ export default function AuthorStoreProductDetailPage() {
               <div className="mt-4 rounded-[20px] bg-[var(--shadow-bg-soft)] p-4">
                 <div className="flex items-end gap-2">
                   <div className="text-[22px] font-black text-[#e5484d]">
-                    {formatUsd(product.price)}
+                    {formatUsd(displayPrice)}
                   </div>
                   {hasDiscount ? (
                     <div className="pb-1 text-[13px] font-semibold text-[var(--shadow-text-tertiary)] line-through">
-                      {formatUsd(product.originalPrice)}
+                     {formatUsd(originalDisplayPrice)}
                     </div>
                   ) : null}
                 </div>
