@@ -1,4 +1,5 @@
 import { getStoryLanguageId } from '../utils/storyLanguage'
+import { getSmartPromotionCache, loadSmartPromotionShelf } from './smartPromotionClient'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
 const CONFIG = {
@@ -67,6 +68,7 @@ function normalize(kind, data, language) {
 
 export function getPromotionShelfCache(kind, language = getStoryLanguageId()) {
   if (!CONFIG[kind] || !VALID_LANGUAGES.has(language) || (kind === 'store' && language !== 'km')) return null
+  if (kind === 'story') return getSmartPromotionCache(language)
   const key = scopedKey(kind, language)
   const current = memory.get(key)
   if (current?.expiresAt > Date.now()) return current
@@ -89,6 +91,7 @@ export function getPromotionShelfCache(kind, language = getStoryLanguageId()) {
 export async function loadPromotionShelf(kind, { force = false, language = getStoryLanguageId() } = {}) {
   const config = CONFIG[kind]
   if (!config || !VALID_LANGUAGES.has(language) || (kind === 'store' && language !== 'km')) return null
+  if (kind === 'story') return loadSmartPromotionShelf({ force, language })
   const key = scopedKey(kind, language)
   const cached = getPromotionShelfCache(kind, language)
   if (!force && cached) return cached
