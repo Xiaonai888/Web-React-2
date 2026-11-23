@@ -982,8 +982,12 @@ const hasDiscount = originalDisplayPrice > displayPrice
   const handlePdfAction = async (destination) => {
     if (pdfActionRef.current || isSoldOut) return
     if (!hasAuthorStoreReaderSession()) {
-      addToAuthorCart(product, 1)
-      navigate(destination, { state: { from: fromPath } })
+      if (!addToAuthorCart(product, 1, activePromotion)) {
+  setError(purchaseCopy.differentAuthor)
+  return
+}
+
+navigate(destination, { state: { from: fromPath } })
       return
     }
 
@@ -1032,25 +1036,72 @@ const hasDiscount = originalDisplayPrice > displayPrice
     }
   }
 
-  const handleAddToCart = () => {
-    if (isSoldOut || pdfActionRef.current) return
-    if (isPdf) {
-      void handlePdfAction('/author/cart')
+  const handleBookAction = async (destination) => {
+  if (isSoldOut || pdfActionRef.current) return
+
+  pdfActionRef.current = true
+  setError('')
+
+  try {
+    if (!hasAuthorStoreReaderSession()) {
+      navigate('/login', { state: { from: fromPath } })
       return
     }
-    addToAuthorCart(product, quantity)
-    navigate('/author/cart', { state: { from: fromPath } })
+
+    const country = await loadCountrySettings({ force: true })
+
+    if (country?.countryVerified !== true) {
+      setError(purchaseCopy.countryUnknown)
+      return
+    }
+
+    const allowed =
+      country.country === 'KH' ||
+      (
+        country.countryPolicyEnabled === true &&
+        country.hasException === true &&
+        country.effective?.physicalBooks === true
+      )
+
+    if (!allowed) {
+      setError(purchaseCopy.bookUnavailable)
+      return
+    }
+
+    if (!addToAuthorCart(product, quantity, activePromotion)) {
+      setError(purchaseCopy.differentAuthor)
+      return
+    }
+
+    navigate(destination, { state: { from: fromPath } })
+  } catch {
+    setError(purchaseCopy.countryUnknown)
+  } finally {
+    pdfActionRef.current = false
+  }
+}
+
+const handleAddToCart = () => {
+  if (isSoldOut || pdfActionRef.current) return
+
+  if (isPdf) {
+    void handlePdfAction('/author/cart')
+    return
   }
 
-  const handleBuyNow = () => {
-    if (isSoldOut || pdfActionRef.current) return
-    if (isPdf) {
-      void handlePdfAction('/author/checkout')
-      return
-    }
-    addToAuthorCart(product, quantity)
-    navigate('/author/checkout', { state: { from: fromPath } })
+  void handleBookAction('/author/cart')
+}
+
+const handleBuyNow = () => {
+  if (isSoldOut || pdfActionRef.current) return
+
+  if (isPdf) {
+    void handlePdfAction('/author/checkout')
+    return
   }
+
+  void handleBookAction('/author/checkout')
+}
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[110px]">
@@ -1170,9 +1221,11 @@ const hasDiscount = originalDisplayPrice > displayPrice
 
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur">
         <div className="mx-auto max-w-5xl">
-          {isPdf && error ? (
-            <p role="alert" className="mb-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-950">{error}</p>
-          ) : null}
+          {error ? (
+  <p role="alert" className="mb-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-950">
+    {error}
+  </p>
+) : null}
           <div className={`grid gap-3 ${isPdf && (pdfOwned || pdfHasPendingPayment || pdfOwnershipUnavailable || pdfOwnershipLoading) ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {!isPdf || (!pdfOwned && !pdfHasPendingPayment && !pdfOwnershipUnavailable && !pdfOwnershipLoading) ? (
               <button
