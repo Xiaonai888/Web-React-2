@@ -438,10 +438,13 @@ const CHECKOUT_FIX_COPY = {
   },
 }
 
+const AUTHOR_STORE_SHARED_PAYWAY_LINK = 'https://link.payway.com.kh/ABAPAYnw446278Y'
+
 function currentPendingAuthorPayment() {
   try {
     const saved = JSON.parse(localStorage.getItem('shadow_author_current_order_payment') || 'null')
-    const order = saved?.order
+        const order = saved?.order
+    if (String(order?.payment_method || '') !== 'binance_personal_pay') return null
     const createdAt = Date.parse(saved?.created_at || '')
     if (!order?.order_id || !Number.isFinite(createdAt)) return null
 if (Date.now() - createdAt > PAYMENT_CHECK_MAX_AGE_MS) return null
@@ -1418,8 +1421,13 @@ useEffect(() => {
         })
       )
 
-      setPaymentModal(previous)
-      setPaymentMessage(pdfCopy.checking)
+      if (previous.payment_method === 'binance_personal_pay') {
+        setPaymentModal(previous)
+        setPaymentMessage(pdfCopy.checking)
+      } else {
+        setPaymentModal(null)
+        setMessage(result.message || pdfCopy.blocked)
+      }
       window.dispatchEvent(new Event('shadow-author-payment-check'))
 
       return true
@@ -1496,6 +1504,7 @@ if (needsDelivery && !deliveryReady) {
     facebook_link: buyerProfile.facebook_link || '',
   }
 
+   let navigationStarted = false
   try {
     paymentSubmissionRef.current = true
         setSaving(true)
@@ -1693,28 +1702,24 @@ if (!needsDelivery) {
       })
     )
 
-    setPaymentClock(Date.now())
-setPaymentModal(nextOrder)
-
-if (useBinance) {
-  setPaymentMessage('')
-} else {
-  const hasPaymentOption = Boolean(
-    getPaymentQrImage(nextOrder) ||
-    getPaywayOpenUrl(nextOrder)
-  )
-
-  setPaymentMessage(
-    hasPaymentOption ? '' : pdfCopy.unavailable
-  )
-}
+    if (useBinance) {
+      setPaymentClock(Date.now())
+      setPaymentModal(nextOrder)
+      setPaymentMessage('')
+    } else {
+      window.location.assign(AUTHOR_STORE_SHARED_PAYWAY_LINK)
+      navigationStarted = true
+    }
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
-  } finally {
-    paymentSubmissionRef.current = false
-    setSaving(false)
+    } finally {
+    if (!navigationStarted) {
+      paymentSubmissionRef.current = false
+      setSaving(false)
+    }
   }
 }
+
 
   const modalExpiresAt = Date.parse(paymentModal?.expires_at || '')
   const paymentWindowActive = Number.isFinite(modalExpiresAt) && modalExpiresAt > paymentClock
@@ -1993,7 +1998,7 @@ if (useBinance) {
           setBinanceProfileOpen(false)
           void handleContinuePayment()
         }} /> : null}
-      {paymentModal && !paidBookOrder && !paidPdfOrder ? (
+      {paymentModal?.payment_method === 'binance_personal_pay' && !paidBookOrder && !paidPdfOrder ? (
         <div className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-labelledby="author-payment-qr-title">
           <div className="max-h-[92vh] w-full max-w-[410px] overflow-y-auto rounded-[26px] bg-[var(--shadow-bg-surface)] px-5 pb-6 pt-5 text-center shadow-2xl">
             <div className="flex items-center justify-between gap-3">
