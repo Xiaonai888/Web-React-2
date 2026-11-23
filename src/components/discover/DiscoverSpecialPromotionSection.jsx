@@ -4,6 +4,9 @@ import SpecialPromotionCheckoutSheet from '../promotions/SpecialPromotionCheckou
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import DiscoverSpecialPromotionCard from './DiscoverSpecialPromotionCard'
+import { getStoryLanguageId } from '../../utils/storyLanguage'
+import { getSmartAdReaderKey } from '../../services/smartAdClient'
+import { getSmartPromotionCache, loadSmartPromotionShelf, clearSmartPromotionCache } from '../../services/smartPromotionClient'
 
 registerTranslationNamespace('discoverSpecialPromotionCheckout', {
   en: {
@@ -102,14 +105,9 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://shadow-backend-kucw.onrender.com'
 
-const ROTATION_STORAGE_KEY = 'shadow_discover_special_promotion_rotation_v2'
 const VISIT_STORAGE_KEY = 'shadow_discover_special_promotion_slide_v2'
 const PURCHASED_STORAGE_PREFIX = 'shadow_discover_special_promotion_purchased_v1'
 const RETRY_DELAY_MS = 30 * 1000
-
-let cachedRotation = null
-let pendingRequest = null
-let retryAfter = 0
 
 function getReaderToken() {
   return (
@@ -148,110 +146,27 @@ function savePurchasedPromotionIds(rotationKey, ids) {
   } catch {}
 }
 
-function normalizeRotation(payload) {
-  if (!payload || payload.ok === false) return null
-
-  const expiresAt = new Date(payload.expires_at || 0).getTime()
-  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
-
-  const source = Array.isArray(payload.promotions)
-    ? payload.promotions
-    : payload.promotion
-      ? [payload.promotion]
-      : []
-  const seen = new Set()
-  const promotions = source.filter((item) => {
-    const id = String(item?.story_id || '').trim()
-    if (!id || seen.has(id)) return false
-    if (!Number.isInteger(Number(item?.locked_episode_count)) || Number(item.locked_episode_count) < 5) return false
-    if (!Number.isSafeInteger(Number(item?.discounted_price_diamonds)) || Number(item.discounted_price_diamonds) < 1) return false
-    seen.add(id)
-    return true
-  }).slice(0, 3)
-
-  return {
-    promotions,
-    promotion: promotions[0] || null,
-    rotationKey: String(payload.rotation_key || payload.slot_start_at || expiresAt),
-    expires_at: new Date(expiresAt).toISOString(),
-    expiresAt,
-  }
-}
-
 function readCachedRotation() {
-  if (cachedRotation?.expiresAt > Date.now()) return cachedRotation
-  cachedRotation = null
-
-  try {
-    const raw = localStorage.getItem(ROTATION_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    const rotation = normalizeRotation(parsed)
-    if (!rotation) {
-      localStorage.removeItem(ROTATION_STORAGE_KEY)
-      return null
-    }
-    cachedRotation = rotation
-    return rotation
-  } catch {
-    return null
-  }
-}
-
-function saveCachedRotation(rotation) {
-  cachedRotation = rotation
-  try {
-    localStorage.setItem(ROTATION_STORAGE_KEY, JSON.stringify({
-      promotions: rotation.promotions,
-      rotation_key: rotation.rotationKey,
-      expires_at: rotation.expires_at,
-    }))
-  } catch {}
+  return getSmartPromotionCache(getStoryLanguageId())
 }
 
 async function loadActivePromotions(force = false) {
-  const cached = readCachedRotation()
-  if (!force && cached) return cached
-  if (!force && Date.now() < retryAfter) return null
-  if (pendingRequest) return pendingRequest
-
-  pendingRequest = (async () => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/public/discover-special-promotion/active`,
-        { headers: { Accept: 'application/json' }, cache: 'no-store' }
-      )
-      if (!response.ok) throw new Error('Promotion unavailable')
-      const result = await response.json()
-      const rotation = normalizeRotation(result)
-      if (!rotation) {
-        retryAfter = Date.now() + RETRY_DELAY_MS
-        return null
-      }
-      saveCachedRotation(rotation)
-      retryAfter = 0
-      return rotation
-    } catch {
-      retryAfter = Date.now() + RETRY_DELAY_MS
-      return readCachedRotation()
-    } finally {
-      pendingRequest = null
-    }
-  })()
-
-  return pendingRequest
+  const language = getStoryLanguageId()
+  const result = await loadSmartPromotionShelf({ force, language })
+  return getStoryLanguageId() === language ? result : null
 }
 
 function nextInitialSlide(rotationKey, count) {
   if (!count) return 0
   let currentIndex = 0
+  const visitKey = `${VISIT_STORAGE_KEY}:${getSmartAdReaderKey()}:${getStoryLanguageId()}`
 
   try {
-    const prior = JSON.parse(localStorage.getItem(VISIT_STORAGE_KEY) || '{}')
+    const prior = JSON.parse(localStorage.getItem(visitKey) || '{}')
     if (prior.rotationKey === rotationKey && Number.isInteger(prior.nextIndex)) {
       currentIndex = ((prior.nextIndex % count) + count) % count
     }
-    localStorage.setItem(VISIT_STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(visitKey, JSON.stringify({
       rotationKey,
       nextIndex: (currentIndex + 1) % count,
     }))
@@ -269,6 +184,7 @@ export default function DiscoverSpecialPromotionSection() {
   const suppressMouseClickUntilRef = useRef(0)
   const initializedRotationRef = useRef('')
   const expiryReloadRef = useRef(0)
+  const readerScopeRef = useRef(`${getSmartAdReaderKey()}:${getStoryLanguageId()}`)
   const [rotation, setRotation] = useState(() => readCachedRotation())
   const [activeIndex, setActiveIndex] = useState(0)
   const [now, setNow] = useState(Date.now())
@@ -282,9 +198,10 @@ export default function DiscoverSpecialPromotionSection() {
 
   useEffect(() => {
     let mounted = true
+    const requestScope = readerScopeRef.current
 
     loadActivePromotions().then((result) => {
-      if (mounted) setRotation(result)
+      if (mounted && readerScopeRef.current === requestScope) setRotation(result)
     })
 
     return () => {
@@ -292,7 +209,7 @@ export default function DiscoverSpecialPromotionSection() {
     }
   }, [])
 
-  const rotationKey = rotation?.rotationKey || ''
+  const rotationKey = rotation?.rotationKey ? `${readerScopeRef.current}:${rotation.rotationKey}` : ''
   const promotionCount = rotation?.promotions?.length || 0
 
   useEffect(() => {
@@ -310,15 +227,30 @@ export default function DiscoverSpecialPromotionSection() {
       const currentTime = Date.now()
       if (!mounted) return
       setNow(currentTime)
+      const nextScope = `${getSmartAdReaderKey()}:${getStoryLanguageId()}`
+      if (readerScopeRef.current !== nextScope) {
+        readerScopeRef.current = nextScope
+        initializedRotationRef.current = ''
+        expiryReloadRef.current = currentTime
+        setQuote(null)
+        setPurchasedStoryId('')
+        setPurchasedStoryIds(new Set())
+        setRotation(readCachedRotation())
+        void loadActivePromotions().then((updated) => {
+          if (mounted && readerScopeRef.current === nextScope) setRotation(updated)
+        })
+        return
+      }
 
       if (
-        rotation?.expiresAt &&
-        currentTime >= rotation.expiresAt &&
+        (!rotation?.expiresAt || currentTime >= rotation.expiresAt) &&
         currentTime - expiryReloadRef.current >= RETRY_DELAY_MS
       ) {
         expiryReloadRef.current = currentTime
         loadActivePromotions(true).then((updated) => {
-          if (mounted && updated?.expiresAt > Date.now()) setRotation(updated)
+          if (mounted && readerScopeRef.current === nextScope && updated?.expiresAt > Date.now()) {
+            setRotation(updated)
+          }
         })
       }
     }
@@ -342,8 +274,9 @@ export default function DiscoverSpecialPromotionSection() {
 
     const storyId = offer?.story_id || offer?.story?.id
     const price = Number(offer?.discounted_price_diamonds)
+    const offerToken = String(offer?.offer_token || '')
 
-    if (!storyId || !Number.isSafeInteger(price) || price < 1) {
+    if (!storyId || !Number.isSafeInteger(price) || price < 1 || !offerToken.startsWith('sp1.')) {
       setNotice(t('discoverSpecialPromotionCheckout.failed'))
       return
     }
@@ -356,6 +289,8 @@ export default function DiscoverSpecialPromotionSection() {
       title: offer.story_title || offer.title || '',
       count: Number(offer.locked_episode_count || 0),
       originalPrice: Number(offer.original_price_diamonds || 0),
+      storyLanguage: String(offer.story_language || getStoryLanguageId()),
+      offerToken,
       price,
     })
   }
@@ -392,7 +327,12 @@ export default function DiscoverSpecialPromotionSection() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ expected_price_diamonds: quote.price }),
+          body: JSON.stringify({
+            expected_price_diamonds: quote.price,
+            purchase_source: 'discover',
+            story_language: quote.storyLanguage,
+            offer_token: quote.offerToken,
+          }),
         }
       )
 
@@ -408,8 +348,10 @@ export default function DiscoverSpecialPromotionSection() {
         const updatedPrice = Number(result.discounted_price_diamonds)
         const updatedCount = Number(result.locked_episode_count)
         const originalPrice = Number(result.original_price_diamonds)
+        const updatedOfferToken = String(result.offer_token || '')
 
-        if (!Number.isSafeInteger(updatedPrice) || updatedPrice < 1) {
+        if (!Number.isSafeInteger(updatedPrice) || updatedPrice < 1 ||
+            !updatedOfferToken.startsWith('sp1.')) {
           setPurchaseError(t('discoverSpecialPromotionCheckout.failed'))
           return
         }
@@ -419,6 +361,7 @@ export default function DiscoverSpecialPromotionSection() {
           price: updatedPrice,
           count: Number.isFinite(updatedCount) ? updatedCount : current.count,
           originalPrice: Number.isFinite(originalPrice) ? originalPrice : current.originalPrice,
+          offerToken: updatedOfferToken,
         }))
         setPurchaseError(t('discoverSpecialPromotionCheckout.updatedPrice'))
         return
@@ -439,6 +382,7 @@ export default function DiscoverSpecialPromotionSection() {
       ].includes(result.code)) {
         setQuote(null)
         setNotice(t('discoverSpecialPromotionCheckout.expired'))
+        clearSmartPromotionCache(getStoryLanguageId())
         const updatedRotation = await loadActivePromotions(true)
         setRotation(updatedRotation)
         return
@@ -455,6 +399,12 @@ export default function DiscoverSpecialPromotionSection() {
       nextPurchasedStoryIds.add(String(quote.storyId))
       setPurchasedStoryIds(nextPurchasedStoryIds)
       savePurchasedPromotionIds(rotationKey, nextPurchasedStoryIds)
+      clearSmartPromotionCache(getStoryLanguageId())
+      void loadActivePromotions(true).then((updated) => {
+        if (updated && readerScopeRef.current === `${getSmartAdReaderKey()}:${getStoryLanguageId()}`) {
+          setRotation(updated)
+        }
+      })
       setNotice(
         t(
           result.already_owned
