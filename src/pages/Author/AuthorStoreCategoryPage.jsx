@@ -35,6 +35,12 @@ registerTranslationNamespace('authorStoreCategory', {
     "owned": 'Owned',
     "readPdf": 'Read PDF',
     "checkingPdf": 'Checking PDF',
+    "pendingLabel": 'Payment Pending',
+    "reviewLabel": 'Check Payment',
+    "recoveryLabel": 'Restore Access',
+    "retryLabel": 'Retry Check',
+    "reviewPdf": 'Your previous payment needs verification. Do not pay again.',
+    "recoveryPdf": 'Your payment was recorded, but PDF access needs recovery.',
     "pendingPdf": 'Your PDF payment is being checked. Do not pay again.',
     "verifyPdfFailed": 'Unable to verify PDF ownership. Please try again.',
     "loading": "Loading products...",
@@ -74,6 +80,12 @@ registerTranslationNamespace('authorStoreCategory', {
     "owned": 'បានទិញរួច',
     "readPdf": 'អាន PDF',
     "checkingPdf": 'កំពុងពិនិត្យ PDF',
+    "pendingLabel": 'កំពុងរង់ចាំបង់ប្រាក់',
+    "reviewLabel": 'ពិនិត្យការទូទាត់',
+    "recoveryLabel": 'ស្តារសិទ្ធិអាន',
+    "retryLabel": 'ពិនិត្យម្តងទៀត',
+    "reviewPdf": 'ការទូទាត់ចាស់ត្រូវការផ្ទៀងផ្ទាត់។ សូមកុំបង់ប្រាក់ម្ដងទៀត។',
+    "recoveryPdf": 'បានកត់ត្រាការទូទាត់រួច ប៉ុន្តែសិទ្ធិអាន PDF ត្រូវការស្តារ។',
     "pendingPdf": 'ការទូទាត់ PDF កំពុងត្រូវបានពិនិត្យ។ សូមកុំទិញម្តងទៀត។',
     "verifyPdfFailed": 'មិនអាចពិនិត្យសិទ្ធិ PDF បានទេ។ សូមព្យាយាមម្តងទៀត។',
     "loading": "កំពុងផ្ទុកទំនិញ...",
@@ -113,6 +125,12 @@ registerTranslationNamespace('authorStoreCategory', {
     "owned": '已购买',
     "readPdf": '阅读 PDF',
     "checkingPdf": '正在核验 PDF',
+    "pendingLabel": '等待付款确认',
+    "reviewLabel": '核实付款',
+    "recoveryLabel": '恢复阅读权限',
+    "retryLabel": '重新检查',
+    "reviewPdf": '之前的付款需要核实，请勿重复付款。',
+    "recoveryPdf": '付款已记录，但 PDF 阅读权限需要恢复。',
     "pendingPdf": 'PDF 付款正在核验，请勿重复付款。',
     "verifyPdfFailed": '无法核验 PDF 所有权，请重试。',
     "loading": "正在加载商品...",
@@ -152,6 +170,12 @@ registerTranslationNamespace('authorStoreCategory', {
     "owned": '購入済み',
     "readPdf": 'PDF を読む',
     "checkingPdf": 'PDF を確認中',
+    "pendingLabel": '決済確認待ち',
+    "reviewLabel": '決済を確認',
+    "recoveryLabel": '閲覧権限を復旧',
+    "retryLabel": '再確認',
+    "reviewPdf": '以前の決済を確認する必要があります。再度支払わないでください。',
+    "recoveryPdf": '決済済みですが、PDF の閲覧権限を復旧する必要があります。',
     "pendingPdf": 'PDF の支払いを確認中です。再購入しないでください。',
     "verifyPdfFailed": 'PDF の購入状態を確認できません。再試行してください。',
     "loading": "商品を読み込み中...",
@@ -191,6 +215,12 @@ registerTranslationNamespace('authorStoreCategory', {
     "owned": '구매 완료',
     "readPdf": 'PDF 읽기',
     "checkingPdf": 'PDF 확인 중',
+    "pendingLabel": '결제 확인 대기',
+    "reviewLabel": '결제 확인',
+    "recoveryLabel": '읽기 권한 복구',
+    "retryLabel": '다시 확인',
+    "reviewPdf": '이전 결제를 확인해야 합니다. 다시 결제하지 마세요.',
+    "recoveryPdf": '결제되었지만 PDF 읽기 권한을 복구해야 합니다.',
     "pendingPdf": 'PDF 결제를 확인 중입니다. 다시 결제하지 마세요.',
     "verifyPdfFailed": 'PDF 구매 상태를 확인할 수 없습니다. 다시 시도하세요.',
     "loading": "상품 불러오는 중...",
@@ -378,12 +408,52 @@ function categoryMatchesProduct(category, product) {
   return true
 }
 
+const PDF_PENDING_MAX_MS = 15 * 60 * 1000
+
+function getPdfPendingDeadline(row) {
+  const expiresAt = Date.parse(String(row?.expires_at || ''))
+  const createdAt = Date.parse(String(row?.created_at || ''))
+
+  return Math.min(
+    Number.isFinite(expiresAt) ? expiresAt : Infinity,
+    Number.isFinite(createdAt) ? createdAt + PDF_PENDING_MAX_MS : Infinity
+  )
+}
+
+function getPdfCardState(row, now = Date.now()) {
+  const state = String(row?.state || 'loading')
+  if (state !== 'checking_payment') return state
+
+  const deadline = getPdfPendingDeadline(row)
+  return Number.isFinite(deadline) && deadline > now
+    ? 'checking_payment'
+    : 'payment_recheck_required'
+}
+
 function ProductCard({ item, onOpen, onAddToCart, pdfState, pdfBusy, readerSignedIn }) {
   const isOutOfStock = item.stock_label === 'OUT OF STOCK'
   const isPdf = item.type === 'PDF'
   const isOwned = isPdf && pdfState === 'purchased'
+  const isLoading = isPdf && (pdfState === 'loading' || pdfBusy)
+  const isPending = isPdf && pdfState === 'checking_payment'
+  const isReview = isPdf && pdfState === 'payment_recheck_required'
+  const isRecovery = isPdf && pdfState === 'access_recovery'
+  const isUnavailable = isPdf && pdfState === 'unavailable'
   const isPdfBlocked = isPdf && readerSignedIn && pdfState !== 'available' && !isOwned
-  const isChecking = isPdf && (pdfBusy || isPdfBlocked)
+
+  const statusLabel = isOwned
+    ? getDisplayText('authorStoreCategory.owned')
+    : isLoading
+      ? getDisplayText('authorStoreCategory.checkingPdf')
+      : isPending
+        ? getDisplayText('authorStoreCategory.pendingLabel')
+        : isReview
+          ? getDisplayText('authorStoreCategory.reviewLabel')
+          : isRecovery
+            ? getDisplayText('authorStoreCategory.recoveryLabel')
+            : isUnavailable
+              ? getDisplayText('authorStoreCategory.retryLabel')
+              : displayStoreValue(item.stock_label)
 
   return (
     <article className="overflow-hidden rounded-[18px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -411,11 +481,7 @@ function ProductCard({ item, onOpen, onAddToCart, pdfState, pdfBusy, readerSigne
             }`}
           >
             {isOwned ? <i className="fa-solid fa-circle-check" /> : null}
-            {isOwned
-              ? getDisplayText('authorStoreCategory.owned')
-              : isPdfBlocked
-                ? getDisplayText('authorStoreCategory.checkingPdf')
-                : displayStoreValue(item.stock_label)}
+            {statusLabel}
           </span>
         ) : null}
       </button>
@@ -441,16 +507,28 @@ function ProductCard({ item, onOpen, onAddToCart, pdfState, pdfBusy, readerSigne
 
           <button
             type="button"
-            onClick={() => isOwned ? onOpen?.(item) : onAddToCart?.(item)}
-            disabled={(isOutOfStock && !isOwned) || isChecking}
+            onClick={() =>
+              isOwned || isReview || isRecovery
+                ? onOpen?.(item)
+                : onAddToCart?.(item)
+            }
+            disabled={(isOutOfStock && !isOwned) || isLoading || isPending}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-page)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-tertiary)]"
             aria-label={isOwned
               ? getDisplayText('authorStoreCategory.readPdf')
-              : isChecking
-                ? getDisplayText('authorStoreCategory.checkingPdf')
+              : isPdfBlocked
+                ? statusLabel
                 : getDisplayText('authorStoreCategory.addToCart')}
           >
-            <i className={`fa-solid ${isOwned ? 'fa-book-open' : isChecking ? 'fa-clock' : 'fa-cart-shopping'} text-[13px]`} />
+            <i className={`fa-solid ${
+              isOwned
+                ? 'fa-book-open'
+                : isLoading || isPending
+                  ? 'fa-clock'
+                  : isReview || isRecovery || isUnavailable
+                    ? 'fa-rotate'
+                    : 'fa-cart-shopping'
+            } text-[13px]`} />
           </button>
         </div>
       </div>
@@ -477,6 +555,7 @@ export default function AuthorStoreCategoryPage() {
   const sentinelRef = useRef(null)
   const restoredScrollRef = useRef('')
   const [pdfOwnership, setPdfOwnership] = useState({ key: '', states: {} })
+  const [pdfClock, setPdfClock] = useState(() => Date.now())
   const [pdfBusyId, setPdfBusyId] = useState('')
   const [actionNotice, setActionNotice] = useState('')
   const pdfBusyRef = useRef(false)
@@ -568,44 +647,110 @@ export default function AuthorStoreCategoryPage() {
 
   useEffect(() => {
     const controller = new AbortController()
+    let active = true
+
     if (pdfResolvedRef.current.key !== pdfOwnerKey) {
       pdfResolvedRef.current = { key: pdfOwnerKey, states: {} }
     }
+
     const ids = visiblePdfKey ? visiblePdfKey.split(',') : []
-    const missing = ids.filter((id) => !Object.prototype.hasOwnProperty.call(pdfResolvedRef.current.states, id))
-    const pending = Object.fromEntries(missing.map((id) => [id, 'checking_payment']))
+    const missing = ids.filter(
+      (id) => !Object.prototype.hasOwnProperty.call(pdfResolvedRef.current.states, id)
+    )
+    const loadingStates = Object.fromEntries(
+      missing.map((id) => [id, { state: 'loading' }])
+    )
+
     setPdfOwnership({
       key: pdfOwnerKey,
-      states: { ...pdfResolvedRef.current.states, ...(readerSignedIn ? pending : {}) },
+      states: {
+        ...pdfResolvedRef.current.states,
+        ...(readerSignedIn ? loadingStates : {}),
+      },
     })
 
-    if (!readerSignedIn || !missing.length) return () => controller.abort()
+    if (!readerSignedIn || !missing.length) {
+      return () => {
+        active = false
+        controller.abort()
+      }
+    }
+
+    const isCurrent = () => active && pdfResolvedRef.current.key === pdfOwnerKey
+
+    const markUnavailable = () => {
+      if (!isCurrent()) return
+      for (const id of missing) {
+        if (!Object.prototype.hasOwnProperty.call(pdfResolvedRef.current.states, id)) {
+          pdfResolvedRef.current.states[id] = { state: 'unavailable' }
+        }
+      }
+      setPdfOwnership({
+        key: pdfOwnerKey,
+        states: { ...pdfResolvedRef.current.states },
+      })
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (!isCurrent()) return
+      controller.abort()
+      markUnavailable()
+    }, 12000)
 
     const check = async () => {
-      for (let offset = 0; offset < missing.length; offset += 30) {
-        const idsToCheck = missing.slice(offset, offset + 30)
-        try {
-          const response = await fetchAuthorStorePdfOwnership(idsToCheck, { signal: controller.signal })
-          if (controller.signal.aborted || pdfResolvedRef.current.key !== pdfOwnerKey) return
-          const next = Object.fromEntries(idsToCheck.map((id) => [id, 'unavailable']))
+      try {
+        for (let offset = 0; offset < missing.length; offset += 30) {
+          const idsToCheck = missing.slice(offset, offset + 30)
+          const response = await fetchAuthorStorePdfOwnership(idsToCheck, {
+            signal: controller.signal,
+          })
+          if (!isCurrent() || controller.signal.aborted) return
+
+          const next = Object.fromEntries(
+            idsToCheck.map((id) => [id, { state: 'unavailable' }])
+          )
           for (const item of response.products || []) {
             if (item.product_type === 'pdf' && idsToCheck.includes(String(item.product_id))) {
-              next[String(item.product_id)] = item.state
+              next[String(item.product_id)] = item
             }
           }
           Object.assign(pdfResolvedRef.current.states, next)
-          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
-        } catch {
-          if (controller.signal.aborted || pdfResolvedRef.current.key !== pdfOwnerKey) return
-          Object.assign(pdfResolvedRef.current.states, Object.fromEntries(idsToCheck.map((id) => [id, 'unavailable'])))
-          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+          setPdfOwnership({
+            key: pdfOwnerKey,
+            states: { ...pdfResolvedRef.current.states },
+          })
+          setPdfClock(Date.now())
         }
+      } catch {
+        if (isCurrent()) markUnavailable()
+      } finally {
+        window.clearTimeout(timeoutId)
       }
     }
 
     void check()
-    return () => controller.abort()
+    return () => {
+      active = false
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [visiblePdfKey, pdfOwnerKey, readerSignedIn])
+
+  useEffect(() => {
+    const now = Date.now()
+    const deadlines = Object.values(pdfStates)
+      .filter((row) => row?.state === 'checking_payment')
+      .map(getPdfPendingDeadline)
+      .filter((deadline) => Number.isFinite(deadline) && deadline > now)
+
+    if (!deadlines.length) return undefined
+
+    const timer = window.setTimeout(() => {
+      setPdfClock(Date.now())
+    }, Math.max(1, Math.min(...deadlines) - now + 50))
+
+    return () => window.clearTimeout(timer)
+  }, [pdfStates, pdfClock])
 
   useEffect(() => {
     if (!active.page || active.loading || active.loadingMore || !active.hasNext || active.page >= 3 || active.error) return undefined
@@ -657,31 +802,47 @@ export default function AuthorStoreCategoryPage() {
       pdfBusyRef.current = true
       setPdfBusyId(String(item.id))
       setActionNotice('')
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000)
+
       try {
-        const response = await fetchAuthorStorePdfOwnership([item.id])
+        const response = await fetchAuthorStorePdfOwnership([item.id], {
+          signal: controller.signal,
+        })
         const row = (response.products || []).find((entry) =>
-          entry.product_type === 'pdf' && String(entry.product_id) === String(item.id))
-        if (!row) throw new Error('PDF ownership is missing')
+          entry.product_type === 'pdf' && String(entry.product_id) === String(item.id)
+        )
+        if (!row?.state) throw new Error('PDF ownership is missing')
+
+        const state = getPdfCardState(row)
         if (pdfResolvedRef.current.key === pdfOwnerKey) {
-          pdfResolvedRef.current.states[String(item.id)] = row.state
+          pdfResolvedRef.current.states[String(item.id)] = row
           setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+          setPdfClock(Date.now())
         }
-        if (row.state === 'purchased') {
+        if (state === 'purchased') {
           openOwnedPdf(item)
           return
         }
-        if (row.state !== 'available') {
-          setActionNotice(t('authorStoreCategory.pendingPdf'))
+        if (state !== 'available') {
+          setActionNotice(t(
+            state === 'payment_recheck_required'
+              ? 'authorStoreCategory.reviewPdf'
+              : state === 'access_recovery'
+                ? 'authorStoreCategory.recoveryPdf'
+                : 'authorStoreCategory.pendingPdf'
+          ))
           return
         }
       } catch {
         if (pdfResolvedRef.current.key === pdfOwnerKey) {
-          pdfResolvedRef.current.states[String(item.id)] = 'unavailable'
+          pdfResolvedRef.current.states[String(item.id)] = { state: 'unavailable' }
           setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
         }
         setActionNotice(t('authorStoreCategory.verifyPdfFailed'))
         return
       } finally {
+        window.clearTimeout(timeoutId)
         pdfBusyRef.current = false
         setPdfBusyId('')
       }
@@ -774,7 +935,7 @@ export default function AuthorStoreCategoryPage() {
                 key={item.id}
                 item={item}
                 onOpen={() => {
-                  if (item.type === 'PDF' && readerSignedIn && pdfStates[String(item.id)] === 'purchased') {
+                  if (item.type === 'PDF' && readerSignedIn && pdfStates[String(item.id)]?.state === 'purchased') {
                     openOwnedPdf(item)
                     return
                   }
@@ -786,7 +947,7 @@ export default function AuthorStoreCategoryPage() {
                 onAddToCart={addToCart}
                 pdfState={item.type === 'PDF'
                   ? readerSignedIn
-                    ? pdfStates[String(item.id)] || 'checking_payment'
+                    ? getPdfCardState(pdfStates[String(item.id)], pdfClock)
                     : 'available'
                   : 'available'}
                 pdfBusy={pdfBusyId === String(item.id)}
