@@ -415,60 +415,31 @@ export default function DiscoverAuthorStorePromotionSection() {
     switchSlide(dx < 0 ? 1 : -1)
   }
 
-  function saveProductToCart(product) {
-  try {
-    const current = readCart()
-    const productId = String(product.product_id)
-
-    const item = {
-      id: productId,
-      title: product.title,
-      type: product.product_type === 'pdf' ? 'PDF' : 'Book',
-      cover_url: product.cover_url || '',
-      price_value: Number(product.promotion_price_usd),
-      quantity: 1,
-      author_page_id: String(product.author_page_id),
-      author_page_name: product.page_name || product.author_name || '',
-      author_page_username: product.page_username,
-      discover_promotion_rotation_key: rotation.rotationKey,
-      discover_promotion_expires_at: rotation.expires_at,
-    }
-
-    const existing = current.find(
-      (cartItem) => String(cartItem.id) === productId
-    )
-
-    const next = existing
-      ? current.map((cartItem) =>
-          String(cartItem.id) === productId
-            ? {
-                ...cartItem,
-                ...item,
-                quantity: product.product_type === 'pdf'
-                  ? 1
-                  : Math.max(1, Number(cartItem.quantity || 1)),
-              }
-            : cartItem
-        )
-      : [...current, item]
-
-    localStorage.setItem(CART_KEY, JSON.stringify(next))
-    window.dispatchEvent(new Event('shadow-author-cart-updated'))
-
-    setError('')
-
-    navigate(
-      `/author/page/${encodeURIComponent(product.page_username)}/store/product/${encodeURIComponent(productId)}`,
-      {
-        state: {
-          from: location.pathname + location.search + location.hash,
-          discoverPurchaseOffer: item,
-        },
-      }
-    )
-  } catch {
-    setError(t('discoverAuthorStorePromotion.cartFailed'))
+  
+function openProductDetail(product) {
+  const item = {
+    id: String(product.product_id),
+    title: product.title,
+    type: product.product_type === 'pdf' ? 'PDF' : 'Book',
+    cover_url: product.cover_url || '',
+    price_value: Number(product.promotion_price_usd),
+    quantity: 1,
+    author_page_id: String(product.author_page_id),
+    author_page_name: product.page_name || product.author_name || '',
+    author_page_username: product.page_username,
+    discover_promotion_rotation_key: rotation.rotationKey,
+    discover_promotion_expires_at: rotation.expires_at,
   }
+
+  navigate(
+    `/author/page/${encodeURIComponent(product.page_username)}/store/product/${encodeURIComponent(product.product_id)}`,
+    {
+      state: {
+        from: location.pathname + location.search + location.hash,
+        discoverPurchaseOffer: item,
+      },
+    }
+  )
 }
 
   function readPdf(product) {
@@ -551,7 +522,7 @@ try {
           return
         }
       }
-      saveProductToCart(product)
+      openProductDetail(product)
     } catch {
       setError(t('discoverAuthorStorePromotion.verifyUnavailable'))
     } finally {
