@@ -10,7 +10,7 @@ import {
   queueSmartPdfVisibleOffers,
   queueSmartPdfOfferClick,
 } from '../../services/smartPdfPromotionAdapter'
-import { buildSmartPdfCartItem, planSmartPdfCart } from '../../services/smartPdfPromotionCart'
+import { buildSmartPdfCartItem } from '../../services/smartPdfPromotionCart'
 
 registerTranslationNamespace('discoverSmartPdfPromotion', {
   en: {
@@ -105,7 +105,7 @@ export default function DiscoverSmartPdfPromotionSection() {
   const [selection, setSelection] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [now, setNow] = useState(Date.now)
-  const [conflict, setConflict] = useState(null)
+  
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const mountedRef = useRef(false)
@@ -233,7 +233,7 @@ export default function DiscoverSmartPdfPromotionSection() {
   }, [rotationKey, visibleProductId, remainingSeconds > 0])
 
   function switchSlide(delta) {
-    if (offers.length < 2 || conflict) return
+    if (offers.length < 2) return
     setActiveIndex((current) => (current + delta + offers.length) % offers.length)
   }
 
@@ -255,7 +255,7 @@ export default function DiscoverSmartPdfPromotionSection() {
   }
 
   function handlePointerDown(event) {
-    if (event.pointerType !== 'mouse' || event.button !== 0 || offers.length < 2 || conflict) return
+    if (event.pointerType !== 'mouse' || event.button !== 0 || offers.length < 2) return
     pointerStartRef.current = { x: event.clientX, y: event.clientY, id: event.pointerId, captured: false }
   }
 
@@ -281,7 +281,7 @@ export default function DiscoverSmartPdfPromotionSection() {
     switchSlide(dx < 0 ? 1 : -1)
   }
 
-  async function buyProduct(product, replace = false) {
+  async function buyProduct(product) {
     if (!product || !selection || remainingSeconds <= 0 ||
         Date.now() < suppressClickRef.current || actionRef.current) return
     if (!hasAuthorStoreReaderSession()) {
@@ -318,16 +318,30 @@ export default function DiscoverSmartPdfPromotionSection() {
         expiresAt: selection.expires_at,
         source: 'discover',
       })
-      const planned = planSmartPdfCart(readCart(), cartItem, { replace })
-      if (planned.conflict) {
-        setConflict(product)
-        return
-      }
-      localStorage.setItem(CART_KEY, JSON.stringify(planned.items))
-      window.dispatchEvent(new Event('shadow-author-cart-updated'))
-      queueSmartPdfOfferClick({ placement: 'discover', rotationKey: selection.rotation_key, productId: product.product_id })
-      setConflict(null)
-      navigate('/author/cart', { state: { from: location.pathname + location.search + location.hash } })
+      const currentCart = readCart()
+const nextCart = [
+  ...currentCart.filter((item) => String(item.id) !== String(cartItem.id)),
+  cartItem,
+]
+
+localStorage.setItem(CART_KEY, JSON.stringify(nextCart))
+window.dispatchEvent(new Event('shadow-author-cart-updated'))
+
+queueSmartPdfOfferClick({
+  placement: 'discover',
+  rotationKey: selection.rotation_key,
+  productId: product.product_id,
+})
+
+navigate(
+  `/author/page/${encodeURIComponent(product.page_username)}/store/product/${encodeURIComponent(product.product_id)}`,
+  {
+    state: {
+      from: location.pathname + location.search + location.hash,
+      discoverPurchaseOffer: cartItem,
+    },
+  }
+)
     } catch {
       setError(t('discoverSmartPdfPromotion.failed'))
     } finally {
@@ -444,17 +458,7 @@ export default function DiscoverSmartPdfPromotionSection() {
         </article>
         {error ? <p className="px-3 py-2 text-[12px] font-semibold text-red-600 dark:text-red-300" role="alert">{error}</p> : null}
       </section>
-      {conflict ? (
-        <div className="fixed inset-0 z-[1000000] flex items-end justify-center bg-black/50 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={t('discoverSmartPdfPromotion.heading')}>
-          <div className="w-full max-w-[410px] rounded-2xl bg-white p-5 text-[#25142f] shadow-xl dark:bg-[#241d2b] dark:text-white">
-            <p className="text-[14px] font-bold leading-relaxed">{t('discoverSmartPdfPromotion.conflict')}</p>
-            <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setConflict(null)} className="flex-1 rounded-full border border-gray-300 px-3 py-3 text-[12px] font-bold dark:border-white/20">{t('discoverSmartPdfPromotion.cancel')}</button>
-              <button type="button" onClick={() => { void buyProduct(conflict, true) }} className="flex-[1.5] rounded-full border border-[#d6a343] bg-[#101010] px-3 py-3 text-[12px] font-bold text-white">{t('discoverSmartPdfPromotion.replace')}</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      
     </>
   )
 }
