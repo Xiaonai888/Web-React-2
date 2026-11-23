@@ -504,7 +504,7 @@ export function SuccessModal({
         </div>
 
         <div className="px-5 pb-5 text-center">
-          <h2 className={`text-[22px] font-bold ${isManga ? 'text-[#FE526E]' : 'text-[var(--shadow-text-primary)]'}`}>
+          <h2 className={`text-[22px] font-bold ${isManga && !isScheduled ? 'text-[#FE526E]' : 'text-[var(--shadow-text-primary)]'}`}>
             {heading}
           </h2>
 
