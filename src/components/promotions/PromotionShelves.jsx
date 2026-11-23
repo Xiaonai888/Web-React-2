@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getPromotionShelfCache, loadPromotionShelf } from '../../services/promotionShelfData'
 import { getStoryLanguageId } from '../../utils/storyLanguage'
+import { getSmartAdReaderKey } from '../../services/smartAdClient'
 import StoryPromotionShelf from './StoryPromotionShelf'
 import SmartPdfStoreShelf from './SmartPdfStoreShelf'
 
@@ -16,10 +17,13 @@ export default function PromotionShelves() {
   const storeRef = useRef(storeRotation)
   const attemptsRef = useRef({ story: 0, store: 0 })
   const mountedRef = useRef(false)
+  const [readerScope, setReaderScope] = useState(getSmartAdReaderKey)
+  const readerScopeRef = useRef(readerScope)
 
   const load = useCallback(async (kind, force = false) => {
   if (kind === 'store') return
   const selectedLanguage = getStoryLanguageId()
+  const requestScope = getSmartAdReaderKey()
     if (kind === 'store' && selectedLanguage !== 'km') {
       if (mountedRef.current && languageRef.current === selectedLanguage) {
         storeRef.current = null
@@ -28,7 +32,13 @@ export default function PromotionShelves() {
       return
     }
     const result = await loadPromotionShelf(kind, { force, language: selectedLanguage })
-    if (!mountedRef.current || getStoryLanguageId() !== selectedLanguage || languageRef.current !== selectedLanguage) return
+        if (
+      !mountedRef.current ||
+      getStoryLanguageId() !== selectedLanguage ||
+      languageRef.current !== selectedLanguage ||
+      getSmartAdReaderKey() !== requestScope ||
+      readerScopeRef.current !== requestScope
+    ) return
     if (kind === 'story') {
       storyRef.current = result
       setStoryRotation(result)
@@ -61,6 +71,20 @@ export default function PromotionShelves() {
       onLanguageChange()
       const current = Date.now()
       setNow(current)
+
+      const nextScope = getSmartAdReaderKey()
+      if (nextScope !== readerScopeRef.current) {
+        readerScopeRef.current = nextScope
+        setReaderScope(nextScope)
+
+        const nextStory = getPromotionShelfCache('story', languageRef.current)
+        storyRef.current = nextStory
+        setStoryRotation(nextStory)
+
+        attemptsRef.current.story = current
+        void load('story')
+      }
+
       for (const kind of ['story', 'store']) {
         if (kind === 'store' && languageRef.current !== 'km') continue
         const rotation = kind === 'story' ? storyRef.current : storeRef.current
@@ -107,7 +131,7 @@ export default function PromotionShelves() {
   return (
     <div className="space-y-6">
       <StoryPromotionShelf
-        key={`story-${language}`}
+        key={`story-${language}-${readerScope}`}
         rotation={storyRotation}
         remainingSeconds={storyRemaining}
         onStale={refreshStory}
