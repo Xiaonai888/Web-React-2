@@ -709,12 +709,6 @@ function getActivePromotionOffer(product, offer) {
   return offer
 }
 
-function addToAuthorCart(product, quantity) {
-  const current = getCartItems()
-  const maxQuantity = product.type === 'PDF' ? 1 : product.preOrder ? 99 : Math.max(1, Math.min(99, product.stockQuantity))
-  const safeQuantity = Math.min(Math.max(1, quantity), maxQuantity)
-  const item = {
-    id: product.id,
 function addToAuthorCart(product, quantity, promotionOffer = null) {
   const current = getCartItems()
 
@@ -982,14 +976,9 @@ const hasDiscount = originalDisplayPrice > displayPrice
   const handlePdfAction = async (destination) => {
     if (pdfActionRef.current || isSoldOut) return
     if (!hasAuthorStoreReaderSession()) {
-      if (!addToAuthorCart(product, 1, activePromotion)) {
-  setError(purchaseCopy.differentAuthor)
+  navigate('/login', { state: { from: fromPath } })
   return
 }
-
-navigate(destination, { state: { from: fromPath } })
-      return
-    }
 
     pdfActionRef.current = true
     setPdfChecking(true)
@@ -1025,8 +1014,12 @@ navigate(destination, { state: { from: fromPath } })
         return
       }
 
-      addToAuthorCart(product, 1)
-      navigate(destination, { state: { from: fromPath } })
+      if (!addToAuthorCart(product, 1, activePromotion)) {
+  setError(purchaseCopy.differentAuthor)
+  return
+}
+
+navigate(destination, { state: { from: fromPath } })
     } catch {
       setPdfOwnership({ status: 'unavailable', state: null, orderId: '' })
       setError(pdfCopy.unavailable)
