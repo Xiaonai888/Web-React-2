@@ -3,6 +3,10 @@ import { getStoryLanguageId } from '../utils/storyLanguage'
 import useStoryLanguageId from '../hooks/useStoryLanguageId'
 import { recordAuthorPostClick } from '../services/authorPostInsightsApi'
 import { getSmartAdVersion, watchSmartAdVersion } from '../services/smartAdClient'
+import {
+  getCachedSmartAdReadingProgress,
+  smartAdCachedStoryPriority,
+} from '../services/smartAdReadingProgressGuard'
 import { openDiscoverSmartAd, trackDiscoverSmartAdImpression, requestDiscoverSmartAdBatch } from '../services/smartAdDiscoverAdapter'
 import {
   getHomeCacheKey,
@@ -2298,36 +2302,53 @@ function isSmartAdBatchFinished(batch, viewed, slotKey) {
   )
 }
 
-async function createNextSmartAdBatch(queue, token, slotKey, catalogVersion, visitKey) {
+async function createNextSmartAdBatch(queue, token, slotKey, catalogVersion, visitKey, progressRows) {
   if (queue.atEnd) {
     const stored = Array.isArray(queue.loopCatalog) && queue.loopCatalog.length
       ? queue.loopCatalog : queue.batches.flat()
     const sourceLength = Number.isSafeInteger(queue.loopSourceLength) && queue.loopSourceLength > 0
       ? Math.min(queue.loopSourceLength, stored.length) : stored.length
+
     const unique = new Set()
-    const pool = stored.slice(0, sourceLength).filter((ad) => {
+    const eligible = stored.slice(0, sourceLength).filter((ad) => {
       const id = String(ad?.story_id || '')
       if (!id || unique.has(id) || isShadowMallAdHidden(asAutoStoryAdOption(ad, slotKey))) return false
+      if (smartAdCachedStoryPriority(ad, progressRows) === 2) return false
       unique.add(id)
       return true
     })
+
+    const pool = [
+      ...eligible.filter((ad) => smartAdCachedStoryPriority(ad, progressRows) === 0),
+      ...eligible.filter((ad) => smartAdCachedStoryPriority(ad, progressRows) === 1),
+    ]
+
     if (!pool.length) return { batch: [], cursor: '', atEnd: true }
+
     const offset = Number.isSafeInteger(queue.loopOffset) && queue.loopOffset < pool.length
       ? Math.max(0, queue.loopOffset) : 0
+
     if (offset === 0) writeSmartAdJson(smartAdReaderKey(token, `seen:${slotKey}`), [])
+
     const batch = pool.slice(offset, offset + SMART_AD_BATCH_SIZE)
+
     return {
-      batch, cursor: '', atEnd: true,
+      batch,
+      cursor: '',
+      atEnd: true,
       loopSourceLength: sourceLength,
       loopOffset: offset + batch.length >= pool.length ? 0 : offset + batch.length,
     }
   }
+
   return requestDiscoverSmartAdBatch({
-    queue, slotKey, catalogVersion, visitKey,
+    queue,
+    slotKey,
+    catalogVersion,
+    visitKey,
     interests: readSmartAdJson(smartAdReaderKey(token, 'genres'), {}) || {},
   })
 }
-
 
 function sortAutoAdsByImpressions(ads, history) {
   const seenOrder = new Map(history.map((id, index) => [id, index]))
@@ -3732,7 +3753,31 @@ useEffect(() => {
   const smartAdQueueRef = useRef(null)
   const smartAdRequestRef = useRef(null)
   const smartAdActiveVisitRef = useRef('')
-  const smartAdGenerationRef = useRef(0)
+    const smartAdGenerationRef = useRef(0)
+
+  const [smartAdReadingState, setSmartAdReadingState] = useState({
+    visitKey: '',
+    rows: new Map(),
+  })
+
+  const smartAdReadingReady = smartAdReadingState.visitKey === smartAdVisitKey
+  const smartAdReadingRows = smartAdReadingState.rows
+
+  useEffect(() => {
+    if (discoverAdControl?.mode !== 'auto' || !sharedSmartAdVersion?.slot_key) return undefined
+
+    let active = true
+
+    void getCachedSmartAdReadingProgress().then((rows) => {
+      if (active) setSmartAdReadingState({ visitKey: smartAdVisitKey, rows })
+    }).catch(() => {
+      if (active) setSmartAdReadingState({ visitKey: smartAdVisitKey, rows: new Map() })
+    })
+
+    return () => {
+      active = false
+    }
+  }, [smartAdVisitKey, discoverAdControl?.mode, sharedSmartAdVersion?.slot_key])
 
   function commitSmartAdQueue(queue) {
     if (smartAdActiveVisitRef.current !== smartAdVisitKey) return
@@ -3760,7 +3805,14 @@ useEffect(() => {
         // Generate batches only when requested. Do not stop after 50 batches:
         // larger shared pools can contain thousands of eligible stories.
         if (!current) return
-        const result = await createNextSmartAdBatch(current, token, autoAdSlotKey, sharedSmartAdVersion.catalog_version, smartAdVisitKey)
+                const result = await createNextSmartAdBatch(
+          current,
+          token,
+          autoAdSlotKey,
+          sharedSmartAdVersion.catalog_version,
+          smartAdVisitKey,
+          smartAdReadingRows,
+        )
         if (smartAdActiveVisitRef.current !== smartAdVisitKey || smartAdGenerationRef.current !== generation) return
         if (result.batch.length) {
           commitSmartAdQueue({
@@ -3791,14 +3843,106 @@ useEffect(() => {
     return promise
   }
 
-  useEffect(() => {
-    if (discoverAdControl?.mode !== 'auto' || !sharedSmartAdVersion?.slot_key) {
+   useEffect(() => {
+    if (discoverAdControl?.mode !== 'auto' || !sharedSmartAdVersion?.slot_key || !smartAdReadingReady) {
       smartAdGenerationRef.current += 1
       smartAdActiveVisitRef.current = ''
       smartAdQueueRef.current = null
       setSmartAdQueueState(null)
       return undefined
     }
+
+    smartAdActiveVisitRef.current = smartAdVisitKey
+    smartAdGenerationRef.current += 1
+    smartAdRequestRef.current = null
+
+    const stored = readSmartAdQueue(token)
+
+    const validStored = stored?.slot_key === autoAdSlotKey &&
+      Number(stored?.catalog_version) === Number(sharedSmartAdVersion.catalog_version)
+
+    const sameVisit = validStored &&
+      stored?.locationKey === location.key &&
+      stored?.scope === smartAdScope
+
+    const seenIds = new Set(readSmartAdSeen(token, autoAdSlotKey))
+
+    const allowed = (ad) =>
+      smartAdCachedStoryPriority(ad, smartAdReadingRows) !== 2
+
+    let batches = validStored
+      ? (stored?.batches?.filter(Array.isArray) || [])
+          .map((batch) => batch.filter(allowed))
+          .filter((batch) => batch.length)
+      : []
+
+    if (!sameVisit) {
+      batches = batches
+        .filter((batch) => !isSmartAdBatchFinished(batch, seenIds, autoAdSlotKey))
+        .slice(-1)
+
+      if (batches.length) {
+        batches = [
+          sortAutoAdsByImpressions(
+            batches[0],
+            readSmartAdSeen(token, autoAdSlotKey),
+          ).sort(
+            (a, b) =>
+              smartAdCachedStoryPriority(a, smartAdReadingRows) -
+              smartAdCachedStoryPriority(b, smartAdReadingRows),
+          ),
+        ]
+      }
+    }
+
+    commitSmartAdQueue({
+      cursor: validStored && typeof stored?.cursor === 'string'
+        ? stored.cursor
+        : '0',
+
+      atEnd: validStored && Boolean(stored?.atEnd),
+
+      batches,
+
+      loopCatalog: validStored
+        ? (
+            Array.isArray(stored?.loopCatalog)
+              ? stored.loopCatalog
+              : stored.batches.flat()
+          ).filter(allowed)
+        : [],
+
+      loopOffset: validStored && Number.isSafeInteger(stored?.loopOffset)
+        ? stored.loopOffset
+        : 0,
+
+      loopSourceLength: validStored && Number.isSafeInteger(stored?.loopSourceLength)
+        ? stored.loopSourceLength
+        : 0,
+    })
+
+    if (
+      !batches.length ||
+      isSmartAdBatchFinished(batches[batches.length - 1], seenIds, autoAdSlotKey)
+    ) {
+      void loadNextSmartAdBatch()
+    }
+
+    return () => {
+      if (smartAdActiveVisitRef.current === smartAdVisitKey) {
+        smartAdActiveVisitRef.current = ''
+      }
+    }
+  }, [
+    token,
+    location.key,
+    storyLanguage,
+    discoverAdControl?.mode,
+    sharedSmartAdVersion?.slot_key,
+    sharedSmartAdVersion?.catalog_version,
+    smartAdReadingReady,
+    smartAdReadingRows,
+  ])
     smartAdActiveVisitRef.current = smartAdVisitKey
     smartAdGenerationRef.current += 1
     smartAdRequestRef.current = null
@@ -3844,7 +3988,44 @@ useEffect(() => {
   )
 
   const visibleAutoAds = useMemo(() => {
-    if (discoverAdControl?.mode !== 'auto') return []
+    if (discoverAdControl?.mode !== 'auto' || !smartAdReadingReady) return []
+
+    if (smartAutoAdBatches?.length) {
+      return smartAutoAdBatches[0].filter((ad) =>
+        ad?.story_id &&
+        !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey)) &&
+        smartAdCachedStoryPriority(ad, smartAdReadingRows) !== 2
+      )
+    }
+
+    return []
+  }, [
+    discoverAdControl,
+    autoHiddenRevision,
+    token,
+    autoAdSlotKey,
+    smartAutoAdBatches,
+    smartAdReadingReady,
+    smartAdReadingRows,
+  ])
+
+  function getSmartAutoAdForPosition(index) {
+    if (!smartAdReadingReady) return null
+
+    if (smartAutoAdBatches?.length) {
+      const ad = smartAutoAdFlat[index]
+
+      return ad &&
+        !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey)) &&
+        smartAdCachedStoryPriority(ad, smartAdReadingRows) !== 2
+          ? ad
+          : null
+    }
+
+    return visibleAutoAds.length
+      ? visibleAutoAds[index % visibleAutoAds.length]
+      : null
+  }
     if (smartAutoAdBatches?.length) {
       return smartAutoAdBatches[0].filter((ad) =>
         ad?.story_id && !isShadowMallAdHidden(asAutoStoryAdOption(ad, autoAdSlotKey))
