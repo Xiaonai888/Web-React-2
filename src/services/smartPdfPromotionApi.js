@@ -5,6 +5,7 @@ const API_URL = (import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.on
 const PLACEMENTS = new Set(['stories', 'manga', 'discover'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ja', 'ko'])
+const PROOF = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 
 function placementOf(value) {
   const placement = String(value || '')
@@ -99,8 +100,10 @@ export async function fetchSmartPdfPromotion({ placement, interests = {}, exclud
   const seen = new Set()
   for (const item of data.promotions) {
     const id = String(item?.product_id || '').toLowerCase()
+    const proof = String(item?.smart_pdf_event_proof || '')
     if (!UUID.test(id) || seen.has(id) || item.product_type !== 'pdf' || item.story_language !== language ||
-      Number(item.promotion_price_usd) <= 0 || item.expires_at !== data.expires_at) {
+      Number(item.promotion_price_usd) <= 0 || item.expires_at !== data.expires_at ||
+      proof.length < 70 || proof.length > 1024 || !PROOF.test(proof)) {
       throw new Error('Invalid PDF promotion item')
     }
     seen.add(id)
@@ -108,15 +111,23 @@ export async function fetchSmartPdfPromotion({ placement, interests = {}, exclud
   return data
 }
 
-export async function recordSmartPdfPromotionEvents({ placement, rotationKey, eventType, productIds, signal } = {}) {
+export async function recordSmartPdfPromotionEvents({ placement, rotationKey, eventType, productIds, eventProofs, signal } = {}) {
   const selectedPlacement = placementOf(placement)
   if (eventType !== 'impression' && eventType !== 'click') throw new TypeError('Invalid PDF event type')
   const ids = idsOf(productIds, 10)
-  if (!ids.length || !/^\d{9,12}$/.test(String(rotationKey || ''))) {
-    throw new TypeError('Invalid PDF promotion event')
+  if (!ids.length || !/^\d{9,12}$/.test(String(rotationKey || '')) ||
+      !Array.isArray(eventProofs) || eventProofs.length !== ids.length ||
+      eventProofs.some((proof) => typeof proof !== 'string' || proof.length < 70 || proof.length > 1024 || !PROOF.test(proof))) {
+    throw new TypeError('Invalid PDF promotion event proof')
   }
   return request('/events', {
-    body: { placement: selectedPlacement, rotation_key: String(rotationKey), event_type: eventType, product_ids: ids },
+    body: {
+      placement: selectedPlacement,
+      rotation_key: String(rotationKey),
+      event_type: eventType,
+      product_ids: ids,
+      event_proofs: eventProofs,
+    },
     signal,
     keepalive: true,
   })
