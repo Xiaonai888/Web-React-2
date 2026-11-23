@@ -692,8 +692,13 @@ useEffect(() => {
       pdfBusyRef.current = true
       setPdfBusyId(item.id)
 
+           const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000)
+
       try {
-        const response = await fetchAuthorStorePdfOwnership([item.id])
+        const response = await fetchAuthorStorePdfOwnership([item.id], {
+          signal: controller.signal,
+        })
         const ownership = response.products?.find(
           (row) =>
             String(row.product_id) === String(item.id) &&
@@ -735,6 +740,7 @@ useEffect(() => {
         onMessage?.(t('authorStoreTab.verifyPdfFailed'))
         return
       } finally {
+        window.clearTimeout(timeoutId)
         pdfBusyRef.current = false
         setPdfBusyId('')
       }
