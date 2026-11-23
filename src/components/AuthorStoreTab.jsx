@@ -20,6 +20,11 @@ registerTranslationNamespace('authorStoreTab', {
     outOfStock: 'OUT OF STOCK',
     failedLoad: 'Failed to load store products',
     addToCart: 'Add to cart',
+    owned: 'Owned',
+    readPdf: 'Read PDF',
+    checkingPdf: 'Checking PDF',
+    pendingPdf: 'Your PDF payment is being checked. Do not pay again.',
+    verifyPdfFailed: 'Unable to verify PDF ownership. Please try again.',
     seeMore: 'See more >',
     categorySubtitle: 'Books and PDFs in this category.',
     addedToCart: '{{title}} added to cart.',
@@ -44,6 +49,11 @@ registerTranslationNamespace('authorStoreTab', {
     outOfStock: 'អស់ពីស្តុក',
     failedLoad: 'មិនអាចផ្ទុកទំនិញក្នុងហាងបានទេ',
     addToCart: 'បន្ថែមទៅកន្ត្រក',
+    owned: 'បានទិញរួច',
+    readPdf: 'អាន PDF',
+    checkingPdf: 'កំពុងពិនិត្យ PDF',
+    pendingPdf: 'ការទូទាត់ PDF កំពុងត្រូវបានពិនិត្យ។ សូមកុំទិញម្តងទៀត។',
+    verifyPdfFailed: 'មិនអាចពិនិត្យសិទ្ធិ PDF បានទេ។ សូមព្យាយាមម្តងទៀត។',
     seeMore: 'មើលបន្ថែម >',
     categorySubtitle: 'សៀវភៅ និង PDF ក្នុងប្រភេទនេះ។',
     addedToCart: 'បានបន្ថែម {{title}} ទៅកន្ត្រក។',
@@ -68,6 +78,11 @@ registerTranslationNamespace('authorStoreTab', {
     outOfStock: '缺货',
     failedLoad: '无法加载商店商品',
     addToCart: '加入购物车',
+    owned: '已购买',
+    readPdf: '阅读 PDF',
+    checkingPdf: '正在核验 PDF',
+    pendingPdf: 'PDF 付款正在核验，请勿重复付款。',
+    verifyPdfFailed: '无法核验 PDF 所有权，请重试。',
     seeMore: '查看更多 >',
     categorySubtitle: '此分类中的书籍和 PDF。',
     addedToCart: '{{title}} 已加入购物车。',
@@ -92,6 +107,11 @@ registerTranslationNamespace('authorStoreTab', {
     outOfStock: '在庫切れ',
     failedLoad: 'ストア商品を読み込めませんでした',
     addToCart: 'カートに追加',
+    owned: '購入済み',
+    readPdf: 'PDF を読む',
+    checkingPdf: 'PDF を確認中',
+    pendingPdf: 'PDF の支払いを確認中です。再購入しないでください。',
+    verifyPdfFailed: 'PDF の購入状態を確認できません。再試行してください。',
     seeMore: 'もっと見る >',
     categorySubtitle: 'このカテゴリーの書籍と PDF。',
     addedToCart: '{{title}} をカートに追加しました。',
@@ -116,6 +136,11 @@ registerTranslationNamespace('authorStoreTab', {
     outOfStock: '품절',
     failedLoad: '스토어 상품을 불러오지 못했습니다',
     addToCart: '장바구니에 추가',
+    owned: '구매 완료',
+    readPdf: 'PDF 읽기',
+    checkingPdf: 'PDF 확인 중',
+    pendingPdf: 'PDF 결제를 확인 중입니다. 다시 결제하지 마세요.',
+    verifyPdfFailed: 'PDF 구매 상태를 확인할 수 없습니다. 다시 시도하세요.',
     seeMore: '더 보기 >',
     categorySubtitle: '이 카테고리의 도서와 PDF입니다.',
     addedToCart: '{{title}}을(를) 장바구니에 추가했습니다.',
@@ -256,8 +281,12 @@ function sectionMatchesProduct(section, product) {
   return true
 }
 
-function AuthorStoreProductCard({ item, onOpen, onAddToCart, t }) {
+function AuthorStoreProductCard({ item, onOpen, onAddToCart, t, pdfState, pdfBusy }) {
   const isOutOfStock = item.stock_label === 'OUT OF STOCK'
+  const isPdf = item.type === 'PDF'
+  const isOwned = isPdf && pdfState === 'purchased'
+  const isPdfBlocked = isPdf && pdfState !== 'available' && !isOwned
+  const isChecking = isPdf && (isPdfBlocked || pdfBusy)
   const displayTitle = item.title || t('authorStoreTab.untitledBook')
   const displayCategory = item.categoryFallback
     ? t('authorStoreTab.newBooks')
@@ -278,15 +307,22 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart, t }) {
           </div>
         )}
 
-        {item.stock_label ? (
+        {item.stock_label || isOwned || isPdfBlocked ? (
           <span
-            className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${
-              isOutOfStock
-                ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]'
-                : 'bg-[#ecfdf3] text-[#027a48] dark:bg-emerald-400/10 dark:text-emerald-300'
+            className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold tracking-wide ${
+              isOwned
+                ? 'bg-[#ecfdf3] text-[#027a48] dark:bg-emerald-400/15 dark:text-emerald-300'
+                : isPdfBlocked || isOutOfStock
+                  ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]'
+                  : 'bg-[#ecfdf3] text-[#027a48] dark:bg-emerald-400/10 dark:text-emerald-300'
             }`}
           >
-            {getStockLabel(item.stock_label, t)}
+            {isOwned ? <i className="fa-solid fa-circle-check" /> : null}
+            {isOwned
+              ? t('authorStoreTab.owned')
+              : isPdfBlocked
+                ? t('authorStoreTab.checkingPdf')
+                : getStockLabel(item.stock_label, t)}
           </span>
         ) : null}
       </button>
@@ -312,12 +348,12 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart, t }) {
 
           <button
             type="button"
-            onClick={() => onAddToCart?.(item)}
-            disabled={isOutOfStock}
+            onClick={() => isOwned ? onOpen?.(item) : onAddToCart?.(item)}
+            disabled={isOutOfStock || isChecking}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-page)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-tertiary)]"
-            aria-label={t('authorStoreTab.addToCart')}
+            aria-label={isOwned ? t('authorStoreTab.readPdf') : isChecking ? t('authorStoreTab.checkingPdf') : t('authorStoreTab.addToCart')}
           >
-            <i className="fa-solid fa-cart-shopping text-[13px]" />
+            <i className={`fa-solid ${isOwned ? 'fa-book-open' : isChecking ? 'fa-clock' : 'fa-cart-shopping'} text-[13px]`} />
           </button>
         </div>
       </div>
@@ -325,7 +361,10 @@ function AuthorStoreProductCard({ item, onOpen, onAddToCart, t }) {
   )
 }
 
-function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart, t }) {
+function AuthorStoreShelf({
+  section, items, onMore, onOpenItem, onAddToCart,
+  t, pdfStates, pdfBusyId, readerSignedIn,
+}) {
   const previewItems = items.slice(0, 6)
 
   return (
@@ -355,6 +394,12 @@ function AuthorStoreShelf({ section, items, onMore, onOpenItem, onAddToCart, t }
             onOpen={onOpenItem}
             onAddToCart={onAddToCart}
             t={t}
+            pdfState={item.type === 'PDF'
+              ? readerSignedIn
+                ? pdfStates[item.id] || 'checking_payment'
+                : 'available'
+              : 'available'}
+            pdfBusy={pdfBusyId === item.id}
           />
         ))}
       </div>
@@ -370,6 +415,10 @@ export default function AuthorStoreTab({ author, cartCount = 0, onCartCountChang
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [pdfStates, setPdfStates] = useState({})
+  const [pdfBusyId, setPdfBusyId] = useState('')
+  const pdfBusyRef = useRef(false)
+  const readerSignedIn = hasAuthorStoreReaderSession()
 
 
 useEffect(() => {
@@ -433,9 +482,115 @@ useEffect(() => {
       .filter((section) => section.items.length > 0)
   }, [activeType, products, t])
 
+  const visiblePdfIds = useMemo(() => [
+    ...new Set(
+      visibleSections
+        .flatMap((section) => section.items.slice(0, 6))
+        .filter((item) => item.type === 'PDF' && item.id)
+        .map((item) => String(item.id))
+    ),
+  ], [visibleSections])
+  const visiblePdfKey = visiblePdfIds.join(',')
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const ids = visiblePdfKey ? visiblePdfKey.split(',') : []
+
+    setPdfStates({})
+
+    if (!ids.length || !readerSignedIn) {
+      return () => controller.abort()
+    }
+
+    setPdfStates(Object.fromEntries(ids.map((id) => [id, 'checking_payment'])))
+
+    const checkOwnership = async () => {
+      try {
+        for (let start = 0; start < ids.length; start += 30) {
+          const batch = ids.slice(start, start + 30)
+          const response = await fetchAuthorStorePdfOwnership(batch, {
+            signal: controller.signal,
+          })
+          if (controller.signal.aborted) return
+
+          const next = Object.fromEntries(batch.map((id) => [id, 'unavailable']))
+          for (const item of response.products || []) {
+            if (item.product_type === 'pdf') next[String(item.product_id)] = item.state
+          }
+          setPdfStates((previous) => ({ ...previous, ...next }))
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setPdfStates((previous) => ({
+            ...previous,
+            ...Object.fromEntries(
+              ids.filter((id) => !previous[id] || previous[id] === 'checking_payment')
+                .map((id) => [id, 'unavailable'])
+            ),
+          }))
+        }
+      }
+    }
+
+    void checkOwnership()
+    return () => controller.abort()
+  }, [visiblePdfKey, readerSignedIn])
+
   const isOwner = Boolean(author?.is_owner)
 
-  function addToCart(item) {
+  function openOwnedPdf(item) {
+    try {
+      const current = JSON.parse(localStorage.getItem('shadow_author_cart_items') || '[]')
+      if (Array.isArray(current)) {
+        const remaining = current.filter((entry) => String(entry.id) !== String(item.id))
+        if (remaining.length !== current.length) {
+          localStorage.setItem('shadow_author_cart_items', JSON.stringify(remaining))
+          window.dispatchEvent(new Event('shadow-author-cart-updated'))
+          onCartCountChange?.(remaining.reduce((total, entry) => total + Number(entry.quantity || 1), 0))
+        }
+      }
+    } catch {}
+
+    navigate(`/discover/pdf/${encodeURIComponent(item.id)}`, {
+      state: {
+        title: item.title,
+        from: location.pathname + location.search + location.hash,
+      },
+    })
+  }
+
+  async function addToCart(item) {
+    if (item.type === 'PDF' && hasAuthorStoreReaderSession()) {
+      if (pdfBusyRef.current) return
+      pdfBusyRef.current = true
+      setPdfBusyId(item.id)
+
+      try {
+        const response = await fetchAuthorStorePdfOwnership([item.id])
+        const state = response.products?.find(
+          (row) => String(row.product_id) === String(item.id) && row.product_type === 'pdf'
+        )?.state
+        if (!state) throw new Error('Ownership missing')
+        setPdfStates((previous) => ({ ...previous, [item.id]: state }))
+
+        if (state === 'purchased') {
+          openOwnedPdf(item)
+          return
+        }
+        if (state !== 'available') {
+          onMessage?.(t('authorStoreTab.pendingPdf'))
+          return
+        }
+      } catch {
+        setPdfStates((previous) => ({ ...previous, [item.id]: 'unavailable' }))
+        onMessage?.(t('authorStoreTab.verifyPdfFailed'))
+        return
+      } finally {
+        pdfBusyRef.current = false
+        setPdfBusyId('')
+      }
+    }
+
     const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
     const cartItems = JSON.parse(rawCart)
     const safeCartItems = Array.isArray(cartItems) ? cartItems : []
@@ -602,13 +757,21 @@ useEffect(() => {
     state: { from: location.pathname + location.search + location.hash },
   })
 }
-onOpenItem={(item) =>
+onOpenItem={(item) => {
+  const owned = item.type === 'PDF' && readerSignedIn && pdfStates[item.id] === 'purchased'
+  if (owned) {
+    openOwnedPdf(item)
+    return
+  }
   navigate(`/author/page/${author.page_username}/store/product/${item.id}`, {
     state: { from: location.pathname + location.search + location.hash },
   })
-}
+}}
           onAddToCart={addToCart}
           t={t}
+          pdfStates={pdfStates}
+          pdfBusyId={pdfBusyId}
+          readerSignedIn={readerSignedIn}
         />
       ))}
     </div>
