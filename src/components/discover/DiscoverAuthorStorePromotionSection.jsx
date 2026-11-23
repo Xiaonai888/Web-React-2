@@ -472,9 +472,12 @@ try {
     }
 
     const allowed =
-      country.country === 'KH' ||
-      (country.hasException === true &&
-       country.effective?.physicalBooks === true)
+  country.country === 'KH' ||
+  (
+    country.countryPolicyEnabled === true &&
+    country.hasException === true &&
+    country.effective?.physicalBooks === true
+  )
 
     if (!allowed) {
       setBookCountryNotice(true)
