@@ -1,4 +1,5 @@
 import { getStoryLanguageId } from '../utils/storyLanguage'
+import { getSmartFreeUnlockInterests } from './advertisements/smartFreeUnlockPresentation'
 import { fetchAuthorStorePdfOwnership, hasAuthorStoreReaderSession } from './authorStorePdfOwnershipApi'
 import {
   fetchSmartPdfPromotion, fetchSmartPdfPromotionVersion, getSmartPdfPromotionReaderKey,
@@ -93,7 +94,10 @@ export async function getPersonalizedSmartPdfPromotion({
     }
     let fresh
     try {
-      fresh = await fetchSmartPdfPromotion({ placement, interests, excludeProductIds: excluded, signal })
+      const selectedInterests = interests && typeof interests === 'object' && !Array.isArray(interests) && Object.keys(interests).length
+  ? interests
+  : getSmartFreeUnlockInterests()
+fresh = await fetchSmartPdfPromotion({ placement, interests: selectedInterests, excludeProductIds: excluded, signal })
       retryAfter.delete(scopeKey)
     } catch (error) {
       retryAfter.set(scopeKey, Date.now() + RETRY_MS)
