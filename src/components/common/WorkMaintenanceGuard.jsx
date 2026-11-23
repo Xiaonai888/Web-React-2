@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import MaintenancePage from '../../pages/MaintenancePage.jsx'
-import { isWorkCircuitOpenPayload } from './MaintenancePage'
+
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
@@ -227,7 +227,7 @@ export default function WorkMaintenanceGuard({ children }) {
       try {
         const payload = await response.clone().json()
 
-        if (isWorkCircuitOpenPayload(payload)) {
+        if (payload?.code === 'WORK_CIRCUIT_OPEN' || payload?.maintenance === true) {
           setMaintenance({
             retryAfterSeconds: retrySecondsFromResponse(
               response,
