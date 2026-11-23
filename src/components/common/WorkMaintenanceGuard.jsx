@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import MaintenancePage, {
-  isWorkCircuitOpenPayload,
-} from './MaintenancePage'
+import MaintenancePage from '../../pages/MaintenancePage.jsx'
+import { isWorkCircuitOpenPayload } from './MaintenancePage'
 
 const API_BASE_URL =
   window.location.hostname === 'localhost' ||
