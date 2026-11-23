@@ -3996,7 +3996,6 @@ useEffect(() => {
     }
 
   function revealMoreSmartAutoAds(readySlots, naturalSlots) {
-  function revealMoreSmartAutoAds(readySlots, naturalSlots) {
     if (discoverAdControl?.mode !== 'auto' ||
         smartAdActiveVisitRef.current !== smartAdVisitKey) return
     const remaining = Math.max(0, readySlots - naturalSlots)
