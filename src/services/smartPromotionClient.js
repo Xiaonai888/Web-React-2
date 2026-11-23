@@ -5,14 +5,14 @@ import { getSmartFreeUnlockInterests } from './advertisements/smartFreeUnlockPre
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com').replace(/\/$/, '')
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const LANGUAGES = new Set(['km', 'en', 'zh', 'ko', 'ja'])
-const PREFIX = 'shadow_smart_special_promotion_v1'
+const PREFIX = 'shadow_smart_special_promotion_v2'
 const RETRY_MS = 30000
 const memory = new Map()
 const pending = new Map()
 const retryAfter = new Map()
 
-function scope(language) {
-  return `${PREFIX}:${getSmartAdReaderKey()}:${language}`
+function scope(language, placement = 'stories') {
+  return `${PREFIX}:${getSmartAdReaderKey()}:${language}:${placement}`
 }
 
 function validOffer(item, language, expiresAt) {
@@ -77,29 +77,35 @@ function readCache(key, language) {
   return null
 }
 
-export function getSmartPromotionCache(language = getStoryLanguageId()) {
+export function getSmartPromotionCache(language = getStoryLanguageId(), placement = 'stories') {
   if (!LANGUAGES.has(language)) return null
-  return readCache(scope(language), language)
+  return readCache(scope(language, placement), language)
 }
 
 export function clearSmartPromotionCache(language = getStoryLanguageId()) {
   if (!LANGUAGES.has(language)) return
-  const key = scope(language)
-  memory.delete(key)
-  retryAfter.delete(key)
-  try { sessionStorage.removeItem(key) } catch {}
+  for (const placement of ['stories', 'discover']) {
+    const key = scope(language, placement)
+    memory.delete(key)
+    retryAfter.delete(key)
+    try { sessionStorage.removeItem(key) } catch {}
+  }
 }
-
-export async function loadSmartPromotionShelf({ force = false, language = getStoryLanguageId(), signal } = {}) {
-  if (!LANGUAGES.has(language)) return null
-  const key = scope(language)
-  const cached = getSmartPromotionCache(language)
+export async function loadSmartPromotionShelf({ force = false, language = getStoryLanguageId(), signal, placement = 'stories' } = {}) {
+  if (!LANGUAGES.has(language) || !['stories', 'discover'].includes(placement)) return null
+  const key = scope(language, placement)
+  const cached = getSmartPromotionCache(language, placement)
   if (!force && cached) return cached
   if (pending.has(key)) return pending.get(key)
   if (!force && Date.now() < (retryAfter.get(key) || 0)) return cached
   const token = getSmartAdAuthToken()
   const request = (async () => {
-    try {
+      try {
+      const homeRotation = placement === 'discover'
+        ? await loadSmartPromotionShelf({ force, language, signal, placement: 'stories' })
+        : null
+      const excludedIds = (homeRotation?.promotions || []).map((offer) => String(offer.story_id))
+
       const headers = { 'Content-Type': 'application/json', Accept: 'application/json' }
       if (token) headers.Authorization = `Bearer ${token}`
       else headers['X-Shadow-Visitor-Id'] = getSmartAdVisitorId()
@@ -108,13 +114,37 @@ export async function loadSmartPromotionShelf({ force = false, language = getSto
         cache: 'no-store',
         credentials: 'omit',
         headers,
-        body: JSON.stringify({ story_language: language, interests: getSmartFreeUnlockInterests() }),
+                body: JSON.stringify({
+          story_language: language,
+          interests: getSmartFreeUnlockInterests(),
+          exclude_story_ids: excludedIds,
+        }),
         signal,
       })
       if (!response.ok) throw new Error(`Smart Promotion API returned ${response.status}`)
-      const result = normalize(await response.json(), language)
+      let result = normalize(await response.json(), language)
       if (!result) throw new Error('Invalid Smart Promotion response')
-      if (scope(language) !== key || getStoryLanguageId() !== language) {
+
+      if (placement === 'discover' && homeRotation?.slot_key === result.slot_key) {
+        const combined = [...result.promotions]
+        const seen = new Set(combined.map((offer) => String(offer.story_id).toLowerCase()))
+
+        for (const offer of homeRotation.promotions || []) {
+          if (combined.length >= 3) break
+          const id = String(offer.story_id).toLowerCase()
+          if (seen.has(id)) continue
+          if (Date.parse(String(offer.expires_at || '')) !== result.expiresAt) continue
+          combined.push(offer)
+          seen.add(id)
+        }
+
+        result = {
+          ...result,
+          promotions: combined,
+          promotion: combined[0] || null,
+        }
+      }
+      if (scope(language, placement) !== key || getStoryLanguageId() !== language) {
         const error = new Error('Special Promotion reader or language changed')
         error.code = 'SMART_PROMOTION_SCOPE_CHANGED'
         throw error
@@ -129,7 +159,7 @@ export async function loadSmartPromotionShelf({ force = false, language = getSto
     } catch (error) {
       if (error?.code === 'SMART_PROMOTION_SCOPE_CHANGED') throw error
       retryAfter.set(key, Date.now() + RETRY_MS)
-      return force ? null : getSmartPromotionCache(language)
+      return force ? null : getSmartPromotionCache(language, placement)
     }
   })()
   pending.set(key, request)
