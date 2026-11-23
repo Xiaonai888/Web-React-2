@@ -117,13 +117,17 @@ function validCartQuantity(value) {
   return Number.isFinite(quantity) ? Math.max(1, Math.min(99, Math.trunc(quantity))) : 1
 }
 
+function isPdfItem(item) {
+  return String(item?.type || '').toLowerCase() === 'pdf' || Boolean(item?.smart_pdf_offer_token)
+}
+
 function getAuthorCartItems() {
   try {
     const items = JSON.parse(localStorage.getItem('shadow_author_cart_items') || '[]')
     return Array.isArray(items)
       ? items.filter((item) => item && typeof item === 'object' && item.id !== null && item.id !== undefined && String(item.id).trim()).map((item) => ({
           ...item,
-          quantity: validCartQuantity(item.quantity),
+          quantity: isPdfItem(item) ? 1 : validCartQuantity(item.quantity),
         }))
       : []
   } catch {
@@ -228,7 +232,7 @@ export default function AuthorCartPage() {
 
   function updateQuantity(id, nextQuantity) {
     const nextItems = getAuthorCartItems().map((item) =>
-      String(item.id) === String(id) ? { ...item, quantity: validCartQuantity(nextQuantity) } : item
+      String(item.id) === String(id) ? { ...item, quantity: isPdfItem(item) ? 1 : validCartQuantity(nextQuantity) } : item
     )
     setAuthorItems(nextItems)
     saveAuthorCartItems(nextItems)
@@ -341,11 +345,11 @@ export default function AuthorCartPage() {
                     <div className="mt-5 flex items-end justify-between gap-3">
                       <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(itemTotal)}</div>
                       <div className="flex items-center gap-2">
-                        <button type="button" aria-label={t('authorCart.decreaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) - 1)} disabled={validCartQuantity(item.quantity) <= 1} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
+                        <button type="button" aria-label={t('authorCart.decreaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) - 1)} disabled={isPdfItem(item) || validCartQuantity(item.quantity) <= 1} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
                           <i className="fa-solid fa-minus text-[11px]" />
                         </button>
                         <span className="w-5 text-center text-[13px] font-black text-[var(--shadow-text-primary)]">{number(validCartQuantity(item.quantity))}</span>
-                        <button type="button" aria-label={t('authorCart.increaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) + 1)} disabled={validCartQuantity(item.quantity) >= 99} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
+                        <button type="button" aria-label={t('authorCart.increaseQuantity')} onClick={() => updateQuantity(item.id, validCartQuantity(item.quantity) + 1)} disabled={isPdfItem(item) || validCartQuantity(item.quantity) >= 99} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
                           <i className="fa-solid fa-plus text-[11px]" />
                         </button>
                       </div>
