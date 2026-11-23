@@ -4,6 +4,7 @@ import SpecialPromotionCheckoutSheet from './SpecialPromotionCheckoutSheet'
 import PromotionBookShelf from '../PromotionBookShelf'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { clearSmartPromotionCache } from '../../services/smartPromotionClient'
 
 registerTranslationNamespace('storyShelfCheckout', {
   en: {
@@ -120,7 +121,13 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
     if (inFlightRef.current || remainingSeconds <= 0) return
     const storyId = String(offer?.story_id || '').trim()
     const price = Number(offer?.discounted_price_diamonds)
+    const offerToken = String(offer?.offer_token || '')
     if (!storyId || !Number.isSafeInteger(price) || price < 1) return
+    if (rotation?.personalized && !offerToken.startsWith('sp1.')) {
+      setNotice(t('storyShelfCheckout.expired'))
+      onStale?.()
+      return
+    }
     setError('')
     setNotice('')
     setNeedsTopUp(false)
@@ -130,6 +137,7 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
       count: Number(offer.locked_episode_count || 0),
       originalPrice: Number(offer.original_price_diamonds || 0),
       storyLanguage: String(offer.story_language || '').trim(),
+      offerToken,
       price,
     })
   }
@@ -160,10 +168,11 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-  expected_price_diamonds: quote.price,
-  purchase_source: window.location.pathname === '/manga' ? 'manga' : 'stories',
-  ...(quote.storyLanguage ? { story_language: quote.storyLanguage } : {}),
-}),
+            expected_price_diamonds: quote.price,
+            purchase_source: window.location.pathname === '/manga' ? 'manga' : 'stories',
+            ...(quote.storyLanguage ? { story_language: quote.storyLanguage } : {}),
+            ...(quote.offerToken ? { offer_token: quote.offerToken } : {}),
+          }),
         }
       )
       const result = await response.json().catch(() => ({}))
@@ -174,15 +183,24 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
       }
       if (response.status === 409 && result.code === 'PRICE_CONFIRMATION_REQUIRED') {
         const updatedPrice = Number(result.discounted_price_diamonds)
-        if (!Number.isSafeInteger(updatedPrice) || updatedPrice < 1) {
-          setError(t('storyShelfCheckout.failed'))
+        const updatedCount = Number(result.locked_episode_count)
+        const updatedOriginal = Number(result.original_price_diamonds)
+        const updatedOfferToken = String(result.offer_token || '')
+        if (!Number.isSafeInteger(updatedPrice) || updatedPrice < 1 ||
+            !Number.isSafeInteger(updatedCount) || updatedCount < 1 ||
+            !Number.isSafeInteger(updatedOriginal) || updatedOriginal < updatedPrice ||
+            (quote.offerToken && !updatedOfferToken.startsWith('sp1.'))) {
+          setQuote(null)
+          setNotice(t('storyShelfCheckout.expired'))
+          onStale?.()
           return
         }
         setQuote((current) => current && ({
           ...current,
           price: updatedPrice,
-          count: Number(result.locked_episode_count ?? current.count),
-          originalPrice: Number(result.original_price_diamonds ?? current.originalPrice),
+          count: updatedCount,
+          originalPrice: updatedOriginal,
+          offerToken: current.offerToken ? updatedOfferToken : '',
         }))
         setError(t('storyShelfCheckout.changed'))
         return
@@ -214,6 +232,10 @@ export default function StoryPromotionShelf({ rotation, remainingSeconds = 0, on
       setQuote(null)
       if (result.wallet) {
         window.dispatchEvent(new CustomEvent('shadow-wallet-updated', { detail: result.wallet }))
+      }
+      if (rotation?.personalized) {
+        clearSmartPromotionCache(rotation.language)
+        onStale?.()
       }
     } catch {
       setError(t('storyShelfCheckout.failed'))
