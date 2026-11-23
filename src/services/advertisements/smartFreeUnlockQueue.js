@@ -10,6 +10,10 @@ import {
   readSmartAdQueue,
 } from '../smartAdQueue'
 import {
+  getCachedSmartAdReadingProgress,
+  smartAdCachedStoryPriority,
+} from '../smartAdReadingProgressGuard'
+import {
   getSmartFreeUnlockInterests,
   toSmartFreeUnlockAdvertisement,
 } from './smartFreeUnlockPresentation'
@@ -112,12 +116,16 @@ export async function takeSmartFreeUnlockAd({ currentStoryId = '', signal } = {}
   }
   if (getStoryLanguageId() !== language) return null
   const readerKey = getSmartAdReaderKey()
-  const queue = await prepareQueue(readerKey, version, signal)
-  if (getStoryLanguageId() !== language) return null
+  const [queue, progressRows] = await Promise.all([
+    prepareQueue(readerKey, version, signal),
+    getCachedSmartAdReadingProgress(),
+  ])
+  if (getStoryLanguageId() !== language || getSmartAdReaderKey() !== readerKey) return null
   const ads = queue?.batches?.flat() || []
   if (!ads.length) return null
 
   const currentId = String(currentStoryId || '').toLowerCase()
+  let replay = null
   for (let i = 0; i < ads.length; i += 1) {
     const story = nextSmartAdFromQueue({
       readerKey,
@@ -126,15 +134,19 @@ export async function takeSmartFreeUnlockAd({ currentStoryId = '', signal } = {}
       catalogVersion: version.catalog_version,
     })
     if (!story || String(story.story_id || '').toLowerCase() === currentId) continue
+    const priority = smartAdCachedStoryPriority(story, progressRows)
+    if (priority === 2) continue
     const advertisement = toSmartFreeUnlockAdvertisement(story, version.slot_key)
     if (!advertisement) continue
-    return {
+    const result = {
       advertisement,
       story,
       slotKey: version.slot_key,
       catalogVersion: Number(version.catalog_version),
       queueSize: ads.length,
     }
+    if (priority === 0) return result
+    if (!replay) replay = result
   }
-  return null
+  return replay
 }
