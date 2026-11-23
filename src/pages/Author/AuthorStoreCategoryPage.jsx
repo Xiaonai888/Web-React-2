@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import {
+  fetchAuthorStorePdfOwnership,
+  hasAuthorStoreReaderSession,
+} from '../../services/authorStorePdfOwnershipApi'
 
 registerTranslationNamespace('authorStoreCategory', {
   "en": {
@@ -28,6 +32,11 @@ registerTranslationNamespace('authorStoreCategory', {
     "outOfStock": "OUT OF STOCK",
     "failedLoad": "Failed to load store products",
     "addToCart": "Add to cart",
+    "owned": 'Owned',
+    "readPdf": 'Read PDF',
+    "checkingPdf": 'Checking PDF',
+    "pendingPdf": 'Your PDF payment is being checked. Do not pay again.',
+    "verifyPdfFailed": 'Unable to verify PDF ownership. Please try again.',
     "loading": "Loading products...",
     "emptyTitle": "No products here yet",
     "emptyHelp": "This category does not have public products right now.",
@@ -62,6 +71,11 @@ registerTranslationNamespace('authorStoreCategory', {
     "outOfStock": "អស់ពីស្តុក",
     "failedLoad": "មិនអាចផ្ទុកទំនិញក្នុងហាងបានទេ",
     "addToCart": "បន្ថែមទៅរទេះ",
+    "owned": 'បានទិញរួច',
+    "readPdf": 'អាន PDF',
+    "checkingPdf": 'កំពុងពិនិត្យ PDF',
+    "pendingPdf": 'ការទូទាត់ PDF កំពុងត្រូវបានពិនិត្យ។ សូមកុំទិញម្តងទៀត។',
+    "verifyPdfFailed": 'មិនអាចពិនិត្យសិទ្ធិ PDF បានទេ។ សូមព្យាយាមម្តងទៀត។',
     "loading": "កំពុងផ្ទុកទំនិញ...",
     "emptyTitle": "មិនទាន់មានទំនិញនៅទីនេះ",
     "emptyHelp": "ប្រភេទនេះមិនមានទំនិញសាធារណៈនៅពេលនេះទេ។",
@@ -96,6 +110,11 @@ registerTranslationNamespace('authorStoreCategory', {
     "outOfStock": "缺货",
     "failedLoad": "无法加载商店商品",
     "addToCart": "加入购物车",
+    "owned": '已购买',
+    "readPdf": '阅读 PDF',
+    "checkingPdf": '正在核验 PDF',
+    "pendingPdf": 'PDF 付款正在核验，请勿重复付款。',
+    "verifyPdfFailed": '无法核验 PDF 所有权，请重试。',
     "loading": "正在加载商品...",
     "emptyTitle": "这里还没有商品",
     "emptyHelp": "此分类目前没有公开商品。",
@@ -130,6 +149,11 @@ registerTranslationNamespace('authorStoreCategory', {
     "outOfStock": "在庫切れ",
     "failedLoad": "ストア商品を読み込めませんでした",
     "addToCart": "カートに追加",
+    "owned": '購入済み',
+    "readPdf": 'PDF を読む',
+    "checkingPdf": 'PDF を確認中',
+    "pendingPdf": 'PDF の支払いを確認中です。再購入しないでください。',
+    "verifyPdfFailed": 'PDF の購入状態を確認できません。再試行してください。',
     "loading": "商品を読み込み中...",
     "emptyTitle": "まだ商品がありません",
     "emptyHelp": "このカテゴリには現在公開商品がありません。",
@@ -164,6 +188,11 @@ registerTranslationNamespace('authorStoreCategory', {
     "outOfStock": "품절",
     "failedLoad": "스토어 상품을 불러오지 못했습니다",
     "addToCart": "장바구니에 추가",
+    "owned": '구매 완료',
+    "readPdf": 'PDF 읽기',
+    "checkingPdf": 'PDF 확인 중',
+    "pendingPdf": 'PDF 결제를 확인 중입니다. 다시 결제하지 마세요.',
+    "verifyPdfFailed": 'PDF 구매 상태를 확인할 수 없습니다. 다시 시도하세요.',
     "loading": "상품 불러오는 중...",
     "emptyTitle": "아직 상품이 없습니다",
     "emptyHelp": "이 카테고리에는 현재 공개 상품이 없습니다.",
@@ -349,8 +378,12 @@ function categoryMatchesProduct(category, product) {
   return true
 }
 
-function ProductCard({ item, onOpen, onAddToCart }) {
+function ProductCard({ item, onOpen, onAddToCart, pdfState, pdfBusy, readerSignedIn }) {
   const isOutOfStock = item.stock_label === 'OUT OF STOCK'
+  const isPdf = item.type === 'PDF'
+  const isOwned = isPdf && pdfState === 'purchased'
+  const isPdfBlocked = isPdf && readerSignedIn && pdfState !== 'available' && !isOwned
+  const isChecking = isPdf && (pdfBusy || isPdfBlocked)
 
   return (
     <article className="overflow-hidden rounded-[18px] bg-[var(--shadow-bg-surface)] shadow-sm ring-1 ring-[var(--shadow-border)]">
@@ -367,13 +400,22 @@ function ProductCard({ item, onOpen, onAddToCart }) {
           </div>
         )}
 
-        {item.stock_label ? (
+        {item.stock_label || isOwned || isPdfBlocked ? (
           <span
-            className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${
-              isOutOfStock ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]' : 'bg-[#ecfdf3] text-[#027a48]'
+            className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold tracking-wide ${
+              isOwned
+                ? 'bg-[#ecfdf3] text-[#027a48] dark:bg-emerald-400/15 dark:text-emerald-300'
+                : isPdfBlocked || isOutOfStock
+                  ? 'bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-secondary)]'
+                  : 'bg-[#ecfdf3] text-[#027a48] dark:bg-emerald-400/10 dark:text-emerald-300'
             }`}
           >
-            {displayStoreValue(item.stock_label)}
+            {isOwned ? <i className="fa-solid fa-circle-check" /> : null}
+            {isOwned
+              ? getDisplayText('authorStoreCategory.owned')
+              : isPdfBlocked
+                ? getDisplayText('authorStoreCategory.checkingPdf')
+                : displayStoreValue(item.stock_label)}
           </span>
         ) : null}
       </button>
@@ -399,12 +441,16 @@ function ProductCard({ item, onOpen, onAddToCart }) {
 
           <button
             type="button"
-            onClick={() => onAddToCart?.(item)}
-            disabled={isOutOfStock}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] active:scale-95 disabled:bg-[var(--shadow-text-disabled)]"
-            aria-label={getDisplayText('authorStoreCategory.addToCart')}
+            onClick={() => isOwned ? onOpen?.(item) : onAddToCart?.(item)}
+            disabled={(isOutOfStock && !isOwned) || isChecking}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-page)] active:scale-95 disabled:bg-[var(--shadow-bg-soft)] disabled:text-[var(--shadow-text-tertiary)]"
+            aria-label={isOwned
+              ? getDisplayText('authorStoreCategory.readPdf')
+              : isChecking
+                ? getDisplayText('authorStoreCategory.checkingPdf')
+                : getDisplayText('authorStoreCategory.addToCart')}
           >
-            <i className="fa-solid fa-cart-shopping text-[13px]" />
+            <i className={`fa-solid ${isOwned ? 'fa-book-open' : isChecking ? 'fa-clock' : 'fa-cart-shopping'} text-[13px]`} />
           </button>
         </div>
       </div>
@@ -430,6 +476,13 @@ export default function AuthorStoreCategoryPage() {
   const generationRef = useRef(0)
   const sentinelRef = useRef(null)
   const restoredScrollRef = useRef('')
+  const [pdfOwnership, setPdfOwnership] = useState({ key: '', states: {} })
+  const [pdfBusyId, setPdfBusyId] = useState('')
+  const [actionNotice, setActionNotice] = useState('')
+  const pdfBusyRef = useRef(false)
+  const pdfResolvedRef = useRef({ key: '', states: {} })
+  const readerSignedIn = hasAuthorStoreReaderSession()
+  const pdfOwnerKey = `${viewKey}:${readerSignedIn ? 'signed' : 'guest'}`
 
   const loadPage = useCallback(async (page) => {
     if (!pageUsername || requestRef.current) return
@@ -508,6 +561,51 @@ export default function AuthorStoreCategoryPage() {
     ? snapshot
     : { key: viewKey, products: [], page: 0, hasNext: true, loading: true, loadingMore: false, error: '' }
   const visibleProducts = useMemo(() => active.products.filter((product) => categoryMatchesProduct(category, product)), [active.products, category])
+  const visiblePdfKey = useMemo(() => [...new Set(visibleProducts
+    .filter((item) => item.type === 'PDF' && item.id)
+    .map((item) => String(item.id)))].join(','), [visibleProducts])
+  const pdfStates = pdfOwnership.key === pdfOwnerKey ? pdfOwnership.states : {}
+
+  useEffect(() => {
+    const controller = new AbortController()
+    if (pdfResolvedRef.current.key !== pdfOwnerKey) {
+      pdfResolvedRef.current = { key: pdfOwnerKey, states: {} }
+    }
+    const ids = visiblePdfKey ? visiblePdfKey.split(',') : []
+    const missing = ids.filter((id) => !Object.prototype.hasOwnProperty.call(pdfResolvedRef.current.states, id))
+    const pending = Object.fromEntries(missing.map((id) => [id, 'checking_payment']))
+    setPdfOwnership({
+      key: pdfOwnerKey,
+      states: { ...pdfResolvedRef.current.states, ...(readerSignedIn ? pending : {}) },
+    })
+
+    if (!readerSignedIn || !missing.length) return () => controller.abort()
+
+    const check = async () => {
+      for (let offset = 0; offset < missing.length; offset += 30) {
+        const idsToCheck = missing.slice(offset, offset + 30)
+        try {
+          const response = await fetchAuthorStorePdfOwnership(idsToCheck, { signal: controller.signal })
+          if (controller.signal.aborted || pdfResolvedRef.current.key !== pdfOwnerKey) return
+          const next = Object.fromEntries(idsToCheck.map((id) => [id, 'unavailable']))
+          for (const item of response.products || []) {
+            if (item.product_type === 'pdf' && idsToCheck.includes(String(item.product_id))) {
+              next[String(item.product_id)] = item.state
+            }
+          }
+          Object.assign(pdfResolvedRef.current.states, next)
+          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+        } catch {
+          if (controller.signal.aborted || pdfResolvedRef.current.key !== pdfOwnerKey) return
+          Object.assign(pdfResolvedRef.current.states, Object.fromEntries(idsToCheck.map((id) => [id, 'unavailable'])))
+          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+        }
+      }
+    }
+
+    void check()
+    return () => controller.abort()
+  }, [visiblePdfKey, pdfOwnerKey, readerSignedIn])
 
   useEffect(() => {
     if (!active.page || active.loading || active.loadingMore || !active.hasNext || active.page >= 3 || active.error) return undefined
@@ -531,7 +629,64 @@ export default function AuthorStoreCategoryPage() {
     }
   }, [viewKey, visibleProducts.length])
 
-  function addToCart(item) {
+  function openOwnedPdf(item) {
+    const from = location.pathname + location.search + location.hash
+    const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
+    try {
+      const parsed = JSON.parse(rawCart)
+      if (Array.isArray(parsed)) {
+        const remaining = parsed.filter((cartItem) => String(cartItem.id) !== String(item.id))
+        if (remaining.length !== parsed.length) {
+          localStorage.setItem('shadow_author_cart_items', JSON.stringify(remaining))
+          window.dispatchEvent(new Event('shadow-author-cart-updated'))
+        }
+      }
+    } catch {
+      localStorage.removeItem('shadow_author_cart_items')
+      window.dispatchEvent(new Event('shadow-author-cart-updated'))
+    }
+    categoryScroll.set(viewKey, window.scrollY)
+    navigate(`/discover/pdf/${encodeURIComponent(item.id)}`, {
+      state: { title: item.title, from },
+    })
+  }
+
+  async function addToCart(item) {
+    if (item.type === 'PDF' && readerSignedIn) {
+      if (pdfBusyRef.current) return
+      pdfBusyRef.current = true
+      setPdfBusyId(String(item.id))
+      setActionNotice('')
+      try {
+        const response = await fetchAuthorStorePdfOwnership([item.id])
+        const row = (response.products || []).find((entry) =>
+          entry.product_type === 'pdf' && String(entry.product_id) === String(item.id))
+        if (!row) throw new Error('PDF ownership is missing')
+        if (pdfResolvedRef.current.key === pdfOwnerKey) {
+          pdfResolvedRef.current.states[String(item.id)] = row.state
+          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+        }
+        if (row.state === 'purchased') {
+          openOwnedPdf(item)
+          return
+        }
+        if (row.state !== 'available') {
+          setActionNotice(t('authorStoreCategory.pendingPdf'))
+          return
+        }
+      } catch {
+        if (pdfResolvedRef.current.key === pdfOwnerKey) {
+          pdfResolvedRef.current.states[String(item.id)] = 'unavailable'
+          setPdfOwnership({ key: pdfOwnerKey, states: { ...pdfResolvedRef.current.states } })
+        }
+        setActionNotice(t('authorStoreCategory.verifyPdfFailed'))
+        return
+      } finally {
+        pdfBusyRef.current = false
+        setPdfBusyId('')
+      }
+    }
+
     const rawCart = localStorage.getItem('shadow_author_cart_items') || '[]'
     let cartItems
     try { cartItems = JSON.parse(rawCart) } catch { cartItems = [] }
@@ -591,6 +746,11 @@ export default function AuthorStoreCategoryPage() {
       </header>
 
       <main className="mx-auto max-w-[980px] px-4 pt-4">
+        {actionNotice ? (
+          <div role="alert" className="mb-4 rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] px-4 py-3 text-[12px] font-semibold text-[var(--shadow-text-primary)]">
+            {actionNotice}
+          </div>
+        ) : null}
         {active.loading ? (
           <div className="rounded-[24px] bg-[var(--shadow-bg-surface)] p-8 text-center text-[13px] font-bold text-[var(--shadow-text-tertiary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
             {t('authorStoreCategory.loading')}
@@ -614,12 +774,23 @@ export default function AuthorStoreCategoryPage() {
                 key={item.id}
                 item={item}
                 onOpen={() => {
+                  if (item.type === 'PDF' && readerSignedIn && pdfStates[String(item.id)] === 'purchased') {
+                    openOwnedPdf(item)
+                    return
+                  }
                   categoryScroll.set(viewKey, window.scrollY)
                   navigate(`/author/page/${pageUsername}/store/product/${item.id}`, {
                     state: { from: location.pathname + location.search + location.hash },
                   })
                 }}
                 onAddToCart={addToCart}
+                pdfState={item.type === 'PDF'
+                  ? readerSignedIn
+                    ? pdfStates[String(item.id)] || 'checking_payment'
+                    : 'available'
+                  : 'available'}
+                pdfBusy={pdfBusyId === String(item.id)}
+                readerSignedIn={readerSignedIn}
               />
             ))}
           </div>
