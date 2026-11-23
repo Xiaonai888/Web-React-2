@@ -1496,7 +1496,6 @@ if (needsDelivery && !deliveryReady) {
     facebook_link: buyerProfile.facebook_link || '',
   }
 
-  let navigationStarted = false
   try {
     paymentSubmissionRef.current = true
         setSaving(true)
@@ -1629,7 +1628,7 @@ if (!needsDelivery) {
         ...(countryTicket ? { 'X-Shadow-Country-Ticket': countryTicket } : {}),
       },
       body: JSON.stringify({
-        items,
+        items: verifiedItems,
         delivery_company: verifiedDeliveryCompany
           ? {
               key: verifiedDeliveryCompany.id,
@@ -1712,12 +1711,13 @@ if (useBinance) {
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
-    if (!navigationStarted) {
-      paymentSubmissionRef.current = false
-      setSaving(false)
-    }
+    paymentSubmissionRef.current = false
+    setSaving(false)
   }
 }
+
+  const modalExpiresAt = Date.parse(paymentModal?.expires_at || '')
+  const paymentWindowActive = Number.isFinite(modalExpiresAt) && modalExpiresAt > paymentClock
 
   return (
     <div className="min-h-screen bg-[var(--shadow-bg-page)] pb-[92px]">
@@ -2014,7 +2014,7 @@ if (useBinance) {
                 {paymentModal.receiver?.uid ? <div>Binance UID: {paymentModal.receiver.uid} ({paymentModal.receiver.name})</div> : null}
               </div>
             ) : null}
-            {getPaymentQrImage(paymentModal) && Date.parse(paymentModal.expires_at || '') > paymentClock ? (
+            {paymentWindowActive && getPaymentQrImage(paymentModal) ? (
               <div className="mx-auto mt-4 flex w-fit max-w-full justify-center rounded-2xl bg-white p-3">
                 <img src={getPaymentQrImage(paymentModal)} alt={t('authorCheckout.paymentTitle')} className="max-h-[260px] max-w-[260px] object-contain" />
               </div>
@@ -2022,12 +2022,12 @@ if (useBinance) {
             <p className="mt-3 break-all text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
               {t('authorCheckout.paymentOrderId')}: {paymentModal.order_id}
             </p>
-            {Number.isFinite(Date.parse(paymentModal.expires_at || '')) ? (
+            {Number.isFinite(modalExpiresAt) ? (
               <p className="mt-1 text-[12px] font-bold text-[var(--shadow-text-primary)]">
-                {t('authorCheckout.paymentExpires')}: {Math.floor(Math.max(0, Math.ceil((Date.parse(paymentModal.expires_at) - paymentClock) / 1000)) / 60).toString().padStart(2, '0')}:{(Math.max(0, Math.ceil((Date.parse(paymentModal.expires_at) - paymentClock) / 1000)) % 60).toString().padStart(2, '0')}
+                {t('authorCheckout.paymentExpires')}: {Math.floor(Math.max(0, Math.ceil((modalExpiresAt - paymentClock) / 1000)) / 60).toString().padStart(2, '0')}:{(Math.max(0, Math.ceil((modalExpiresAt - paymentClock) / 1000)) % 60).toString().padStart(2, '0')}
               </p>
             ) : null}
-            {Date.parse(paymentModal.expires_at || '') <= paymentClock ? (
+            {!paymentWindowActive ? (
               <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900">
                 {paymentModal.payment_method === 'binance_personal_pay' ? t('authorCheckout.pdf_binanceWait') : pdfCopy.expired}
               </p>
@@ -2035,14 +2035,18 @@ if (useBinance) {
             {paymentMessage ? <p role="status" className="mt-3 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-left text-[12px] text-[var(--shadow-text-primary)]">{paymentMessage}</p> : null}
             <div className="mt-5 flex flex-col gap-2.5">
               {paymentModal.payment_method !== 'binance_personal_pay' &&
-                (paymentModal.deeplink || /^https:\/\//i.test(String(paymentModal.checkout_url || ''))) ? (
+                getPaywayOpenUrl(paymentModal) ? (
                 <button
                   type="button"
-                  disabled={Date.parse(paymentModal.expires_at || '') <= paymentClock}
+                  disabled={!paymentWindowActive}
                   onClick={() => {
-                    const link = String(paymentModal.deeplink || paymentModal.checkout_url || '').trim()
-                    if (/^https:\/\//i.test(link)) window.open(link, '_blank', 'noopener,noreferrer')
-                    else if (/^abamobilebank:\/\//i.test(link)) window.location.assign(link)
+                    if (!paymentWindowActive) return
+                    const link = getPaywayOpenUrl(paymentModal)
+                    if (/^https:\/\//i.test(link)) {
+                      window.open(link, '_blank', 'noopener,noreferrer')
+                    } else if (/^abamobilebank:\/\//i.test(link)) {
+                      window.location.assign(link)
+                    }
                   }}
                   className="h-12 w-full rounded-full bg-[#FE526E] text-[13px] font-black text-white disabled:opacity-40"
                 >
