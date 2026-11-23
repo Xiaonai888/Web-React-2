@@ -189,6 +189,8 @@ registerTranslationNamespace('chatRoomPage', {
     replyPlaceholder: "Write a reply...",
     messagePlaceholder: "Write a message...",
     waitingApproval: "Waiting for request approval",
+    waitFirstReply: "Wait for a reply to send more messages",
+    waitNextDayOrReply: "Wait for a reply or the next day",
     messagesUnavailable: "Messages are unavailable",
     comingSoon: "Coming soon",
     searchMessages: "Search messages",
@@ -324,6 +326,8 @@ registerTranslationNamespace('chatRoomPage', {
     replyPlaceholder: "សរសេរការឆ្លើយតប...",
     messagePlaceholder: "សរសេរសារ...",
     waitingApproval: "កំពុងរង់ចាំការយល់ព្រមសំណើ",
+    waitFirstReply: "សូមរង់ចាំការឆ្លើយតប មុនផ្ញើសារបន្ថែម",
+    waitNextDayOrReply: "សូមរង់ចាំការឆ្លើយតប ឬថ្ងៃថ្មី",
     messagesUnavailable: "មិនអាចផ្ញើសារបានទេ",
     comingSoon: "នឹងមកដល់ឆាប់ៗ",
     searchMessages: "ស្វែងរកសារ",
@@ -459,6 +463,8 @@ registerTranslationNamespace('chatRoomPage', {
     replyPlaceholder: "写回复...",
     messagePlaceholder: "写消息...",
     waitingApproval: "等待请求批准",
+    waitFirstReply: "请等待回复后再发送消息",
+    waitNextDayOrReply: "请等待回复或第二天再发送",
     messagesUnavailable: "消息不可用",
     comingSoon: "即将推出",
     searchMessages: "搜索消息",
@@ -594,6 +600,8 @@ registerTranslationNamespace('chatRoomPage', {
     replyPlaceholder: "返信を書く...",
     messagePlaceholder: "メッセージを書く...",
     waitingApproval: "リクエストの承認待ち",
+    waitFirstReply: "返信があるまでお待ちください",
+    waitNextDayOrReply: "返信か翌日までお待ちください",
     messagesUnavailable: "メッセージは利用できません",
     comingSoon: "近日公開",
     searchMessages: "メッセージを検索",
@@ -729,6 +737,8 @@ registerTranslationNamespace('chatRoomPage', {
     replyPlaceholder: "답장 작성...",
     messagePlaceholder: "메시지 작성...",
     waitingApproval: "요청 승인 대기 중",
+    waitFirstReply: "답장을 받은 후 추가 메시지를 보내세요",
+    waitNextDayOrReply: "답장 또는 다음 날까지 기다려 주세요",
     messagesUnavailable: "메시지를 사용할 수 없습니다",
     comingSoon: "곧 제공 예정",
     searchMessages: "메시지 검색",
@@ -2133,10 +2143,18 @@ export default function ChatRoomPage() {
           Array.isArray(data.messages)
             ? data.messages
             : []
+        const clearedAt = Math.max(
+          new Date(roomConversation?.cleared_at || 0).getTime() || 0,
+          new Date(roomConversation?.cleared_for_all_at || 0).getTime() || 0
+        )
+        const visibleMessages = incomingMessages.filter(
+          (item) =>
+            !clearedAt || new Date(item.created_at).getTime() > clearedAt
+        )
 
         pollCursorRef.current =
           getLatestMessageCursor(
-            incomingMessages,
+            visibleMessages,
             roomConversation?.last_message_at ||
               roomConversation?.created_at ||
               pollCursorRef.current
@@ -2179,7 +2197,10 @@ export default function ChatRoomPage() {
 
           setPins(
             Array.isArray(pinData.pins)
-              ? pinData.pins
+              ? pinData.pins.filter((pin) =>
+                  !clearedAt ||
+                  new Date(pin.message?.created_at || 0).getTime() > clearedAt
+                )
               : []
           )
         }
@@ -2192,13 +2213,15 @@ export default function ChatRoomPage() {
 
           setMessages((current) =>
             mergeMessages(
-              current,
-              incomingMessages
+              current.filter((item) =>
+                !clearedAt || new Date(item.created_at).getTime() > clearedAt
+              ),
+              visibleMessages
             )
           )
         } else {
           shouldScrollBottomRef.current = true
-          setMessages(incomingMessages)
+          setMessages(visibleMessages)
           setNextBefore(
             data.next_before || null
           )
@@ -2762,9 +2785,6 @@ export default function ChatRoomPage() {
           )
 
           setConversation((current) => {
-            if (
-              !current ||
-          setConversation((current) => {
             if (!current || !current.chat_send_limit_mode) {
               return current
             }
@@ -2803,6 +2823,12 @@ export default function ChatRoomPage() {
       notifyChatUpdated()
       await loadRoom({ silent: true })
     } catch (sendError) {
+      if (
+        sendError.code === 'FIRST_REPLY_5_MESSAGE_LIMIT' ||
+        sendError.code === 'DAILY_UNANSWERED_20_MESSAGE_LIMIT'
+      ) {
+        await loadRoom({ silent: true })
+      }
       setError(
         sendError.message ||
           getDisplayText('chatRoomPage.failedSend')
