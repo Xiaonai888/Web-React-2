@@ -53,7 +53,7 @@ import {
 } from '../components/common/ProfessionalPostContent'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
-import DiscoverAuthorStorePromotionSection from '../components/discover/DiscoverAuthorStorePromotionSection'
+import DiscoverAuthorStorePromotionSection from '../components/discover/DiscoverSmartPdfPromotionSection'
 import { traceRequestOrigin } from '../utils/requestOriginDiagnostics'
 
 function discoverFetch(input, init, trigger = 'unknown') {
