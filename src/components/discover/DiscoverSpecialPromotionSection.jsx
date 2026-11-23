@@ -147,12 +147,12 @@ function savePurchasedPromotionIds(rotationKey, ids) {
 }
 
 function readCachedRotation() {
-  return getSmartPromotionCache(getStoryLanguageId())
+  return getSmartPromotionCache(getStoryLanguageId(), 'discover')
 }
 
 async function loadActivePromotions(force = false) {
   const language = getStoryLanguageId()
-  const result = await loadSmartPromotionShelf({ force, language })
+  const result = await loadSmartPromotionShelf({ force, language, placement: 'discover' })
   return getStoryLanguageId() === language ? result : null
 }
 
