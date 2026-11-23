@@ -1,7 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  getHomeCacheKey,
+  loadHomeCache,
+  saveHomeCache,
+} from '../../utils/homeDataCache'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://shadow-backend-kucw.onrender.com'
+
+const ROMANCE_LATEST_CACHE_MS = 30 * 60 * 1000
+
+const ROMANCE_LATEST_CACHE_KEY = getHomeCacheKey({
+  section: 'stories',
+  language: 'all',
+  params: {
+    page: 'romance-latest-cards',
+    genre: 'Romance',
+    sort: 'latest',
+    limit: 48,
+    schema: 1,
+  },
+})
 
 function getTime(value) {
   const time = new Date(value || 0).getTime()
@@ -64,31 +83,67 @@ export default function RomanceLatestPage() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  async function loadStories() {
+  async function loadStories({ force = false } = {}) {
+    let hasCached = false
+
     try {
       setLoading(true)
       setMessage('')
 
-      const response = await fetch(`${API_URL}/api/public/stories?genre=Romance&limit=48&sort=latest`)
+      if (!force) {
+        const cached = await loadHomeCache(
+          ROMANCE_LATEST_CACHE_KEY,
+          {
+            maxAgeMs: ROMANCE_LATEST_CACHE_MS,
+            allowExpired: true,
+          }
+        )
+
+        if (Array.isArray(cached?.data)) {
+          hasCached = true
+          setStories(cached.data)
+          setLoading(false)
+
+          if (cached.isFresh) return
+        }
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/public/stories?genre=Romance&limit=48&sort=latest&view=card`
+      )
+
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok || data.ok === false) {
-        throw new Error(data.message || 'Failed to load romance stories')
+        throw new Error(
+          data.message || 'Failed to load romance stories'
+        )
       }
 
-      const list = (data.stories || [])
+      const list = (Array.isArray(data.stories) ? data.stories : [])
         .filter(isRomanceStory)
         .map(normalizeStory)
 
       setStories(list)
+
+      saveHomeCache(
+        ROMANCE_LATEST_CACHE_KEY,
+        list,
+        { maxAgeMs: ROMANCE_LATEST_CACHE_MS }
+      ).catch(() => {})
     } catch (error) {
-      setStories([])
-      setMessage(error.message === 'Failed to fetch' ? 'Cannot connect to server.' : error.message || 'Failed to load romance stories')
+      if (!hasCached) {
+        setStories([])
+        setMessage(
+          error.message === 'Failed to fetch'
+            ? 'Cannot connect to server.'
+            : error.message || 'Failed to load romance stories'
+        )
+      }
     } finally {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadStories()
   }, [])
@@ -123,7 +178,7 @@ export default function RomanceLatestPage() {
             <p className="text-[13px] font-medium text-[#e5484d]">{message}</p>
             <button
               type="button"
-              onClick={loadStories}
+              onClick={() => loadStories({ force: true })}
               className="mt-4 rounded-full bg-[#111827] px-5 py-2.5 text-[13px] font-bold text-white active:scale-95"
             >
               Retry
