@@ -444,9 +444,16 @@ function currentPendingAuthorPayment() {
     const order = saved?.order
     const createdAt = Date.parse(saved?.created_at || '')
     if (!order?.order_id || !Number.isFinite(createdAt)) return null
-    if (Date.now() - createdAt > PAYMENT_CHECK_MAX_AGE_MS) return null
-    if (localStorage.getItem(PAYMENT_SUCCESS_SEEN_KEY) === String(order.order_id)) return null
-    return order
+if (Date.now() - createdAt > PAYMENT_CHECK_MAX_AGE_MS) return null
+if (localStorage.getItem(PAYMENT_SUCCESS_SEEN_KEY) === String(order.order_id)) return null
+
+const expiresAt = Date.parse(order.expires_at || '')
+
+if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+  return null
+}
+
+return order
   } catch {
     return null
   }
@@ -457,6 +464,16 @@ function getPaymentQrImage(order) {
   if (!raw) return ''
   if (/^data:image\/png;base64,/i.test(raw) || /^https:\/\//i.test(raw)) return raw
   if (/^[A-Za-z0-9+/=\s]+$/.test(raw)) return `data:image/png;base64,${raw.replace(/\s/g, '')}`
+  return ''
+}
+function getPaywayOpenUrl(order) {
+  const deeplink = String(order?.deeplink || '').trim()
+  const checkoutUrl = String(order?.checkout_url || '').trim()
+
+  if (/^abamobilebank:\/\//i.test(deeplink)) return deeplink
+  if (/^https:\/\//i.test(deeplink)) return deeplink
+  if (/^https:\/\//i.test(checkoutUrl)) return checkoutUrl
+
   return ''
 }
 
@@ -1432,11 +1449,35 @@ useEffect(() => {
 }
 
   if (!items.length) {
-    setMessage(t('authorCheckout.cartEmpty'))
-    return
+  setMessage(t('authorCheckout.cartEmpty'))
+  return
+}
+
+const firstAuthor = latestItems[0]
+const firstAuthorId = String(firstAuthor.author_page_id || '').trim()
+const firstUsername = String(firstAuthor.author_page_username || '').trim().toLowerCase()
+
+const differentAuthors = latestItems.some((item) => {
+  const authorId = String(item.author_page_id || '').trim()
+  const username = String(item.author_page_username || '').trim().toLowerCase()
+
+  if (firstAuthorId && authorId) {
+    return firstAuthorId !== authorId
   }
 
-  if (needsDelivery && !deliveryReady) {
+  return username !== firstUsername
+})
+
+const mixedProductTypes =
+  latestItems.some(isPdfCheckoutItem) &&
+  latestItems.some((item) => !isPdfCheckoutItem(item))
+
+if (differentAuthors || mixedProductTypes) {
+  setMessage(checkoutFixCopy.cart)
+  return
+}
+
+if (needsDelivery && !deliveryReady) {
     setMessage(deliveryLoadError || deliveryCopy.error)
     return
   }
@@ -1464,36 +1505,61 @@ useEffect(() => {
         let countryTicket = null
 
     if (needsDelivery) {
-      const countrySettings = await loadCountrySettings()
+  const settings = await loadCountrySettings({ force: true })
 
-      if (countrySettings?.countryPolicyEnabled === true) {
-        if (
-          countrySettings.countryVerified !== true ||
-          countrySettings.country !== 'KH' ||
-          getCountryFeature(countrySettings, 'physicalBooks', false) !== true ||
-          getCountryFeature(countrySettings, 'payway', false) !== true
-        ) {
-          throw new Error(t('authorCheckout.failedContinuePayment'))
-        }
+  if (settings?.countryVerified !== true) {
+    throw new Error(checkoutFixCopy.physical)
+  }
 
-        countryTicket = await getPaymentCountryTicket()
+  const physicalAllowed =
+    settings.country === 'KH' ||
+    (
+      settings.countryPolicyEnabled === true &&
+      settings.hasException === true &&
+      getCountryFeature(settings, 'physicalBooks', false) === true
+    )
 
-        if (!countryTicket) {
-          throw new Error(t('authorCheckout.failedContinuePayment'))
-        }
-      }
+  if (!physicalAllowed) {
+    throw new Error(checkoutFixCopy.physical)
+  }
+
+  if (settings.countryPolicyEnabled === true) {
+    if (
+      getCountryFeature(settings, 'physicalBooks', false) !== true ||
+      getCountryFeature(settings, 'payway', false) !== true
+    ) {
+      throw new Error(checkoutFixCopy.physical)
     }
-    if (!needsDelivery) {
-      const rules = await loadCountrySettings({ force: true })
-      if (!methodAvailability.ready || getCountryFeature(rules,
-        paymentMethod === 'binance' ? 'pdfBinancePay' : 'pdfPayway', false) !== true) {
-        throw new Error(t('authorCheckout.pdf_binanceUnavailable'))
-      }
-      if (rules?.countryPolicyEnabled === true) {
-        countryTicket = await getPaymentCountryTicket()
-        if (!countryTicket) throw new Error(t('authorCheckout.failedContinuePayment'))
-      }
+
+    countryTicket = await getPaymentCountryTicket()
+    if (!countryTicket) {
+      throw new Error(t('authorCheckout.failedContinuePayment'))
     }
+  }
+}
+
+if (!needsDelivery) {
+  const rules = await loadCountrySettings({ force: true })
+
+  const feature = paymentMethod === 'binance'
+    ? 'pdfBinancePay'
+    : 'pdfPayway'
+
+  if (
+    rules?.countryVerified !== true ||
+    getCountryFeature(rules, feature, false) !== true
+  ) {
+    throw new Error(checkoutFixCopy.methods)
+  }
+
+  if (rules.countryPolicyEnabled === true) {
+    countryTicket = await getPaymentCountryTicket()
+
+    if (!countryTicket) {
+      throw new Error(t('authorCheckout.failedContinuePayment'))
+    }
+  }
+}
     if (needsDelivery) {
       const savedProfile = await saveBuyerProfile(profile)
       setBuyerProfile(current => ({ ...current, ...savedProfile }))
@@ -1628,27 +1694,21 @@ useEffect(() => {
       })
     )
 
-    if (useBinance) {
-      setPaymentClock(Date.now())
-      setPaymentModal(nextOrder)
-      setPaymentMessage('')
-    } else {
-      const paywayUrl = String(
-        nextOrder.checkout_url || nextOrder.deeplink || ''
-      ).trim()
+    setPaymentClock(Date.now())
+setPaymentModal(nextOrder)
 
-      if (
-        /^https:\/\//i.test(paywayUrl) ||
-        /^abamobilebank:\/\//i.test(paywayUrl)
-      ) {
-        window.location.assign(paywayUrl)
-        navigationStarted = true
-      } else {
-        setPaymentClock(Date.now())
-        setPaymentModal(nextOrder)
-        setPaymentMessage(nextOrder.qr_image ? '' : pdfCopy.unavailable)
-      }
-    }
+if (useBinance) {
+  setPaymentMessage('')
+} else {
+  const hasPaymentOption = Boolean(
+    getPaymentQrImage(nextOrder) ||
+    getPaywayOpenUrl(nextOrder)
+  )
+
+  setPaymentMessage(
+    hasPaymentOption ? '' : pdfCopy.unavailable
+  )
+}
   } catch (error) {
     setMessage(error.message || t('authorCheckout.failedContinuePayment'))
   } finally {
@@ -1851,8 +1911,29 @@ useEffect(() => {
                 </button> : null}
               </div>
 
-              {methodAvailability.ready && !methodAvailability.aba && !methodAvailability.binance ?
-                <p className="text-[12px] text-red-600">{t('authorCheckout.pdf_binanceUnavailable')}</p> : null}
+              {!methodAvailability.ready ? (
+  <p role="status" className="text-[12px] text-[var(--shadow-text-secondary)]">
+    {t('authorCheckout.checkingPayment')}
+  </p>
+) : null}
+
+{methodAvailability.ready &&
+ !methodAvailability.aba &&
+ !methodAvailability.binance ? (
+  <div role="alert" className="space-y-2">
+    <p className="text-[12px] text-red-600 dark:text-red-300">
+      {checkoutFixCopy.methods}
+    </p>
+
+    <button
+      type="button"
+      onClick={() => { void refreshPdfMethods() }}
+      className="rounded-xl border border-[var(--shadow-border)] px-4 py-2 text-[12px] font-medium text-[var(--shadow-text-primary)]"
+    >
+      {deliveryCopy.retry}
+    </button>
+  </div>
+) : null}
               {paymentMethod === 'binance' && methodAvailability.binance ? <div className="text-[12px] font-bold text-emerald-700">
                 {t('authorCheckout.pdf_binanceBonus')}<div className="text-[#9a7000]">{t('authorCheckout.pdf_binancePrice')}: {(total + 1).toFixed(2)} USDT</div>
               </div> : null}
