@@ -1,0 +1,37 @@
+name: Smart PDF Shelf Validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/services/smartPdfPromotionCart.js'
+      - 'src/components/promotions/SmartPdfStoreShelf.jsx'
+      - 'src/tests/smartPdfPromotionCart.test.mjs'
+      - '.github/workflows/smart-pdf-shelf-check.yml'
+  pull_request:
+    paths:
+      - 'src/services/smartPdfPromotionCart.js'
+      - 'src/components/promotions/SmartPdfStoreShelf.jsx'
+      - 'src/tests/smartPdfPromotionCart.test.mjs'
+      - '.github/workflows/smart-pdf-shelf-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-shelf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript and test promotion checkout
+        run: |
+          node --check src/services/smartPdfPromotionCart.js
+          node --check src/tests/smartPdfPromotionCart.test.mjs
+          node --test src/tests/smartPdfPromotionCart.test.mjs
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify React build
+        run: npm run build
