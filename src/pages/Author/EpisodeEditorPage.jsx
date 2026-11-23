@@ -198,6 +198,7 @@ registerTranslationNamespace('episodeEditor', {
     mangaDraftHelp: "Drafts may be saved without pages. Add at least {{count}} pages before continuing to Publish.",
     mangaReady: "Manga pages are ready. Use the arrows to confirm their reading order.",
     dropOrAddManga: "Drop or Add Manga Pages",
+    chooseMangaImages: "Choose Images",
     uploadingPages: "Uploading pages...",
     insertImage: "Insert image",
     aiSpace: "AI Space",
@@ -394,6 +395,7 @@ registerTranslationNamespace('episodeEditor', {
     mangaDraftHelp: "អាចរក្សាទុកព្រាងដោយគ្មានទំព័រ។ បន្ថែមយ៉ាងតិច {{count}} ទំព័រមុនបោះផ្សាយ។",
     mangaReady: "ទំព័រ Manga រួចរាល់។ ប្រើព្រួញដើម្បីផ្ទៀងលំដាប់អាន។",
     dropOrAddManga: "ទម្លាក់ ឬបន្ថែមទំព័រ Manga",
+    chooseMangaImages: "ជ្រើសរូបភាព",
     uploadingPages: "កំពុងអាប់ឡូដទំព័រ...",
     insertImage: "បញ្ចូលរូបភាព",
     aiSpace: "AI Space",
@@ -590,6 +592,7 @@ registerTranslationNamespace('episodeEditor', {
     mangaDraftHelp: "草稿可以不含页面。发布前至少添加 {{count}} 页。",
     mangaReady: "Manga 页面已准备好，请使用箭头确认阅读顺序。",
     dropOrAddManga: "拖入或添加 Manga 页面",
+    chooseMangaImages: "选择图片",
     uploadingPages: "正在上传页面...",
     insertImage: "插入图片",
     aiSpace: "AI 空间",
@@ -786,6 +789,7 @@ registerTranslationNamespace('episodeEditor', {
     mangaDraftHelp: "下書きはページなしでも保存できます。公開前に最低 {{count}} ページ追加してください。",
     mangaReady: "Manga ページの準備ができました。矢印で読む順番を確認してください。",
     dropOrAddManga: "Manga ページをドロップまたは追加",
+    chooseMangaImages: "画像を選択",
     uploadingPages: "ページをアップロード中...",
     insertImage: "画像を挿入",
     aiSpace: "AI スペース",
@@ -982,6 +986,7 @@ registerTranslationNamespace('episodeEditor', {
     mangaDraftHelp: "페이지 없이도 초안을 저장할 수 있습니다. 게시 전 최소 {{count}}페이지를 추가하세요.",
     mangaReady: "Manga 페이지가 준비되었습니다. 화살표로 읽기 순서를 확인하세요.",
     dropOrAddManga: "Manga 페이지 놓기 또는 추가",
+    chooseMangaImages: "이미지 선택",
     uploadingPages: "페이지 업로드 중...",
     insertImage: "이미지 삽입",
     aiSpace: "AI 공간",
@@ -6680,7 +6685,7 @@ releaseOption={releaseOption}
                       {getDisplayText('episodeEditor.mangaPickHelp')}
                     </p>
                   </div>
-                  <div className="shrink-0 rounded-full bg-[#fff1f1] px-3 py-1.5 text-[11px] font-extrabold text-[#e5484d]">
+                  <div className="shrink-0 rounded-full bg-[var(--shadow-bg-soft)] px-3 py-1.5 text-[11px] font-semibold text-[var(--shadow-text-secondary)]">
                     {completedMangaPages.length}/{MANGA_MAX_PAGES}
                   </div>
                 </div>
@@ -6693,21 +6698,33 @@ releaseOption={releaseOption}
                   label={getDisplayText('episodeEditor.dropMangaPages')}
                 >
                   <label
-                    className={`flex min-h-[120px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] text-center ${
+                    className={`flex min-h-[190px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-4 py-6 text-center ${
                       mangaUploadPending || mangaPages.length >= MANGA_MAX_PAGES
                         ? 'pointer-events-none opacity-55'
                         : 'cursor-pointer'
                     }`}
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
-                      <i className="fa-solid fa-images text-[17px]" />
-                    </div>
-                    <div className="mt-3 text-[13px] font-extrabold text-[var(--shadow-text-primary)]">
-                     {mangaUploadPending ? (
-  <><MangaSmoothUploadPercent percent={mangaTransferPercent(mangaPages)} /> {getDisplayText('episodeEditor.uploadingPages')}</>
-) : getDisplayText('episodeEditor.dropOrAddManga')}
-                    </div>
-                    <div className="mt-1 text-[11px] text-[var(--shadow-text-tertiary)]">{getDisplayText('episodeEditor.mangaFileTypes')}</div>
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] shadow-sm ring-1 ring-[var(--shadow-border)]">
+                      <i className="fa-solid fa-images text-[20px]" />
+                    </span>
+
+                    <span className="mt-3 text-[13px] font-semibold text-[var(--shadow-text-primary)]">
+                      {mangaUploadPending ? (
+                        <>
+                          <MangaSmoothUploadPercent percent={mangaTransferPercent(mangaPages)} />{' '}
+                          {getDisplayText('episodeEditor.uploadingPages')}
+                        </>
+                      ) : getDisplayText('episodeEditor.dropOrAddManga')}
+                    </span>
+
+                    <span className="mt-1 text-[11px] leading-4 text-[var(--shadow-text-tertiary)]">
+                      {getDisplayText('episodeEditor.mangaFileTypes')}
+                    </span>
+
+                    <span className="mt-3 inline-flex min-h-8 items-center justify-center rounded-[10px] bg-[var(--shadow-bg-surface)] px-4 py-1.5 text-[12px] font-semibold text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
+                      {getDisplayText('episodeEditor.chooseMangaImages')}
+                    </span>
+
                     <input
                       type="file"
                       accept="image/*,.heic,.heif"
@@ -6720,7 +6737,7 @@ releaseOption={releaseOption}
                       }}
                     />
                   </label>
-                     </ImageDropZone>
+                </ImageDropZone>
                 <MangaUploadInlineStatus pages={mangaPages} />
 
                 {mangaPages.length ? (
@@ -6740,17 +6757,39 @@ releaseOption={releaseOption}
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-[18px] bg-[#fff7df] px-4 py-3 text-[12px] font-bold leading-5 text-[#a56a00]">
-                    {getDisplayText('episodeEditor.mangaDraftHelp', {
-                      count: MANGA_MIN_PUBLISH_PAGES.toLocaleString(getDisplayLanguageId()),
-                    })}
+                  <div className="mt-4 flex items-start gap-2 px-1 text-[12px] leading-5 text-[var(--shadow-text-secondary)]">
+                    <i className="fa-solid fa-circle-info mt-1 shrink-0 text-[12px] text-[var(--shadow-text-tertiary)]" />
+                    <span>
+                      {getDisplayText('episodeEditor.mangaDraftHelp', {
+                        count: MANGA_MIN_PUBLISH_PAGES.toLocaleString(getDisplayLanguageId()),
+                      })}
+                    </span>
                   </div>
                 )}
 
                 {warningText ? (
-                  <div className="mt-4 rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[12px] font-bold leading-5 text-[var(--shadow-text-secondary)]">
-  {warningText}
-</div>
+                  <div className="mt-4 rounded-[16px] bg-[var(--shadow-bg-soft)] px-4 py-3 text-[12px] font-medium leading-5 text-[var(--shadow-text-secondary)]">
+                    {warningText}
+                    {completedMangaPages.length < MANGA_MIN_PUBLISH_PAGES &&
+                    !mangaUploadPending &&
+                    mangaErrorCount === 0 ? (
+                      <div
+                        className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--shadow-border)]"
+                        role="progressbar"
+                        aria-label={getDisplayText('episodeEditor.mangaPages')}
+                        aria-valuemin={0}
+                        aria-valuemax={MANGA_MIN_PUBLISH_PAGES}
+                        aria-valuenow={completedMangaPages.length}
+                      >
+                        <div
+                          className="h-full rounded-full bg-[var(--shadow-text-primary)] transition-[width] duration-200"
+                          style={{
+                            width: `${Math.min(100, (completedMangaPages.length / MANGA_MIN_PUBLISH_PAGES) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
                 ) : (
                   <div className="mt-4 rounded-[16px] bg-[#ecfdf3] px-4 py-3 text-[12px] font-bold leading-5 text-[#16803c]">
                     {getDisplayText('episodeEditor.mangaReady')}
