@@ -18,7 +18,8 @@ export default function PromotionShelves() {
   const mountedRef = useRef(false)
 
   const load = useCallback(async (kind, force = false) => {
-    const selectedLanguage = getStoryLanguageId()
+  if (kind === 'store') return
+  const selectedLanguage = getStoryLanguageId()
     if (kind === 'store' && selectedLanguage !== 'km') {
       if (mountedRef.current && languageRef.current === selectedLanguage) {
         storeRef.current = null
@@ -111,13 +112,7 @@ export default function PromotionShelves() {
         remainingSeconds={storyRemaining}
         onStale={refreshStory}
       />
-      {language === 'km' ? (
-        <StorePromotionShelf
-          key={`store-${language}`}
-          rotation={storeRotation}
-          remainingSeconds={storeRemaining}
-        />
-      ) : null}
+      <SmartPdfStoreShelf key={`store-${language}`} />
     </div>
   )
 }
