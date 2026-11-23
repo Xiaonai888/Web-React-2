@@ -410,6 +410,33 @@ const PDF_CHECKOUT_COPY = Object.freeze({
     unavailable: '이 주문에 연결된 안전한 결제 링크가 없습니다.',
   },
 })
+const CHECKOUT_FIX_COPY = {
+  en: {
+    methods: 'PDF payment methods could not be confirmed for your account. Please retry.',
+    cart: 'Please check out products from different authors, or printed books and PDFs, separately.',
+    physical: 'Paper book payment is available in Cambodia or with an eligible country exception only.',
+  },
+  km: {
+    methods: 'មិនអាចផ្ទៀងផ្ទាត់វិធីបង់ប្រាក់ PDF សម្រាប់គណនីនេះបានទេ។ សូមព្យាយាមម្ដងទៀត។',
+    cart: 'សូមបង់ប្រាក់ដាច់ដោយឡែក សម្រាប់អ្នកនិពន្ធផ្សេងគ្នា ឬសៀវភៅក្រដាស និង PDF។',
+    physical: 'ការទូទាត់សៀវភៅក្រដាសអាចធ្វើបានតែនៅកម្ពុជា ឬគណនីដែលមានសិទ្ធិពិសេសប៉ុណ្ណោះ។',
+  },
+  zh: {
+    methods: '无法确认此账户可用的 PDF 付款方式，请重试。',
+    cart: '不同作者的商品以及纸质书和 PDF 请分别结账。',
+    physical: '纸质书仅限柬埔寨或获得特别授权的账户购买。',
+  },
+  ja: {
+    methods: 'PDF の支払い方法を確認できません。再試行してください。',
+    cart: '異なる作者の商品、紙の本と PDF は別々に決済してください。',
+    physical: '紙の本はカンボジアまたは特別に許可されたアカウントのみ購入できます。',
+  },
+  ko: {
+    methods: 'PDF 결제 수단을 확인할 수 없습니다. 다시 시도해 주세요.',
+    cart: '다른 작가의 상품 및 종이책과 PDF는 별도로 결제해 주세요.',
+    physical: '종이책은 캄보디아 또는 특별 허용된 계정에서만 구매할 수 있습니다.',
+  },
+}
 
 function currentPendingAuthorPayment() {
   try {
@@ -826,6 +853,7 @@ export default function AuthorCheckoutPage() {
   const location = useLocation()
   const { t } = useDisplayTranslation()
   const pdfCopy = PDF_CHECKOUT_COPY[getDisplayLanguageId()] || PDF_CHECKOUT_COPY.en
+  const checkoutFixCopy = CHECKOUT_FIX_COPY[getDisplayLanguageId()] || CHECKOUT_FIX_COPY.en
   const [items, setItems] = useState(getCartItems)
   const promotionExpired = useDiscoverPromotionExpiry(items)
   const [buyerProfile, setBuyerProfile] = useState(getBuyerProfile)
@@ -857,22 +885,54 @@ export default function AuthorCheckoutPage() {
   const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentClock, setPaymentClock] = useState(Date.now())
   const [paymentMethod, setPaymentMethod] = useState('aba')
-  const [methodAvailability, setMethodAvailability] = useState({ aba: false, binance: false, ready: false })
-  const [binanceProfileOpen, setBinanceProfileOpen] = useState(false)
+  const [methodAvailability, setMethodAvailability] = useState({
+  aba: false,
+  binance: false,
+  ready: false,
+})
+const [binanceProfileOpen, setBinanceProfileOpen] = useState(false)
+const methodRequestRef = useRef(0)
 
-  useEffect(() => {
-    let active = true
-    void loadCountrySettings({ force: true }).then((settings) => {
-      if (!active) return
-      const aba = getCountryFeature(settings, 'pdfPayway', false) === true
-      const binance = getCountryFeature(settings, 'pdfBinancePay', false) === true
-      setMethodAvailability({ aba, binance, ready: true })
-      if (!aba && binance) setPaymentMethod('binance')
-    }).catch(() => {
-      if (active) setMethodAvailability({ aba: false, binance: false, ready: true })
-    })
-    return () => { active = false }
-  }, [])
+async function refreshPdfMethods() {
+  const requestId = ++methodRequestRef.current
+
+  setMethodAvailability({
+    aba: false,
+    binance: false,
+    ready: false,
+  })
+
+  const settings = await loadCountrySettings({ force: true }).catch(() => null)
+
+  if (requestId !== methodRequestRef.current) return
+
+  const verified = settings?.countryVerified === true
+  const aba = verified &&
+    getCountryFeature(settings, 'pdfPayway', false) === true
+  const binance = verified &&
+    getCountryFeature(settings, 'pdfBinancePay', false) === true
+
+  setMethodAvailability({
+    aba,
+    binance,
+    ready: true,
+  })
+
+  setPaymentMethod((current) => {
+    if (current === 'aba' && aba) return 'aba'
+    if (current === 'binance' && binance) return 'binance'
+    if (aba) return 'aba'
+    if (binance) return 'binance'
+    return 'aba'
+  })
+}
+
+useEffect(() => {
+  void refreshPdfMethods()
+  return () => {
+    methodRequestRef.current += 1
+  }
+}, [])
 
   useEffect(() => {
     const syncCart = () => {
@@ -1730,15 +1790,25 @@ export default function AuthorCheckoutPage() {
                   <div className="mt-5 flex items-end justify-between gap-3">
                     <div className="text-[14px] font-black text-[#e5484d]">{isExpiredDiscoverPromotion(item) ? '—' : money(Number(item.price_value || 0) * Number(item.quantity || 1))}</div>
                     <div className="flex items-center gap-2">
-                      <button type="button" aria-label={t('authorCheckout.decreaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)]">
-                        disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) <= 1}
-                        <i className="fa-solid fa-minus text-[11px]" />
-                      </button>
+                      <button
+  type="button"
+  aria-label={t('authorCheckout.decreaseQuantity')}
+  onClick={() => updateQuantity(item.id, Number(item.quantity || 1) - 1)}
+  disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) <= 1}
+  className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] disabled:opacity-40"
+>
+  <i className="fa-solid fa-minus text-[11px]" />
+</button>
                       <span className="w-5 text-center text-[13px] font-black text-[var(--shadow-text-primary)]">{number(item.quantity || 1)}</span>
-                      <button type="button" aria-label={t('authorCheckout.increaseQuantity')} onClick={() => updateQuantity(item.id, Number(item.quantity || 1) + 1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)]">
-                        disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) >= 99}
-                        <i className="fa-solid fa-plus text-[11px]" />
-                      </button>
+                      <button
+  type="button"
+  aria-label={t('authorCheckout.increaseQuantity')}
+  onClick={() => updateQuantity(item.id, Number(item.quantity || 1) + 1)}
+  disabled={isPdfCheckoutItem(item) || Number(item.quantity || 1) >= 99}
+  className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-text-primary)] text-[var(--shadow-bg-surface)] disabled:opacity-40"
+>
+  <i className="fa-solid fa-plus text-[11px]" />
+</button>
                     </div>
                   </div>
                 </div>
