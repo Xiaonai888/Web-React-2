@@ -314,3 +314,34 @@ A new page is NOT complete if:
 - Compare the complete old/new diff, keep existing functions intact, and run available build and relevant tests. Confirm the latest CodeQL analysis has run against the new commit before declaring the issue closed.
 - CodeQL's 0 Open status does not mean that every possible vulnerability has been found. Retain automated scanning and periodically review dependencies and access controls.
 
+
+## Safe Maintenance & Security Update Standard
+
+- Verify the actual problem before modifying code. Automated alerts and audit warnings are not automatically proof of production defects.
+- Verify dependency vulnerabilities against installed versions, official advisories, actual usage, exploit conditions, and production exposure.
+- Prioritize confirmed security risks and necessary improvements. Document the reason for deferring any valid security alert.
+- Inspect affected files, direct dependencies, shared components, API contracts, and related consumers before editing.
+- Apply the smallest effective change. Complete related fixes together without expanding into unrelated functionality.
+- Preserve existing features, UI, translations, Dark Mode, routing, caching, authentication, and business rules.
+- Prefer compatible security patches. Major dependency upgrades require compatibility review and explicit approval.
+- Never blindly merge Dependabot updates or run forced audit fixes.
+- Keep package.json and package-lock.json synchronized.
+- Do not introduce unnecessary dependencies, API requests, polling, database queries, or infrastructure costs.
+- Do not replace working systems or refactor unrelated code without a demonstrated need.
+- Never weaken security controls or dismiss valid alerts merely to reduce alert counts.
+- Verify affected functionality, relevant audits, and production build before deployment.
+- Report actual test results, remaining risks, and rollback requirements.
+- Stop and report uncertainty when required source code or verification is unavailable.
+
+## Frontend Regression Protection
+
+- Preserve existing Reader and Author workflows.
+- Protect navigation, lazy imports, deep links, redirects, and page refresh behavior.
+- Preserve login, session handling, and access restrictions.
+- Preserve payment, PDF purchases, episode unlocking, and wallet behavior.
+- Preserve story reading, Manga reading, image uploads, and media playback.
+- Preserve cache behavior and prevent duplicate requests or retry loops.
+- Review all affected consumers before changing shared components or global styles.
+- Keep existing mobile, tablet, desktop, Light Mode, Dark Mode, and display-language compatibility.
+- Run targeted regression checks and the existing production build before marking changes complete.
+- Never deploy unverified changes directly to production.
