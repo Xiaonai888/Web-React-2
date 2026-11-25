@@ -76,7 +76,7 @@ function writeAdvertisementCache(placement, data) {
   pruneAdvertisementCache()
 }
 
-async function fetchAdvertisementData(placement, debug = false) {
+export async function fetchAdvertisementData(placement, debug = false, signal) {
   const key = String(placement || 'opening')
   const url = `${API_URL}/api/advertisements/public?placement=${encodeURIComponent(key)}`
 
@@ -106,8 +106,9 @@ async function fetchAdvertisementData(placement, debug = false) {
 
   const request = (async () => {
     const response = await fetch(url, {
-      cache: debug ? 'no-store' : 'default',
-    })
+  cache: debug ? 'no-store' : 'default',
+  signal,
+})
 
     const data = await response
       .json()
