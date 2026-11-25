@@ -153,45 +153,48 @@ function getPrivateScope(input, init = {}) {
   )
 }
 
-function manifestStorageKey(storyId) {
-  return `${MANIFEST_PREFIX}${encodeURIComponent(
-    normalizeText(storyId)
-  )}`
+function manifestStorageKey(manifestKey) {
+  return `${MANIFEST_PREFIX}${encodeURIComponent(manifestKey)}`
+}
+
+function getManifestKey(storyId, token) {
+  return JSON.stringify([getReaderSessionIdentity(token) || 'anon', normalizeText(storyId)])
+}
+
+export function isReaderEpisodeManifestFresh(data, savedAt, now = Date.now()) {
+  const age = now - Number(savedAt || 0)
+  if (!Number.isFinite(age) || age < 0 || age > MANIFEST_TTL_MS || !savedAt || data?.ok !== true || data.story_is_adult !== false || !Array.isArray(data.episodes)) return false
+  if (data.episodes.some((item) => !item || item.is_adult)) return false
+  const scheduledAt = data.upcoming_episode?.scheduled_at
+  if (scheduledAt && (!Number.isFinite(Date.parse(scheduledAt)) || Date.parse(scheduledAt) <= now)) return false
+  return !data.episodes.some((item) => {
+    if (!item.unlock_expires_at) return false
+    const expiresAt = Date.parse(item.unlock_expires_at)
+    return !Number.isFinite(expiresAt) || expiresAt <= now
+  })
 }
 
 function isFreshManifest(entry) {
-  if (!entry?.data) return false
-
-  const savedAt = Number(
-    entry.savedAt || 0
-  )
-
-  return (
-    savedAt > 0 &&
-    Date.now() - savedAt <=
-      MANIFEST_TTL_MS
-  )
+  return isReaderEpisodeManifestFresh(entry?.data, entry?.savedAt)
 }
 
-function readSessionManifest(storyId) {
-  const key = manifestStorageKey(storyId)
+function rememberManifest(manifestKey, entry) {
+  manifestMemory.delete(manifestKey)
+  manifestMemory.set(manifestKey, entry)
+  while (manifestMemory.size > MANIFEST_MAX_STORIES) {
+    manifestMemory.delete(manifestMemory.keys().next().value)
+  }
+}
 
+function readSessionManifest(manifestKey) {
+  const key = manifestStorageKey(manifestKey)
   try {
-    const raw = sessionStorage.getItem(key)
-    if (!raw) return null
-
-    const entry = JSON.parse(raw)
-
+    const entry = JSON.parse(sessionStorage.getItem(key) || 'null')
     if (!isFreshManifest(entry)) {
       sessionStorage.removeItem(key)
       return null
     }
-
-    manifestMemory.set(
-      normalizeText(storyId),
-      entry
-    )
-
+    rememberManifest(manifestKey, entry)
     return entry
   } catch {
     return null
@@ -201,227 +204,117 @@ function readSessionManifest(storyId) {
 function pruneSessionManifests() {
   try {
     const entries = []
-
-    for (
-      let index = 0;
-      index < sessionStorage.length;
-      index += 1
-    ) {
-      const key =
-        sessionStorage.key(index)
-
-      if (
-        !key ||
-        !key.startsWith(
-          MANIFEST_PREFIX
-        )
-      ) {
+    for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+      const key = sessionStorage.key(index)
+      if (!key) continue
+      if (key.startsWith('shadow_reader_episode_manifest_v2:')) {
+        sessionStorage.removeItem(key)
         continue
       }
-
+      if (!key.startsWith(MANIFEST_PREFIX)) continue
       try {
-        const value = JSON.parse(
-          sessionStorage.getItem(key) ||
-            '{}'
-        )
-
-        entries.push({
-          key,
-          savedAt: Number(
-            value.savedAt || 0
-          ),
-        })
+        const entry = JSON.parse(sessionStorage.getItem(key) || 'null')
+        if (isFreshManifest(entry)) entries.push({ key, savedAt: entry.savedAt })
+        else sessionStorage.removeItem(key)
       } catch {
         sessionStorage.removeItem(key)
       }
     }
-
-    entries
-      .sort(
-        (left, right) =>
-          right.savedAt - left.savedAt
-      )
+    entries.sort((a, b) => b.savedAt - a.savedAt)
       .slice(MANIFEST_MAX_STORIES)
-      .forEach((entry) => {
-        sessionStorage.removeItem(
-          entry.key
-        )
-      })
-  } catch {
-    return
-  }
+      .forEach(({ key }) => sessionStorage.removeItem(key))
+  } catch {}
 }
 
-function saveManifest(storyId, data) {
-  const safeStoryId =
-    normalizeText(storyId)
-
-  if (!safeStoryId || !data) {
-    return
-  }
-
-  const entry = {
-    data,
-    savedAt: Date.now(),
-  }
-
-  manifestMemory.set(
-    safeStoryId,
-    entry
-  )
-
+function saveManifest(manifestKey, data) {
+  const entry = { data, savedAt: Date.now() }
+  if (!isFreshManifest(entry)) return
+  rememberManifest(manifestKey, entry)
   try {
-    sessionStorage.setItem(
-      manifestStorageKey(safeStoryId),
-      JSON.stringify(entry)
-    )
+    sessionStorage.setItem(manifestStorageKey(manifestKey), JSON.stringify(entry))
     pruneSessionManifests()
-  } catch {
-    return
-  }
+  } catch {}
 }
 
-function loadCachedManifest(storyId) {
-  const safeStoryId =
-    normalizeText(storyId)
-
-  const memoryEntry =
-    manifestMemory.get(safeStoryId)
-
-  if (isFreshManifest(memoryEntry)) {
-    return memoryEntry
+function loadCachedManifest(manifestKey) {
+  const entry = manifestMemory.get(manifestKey)
+  if (isFreshManifest(entry)) {
+    rememberManifest(manifestKey, entry)
+    return entry
   }
-
-  if (memoryEntry) {
-    manifestMemory.delete(safeStoryId)
-  }
-
-  return readSessionManifest(
-    safeStoryId
-  )
+  manifestMemory.delete(manifestKey)
+  return readSessionManifest(manifestKey)
 }
 
-function jsonResponse(
-  data,
-  {
-    status = 200,
-    cacheState = 'HIT',
-  } = {}
-) {
-  return new Response(
-    JSON.stringify(data ?? {}),
-    {
-      status,
-      headers: {
-        'Content-Type':
-          'application/json',
-        'X-Shadow-Reader-Cache':
-          cacheState,
-      },
+export function invalidateReaderEpisodeManifest(storyId) {
+  const target = normalizeText(storyId)
+  if (!target) return
+  const matches = (key) => {
+    try { return JSON.parse(key)?.[1] === target } catch { return false }
+  }
+  for (const key of manifestMemory.keys()) {
+    if (matches(key)) manifestMemory.delete(key)
+  }
+  for (const key of manifestRequests.keys()) {
+    if (matches(key)) manifestRequests.delete(key)
+  }
+  try {
+    for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+      const key = sessionStorage.key(index)
+      if (key?.startsWith(MANIFEST_PREFIX) && matches(decodeURIComponent(key.slice(MANIFEST_PREFIX.length)))) {
+        sessionStorage.removeItem(key)
+      }
     }
-  )
+  } catch {}
 }
 
-async function fetchManifest(
-  apiFetch,
-  storyId,
-  input = null,
-  init = {}
-) {
-  const safeStoryId =
-    normalizeText(storyId)
+function jsonResponse(data, { status = 200, cacheState = 'HIT' } = {}) {
+  return new Response(JSON.stringify(data ?? {}), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shadow-Reader-Cache': cacheState,
+    },
+  })
+}
 
+async function fetchManifest(apiFetch, storyId, input = null, init = {}) {
+  const safeStoryId = normalizeText(storyId)
   const token = getRequestReaderToken(input, init)
-  const identity = getReaderSessionIdentity(token)
-  const manifestKey = JSON.stringify([identity || 'anon', safeStoryId])
+  const manifestKey = getManifestKey(safeStoryId, token)
   const cached = loadCachedManifest(manifestKey)
-
-  if (cached) {
-    return {
-      ok: true,
-      data: cached.data,
-      status: 200,
-      source: 'HIT',
-    }
-  }
-
-  if (
-    manifestRequests.has(
-      safeStoryId
-    )
-  ) {
-    return manifestRequests.get(
-      safeStoryId
-    )
-  }
+  if (cached) return { ok: true, data: cached.data, status: 200, source: 'HIT' }
+  const existing = manifestRequests.get(manifestKey)
+  if (existing) return existing
 
   const request = (async () => {
     try {
       const response = await apiFetch(
-        `${API_BASE_URL}/api/public/stories/${encodeURIComponent(
-          safeStoryId
-        )}/episodes`,
-        {
-          headers: getRequestHeaders(input, init),
-          cache: 'no-store',
-        }
+        `${API_BASE_URL}/api/public/stories/${encodeURIComponent(safeStoryId)}/episodes`,
+        { headers: getRequestHeaders(input, init), cache: 'no-store' }
       )
-
-      const data = await response
-        .clone()
-        .json()
-        .catch(() => ({}))
-
-      if (
-        !response.ok ||
-        data.ok === false
-      ) {
-        return {
-          ok: false,
-          data,
-          status: response.status,
-          source: 'NETWORK',
-        }
+      const data = await response.clone().json().catch(() => ({}))
+      if (!response.ok || data.ok !== true) {
+        return { ok: false, data, status: response.status, source: 'NETWORK' }
       }
-
-            if (
-        data.story_is_adult === false &&
-        !data.episodes?.some((item) => item?.is_adult)
-      ) {
-        saveManifest(safeStoryId, data)
+      if (manifestRequests.get(manifestKey) === request && getManifestKey(safeStoryId, getActiveReaderToken()) === manifestKey) {
+        saveManifest(manifestKey, data)
       }
-
-      return {
-        ok: true,
-        data,
-        status: response.status,
-        source: 'NETWORK',
-      }
+      return { ok: true, data, status: response.status, source: 'NETWORK' }
     } catch (error) {
-      return {
-        ok: false,
-        data: {
-          ok: false,
-          message:
-            error?.message ||
-            'Failed to load episodes',
-        },
-        status: 503,
-        source: 'ERROR',
-      }
+      return { ok: false, data: { ok: false, message: error?.message || 'Failed to load episodes' }, status: 503, source: 'ERROR' }
     }
   })()
 
   manifestRequests.set(manifestKey, request)
-
   try {
     return await request
   } finally {
-    manifestRequests.delete(
-      safeStoryId
-    )
+    if (manifestRequests.get(manifestKey) === request) manifestRequests.delete(manifestKey)
   }
 }
+
+
 
 function findManifestEpisode(
   manifest,
