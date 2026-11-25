@@ -1,3 +1,4 @@
+import { createPublicStoriesNavigationFetch } from './publicStoriesNavigationCache'
 import {
   getHomeCacheKey,
   loadHomeCache,
@@ -361,12 +362,15 @@ export function installHomePublicCacheFetch() {
   const apiFetch =
     window.fetch.bind(window)
 
+  const navigationFetch =
+    createPublicStoriesNavigationFetch(apiFetch, API_ORIGIN)
+
   window.fetch = async (
     input,
     init = {}
   ) => {
     if (!isHomeSurface()) {
-      return apiFetch(input, init)
+      return navigationFetch(input, init)
     }
 
     if (
