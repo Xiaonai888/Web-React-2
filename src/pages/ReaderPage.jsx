@@ -1,3 +1,4 @@
+import { invalidateReaderEpisodeManifest, isReaderEpisodeManifestFresh } from '../utils/installReaderEpisodeCacheFetch'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../utils/displayLanguage'
@@ -1097,10 +1098,8 @@ function iosEligibleManifest(data) {
 }
 
 function iosFreshManifest(entry) {
-  const age = Date.now() - Number(entry?.savedAt || 0)
-  return age >= 0 && age <= IOS_MANIFEST_TTL_MS && iosEligibleManifest(entry?.data)
+  return isReaderEpisodeManifestFresh(entry?.data, entry?.savedAt)
 }
-
 function clearIOSManifest(storyId) {
   if (!IOS_READER) return
   const key = iosManifestKey(storyId)
@@ -5967,6 +5966,7 @@ export default function ReaderPage() {
     unlockStatusCacheRef.current.clear()
     unlockStatusRequestRef.current.clear()
     clearIOSManifest(storyId)
+    invalidateReaderEpisodeManifest(storyId)
     navigate(`/story/${storyId}/episode/${targetEpisodeId}`, {
       replace: true,
       state: null,
