@@ -1,3 +1,4 @@
+import { getActiveReaderToken, getReaderSessionIdentity } from './readerActiveAccount'
 import {
   deleteReaderEpisodeCache,
   loadReaderEpisodeCache,
@@ -16,7 +17,7 @@ const API_ORIGIN = new URL(
 const MANIFEST_TTL_MS = 10 * 60 * 1000
 const MANIFEST_MAX_STORIES = 10
 const MANIFEST_PREFIX =
-  'shadow_reader_episode_manifest_v2:'
+  'shadow_reader_episode_manifest_v4:'
 
 const STORY_TYPES = [
   'novel',
@@ -124,16 +125,7 @@ function getRequestReaderToken(input, init = {}) {
     return authorization.slice(7).trim()
   }
 
-  return (
-    sessionStorage.getItem(
-      'shadow_reader_token'
-    ) ||
-    localStorage.getItem(
-      'shadow_reader_token'
-    ) ||
-    ''
-  )
-}
+    return getActiveReaderToken()
 
 function tokenFingerprint(token) {
   const value = normalizeText(token)
@@ -339,8 +331,10 @@ async function fetchManifest(
   const safeStoryId =
     normalizeText(storyId)
 
-  const cached =
-    loadCachedManifest(safeStoryId)
+  const token = getRequestReaderToken(input, init)
+  const identity = getReaderSessionIdentity(token)
+  const manifestKey = JSON.stringify([identity || 'anon', safeStoryId])
+  const cached = loadCachedManifest(manifestKey)
 
   if (cached) {
     return {
@@ -418,10 +412,7 @@ async function fetchManifest(
     }
   })()
 
-  manifestRequests.set(
-    safeStoryId,
-    request
-  )
+  manifestRequests.set(manifestKey, request)
 
   try {
     return await request
@@ -685,6 +676,17 @@ export function installReaderEpisodeCacheFetch() {
       return apiFetch(input, init)
     }
 
+        const token = getRequestReaderToken(input, init)
+    if (token !== getActiveReaderToken()) return apiFetch(input, init)
+    if (token) {
+      try {
+        const claims = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+        if (!getReaderSessionIdentity(token) || !Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now()) return apiFetch(input, init)
+      } catch {
+        return apiFetch(input, init)
+      }
+    }
+
     if (route.type === 'manifest') {
       const result =
         await fetchManifest(
@@ -753,8 +755,8 @@ export function installReaderEpisodeCacheFetch() {
 
     if (manifestEpisode) {
       const isPublic =
-        manifestEpisode.is_locked ===
-        false
+        manifestEpisode.is_locked === false &&
+        manifestEpisode.is_free_published === true
 
       const cached =
         await loadEpisodeFromCache({
@@ -770,7 +772,7 @@ export function installReaderEpisodeCacheFetch() {
               : privateScope,
         })
 
-      if (cached) {
+      if (cached && manifestEpisode.is_locked === false) {
         return jsonResponse(
           cached,
           {
