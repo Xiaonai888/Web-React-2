@@ -21,34 +21,44 @@ jobs:
           cp package.json "$RUNNER_TEMP/package.before.json"
           cp package-lock.json "$RUNNER_TEMP/package-lock.before.json"
           node --input-type=module <<'NODE'
-          import assert from 'node:assert/strict'
+          import { isDeepStrictEqual } from 'node:util'
+          const equal = (actual, expected, label) => {
+            if (isDeepStrictEqual(actual, expected)) return
+            console.error(label, '\nExpected:', JSON.stringify(expected), '\nActual:', JSON.stringify(actual))
+            throw new Error(label)
+          }
           import fs from 'node:fs'
           const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'))
           const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-          assert.equal(lock.packages['node_modules/react-router-dom'].version, '6.30.3')
-          assert.equal(manifest.dependencies['react-router-dom'], lock.packages[''].dependencies['react-router-dom'])
+          equal(lock.packages['node_modules/react-router-dom'].version, '6.30.3', 'Unexpected starting router version')
+          equal(manifest.dependencies['react-router-dom'], lock.packages[''].dependencies['react-router-dom'], 'Manifest and lockfile router ranges differ')
           NODE
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact react-router-dom@6.30.6
       - name: Reject unrelated dependency changes
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import assert from 'node:assert/strict'
+          import { isDeepStrictEqual } from 'node:util'
+          const equal = (actual, expected, label) => {
+            if (isDeepStrictEqual(actual, expected)) return
+            console.error(label, '\nExpected:', JSON.stringify(expected), '\nActual:', JSON.stringify(actual))
+            throw new Error(label)
+          }
           import fs from 'node:fs'
           import path from 'node:path'
           const read = p => JSON.parse(fs.readFileSync(p, 'utf8'))
           const before = read(path.join(process.env.RUNNER_TEMP, 'package.before.json'))
           const after = read('package.json')
           before.dependencies['react-router-dom'] = '6.30.6'
-          assert.deepEqual(after, before)
+          equal(after, before, 'Unexpected package.json change')
           const old = read(path.join(process.env.RUNNER_TEMP, 'package-lock.before.json'))
           const next = read('package-lock.json')
           const allowed = new Set(['node_modules/react-router-dom', 'node_modules/react-router', 'node_modules/@remix-run/router'])
-          assert.equal(next.packages['node_modules/react-router-dom'].version, '6.30.6')
-          assert.equal(next.packages['node_modules/react-router'].version, '6.30.6')
+          equal(next.packages['node_modules/react-router-dom'].version, '6.30.6', 'Unexpected react-router-dom target version')
+          equal(next.packages['node_modules/react-router'].version, '6.30.6', 'Unexpected react-router target version')
           old.packages[''].dependencies['react-router-dom'] = '6.30.6'
           for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
-            if (!allowed.has(key)) assert.deepEqual(next.packages[key], old.packages[key], `Unexpected change: ${key}`)
+            if (!allowed.has(key)) equal(next.packages[key], old.packages[key], `Unexpected change: ${key || "root"}`)
             else if (JSON.stringify(old.packages[key]) !== JSON.stringify(next.packages[key])) console.log(key, old.packages[key]?.version, '->', next.packages[key]?.version)
           }
           NODE
@@ -70,4 +80,20 @@ jobs:
           name: web-router-security-patch
           path: ${{ runner.temp }}/router-patch/
           if-no-files-found: error
+          retention-days: 7
+      - name: Collect failure diagnostics
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/router-diagnostics"
+          git diff -- package.json package-lock.json > "$RUNNER_TEMP/router-diagnostics/changes.patch"
+          node --version > "$RUNNER_TEMP/router-diagnostics/versions.txt"
+          npm --version >> "$RUNNER_TEMP/router-diagnostics/versions.txt"
+      - name: Upload failure diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-router-security-diagnostics
+          path: ${{ runner.temp }}/router-diagnostics/
+          if-no-files-found: warn
           retention-days: 7
