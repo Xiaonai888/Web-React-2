@@ -125,7 +125,8 @@ function getRequestReaderToken(input, init = {}) {
     return authorization.slice(7).trim()
   }
 
-    return getActiveReaderToken()
+  return getActiveReaderToken()
+}
 
 function tokenFingerprint(token) {
   const value = normalizeText(token)
