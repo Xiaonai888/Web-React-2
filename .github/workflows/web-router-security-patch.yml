@@ -15,200 +15,109 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare targeted router update
+      - name: Generate isolated Swiper lock entry
         shell: bash
         run: |
-          cp package.json "$RUNNER_TEMP/package.before.json"
-          cp package-lock.json "$RUNNER_TEMP/package-lock.before.json"
-          node --input-type=module <<'NODE'
-          import { isDeepStrictEqual } from 'node:util'
-          const equal = (actual, expected, label) => {
-            if (isDeepStrictEqual(actual, expected)) return
-            console.error(label, '\nExpected:', JSON.stringify(expected), '\nActual:', JSON.stringify(actual))
-            throw new Error(label)
-          }
-          import fs from 'node:fs'
-          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'))
-          const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-          equal(lock.packages['node_modules/react-router-dom'].version, '6.30.3', 'Unexpected starting router version')
-          equal(manifest.dependencies['react-router-dom'], lock.packages[''].dependencies['react-router-dom'], 'Manifest and lockfile router ranges differ')
-          NODE
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact react-router-dom@6.30.6
-      - name: Reject unrelated dependency changes
+          mkdir -p "$RUNNER_TEMP/swiper-isolated" "$RUNNER_TEMP/swiper-diagnostics"
+          cp package.json "$RUNNER_TEMP/swiper-diagnostics/package.before.json"
+          cp package-lock.json "$RUNNER_TEMP/swiper-diagnostics/package-lock.before.json"
+          cd "$RUNNER_TEMP/swiper-isolated"
+          npm init -y
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact swiper@12.1.2
+      - name: Apply only Swiper update
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import { isDeepStrictEqual } from 'node:util'
-          const equal = (actual, expected, label) => {
-            if (isDeepStrictEqual(actual, expected)) return
-            console.error(label, '\nExpected:', JSON.stringify(expected), '\nActual:', JSON.stringify(actual))
-            throw new Error(label)
-          }
           import fs from 'node:fs'
           import path from 'node:path'
+          import assert from 'node:assert/strict'
           const read = p => JSON.parse(fs.readFileSync(p, 'utf8'))
-          const before = read(path.join(process.env.RUNNER_TEMP, 'package.before.json'))
-          const after = read('package.json')
-          before.dependencies['react-router-dom'] = '6.30.6'
-          equal(after, before, 'Unexpected package.json change')
-          const old = read(path.join(process.env.RUNNER_TEMP, 'package-lock.before.json'))
-          const next = read('package-lock.json')
-          const allowed = new Set(['node_modules/react-router-dom', 'node_modules/react-router', 'node_modules/@remix-run/router'])
-          equal(next.packages['node_modules/react-router-dom'].version, '6.30.6', 'Unexpected react-router-dom target version')
-          equal(next.packages['node_modules/react-router'].version, '6.30.6', 'Unexpected react-router target version')
-          old.packages[''].dependencies['react-router-dom'] = '6.30.6'
-          const rollup = old.packages['node_modules/rollup']
-          const platformPackages = rollup?.optionalDependencies || {}
-          const normalized = []
-          const unexpected = []
-          for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
-            const previous = old.packages[key]
-            const current = next.packages[key]
-            if (allowed.has(key)) {
-              console.log(key, previous?.version, '->', current?.version)
-              continue
-            }
-            if (isDeepStrictEqual(previous, current)) continue
-            const name = key.slice('node_modules/'.length)
-            if (key.startsWith('node_modules/@rollup/rollup-') && Object.hasOwn(platformPackages, name) && previous?.dev === true && previous.optional === true && current?.optional === true) {
-              const restored = { ...current }
-              if (current.dev === undefined || current.dev === false) restored.dev = true
-              if (Object.hasOwn(previous, 'libc') && !Object.hasOwn(current, 'libc')) restored.libc = previous.libc
-              if (isDeepStrictEqual(previous, restored)) {
-                next.packages[key] = previous
-                normalized.push(key)
-                continue
-              }
-            }
-            unexpected.push(key || 'root')
-            console.error('Unexpected dependency change:', key || 'root', '\nBefore:', JSON.stringify(previous), '\nAfter:', JSON.stringify(current))
+          const write = (p, value) => fs.writeFileSync(p, JSON.stringify(value, null, 2) + '\n')
+          const target = '12.1.2'
+          const key = 'node_modules/swiper'
+          const manifest = read('package.json')
+          const lock = read('package-lock.json')
+          const generated = read(path.join(process.env.RUNNER_TEMP, 'swiper-isolated', 'package-lock.json'))
+          const entry = generated.packages[key]
+          assert.equal(lock.lockfileVersion, 3)
+          assert.equal(lock.packages[key].version, '11.2.10')
+          assert.equal(manifest.dependencies.swiper, lock.packages[''].dependencies.swiper)
+          assert.equal(manifest.dependencies['react-router-dom'], '6.30.6')
+          assert.equal(lock.packages['node_modules/react-router-dom'].version, '6.30.6')
+          assert.equal(generated.packages[''].dependencies.swiper, target)
+          assert.deepEqual(Object.keys(generated.packages).sort(), ['', key].sort())
+          assert.equal(entry.version, target)
+          assert.equal(entry.resolved, `https://registry.npmjs.org/swiper/-/swiper-${target}.tgz`)
+          assert.match(entry.integrity, /^sha512-[A-Za-z0-9+/]+={0,2}$/)
+          for (const field of ['dependencies', 'optionalDependencies', 'peerDependencies']) {
+            assert.equal(Object.keys(entry[field] || {}).length, 0, `Unexpected Swiper ${field}`)
           }
-          if (unexpected.length) throw new Error(`Unexpected dependency changes: ${unexpected.join(', ')}`)
-          equal(next.packages['node_modules/react-router-dom'].dependencies, { '@remix-run/router': next.packages['node_modules/@remix-run/router'].version, 'react-router': '6.30.6' }, 'Unexpected router-dom dependencies')
-          equal(next.packages['node_modules/react-router'].dependencies, { '@remix-run/router': next.packages['node_modules/@remix-run/router'].version }, 'Unexpected router dependencies')
-          for (const key of allowed) {
-            const entry = next.packages[key]
-            if (!entry?.integrity || !entry.resolved?.startsWith('https://registry.npmjs.org/')) throw new Error(`Missing registry integrity or source: ${key}`)
+          assert.ok(!entry.dev && !entry.optional && !entry.link)
+          const html = fs.readFileSync('index.html', 'utf8')
+          for (const ext of ['css', 'js']) {
+            assert.ok(html.includes(`https://unpkg.com/swiper@${target}/swiper-bundle.min.${ext}`), `Expected pinned CDN ${ext} URL is missing`)
           }
-          console.log('Restored original optional Rollup metadata (dev/libc):', normalized)
-          fs.writeFileSync('package-lock.json', JSON.stringify(next, null, 2) + '\n')
-          for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
-            if (!allowed.has(key)) equal(next.packages[key], old.packages[key], `Unexpected final change: ${key || 'root'}`)
-          }
-          equal({ ...next, packages: undefined }, { ...old, packages: undefined }, 'Unexpected lockfile top-level changes')
+          manifest.dependencies.swiper = target
+          lock.packages[''].dependencies.swiper = target
+          lock.packages[key] = entry
+          write('package.json', manifest)
+          write('package-lock.json', lock)
+          const beforeManifest = read(path.join(process.env.RUNNER_TEMP, 'swiper-diagnostics', 'package.before.json'))
+          const beforeLock = read(path.join(process.env.RUNNER_TEMP, 'swiper-diagnostics', 'package-lock.before.json'))
+          beforeManifest.dependencies.swiper = target
+          beforeLock.packages[''].dependencies.swiper = target
+          beforeLock.packages[key] = entry
+          assert.deepEqual(read('package.json'), beforeManifest)
+          assert.deepEqual(read('package-lock.json'), beforeLock)
+          console.log('Only Swiper manifest and lock entries changed. All other lock entries preserved.')
           NODE
           git diff --stat
-      - name: Prepare compatible security updates
+      - name: Install and build candidate
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/compatible-security-patch"
-          cp package.json "$RUNNER_TEMP/router.manifest.json"
-          cp package-lock.json "$RUNNER_TEMP/router.lock.json"
-          npm audit --package-lock-only --json > "$RUNNER_TEMP/compatible-security-patch/audit-before.json" || true
-          npm audit fix --package-lock-only --ignore-scripts --no-fund --json > "$RUNNER_TEMP/compatible-security-patch/audit-fix.json" || true
-      - name: Verify compatible candidate
-        shell: bash
-        run: |
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs'
-          import path from 'node:path'
-          import { isDeepStrictEqual as eq } from 'node:util'
-          const tmp = process.env.RUNNER_TEMP
-          const report = path.join(tmp, 'compatible-security-patch')
-          const read = p => JSON.parse(fs.readFileSync(p, 'utf8'))
-          const before = read(path.join(tmp, 'router.manifest.json'))
-          const after = read('package.json')
-          const old = read(path.join(tmp, 'router.lock.json'))
-          const next = read('package-lock.json')
-          const fix = read(path.join(report, 'audit-fix.json'))
-          const audit = read(path.join(report, 'audit-before.json'))
-          if (fix.error || audit.error || !audit.metadata?.vulnerabilities) throw new Error('npm audit command failed; inspect report')
-          if (!eq(before, after)) throw new Error('Unexpected package.json change')
-          if (!eq({...old, packages: undefined}, {...next, packages: undefined})) throw new Error('Unexpected lockfile structure change')
-          if (!eq(old.packages[''], next.packages[''])) throw new Error('Unexpected root lockfile change')
-          const direct = new Set(Object.keys({...before.dependencies, ...before.devDependencies}).map(n => 'node_modules/' + n))
-          const targets = new Set(['@babel/core','baseline-browser-mapping','browserslist','nanoid','postcss','source-map-js'])
-          const rollup = old.packages['node_modules/rollup']?.optionalDependencies || {}
-          const major = v => /^\d+/.exec(v || '')?.[0]
-          const changes = []
-          const rejected = []
-          for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
-            const a = old.packages[key]
-            const b = next.packages[key]
-            if (eq(a,b)) continue
-            const name = key.split('node_modules/').at(-1)
-            if (a && b && a.version === b.version && a.integrity === b.integrity && a.resolved === b.resolved && key.startsWith('node_modules/@rollup/rollup-') && Object.hasOwn(rollup,name) && a.optional === true && b.optional === true) {
-              const restored = {...b}
-              if (a.dev === true && (b.dev === undefined || b.dev === false)) restored.dev = true
-              if (Object.hasOwn(a,'libc') && !Object.hasOwn(b,'libc')) restored.libc = a.libc
-              if (eq(a,restored)) { next.packages[key] = a; continue }
-            }
-            const entry = {path:key, before:a?.version ?? null, after:b?.version ?? null, requested:targets.has(name), beforeDev:a?.dev ?? false, afterDev:b?.dev ?? false}
-            changes.push(entry)
-            let reason = null
-            if (direct.has(key)) reason = 'direct dependency changed'
-            else if ((a && a.dev !== true) || (b && b.dev !== true)) reason = 'production dependency changed'
-            else if (a && b && (!major(a.version) || major(a.version) !== major(b.version))) reason = 'major version changed'
-            else if (b && (!b.integrity || !b.resolved?.startsWith('https://registry.npmjs.org/'))) reason = 'missing registry integrity or source'
-            else if (a && b && a.version === b.version && (a.integrity !== b.integrity || a.resolved !== b.resolved)) reason = 'same version package identity changed'
-            if (reason) rejected.push({...entry, reason})
-          }
-          fs.writeFileSync(path.join(report,'dependency-changes.json'),JSON.stringify({changes,rejected},null,2)+'\n')
-          console.log(JSON.stringify({changes,rejected},null,2))
-          if (rejected.length) throw new Error('Candidate requires manual review: see dependency-changes.json')
-          fs.writeFileSync('package-lock.json',JSON.stringify(next,null,2)+'\n')
-          NODE
-      - name: Install and build
-        shell: bash
-        run: |
-          cp package.json "$RUNNER_TEMP/package.candidate.json"
-          cp package-lock.json "$RUNNER_TEMP/package-lock.candidate.json"
+          cp package.json "$RUNNER_TEMP/swiper-manifest.candidate.json"
+          cp package-lock.json "$RUNNER_TEMP/swiper-lock.candidate.json"
           npm ci --no-audit --no-fund
           npm run build
-          cmp package.json "$RUNNER_TEMP/package.candidate.json"
-          cmp package-lock.json "$RUNNER_TEMP/package-lock.candidate.json"
-      - name: Collect final advisory report
+          cmp package.json "$RUNNER_TEMP/swiper-manifest.candidate.json"
+          cmp package-lock.json "$RUNNER_TEMP/swiper-lock.candidate.json"
+      - name: Audit candidate and prepare artifact
         shell: bash
         run: |
-          out="$RUNNER_TEMP/compatible-security-patch"
+          out="$RUNNER_TEMP/swiper-diagnostics"
           npm audit --json > "$out/npm-audit.json" || true
           node --input-type=module <<'NODE'
           import fs from 'node:fs'
           import path from 'node:path'
-          const out=path.join(process.env.RUNNER_TEMP,'compatible-security-patch')
-          const read=n=>JSON.parse(fs.readFileSync(path.join(out,n),'utf8'))
-          const before=read('audit-before.json')
-          const after=read('npm-audit.json')
-          if (after.error || !after.metadata?.vulnerabilities || !after.vulnerabilities) throw new Error('Final npm audit report is invalid')
-          const names=['@babel/core','baseline-browser-mapping','browserslist','nanoid','postcss','source-map-js']
-          const result={before:before.metadata.vulnerabilities,after:after.metadata.vulnerabilities,targets:names.map(name=>({name,before:!!before.vulnerabilities[name],after:!!after.vulnerabilities[name]}))}
-          console.log(JSON.stringify(result,null,2))
-          fs.writeFileSync(path.join(out,'audit-summary.json'),JSON.stringify(result,null,2)+'\n')
+          import assert from 'node:assert/strict'
+          const report = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'swiper-diagnostics', 'npm-audit.json'), 'utf8'))
+          assert.ok(!report.error && report.metadata?.vulnerabilities && report.vulnerabilities, 'Invalid npm audit report')
+          assert.ok(!Object.hasOwn(report.vulnerabilities, 'swiper'), 'Swiper still appears in npm audit; review the new advisory')
+          console.log(JSON.stringify(report.metadata.vulnerabilities, null, 2))
           NODE
-          cp package.json package-lock.json "$out/"
-          git diff -- package.json package-lock.json > "$out/changes.patch"
-      - name: Upload reviewed candidate
+          mkdir -p "$RUNNER_TEMP/web-swiper-security-patch"
+          cp package.json package-lock.json "$out/npm-audit.json" "$RUNNER_TEMP/web-swiper-security-patch/"
+          git diff -- package.json package-lock.json > "$RUNNER_TEMP/web-swiper-security-patch/changes.patch"
+      - name: Upload reviewed Swiper candidate
         uses: actions/upload-artifact@v4
         with:
-          name: web-compatible-security-patch
-          path: ${{ runner.temp }}/compatible-security-patch/
+          name: web-swiper-security-patch
+          path: ${{ runner.temp }}/web-swiper-security-patch/
           if-no-files-found: error
           retention-days: 7
-      - name: Collect failure diagnostics
+      - name: Save failure diagnostics
         if: ${{ failure() }}
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/router-diagnostics"
-          git diff -- package.json package-lock.json > "$RUNNER_TEMP/router-diagnostics/changes.patch"
-          cp package.json package-lock.json "$RUNNER_TEMP/router-diagnostics/"
-          if [ -d "$RUNNER_TEMP/compatible-security-patch" ]; then cp -a "$RUNNER_TEMP/compatible-security-patch/." "$RUNNER_TEMP/router-diagnostics/"; fi
-          node --version > "$RUNNER_TEMP/router-diagnostics/versions.txt"
-          npm --version >> "$RUNNER_TEMP/router-diagnostics/versions.txt"
+          mkdir -p "$RUNNER_TEMP/swiper-diagnostics"
+          git diff -- package.json package-lock.json > "$RUNNER_TEMP/swiper-diagnostics/changes.patch"
+          cp package.json package-lock.json "$RUNNER_TEMP/swiper-diagnostics/"
+          if [ -f "$RUNNER_TEMP/swiper-isolated/package-lock.json" ]; then cp "$RUNNER_TEMP/swiper-isolated/package-lock.json" "$RUNNER_TEMP/swiper-diagnostics/swiper-isolated-lock.json"; fi
       - name: Upload failure diagnostics
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: web-compatible-security-diagnostics
-          path: ${{ runner.temp }}/router-diagnostics/
+          name: web-swiper-security-diagnostics
+          path: ${{ runner.temp }}/swiper-diagnostics/
           if-no-files-found: warn
           retention-days: 7
