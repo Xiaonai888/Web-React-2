@@ -57,16 +57,50 @@ jobs:
           equal(next.packages['node_modules/react-router-dom'].version, '6.30.6', 'Unexpected react-router-dom target version')
           equal(next.packages['node_modules/react-router'].version, '6.30.6', 'Unexpected react-router target version')
           old.packages[''].dependencies['react-router-dom'] = '6.30.6'
+          const rollup = old.packages['node_modules/rollup']
+          const platformPackages = rollup?.optionalDependencies || {}
+          const normalized = []
+          const unexpected = []
           for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
-            if (!allowed.has(key)) equal(next.packages[key], old.packages[key], `Unexpected change: ${key || "root"}`)
-            else if (JSON.stringify(old.packages[key]) !== JSON.stringify(next.packages[key])) console.log(key, old.packages[key]?.version, '->', next.packages[key]?.version)
+            const previous = old.packages[key]
+            const current = next.packages[key]
+            if (allowed.has(key)) {
+              console.log(key, previous?.version, '->', current?.version)
+              continue
+            }
+            if (isDeepStrictEqual(previous, current)) continue
+            const name = key.slice('node_modules/'.length)
+            if (key.startsWith('node_modules/@rollup/rollup-') && Object.hasOwn(platformPackages, name) && previous?.dev === true && previous.optional === true && current?.optional === true && (current.dev === undefined || current.dev === false) && isDeepStrictEqual(previous, { ...current, dev: true })) {
+              next.packages[key] = previous
+              normalized.push(key)
+              continue
+            }
+            unexpected.push(key || 'root')
+            console.error('Unexpected dependency change:', key || 'root', '\nBefore:', JSON.stringify(previous), '\nAfter:', JSON.stringify(current))
           }
+          if (unexpected.length) throw new Error(`Unexpected dependency changes: ${unexpected.join(', ')}`)
+          equal(next.packages['node_modules/react-router-dom'].dependencies, { '@remix-run/router': next.packages['node_modules/@remix-run/router'].version, 'react-router': '6.30.6' }, 'Unexpected router-dom dependencies')
+          equal(next.packages['node_modules/react-router'].dependencies, { '@remix-run/router': next.packages['node_modules/@remix-run/router'].version }, 'Unexpected router dependencies')
+          for (const key of allowed) {
+            const entry = next.packages[key]
+            if (!entry?.integrity || !entry.resolved?.startsWith('https://registry.npmjs.org/')) throw new Error(`Missing registry integrity or source: ${key}`)
+          }
+          console.log('Preserved original optional Rollup dev metadata:', normalized)
+          fs.writeFileSync('package-lock.json', JSON.stringify(next, null, 2) + '\n')
+          for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
+            if (!allowed.has(key)) equal(next.packages[key], old.packages[key], `Unexpected final change: ${key || 'root'}`)
+          }
+          equal({ ...next, packages: undefined }, { ...old, packages: undefined }, 'Unexpected lockfile top-level changes')
           NODE
           git diff --stat
       - name: Install and build
         run: |
+          cp package.json "$RUNNER_TEMP/package.candidate.json"
+          cp package-lock.json "$RUNNER_TEMP/package-lock.candidate.json"
           npm ci --no-audit --no-fund
           npm run build
+          cmp package.json "$RUNNER_TEMP/package.candidate.json"
+          cmp package-lock.json "$RUNNER_TEMP/package-lock.candidate.json"
       - name: Collect advisory report
         shell: bash
         run: |
@@ -87,6 +121,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/router-diagnostics"
           git diff -- package.json package-lock.json > "$RUNNER_TEMP/router-diagnostics/changes.patch"
+          cp package.json package-lock.json "$RUNNER_TEMP/router-diagnostics/"
           node --version > "$RUNNER_TEMP/router-diagnostics/versions.txt"
           npm --version >> "$RUNNER_TEMP/router-diagnostics/versions.txt"
       - name: Upload failure diagnostics
