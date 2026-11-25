@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { clearHomeCacheSection } from '../../utils/homeDataCache'
-import { optimizeImageForUpload } from '../../utils/imageUploadOptimizer'
+import { uploadStoryImageDirect } from '../../utils/storyImageDirectUpload'
 import StoryTextEditor, { normalizeStoryTextSticker } from './StoryTextEditor'
 import StoryTextSticker from './StoryTextSticker'
 import StoryMentionPicker from './StoryMentionPicker'
@@ -285,48 +285,6 @@ function readVideoDuration(file) {
     }
 
     setSafeStoryComposerMedia(video, objectUrl)
-  })
-}
-
-function uploadStory({ apiPath, file, textOverlay, token, onProgress }) {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest()
-    const formData = new FormData()
-
-    formData.append('media', file)
-    formData.append('caption', textOverlay.trim())
-    formData.append('allow_messages', 'true')
-
-    request.open('POST', `${API_BASE_URL}${apiPath}`)
-    request.setRequestHeader('Authorization', `Bearer ${token}`)
-    request.timeout = 180000
-
-    request.upload.onprogress = (event) => {
-      if (!event.lengthComputable) return
-      onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)))
-    }
-
-    request.onload = () => {
-      let data = {}
-
-      try {
-        data = JSON.parse(request.responseText || '{}')
-      } catch {
-        data = {}
-      }
-
-      if (request.status >= 200 && request.status < 300 && data.ok !== false) {
-        onProgress(100)
-        resolve(data.story || null)
-        return
-      }
-
-      reject(new Error(data.message || getDisplayText('storyComposer.shareFailed')))
-    }
-
-    request.onerror = () => reject(new Error(getDisplayText('storyComposer.networkError')))
-    request.ontimeout = () => reject(new Error(getDisplayText('storyComposer.uploadTimeout')))
-    request.send(formData)
   })
 }
 
@@ -757,17 +715,11 @@ export default function StoryComposer({ mode }) {
           token,
           onProgress: setUploadProgress,
         })
-      } else {
-        const uploadFile = (
-          await optimizeImageForUpload(mediaFile, {
-            preset: 'post',
-            maxSourceBytes: MAX_PHOTO_BYTES,
-          })
-        ).file
-
-        createdStory = await uploadStory({
-          apiPath: config.apiPath,
-          file: uploadFile,
+            } else {
+        createdStory = await uploadStoryImageDirect({
+          apiBaseUrl: API_BASE_URL,
+          mode,
+          file: mediaFile,
           textOverlay,
           token,
           onProgress: setUploadProgress,
