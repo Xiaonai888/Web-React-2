@@ -5920,6 +5920,7 @@ export default function ReaderPage() {
   const readingActivityReadyAtRef = useRef(0)
   const previousReadingPageRef = useRef(null)
   const readingHeartbeatBusyRef = useRef(false)
+  const readingHeartbeatScopeRef = useRef(0)
   const weeklyReadingTrackedEpisodeRef = useRef('')
   const activeReadingTargetRef = useRef(null)
   const readingTargetLoadedRef = useRef(false)
@@ -7796,13 +7797,16 @@ if (!episodesResponse.ok || episodesData.ok === false) {
   lastReadingActivityRef.current = 0
   readingActivityReadyAtRef.current = Date.now() + 1000
   previousReadingPageRef.current = null
-  readingHeartbeatBusyRef.current = false
+  
   weeklyReadingTrackedEpisodeRef.current = ''
   readingSessionIdleUntilRef.current = {
     episodeId: '',
     until: 0,
   }
   setReadingRewardAnimation(null)
+return () => {
+  readingHeartbeatScopeRef.current += 1
+}
 }, [episodeId, storyId])
 
   useEffect(() => {
@@ -7870,7 +7874,8 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       weeklyReadingTrackedEpisodeRef.current ===
       currentEpisodeId
 
-    readingHeartbeatBusyRef.current = true
+   const heartbeatScope = readingHeartbeatScopeRef.current
+readingHeartbeatBusyRef.current = true
 
         try {
       const readingSessionSource = autoScrollEnabled
@@ -7902,7 +7907,7 @@ if (!episodesResponse.ok || episodesData.ok === false) {
       const progressData = await progressResponse
         .json()
         .catch(() => ({}))
-
+if (heartbeatScope !== readingHeartbeatScopeRef.current) return
      if (
   !progressResponse.ok ||
   progressData.ok === false
@@ -8067,14 +8072,16 @@ readingSessionIdleUntilRef.current = {
           (value) => value + 1
         )
       }
-    } catch {
-      readingSessionIdleUntilRef.current = {
-        episodeId: currentEpisodeId,
-        until: Date.now() + 120000,
-      }
-    } finally {
-      readingHeartbeatBusyRef.current = false
+   } catch {
+  if (heartbeatScope === readingHeartbeatScopeRef.current) {
+    readingSessionIdleUntilRef.current = {
+      episodeId: currentEpisodeId,
+      until: Date.now() + 120000,
     }
+  }
+} finally {
+  readingHeartbeatBusyRef.current = false
+}
   }, READING_PROGRESS_STEP_SECONDS * 1000)
 
   return () => {
