@@ -198,7 +198,7 @@ export default function YouMightLikePage() {
 
       const response = await fetch(
         addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=48&sort=popular`
+          `${API_BASE_URL}/api/public/stories?limit=48&sort=popular&view=tile`
         ),
         { signal }
       )
