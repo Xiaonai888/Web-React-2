@@ -70,10 +70,15 @@ jobs:
             }
             if (isDeepStrictEqual(previous, current)) continue
             const name = key.slice('node_modules/'.length)
-            if (key.startsWith('node_modules/@rollup/rollup-') && Object.hasOwn(platformPackages, name) && previous?.dev === true && previous.optional === true && current?.optional === true && (current.dev === undefined || current.dev === false) && isDeepStrictEqual(previous, { ...current, dev: true })) {
-              next.packages[key] = previous
-              normalized.push(key)
-              continue
+            if (key.startsWith('node_modules/@rollup/rollup-') && Object.hasOwn(platformPackages, name) && previous?.dev === true && previous.optional === true && current?.optional === true) {
+              const restored = { ...current }
+              if (current.dev === undefined || current.dev === false) restored.dev = true
+              if (Object.hasOwn(previous, 'libc') && !Object.hasOwn(current, 'libc')) restored.libc = previous.libc
+              if (isDeepStrictEqual(previous, restored)) {
+                next.packages[key] = previous
+                normalized.push(key)
+                continue
+              }
             }
             unexpected.push(key || 'root')
             console.error('Unexpected dependency change:', key || 'root', '\nBefore:', JSON.stringify(previous), '\nAfter:', JSON.stringify(current))
@@ -85,7 +90,7 @@ jobs:
             const entry = next.packages[key]
             if (!entry?.integrity || !entry.resolved?.startsWith('https://registry.npmjs.org/')) throw new Error(`Missing registry integrity or source: ${key}`)
           }
-          console.log('Preserved original optional Rollup dev metadata:', normalized)
+          console.log('Restored original optional Rollup metadata (dev/libc):', normalized)
           fs.writeFileSync('package-lock.json', JSON.stringify(next, null, 2) + '\n')
           for (const key of new Set([...Object.keys(old.packages), ...Object.keys(next.packages)])) {
             if (!allowed.has(key)) equal(next.packages[key], old.packages[key], `Unexpected final change: ${key || 'root'}`)
