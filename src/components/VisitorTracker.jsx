@@ -14,6 +14,7 @@ const LAST_TRACK_KEY = 'shadow_anonymous_last_track'
 const EVENT_HISTORY_KEY = 'shadow_anonymous_event_history'
 const TRACK_DEDUP_MS = 30_000
 const pendingVisitorTracks = new Set()
+let visitorTrackRetryAt = 0
 
 function createTrackingId(prefix) {
   if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`
@@ -279,7 +280,8 @@ export default function VisitorTracker() {
     }
 
     const timer = window.setTimeout(async () => {
-      if (hasReaderAccount()) return
+  if (hasReaderAccount()) return
+  if (Date.now() < visitorTrackRetryAt) return
       if (pendingVisitorTracks.has(pendingKey)) {
         if (debugEnabled && active) {
           setDebugState({
@@ -336,8 +338,9 @@ export default function VisitorTracker() {
             message: `Visitor ID: ${visitorId}`,
           })
         }
-      } catch (error) {
-        console.error('VISITOR TRACKING FAILED:', error)
+} catch (error) {
+  visitorTrackRetryAt = Date.now() + 60000
+  console.error('VISITOR TRACKING FAILED:', error)
 
         if (debugEnabled && active) {
           setDebugState({
