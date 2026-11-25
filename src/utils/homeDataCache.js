@@ -187,22 +187,35 @@ async function fetchContentVersions() {
 
       const data = await response.json().catch(() => ({}))
 
-      if (!response.ok || data.ok === false) {
+      if (
+        !response.ok ||
+        !data ||
+        data.ok === false ||
+        !data.versions ||
+        typeof data.versions !== 'object' ||
+        Array.isArray(data.versions)
+      ) {
         throw new Error(
-          data.message || 'Failed to load content versions'
+          data?.message || 'Failed to load content versions'
         )
       }
 
       const nextVersions = {}
 
       for (const key of CONTENT_VERSION_KEYS) {
-        const version = Number(
-          data?.versions?.[key]?.version
-        )
+        const rawVersion = data.versions[key]?.version
+        const version = Number(rawVersion)
 
-        if (Number.isFinite(version)) {
-          nextVersions[key] = version
+        if (
+          (typeof rawVersion !== 'number' &&
+            (typeof rawVersion !== 'string' || !rawVersion.trim())) ||
+          !Number.isSafeInteger(version) ||
+          version < 0
+        ) {
+          throw new Error(`Invalid content version: ${key}`)
         }
+
+        nextVersions[key] = version
       }
 
       contentVersions = nextVersions
