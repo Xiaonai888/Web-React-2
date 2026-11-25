@@ -107,7 +107,7 @@ export default function useReadingProgressSync({
   const rejectedEpisodeKeysRef = useRef(new Set())
   const rejectedStoryKeysRef = useRef(new Set())
 
-  const saveCurrent = useCallback(async (current) => {
+  const saveCurrent = useCallback(async (current, trigger = 'retry') => {
     if (!current || current.percent <= 0) return false
 
     const storyKey = `${current.accountKey}:${current.storyId}`
@@ -153,7 +153,7 @@ export default function useReadingProgressSync({
       const response = await traceRequestOrigin(
         {
           source_file: 'src/hooks/useReadingProgressSync.js',
-          trigger: 'unknown',
+          trigger,
         },
         `${API_BASE_URL}/api/reading-progress`,
         {
@@ -161,7 +161,7 @@ export default function useReadingProgressSync({
           headers: {
             Authorization: `Bearer ${current.token}`,
             'Content-Type': 'application/json',
-            'X-Shadow-Reading-Progress-Source': 'reader-sync',
+            trigger,'X-Shadow-Reading-Progress-Source': `reader-sync-${trigger}`,
           },
           body: JSON.stringify({
             story_id: current.storyId,
@@ -295,7 +295,7 @@ export default function useReadingProgressSync({
         savedStateByKeyRef.current.get(previous.key)
           ?.lastSavedSignature !== previous.signature
       ) {
-        void saveCurrent(previous)
+        void saveCurrent(previous, 'navigation')
       }
 
       latestRef.current = null
@@ -329,7 +329,7 @@ export default function useReadingProgressSync({
         previousState?.lastSavedSignature !==
         previous.signature
       ) {
-        void saveCurrent(previous)
+        void saveCurrent(previous, 'navigation')
       }
     }
 
