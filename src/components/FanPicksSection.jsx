@@ -162,7 +162,7 @@ export default function FanPicksSection() {
 
       const response = await fetch(
         addStoryLanguageParam(
-          `${API_BASE_URL}/api/public/stories?limit=6&sort=discover_more`
+          `${API_BASE_URL}/api/public/stories?limit=6&sort=discover_more&view=tile`
         )
       )
 
