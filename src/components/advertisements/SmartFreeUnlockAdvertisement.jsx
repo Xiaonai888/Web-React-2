@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdvertisementPopup from '../AdvertisementPopup'
+import AdvertisementPopup, { fetchAdvertisementData } from '../AdvertisementPopup'
 import useStoryLanguageId from '../../hooks/useStoryLanguageId'
 import { grantReaderAdEntryPass } from '../../services/advertisements/readerAdFrequency'
 import { takeSmartFreeUnlockAd } from '../../services/advertisements/smartFreeUnlockQueue'
@@ -29,12 +29,8 @@ async function isSmartFreeUnlockMode() {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), MODE_TIMEOUT_MS)
     try {
-      const response = await fetch(`${API_URL}/api/advertisements/public?placement=freeUnlock`, {
-        signal: controller.signal,
-        cache: 'default',
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.ok !== true) throw new Error('Advertisement mode unavailable')
+      const { data } = await fetchAdvertisementData('freeUnlock', false, controller.signal)
+if (data.ok !== true) throw new Error('Advertisement mode unavailable')
       const mode = String(data.rotation?.mode || '').toLowerCase()
       if (!['manual', 'auto', 'smart', 'auto_system'].includes(mode)) {
         throw new Error('Advertisement mode missing')
