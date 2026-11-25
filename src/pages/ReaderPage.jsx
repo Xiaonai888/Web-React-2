@@ -7903,13 +7903,21 @@ if (!episodesResponse.ok || episodesData.ok === false) {
         .json()
         .catch(() => ({}))
 
-      if (
-        !progressResponse.ok ||
-        progressData.ok === false
-      ) {
-        return
-      }
-
+     if (
+  !progressResponse.ok ||
+  progressData.ok === false
+) {
+  if (
+    progressResponse.status === 429 ||
+    progressResponse.status >= 500
+  ) {
+    readingSessionIdleUntilRef.current = {
+      episodeId: currentEpisodeId,
+      until: Date.now() + 120000,
+    }
+  }
+  return
+}
       readingTargetLoadedRef.current = true
 
       if (progressData.weekly_reading) {
@@ -8058,6 +8066,11 @@ readingSessionIdleUntilRef.current = {
         setReadingRewardReloadKey(
           (value) => value + 1
         )
+      }
+    } catch {
+      readingSessionIdleUntilRef.current = {
+        episodeId: currentEpisodeId,
+        until: Date.now() + 120000,
       }
     } finally {
       readingHeartbeatBusyRef.current = false
