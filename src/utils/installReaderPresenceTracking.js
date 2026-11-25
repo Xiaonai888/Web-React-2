@@ -79,8 +79,8 @@ export function installReaderPresenceTracking() {
     forceInactive = false,
   } = {}) => {
     const token = getReaderToken()
-    if (!token || !navigator.onLine) return
-
+if (!token || !navigator.onLine) return
+if (document.visibilityState !== 'visible' && !forceInactive) return
     if (retryToken !== token) {
       nextAttemptAt = 0
       failureCount = 0
@@ -116,7 +116,8 @@ export function installReaderPresenceTracking() {
     const samePayload = payloadKey === lastPayloadKey && sameToken
     const elapsed = now - lastSentAt
 
-    if (samePayload && elapsed < HEARTBEAT_INTERVAL_MS) return
+   if (samePayload && !payload.is_active && payload.visibility_state === 'hidden') return
+if (samePayload && elapsed < HEARTBEAT_INTERVAL_MS) return
 
     if (sameToken && lastSentAt && elapsed < MIN_SEND_GAP_MS && !forceInactive) {
       if (!samePayload) scheduleHeartbeat(MIN_SEND_GAP_MS - elapsed)
