@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import StoryHeroSection from '../components/story-detail/StoryHeroSection'
+import StoryDetailErrorBlock from '../components/story-detail/StoryDetailErrorBlock'
+import { createStoryDetailError } from '../components/story-detail/storyDetailError'
 import StoryStatsSection from '../components/story-detail/StoryStatsSection'
 import StoryInfoSection from '../components/story-detail/StoryInfoSection'
 import EpisodePreviewSection from '../components/story-detail/EpisodePreviewSection'
@@ -339,30 +341,7 @@ function LoadingBlock() {
   )
 }
 
-function ErrorBlock({ message, onBack }) {
-  const { t } = useDisplayTranslation()
 
-  return (
-    <div className="mx-auto mt-5 max-w-4xl rounded-[26px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5 dark:bg-[var(--shadow-bg-surface)] dark:ring-[var(--shadow-border)]">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f1] text-[#e5484d] dark:bg-red-500/10 dark:text-red-400">
-        <i className="fa-solid fa-triangle-exclamation text-[22px]" />
-      </div>
-      <h2 className="mt-4 text-[18px] font-extrabold text-[#111827] dark:text-[var(--shadow-text-primary)]">
-        {t('storyDetailPage.cannotLoadStory')}
-      </h2>
-      <p className="mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6 text-[#667085] dark:text-[var(--shadow-text-secondary)]">
-        {message || t('storyDetailPage.tryAgainLater')}
-      </p>
-      <button
-        type="button"
-        onClick={onBack}
-        className="mt-5 h-12 rounded-full bg-[#111827] px-6 text-[13px] font-extrabold text-white active:scale-95 dark:bg-white dark:text-[#111827]"
-      >
-        {t('storyDetailPage.goBack')}
-      </button>
-    </div>
-  )
-}
 
 function StoryAuthorMiniCard({
   authorPage,
@@ -518,8 +497,7 @@ export default function StoryDetailPage() {
   const episodesLastFetchedRef = useRef(0)
   const [episodesLoading, setEpisodesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState('')
-  const [errorCode, setErrorCode] = useState('')
+  const [diagnostic, setDiagnostic] = useState(null)
   const [episodeListOpen, setEpisodeListOpen] = useState(
     () => Boolean(location.state?.reopenEpisodeList)
   )
@@ -624,8 +602,7 @@ export default function StoryDetailPage() {
     async function loadStory() {
       setLoading(true)
       setEpisodesLoading(true)
-      setMessage('')
-      setErrorCode('')
+      setDiagnostic(null)
       setStory(null)
       setEpisodes([])
       setUpcomingEpisode(null)
@@ -633,8 +610,7 @@ export default function StoryDetailPage() {
       setAuthorFollowerCount(0)
       setAuthorIsOwnerPage(false)
       if (!isValidStoryUuid(realStoryId)) {
-        setErrorCode('INVALID_STORY_ID')
-        setMessage(t('storyDetailPage.storyNotFound'))
+        setDiagnostic(createStoryDetailError({ invalidId: true }))
         setLoading(false)
         setEpisodesLoading(false)
         return
@@ -656,18 +632,34 @@ export default function StoryDetailPage() {
         })
         .catch((error) => ({ error }))
 
-      try {
-        const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`, {
-  headers: authHeaders(),
-  cache: 'no-store',
-})
-        const storyData = await storyResponse.json().catch(() => ({}))
+     let failureDiagnostic = null
 
-        if (!storyResponse.ok || storyData.ok === false) {
-  const error = new Error(storyData.message || t('storyDetailPage.storyNotFound'))
-  error.code = storyData.code || ''
-  throw error
-}
+try {
+  const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`, {
+    headers: authHeaders(),
+    cache: 'no-store',
+  }).catch((error) => {
+    failureDiagnostic = createStoryDetailError({ network: true })
+    throw error
+  })
+
+  const storyData = await storyResponse.json().catch(() => null)
+
+  if (!storyResponse.ok || storyData?.ok === false) {
+    failureDiagnostic = createStoryDetailError({
+      status: storyResponse.status,
+      data: storyData,
+    })
+    throw new Error('STORY_DETAIL_REQUEST_FAILED')
+  }
+
+  if (!storyData?.story || typeof storyData.story !== 'object' || Array.isArray(storyData.story)) {
+    failureDiagnostic = createStoryDetailError({
+      status: storyResponse.status,
+      invalidResponse: true,
+    })
+    throw new Error('STORY_RESPONSE_INVALID')
+  }
 
         if (ignore) return
 
@@ -711,12 +703,7 @@ export default function StoryDetailPage() {
       } catch (error) {
         if (ignore) return
 
-setErrorCode(error.code || '')
-setMessage(
-          error.message === 'Failed to fetch'
-            ? t('storyDetailPage.cannotConnectServer')
-            : error.message || t('storyDetailPage.failedLoadStory')
-        )
+setDiagnostic(failureDiagnostic || createStoryDetailError())
         setLoading(false)
         setEpisodesLoading(false)
       }
@@ -1006,7 +993,7 @@ useEffect(() => {
     return <LoadingBlock />
   }
 
-  if (errorCode === 'ADULT_RESTRICTED') {
+  if (diagnostic?.kind === 'restricted') {
   return (
     <div className="story-detail-page app-page min-h-screen px-4 py-8">
       <div className="app-card app-shadow mx-auto mt-8 max-w-md rounded-[28px] border p-6 text-center">
@@ -1019,6 +1006,11 @@ useEffect(() => {
         <p className="app-muted mx-auto mt-2 max-w-[360px] text-[13px] font-semibold leading-6">
           {t('storyDetailPage.adultRestrictedMessage')}
         </p>
+        <div className="app-soft mt-4 rounded-xl p-3 text-[12px]">
+  <p>{t('storyDetailDiagnostic.source')}: {t('storyDetailDiagnostic.ACCESS')}</p>
+  <p>{t('storyDetailDiagnostic.responsible')}: {t('storyDetailDiagnostic.READER')}</p>
+  <p>{diagnostic.code}</p>
+</div>
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -1031,10 +1023,13 @@ useEffect(() => {
   )
 }
 
-if (message || !story) {
+if (diagnostic || !story) {
   return (
     <div className="story-detail-page app-page min-h-screen bg-[#f5f3fa] px-4 pb-[110px] pt-4 dark:bg-[var(--shadow-bg-page)]">
-      <ErrorBlock message={message} onBack={() => navigate(-1)} />
+     <StoryDetailErrorBlock
+  diagnostic={diagnostic || createStoryDetailError({ invalidResponse: true })}
+  onBack={() => navigate(-1)}
+/>
     </div>
   )
 }
