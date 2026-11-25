@@ -19,6 +19,7 @@ import { trackSectionQualifiedView } from '../services/storySectionRankTracking'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
 import { enableReaderStoryPush } from '../services/readerOneSignal.service'
+import { getActiveReaderToken } from '../utils/readerActiveAccount'
 
 const isValidStoryUuid = (value) =>
   /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(String(value || '').trim())
@@ -182,6 +183,38 @@ function authHeaders() {
   }
 }
 
+const storyDetailPending = new Map()
+
+async function fetchStoryDetail(storyId) {
+  const headers = authHeaders()
+  const key = JSON.stringify([storyId, headers.Authorization || '', getActiveReaderToken() || ''])
+
+  if (storyDetailPending.has(key)) {
+    return (await storyDetailPending.get(key)).clone()
+  }
+
+  if (storyDetailPending.size >= 20) {
+    return fetch(`${API_BASE_URL}/api/public/stories/${storyId}`, {
+      headers,
+      cache: 'no-store',
+    })
+  }
+
+  const request = fetch(`${API_BASE_URL}/api/public/stories/${storyId}`, {
+    headers,
+    cache: 'no-store',
+  })
+
+  storyDetailPending.set(key, request)
+
+  try {
+    return (await request).clone()
+  } finally {
+    if (storyDetailPending.get(key) === request) {
+      storyDetailPending.delete(key)
+    }
+  }
+}
 const STORY_DETAIL_STATUS_CACHE_MS = 12 * 1000
 const STORY_DETAIL_STATUS_CACHE_LIMIT = 80
 const storyDetailStatusCache = new Map()
@@ -635,10 +668,7 @@ export default function StoryDetailPage() {
      let failureDiagnostic = null
 
 try {
-  const storyResponse = await fetch(`${API_BASE_URL}/api/public/stories/${realStoryId}`, {
-    headers: authHeaders(),
-    cache: 'no-store',
-  }).catch((error) => {
+  const storyResponse = await fetchStoryDetail(realStoryId).catch((error) => {
     failureDiagnostic = createStoryDetailError({ network: true })
     throw error
   })
