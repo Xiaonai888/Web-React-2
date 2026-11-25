@@ -149,7 +149,7 @@ export default function useReadingProgressSync({
     let saved = false
     let permanentFailure = false
 
-      try {
+    try {
       const response = await traceRequestOrigin(
         {
           source_file: 'src/hooks/useReadingProgressSync.js',
@@ -161,7 +161,7 @@ export default function useReadingProgressSync({
           headers: {
             Authorization: `Bearer ${current.token}`,
             'Content-Type': 'application/json',
-            trigger,'X-Shadow-Reading-Progress-Source': `reader-sync-${trigger}`,
+            'X-Shadow-Reading-Progress-Source': `reader-sync-${trigger}`,
           },
           body: JSON.stringify({
             story_id: current.storyId,
@@ -217,7 +217,7 @@ export default function useReadingProgressSync({
       retryByStoryRef.current.delete(storyKey)
       saved = true
       return true
-        } catch (error) {
+    } catch (error) {
       if (!retryByStoryRef.current.has(storyKey)) {
         console.warn('READING_PROGRESS_NETWORK_ERROR', error?.message || 'Fetch failed')
       }
@@ -279,7 +279,7 @@ export default function useReadingProgressSync({
           )
         }
 
-        if (queued) void saveCurrent(queued)
+        if (queued) void saveCurrent(queued, 'retry')
       }
     }
   }, [])
@@ -379,7 +379,7 @@ export default function useReadingProgressSync({
         )
       )
     ) {
-      void saveCurrent(current)
+      void saveCurrent(current, 'user_action')
     }
   }, [
     enabled,
@@ -405,7 +405,7 @@ export default function useReadingProgressSync({
             Number(state?.lastSavedAt || 0) >=
             SAVE_MAX_DELAY_MS
         ) {
-          void saveCurrent(current)
+          void saveCurrent(current, 'timer')
         }
       }
 
@@ -434,7 +434,7 @@ export default function useReadingProgressSync({
           storyKey
         )
 
-        if (pending) void saveCurrent(pending)
+        if (pending) void saveCurrent(pending, 'retry')
       }
     }, SAVE_CHECK_INTERVAL_MS)
 
@@ -451,7 +451,7 @@ export default function useReadingProgressSync({
         savedStateByKeyRef.current.get(current.key)
           ?.lastSavedSignature !== current.signature
       ) {
-        void saveCurrent(current)
+        void saveCurrent(current, 'visibility')
       }
     }
 
