@@ -56,6 +56,12 @@ const API_BASE_URL =
 
 const HOME_STORY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
+function getTrendingDay() {
+  return new Date(Date.now() + 7 * 3600000)
+    .toISOString()
+    .slice(0, 10)
+}
+
 const STORY_LANGUAGE_LABELS = Object.freeze({
   km: 'Khmer',
   en: 'English',
@@ -173,7 +179,32 @@ export default function TrendingNowSection({
   const normalizedStoryType = String(storyType || '')
     .trim()
     .toLowerCase()
-  const resultScope = `${storyLanguageId}:${normalizedStoryType || 'all'}`
+  const [rotationDay, setRotationDay] = useState(getTrendingDay)
+
+  useEffect(() => {
+    const syncDay = () => setRotationDay(getTrendingDay())
+    const offset = 7 * 3600000
+    const dayMs = 86400000
+    const nextMidnight =
+      (Math.floor((Date.now() + offset) / dayMs) + 1) *
+      dayMs - offset
+
+    const timer = setTimeout(
+      syncDay,
+      Math.max(1000, nextMidnight - Date.now() + 1000)
+    )
+
+    window.addEventListener('focus', syncDay)
+    document.addEventListener('visibilitychange', syncDay)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('focus', syncDay)
+      document.removeEventListener('visibilitychange', syncDay)
+    }
+  }, [rotationDay])
+
+  const resultScope = `${storyLanguageId}:${normalizedStoryType || 'all'}:${rotationDay}`
 
   useEffect(() => {
     let ignore = false
@@ -190,10 +221,10 @@ export default function TrendingNowSection({
         language: storyLanguageId,
         params: {
           home_section: 'trending',
-          sort: 'popular',
+          sort: 'trending_daily',
           limit: 9,
           story_type: normalizedStoryType || 'all',
-          schema: 2,
+          schema: 3,
         },
       })
 
@@ -207,9 +238,13 @@ export default function TrendingNowSection({
 
         if (ignore || controller.signal.aborted) return
 
-        hasCachedStories = Array.isArray(cached?.data)
+        hasCachedStories =
+          cached?.isFresh === true &&
+          cached?.data?.rotation_day === rotationDay &&
+          Array.isArray(cached?.data?.stories)
+
         if (hasCachedStories) {
-          setStories(cached.data)
+          setStories(cached.data.stories)
           setLoadedScope(scope)
           setLoading(false)
         }
@@ -218,7 +253,7 @@ export default function TrendingNowSection({
 
         const params = new URLSearchParams({
           limit: '9',
-          sort: 'popular',
+          sort: 'trending_daily',
           language: STORY_LANGUAGE_LABELS[storyLanguageId] || 'Khmer',
         })
         if (normalizedStoryType) {
@@ -227,12 +262,16 @@ export default function TrendingNowSection({
 
         const response = await fetch(
           `${API_BASE_URL}/api/public/stories?${params.toString()}`,
-          { signal: controller.signal }
+          { signal: controller.signal, cache: 'no-store' }
         )
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok || data.ok === false) {
           throw new Error(data.message || 'Failed to load trending stories')
+        }
+
+        if (data.rotation_day !== rotationDay) {
+          throw new Error('Invalid Trending rotation day')
         }
 
         const selectedLanguage = (STORY_LANGUAGE_LABELS[storyLanguageId] || 'Khmer').toLowerCase()
@@ -252,7 +291,10 @@ export default function TrendingNowSection({
 
         setStories(nextStories)
         setLoadedScope(scope)
-        await saveHomeCache(cacheKey, nextStories, {
+        await saveHomeCache(cacheKey, {
+          rotation_day: rotationDay,
+          stories: nextStories,
+        }, {
           maxAgeMs: HOME_STORY_CACHE_MAX_AGE_MS,
         }).catch(() => {})
       } catch (error) {
@@ -275,7 +317,7 @@ export default function TrendingNowSection({
       ignore = true
       controller.abort()
     }
-  }, [normalizedStoryType, storyLanguageId])
+  }, [normalizedStoryType, storyLanguageId, rotationDay])
 
   const handleMouseDown = (event) => {
     const container = scrollRef.current
