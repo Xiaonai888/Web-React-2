@@ -7,9 +7,9 @@ const API_BASE_URL =
     ? 'http://localhost:5000'
     : 'https://shadow-backend-kucw.onrender.com')
 
-const SAVE_PERCENT_STEP = 15
-const SAVE_MIN_INTERVAL_MS = 45 * 1000
-const SAVE_MAX_DELAY_MS = 2 * 60 * 1000
+const SAVE_PERCENT_STEP = 20
+const SAVE_MIN_INTERVAL_MS = 60 * 1000
+const SAVE_MAX_DELAY_MS = 3 * 60 * 1000
 const SAVE_CHECK_INTERVAL_MS = 15 * 1000
 const RETRY_BASE_MS = 20 * 1000
 const RETRY_MAX_MS = 5 * 60 * 1000
