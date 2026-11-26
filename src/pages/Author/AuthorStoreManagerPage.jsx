@@ -3099,6 +3099,7 @@ return {
   avatar_url: avatarUrl,
   is_owner: Boolean(getAuthToken() && (authorPage.id || authorPage.author_page_id)),
 }
+}
 
 function DeliveryLogo({ type }) {
   const src = type === 'jnt' ? '/assets/Icons/J%26T.svg' : '/assets/Icons/VET.svg'
