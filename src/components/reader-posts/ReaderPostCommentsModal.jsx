@@ -12,6 +12,7 @@ import AuthorPageShareSheet from '../AuthorPageShareSheet'
 import ReactionAction from '../social/reactions/ReactionAction'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import usePopupUiDiagnostics from '../../hooks/usePopupUiDiagnostics'
 
 registerTranslationNamespace('readerPostCommentsModal', {
   "en": {
@@ -1111,6 +1112,7 @@ export default function ReaderPostCommentsModal({
     return new URLSearchParams(location.search).get('comment') || ''
   }, [requestedFocusCommentId, postId, location.pathname, location.search])
   const sheetRef = useRef(null)
+  usePopupUiDiagnostics(open, sheetRef, 'post-comments')
   const composerRef = useRef(null)
   const dragStartYRef = useRef(0)
   const dragCurrentYRef = useRef(0)
