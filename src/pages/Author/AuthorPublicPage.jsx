@@ -5,6 +5,7 @@ import AuthorPostsSection from '../../components/AuthorPostsSection'
 import AuthorPublicStoreSection from '../../components/AuthorPublicStoreSection'
 import AuthorStoreTab from '../../components/AuthorStoreTab'
 import AuthorWorksTab from '../../components/AuthorWorksTab'
+import SignUpRequiredPopup from '../SignUpRequiredPopup'
 import AuthorReelGrid from '../../components/author/AuthorReelGrid'
 import ReaderAuthorMessageRequestModal from '../../components/chat/ReaderAuthorMessageRequestModal'
 import AuthorSocialMediaPopup from '../../components/Author/AuthorSocialMediaPopup'
@@ -1896,6 +1897,7 @@ const [menuSwitcherOpen, setMenuSwitcherOpen] = useState(
   const [messageRequestOpen, setMessageRequestOpen] = useState(false)
   const [socialMediaOpen, setSocialMediaOpen] = useState(false)
   const [pageAboutOpen, setPageAboutOpen] = useState(false)
+  const [signUpRequiredOpen, setSignUpRequiredOpen] = useState(false)
   const [pageTransparencyOpen, setPageTransparencyOpen] = useState(false)
   const [switchingToReader, setSwitchingToReader] = useState(false)
   const readerUser = getStoredReaderUser()
@@ -4454,7 +4456,13 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
       renderWork={(work) => (
         <AuthorWorkCard
           work={work}
-          onOpen={() => navigate(`/story/${work.id}`)}
+          onOpen={() => {
+  if (!getAuthToken()) {
+    setSignUpRequiredOpen(true)
+    return
+  }
+  navigate(`/story/${work.id}`)
+}}
         />
       )}
       renderEmpty={() => (
@@ -4487,7 +4495,10 @@ className="relative h-[210px] cursor-pointer bg-[#111827] sm:h-[280px]"
           
         </section>
       </main>
-      <AuthorPageAboutPopup
+     <SignUpRequiredPopup
+  open={signUpRequiredOpen}
+  onClose={() => setSignUpRequiredOpen(false)}
+/>
         open={pageAboutOpen}
         author={displayAuthor}
         onClose={() => setPageAboutOpen(false)}
