@@ -486,6 +486,10 @@ function formatDownloadItems(downloads) {
       status: 'completed',
       pdf_file_url: item.pdf_file_url || '',
       pdf_file_name: item.pdf_file_name || '',
+      pdf_is_private: item.pdf_is_private === true,
+      pdf_version: Number(item.pdf_version) || 0,
+      pdf_updated_at: item.pdf_updated_at || null,
+      pdf_update_note: item.pdf_update_note || '',
       access_rule: item.access_rule || 'Download after payment',
       order_number: item.order_number || '',
     },
@@ -1094,6 +1098,7 @@ export default function Library() {
 
   useEffect(() => {
     if (activeTab !== 'Downloads' || offline || !isLoggedIn || downloadedRef.current) return undefined
+    if (activeTab !== 'Downloads' || offline || !isLoggedIn) return undefined
     const controller = new AbortController()
     let active = true
     setDownloadLoading(true)
