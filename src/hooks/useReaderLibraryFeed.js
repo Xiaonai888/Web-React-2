@@ -5,6 +5,8 @@ import {
   loadReaderLibraryFeedCache,
   saveReaderLibraryFeedCache,
 } from '../utils/readerLibraryFeedCache'
+import { getActiveReaderToken } from '../utils/readerActiveAccount'
+import { isReaderAccountResponseCurrent } from '../utils/readerAccountSessionManager'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -24,7 +26,7 @@ const EMPTY = {
 }
 
 function getToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function typeKey(value) {
@@ -83,7 +85,7 @@ export default function useReaderLibraryFeed({
   const loadPage = useCallback(async ({ append = false, background = false } = {}) => {
     if (!enabled || !params.accountId || requestRef.current || isReaderOffline()) return false
     const token = getToken()
-    if (!token) return false
+if (!token || !isReaderAccountResponseCurrent(token, params.accountId)) return false
     const current = feedRef.current
     const cursor = append ? current.nextCursor : null
     if (append && (!current.hasMore || !cursor)) return false
@@ -114,7 +116,11 @@ export default function useReaderLibraryFeed({
       if (!response.ok || data.ok === false) {
         throw new Error(data.message || 'Failed to load library')
       }
-      if (controller.signal.aborted || activeKeyRef.current !== requestKey) return false
+      if (
+  controller.signal.aborted ||
+  activeKeyRef.current !== requestKey ||
+  !isReaderAccountResponseCurrent(token, params.accountId)
+) return false
 
       const received = Array.isArray(data.items) ? data.items.slice(0, 9).map(normalizeItem) : []
       const previous = feedRef.current
@@ -135,7 +141,11 @@ export default function useReaderLibraryFeed({
       saveReaderLibraryFeedCache(params, next)
       return true
     } catch (error) {
-      if (controller.signal.aborted || activeKeyRef.current !== requestKey) return false
+      if (
+  controller.signal.aborted ||
+  activeKeyRef.current !== requestKey ||
+  !isReaderAccountResponseCurrent(token, params.accountId)
+) return false
       publish({
         ...feedRef.current,
         loading: false,
@@ -185,16 +195,31 @@ export default function useReaderLibraryFeed({
   }, [loadPage])
 
   useEffect(() => {
-    if (!enabled) return undefined
-    const onInvalidated = (event) => {
-      if (String(event.detail?.accountId || '') !== params.accountId) return
-      if (event.detail?.tab && event.detail.tab !== normalizedTab) return
-      void refresh()
-    }
-    window.addEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
-    return () => window.removeEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
-  }, [enabled, params.accountId, normalizedTab, refresh])
+  if (!enabled) return undefined
 
+  let scheduled = false
+  let active = true
+
+  const onInvalidated = (event) => {
+    if (String(event.detail?.accountId || '') !== params.accountId) return
+    if (event.detail?.tab && event.detail.tab !== normalizedTab) return
+    if (scheduled) return
+
+    scheduled = true
+
+    queueMicrotask(() => {
+      scheduled = false
+      if (active) void refresh()
+    })
+  }
+
+  window.addEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
+
+  return () => {
+    active = false
+    window.removeEventListener('shadow-reader-library-feed-invalidated', onInvalidated)
+  }
+}, [enabled, params.accountId, normalizedTab, refresh])
   const { sentinelRef, showManualLoad } = useGenreAutoLoad({
     resetKey: key,
     hasMore: enabled && feed.hasMore,
