@@ -3171,7 +3171,6 @@ function StoreManagerHome({
   orderActionLoadingId,
 }) {
 const navigate = useNavigate()
-const location = useLocation()
 const [recordFilterOpen, setRecordFilterOpen] = useState(false)
 const [orderFilterOpen, setOrderFilterOpen] = useState(false)
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
@@ -5511,6 +5510,7 @@ export default function AuthorStoreManagerPage() {
   const [promotion, setPromotion] = useState(null)
   const [authorMenuOpen, setAuthorMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const [mode, setMode] = useState('manager')
   useAuthorPageFooterVisibility(mode === 'manager')
   const [editingProduct, setEditingProduct] = useState(null)
