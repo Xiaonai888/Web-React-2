@@ -6,6 +6,8 @@ import { useDisplayTranslation } from '../utils/displayLanguage'
 import { getOfflineReaderAccountId } from '../utils/offlineReaderContent'
 import { listOfflineEpisodes, loadOfflineEpisode } from '../utils/offlineReadingStorage'
 import WebPdfReader from '../components/library/WebPdfReader'
+import { getPurchasedPdfUpdateState, rememberPurchasedPdfVersion, readPurchasedPdfResponse } from '../utils/purchasedPdfUpdate'
+import OfflinePdfSaveButton from '../components/library/OfflinePdfSaveButton'
 
 registerTranslationNamespace('libraryCollection', {
   en: {
@@ -105,6 +107,13 @@ function PurchaseCard({ item, t, token, onRead }) {
   const title = item.title || item.pdf_file_name || 'PDF'
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const accountId = getOfflineReaderAccountId()
+const update = getPurchasedPdfUpdateState({
+  accountId,
+  productId: id,
+  latestVersion: item.pdf_version,
+  canDownload,
+})
   const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
 
   async function downloadPrivatePdf() {
@@ -120,7 +129,7 @@ function PurchaseCard({ item, t, token, onRead }) {
         const body = await response.json().catch(() => ({}))
         throw new Error(body.message || t('libraryCollection.fileNotReady'))
       }
-      const pdf = await response.blob()
+      const { blob: pdf, version } = await readPurchasedPdfResponse(response)
       if (!pdf.type.toLowerCase().startsWith('application/pdf') || !pdf.size) throw new Error(t('libraryCollection.fileNotReady'))
       const blobUrl = URL.createObjectURL(pdf)
       const anchor = document.createElement('a')
@@ -128,7 +137,8 @@ function PurchaseCard({ item, t, token, onRead }) {
       anchor.download = String(item.pdf_file_name || `${title}.pdf`).split(/[\\/]/).pop()
       document.body.appendChild(anchor)
       anchor.click()
-      anchor.remove()
+anchor.remove()
+rememberPurchasedPdfVersion(accountId, id, version)
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000)
     } catch (reason) {
       setError(reason?.message || t('libraryCollection.fileNotReady'))
@@ -146,6 +156,21 @@ function PurchaseCard({ item, t, token, onRead }) {
       </Cover>
       <h2 className="mt-2 line-clamp-2 text-[12px] font-bold text-[var(--shadow-text-primary)]">{title}</h2>
       <p className="mt-1 text-[10px] text-[var(--shadow-text-secondary)]">{canDownload ? 'PDF' : 'eBook'}</p>
+      {update.updateAvailable && (
+  <div className="mt-1 text-[10px] font-bold text-[#16a34a]">
+    Update Available · V{update.latestVersion}
+    {item.pdf_update_note && (
+      <p className="mt-1 break-words font-normal text-[var(--shadow-text-secondary)]">
+        {item.pdf_update_note}
+      </p>
+    )}
+  </div>
+)}
+{canDownload && id && (
+  <div className="mt-2">
+    <OfflinePdfSaveButton pdfId={id} latestVersion={item.pdf_version} />
+  </div>
+)}
       {!url && !id ? <p className="mt-1 text-[10px] text-[var(--shadow-warning)]">{t('libraryCollection.fileNotReady')}</p> : null}
       {error ? <p role="alert" className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]">{error}</p> : null}
     </article>
@@ -197,7 +222,7 @@ export default function LibraryCollectionPage() {
         }
         if (purchased) {
           const response = await fetch(`${API_BASE_URL}/api/author-store/downloads/my`, {
-            headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
+            headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal: controller.signal,
           })
           const data = await response.json().catch(() => ({}))
           if (!response.ok || data.ok === false || !Array.isArray(data.downloads)) throw new Error(data.message || t('libraryCollection.failed'))
