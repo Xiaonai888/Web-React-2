@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { beginAuthorMenuNavigation } from '../../utils/authorMenuNavigation'
 import { getAuthToken } from '../../config/api'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -14,9 +15,10 @@ registerTranslationNamespace('authorMenuSheet', {
   ko: { authorPage: '작가 페이지', closeMenu: '작가 메뉴 닫기', title: '작가 메뉴', switchProfile: '프로필 전환', finance: '재정', settings: '설정' },
 })
 
-export default function AuthorMenuSheet({ open, author, onClose, onSwitchProfile }) {
+export default function AuthorMenuSheet({ open, author, onClose, onSwitchProfile, source = 'page', activeTab }) {
   const { t, language } = useDisplayTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [verifiedAccess, setVerifiedAccess] = useState(null)
   const isOwner = Boolean(author?.is_owner)
   const authorId = String(author?.id || author?.author_page_id || '')
@@ -49,10 +51,16 @@ export default function AuthorMenuSheet({ open, author, onClose, onSwitchProfile
   const pageLogo = author?.avatar_url || ''
   const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
   const openPage = (path) => {
-    onClose()
-    navigate(path)
-  }
+  onClose()
 
+  beginAuthorMenuNavigation({
+    navigate,
+    location,
+    destination: path,
+    source,
+    activeTab,
+  })
+}
   const items = [
     ...(preOrderAllowed ? [{ icon: 'fa-book-open', label: authorPreOrderText(language, 'pageTitle'), path: '/author/page/pre-order' }] : []),
     { icon: 'fa-wallet', label: t('authorMenuSheet.finance'), path: '/author/page/finance' },
