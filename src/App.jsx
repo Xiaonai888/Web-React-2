@@ -90,8 +90,10 @@ import AuthorRecentEarningsPage from './pages/Author/AuthorRecentEarningsPage'
 import AuthorTopSupportersPage from './pages/Author/AuthorTopSupportersPage'
 import AuthorMonthlyEarningsPage from './pages/Author/AuthorMonthlyEarningsPage'
 import { syncReaderOneSignalIdentity } from './services/readerOneSignal.service'
-const AuthorAdsCampaignDetailPage = lazy(() => import('./pages/Author/AuthorAdsCampaignDetailPage'))
+import { AuthorMenuNavigationGuard } from './utils/authorMenuNavigation'
 
+
+const AuthorAdsCampaignDetailPage = lazy(() => import('./pages/Author/AuthorAdsCampaignDetailPage'))
 const AuthorAdsProductEditorPage = lazy(() => import('./pages/Author/AuthorAdsProductEditorPage'))
 const GamePage = lazy(() => import('./pages/Me/GamePage'))
 const MyFramePage = lazy(() => import('./pages/MyFramePage'))
@@ -2071,6 +2073,7 @@ const shouldShowOpeningAds =
 export default function App() {
   return (
     <Router>
+      <AuthorMenuNavigationGuard />
   <AuthorPageNotificationProvider>
     <SmartRefreshProvider>
   <WorkMaintenanceGuard>
