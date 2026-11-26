@@ -1023,17 +1023,18 @@ useEffect(() => {
     return <LoadingBlock />
   }
 
-  if (diagnostic?.kind === 'restricted') {
-    if (diagnostic?.kind === 'login' || (!getReaderToken() && diagnostic?.kind === 'restricted')) {
+  if (diagnostic?.kind === 'login' || (!getReaderToken() && diagnostic?.kind === 'restricted')) {
   return (
     <div className="story-detail-page app-page min-h-screen">
       <SignUpRequiredPopup
         open={true}
-        onClose={() => navigate(-1)}
+        onClose={() => window.history.state?.idx > 0 ? navigate(-1) : navigate('/', { replace: true })}
       />
     </div>
   )
 }
+
+if (diagnostic?.kind === 'restricted') {
   return (
     <div className="story-detail-page app-page min-h-screen px-4 py-8">
       <div className="app-card app-shadow mx-auto mt-8 max-w-md rounded-[28px] border p-6 text-center">
