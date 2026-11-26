@@ -1,3 +1,5 @@
+import { chatThemeAccount } from '../../services/chatStoryThemes'
+import { readSupportMute, isSupportMuted } from '../../components/chat/supportChatProfileModel'
 import {
   Archive,
   BadgeCheck,
@@ -3346,7 +3348,12 @@ activeFilter === 'all' ? (
               <BadgeCheck size={16} className="absolute -bottom-1 -right-1 rounded-full bg-[var(--shadow-bg-surface)] text-blue-500" aria-label="Verified" />
             </span>
             <span className="min-w-0 flex-1">
-              <strong className="app-title block truncate text-[15px] font-bold">Shadow Admin</strong>
+              <span className="flex items-center gap-2">
+  <strong className="app-title truncate text-[15px] font-bold">Shadow Admin</strong>
+  {isSupportMuted(readSupportMute(chatThemeAccount(), adminSupportConversation.id)) && (
+    <VolumeX size={14} strokeWidth={2} className="shrink-0 text-[#96929d]" />
+  )}
+</span>
               <span className="app-muted mt-1 block truncate text-[13px]">{adminSupportConversation.last_message_preview || t('chatInboxPage.openConversation')}</span>
             </span>
             <span className="flex shrink-0 flex-col items-end gap-2">
