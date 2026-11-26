@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CommentSection from '../comments/CommentSection'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import usePopupUiDiagnostics from '../../hooks/usePopupUiDiagnostics'
 
 registerTranslationNamespace('commentsModal', {
   en: {
@@ -75,6 +76,7 @@ export default function CommentsModal({
   const { t } = useDisplayTranslation()
   const navigate = useNavigate()
   const sheetRef = useRef(null)
+  usePopupUiDiagnostics(open, sheetRef, 'story-comments')
   useEffect(() => {
     if (!open || !focusCommentId) return undefined
     const sheet = sheetRef.current
