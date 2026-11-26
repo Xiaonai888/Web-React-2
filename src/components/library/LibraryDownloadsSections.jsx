@@ -200,19 +200,24 @@ rememberPurchasedPdfVersion(accountId, productId, version)
         {rights.download ? 'PDF' : 'eBook'}
       </p>
 
-      {error ? (
-        <p
-          role="alert"
-          className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]"
-        >
-          {error}
-        </p>
       {update.updateAvailable && (
   <div className="mt-1 text-[10px] font-bold text-[#16a34a]">
     Update Available · V{update.latestVersion}
+    {story.pdf_update_note && (
+      <p className="mt-1 break-words font-normal text-[var(--shadow-text-secondary)]">
+        {story.pdf_update_note}
+      </p>
+    )}
   </div>
 )}
-      ) : null}
+{error ? (
+  <p
+    role="alert"
+    className="mt-1 break-words text-[10px] text-[var(--shadow-warning)]"
+  >
+    {error}
+  </p>
+) : null}
     </article>
   )
 }
