@@ -94,6 +94,22 @@ export function getMySupportBlock({ signal } = {}) {
   return request('/mine/block', { signal })
 }
 
+function validateSupportPins(data) {
+  if (data?.ok !== true || !Array.isArray(data.pins) || data.pins.length > 50 || data.pins.some(pin => !UUID.test(String(pin?.message_id || '')))) {
+    throw new ReaderSupportChatApiError(503, 'SUPPORT_PIN_INVALID_RESPONSE', 'Support pins are unavailable')
+  }
+  return data
+}
+
+export async function getMySupportPins({ signal } = {}) {
+  return validateSupportPins(await request('/mine/pins', { signal }))
+}
+
+export async function setMySupportPin(messageId, pinned, { signal } = {}) {
+  if (!UUID.test(String(messageId || '')) || typeof pinned !== 'boolean') throw imageError('SUPPORT_PIN_INVALID')
+  return validateSupportPins(await request(`/mine/messages/${encodeURIComponent(messageId)}/pin`, { method: pinned ? 'POST' : 'DELETE', signal }))
+}
+
 function validatePrivateImageUrl(value, kind) {
   let url
   try { url = new URL(value) } catch { throw imageError('SUPPORT_IMAGE_URL_INVALID') }
