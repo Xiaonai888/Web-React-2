@@ -1107,6 +1107,7 @@ export default function Library() {
           `${API_BASE_URL}/api/author-store/downloads/my`,
           {
             headers: getHeaders(),
+            cache: 'no-store',
             signal: controller.signal,
           }
         )
