@@ -17,6 +17,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 // Independent per-account, per-conversation preferences. No API/Supabase traffic.
 const EVENT = 'shadow:conversation-chat-appearance-changed'
 const PREFIX = 'shadow:conversation-chat-appearance:v1'
+const SUPPORT_DEFAULT_THEME = Object.freeze({ source: 'preset', id: 'honeyCream', paletteId: 'honeyCream' })
 
 registerTranslationNamespace('conversationAppearance', {
   en: {
@@ -49,13 +50,13 @@ registerTranslationNamespace('conversationAppearance', {
 function preferenceKey(conversationId, scope, account) {
   const id = String(conversationId || '').slice(0, 128)
   if (!id || !account || account === 'guest') return ''
-  const type = scope === 'author' ? 'author' : 'reader'
+  const type = scope === 'support' ? 'support' : scope === 'author' ? 'author' : 'reader'
   return `${PREFIX}:${type}:${account}:${id}`
 }
 
-function normalizePreferences(value) {
+function normalizePreferences(value, scope) {
   return {
-    themeSelection: normalizeChatTheme(value?.themeSelection),
+    themeSelection: normalizeChatTheme(value?.themeSelection ?? (scope === 'support' ? SUPPORT_DEFAULT_THEME : undefined)),
     fontKey: getChatFontOption(value?.fontKey).key,
   }
 }
@@ -67,8 +68,8 @@ function readSnapshot(key) {
 
 export function readConversationAppearance(conversationId, scope = 'reader', account = chatThemeAccount()) {
   const key = preferenceKey(conversationId, scope, account)
-  try { return normalizePreferences(JSON.parse(readSnapshot(key) || 'null')) }
-  catch { return normalizePreferences(null) }
+  try { return normalizePreferences(JSON.parse(readSnapshot(key) || 'null'), scope) }
+  catch { return normalizePreferences(null, scope) }
 }
 
 export function saveConversationAppearance(conversationId, changes, scope = 'reader', account = chatThemeAccount()) {
@@ -77,7 +78,7 @@ export function saveConversationAppearance(conversationId, changes, scope = 'rea
     throw new Error('Chat account has changed. Sign in again.')
   }
   const current = readConversationAppearance(conversationId, scope, account)
-  const next = normalizePreferences({ ...current, ...changes })
+  const next = normalizePreferences({ ...current, ...changes }, scope)
   window.localStorage.setItem(key, JSON.stringify(next))
   window.dispatchEvent(new CustomEvent(EVENT, { detail: { key } }))
   return next
@@ -99,14 +100,15 @@ export function useConversationAppearance(conversationId, scope = 'reader', acco
   const getSnapshot = useCallback(() => readSnapshot(key), [key])
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => '')
   const preferences = useMemo(() => {
-    try { return normalizePreferences(JSON.parse(snapshot || 'null')) }
-    catch { return normalizePreferences(null) }
-  }, [snapshot])
+    try { return normalizePreferences(JSON.parse(snapshot || 'null'), scope) }
+    catch { return normalizePreferences(null, scope) }
+  }, [snapshot, scope])
   const save = useCallback((changes) =>
     saveConversationAppearance(conversationId, changes, scope, account),
     [conversationId, scope, account])
   return {
     ...preferences,
+    isSupportDefault: scope === 'support' && JSON.stringify(preferences.themeSelection) === JSON.stringify(normalizeChatTheme(SUPPORT_DEFAULT_THEME)),
     theme: resolveChatTheme(preferences.themeSelection),
     themeStyle: chatThemeStyle(preferences.themeSelection),
     font: getChatFontOption(preferences.fontKey),
