@@ -6,6 +6,7 @@ import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { authorPreOrderText } from '../../utils/authorPreOrderRules'
 import { fetchAuthorPreOrders, verifyAuthorPreOrderAccess } from '../../services/authorPreOrder.service'
 import AuthorPreOrderCampaignCard from '../../components/author/preorder/AuthorPreOrderCampaignCard'
+import { useAuthorMenuReturn } from '../../utils/authorMenuNavigation'
 
 const FILTERS = ['all', 'active', 'scheduled', 'closed', 'completed', 'draft']
 
@@ -22,6 +23,7 @@ function AccessMessage({ icon: Icon, title, onRetry, retryText }) {
 export default function AuthorPreOrderPage() {
   useAuthorPageFooterVisibility(false)
   const navigate = useNavigate()
+  const returnToAuthorMenu = useAuthorMenuReturn()
   const { language: lang } = useDisplayTranslation()
   const text = key => authorPreOrderText(lang, key)
   const [access, setAccess] = useState('checking')
@@ -101,7 +103,7 @@ export default function AuthorPreOrderPage() {
     <main className="min-h-[100dvh] bg-white pb-[calc(24px+env(safe-area-inset-bottom))] text-[#171717]">
       <div className="mx-auto max-w-[720px] px-4 pt-3 sm:px-6">
         <header className="flex h-12 items-center gap-3">
-          <button type="button" onClick={() => navigate('/author/page')} aria-label={text('back')} className="flex h-10 w-9 items-center justify-center rounded-full hover:bg-[#f5f5f5]"><ArrowLeft size={21} /></button>
+          <button type="button" onClick={() => returnToAuthorMenu(() => navigate('/author/page'))} aria-label={text('back')} className="flex h-10 w-9 items-center justify-center rounded-full hover:bg-[#f5f5f5]"><ArrowLeft size={21} /></button>
           <h1 className="flex-1 text-[20px] font-bold">{text('pageTitle')}</h1>
           
         </header>
