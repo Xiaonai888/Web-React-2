@@ -4,6 +4,7 @@ import { getDisplayText, useDisplayTranslation } from '../../utils/displayLangua
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { clearHomeCacheSection } from '../../utils/homeDataCache'
 import { uploadStoryImageDirect } from '../../utils/storyImageDirectUpload'
+import { compressStoryVideoOnDevice } from '../../utils/storyVideoCompression'
 import StoryTextEditor, { normalizeStoryTextSticker } from './StoryTextEditor'
 import StoryTextSticker from './StoryTextSticker'
 import StoryMentionPicker from './StoryMentionPicker'
@@ -375,16 +376,20 @@ async function finalizeStoryVideoUpload({
 }
 
 async function uploadStoryVideoDirect({ config, file, textOverlay, token, onProgress }) {
+  const uploadFile = await compressStoryVideoOnDevice(file, {
+    onProgress: value => onProgress(Math.round(value * 20)),
+  })
+  onProgress(20)
   const prepared = await requestStoryVideoUpload({
     initPath: config.videoUploadInitPath,
-    file,
+    file: uploadFile,
     token,
   })
 
   await uploadVideoDirectToR2({
     uploadUrl: prepared.upload_url,
-    file,
-    onProgress,
+    file: uploadFile,
+    onProgress: value => onProgress(20 + Math.round(value * 73 / 93)),
   })
 
   return finalizeStoryVideoUpload({
