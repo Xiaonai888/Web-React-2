@@ -19,25 +19,37 @@ export default function SharedChatComposer({
   onComingSoon,
   variant = 'reader',
   labels,
+  theme,
 }) {
   const { t } = useDisplayTranslation()
   const label = key => labels?.[key] ?? t(`chatRoomPage.${key}`)
   const support = variant === 'support'
   const hasText = Boolean(text.trim())
   const disabled = !canSend || sending
-  const accent = support
-    ? 'bg-gradient-to-r from-[#D19A36] to-[#E9AD4B] text-white'
-    : 'bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white'
-  const sendAccent = support
-    ? accent
-    : 'bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white'
+  const themeVars = theme ? {
+    '--cs-outgoing': theme.outgoing,
+    '--cs-outgoing-end': theme.outgoingEnd,
+    '--cs-outgoing-text': theme.outgoingText,
+    '--cs-accent': theme.accent,
+  } : undefined
+  const start = support ? '#D19A36' : '#7c3aed'
+  const end = support ? '#E9AD4B' : '#9b6df2'
+  const buttonStyle = fallbackEnd => ({
+    background: `linear-gradient(to right, var(--cs-outgoing, ${start}), var(--cs-outgoing-end, ${fallbackEnd}))`,
+    color: 'var(--cs-outgoing-text, #fff)',
+    boxShadow: 'inset 0 0 0 1px var(--cs-accent, transparent)',
+  })
+  const inputStyle = {
+    fontFamily,
+    ...(!support || theme ? { borderColor: `var(--cs-accent, ${support ? 'var(--shadow-border)' : '#dedee4'})` } : {}),
+  }
   const iconColor = support ? 'text-[var(--shadow-text-primary)]' : 'text-[#111827]'
   const inputClass = support
     ? 'border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] text-[var(--shadow-text-primary)] focus:border-[#D19A36]'
     : 'border-[#dedee4] bg-[#f7f7f9] text-[#111827] focus:border-[#9b7be8] focus:bg-white'
 
   return (
-    <div className="relative">
+    <div className="relative" style={themeVars}>
       <textarea
         ref={textareaRef}
         value={text}
@@ -46,7 +58,7 @@ export default function SharedChatComposer({
         disabled={disabled}
         rows={1}
         placeholder={placeholder}
-        style={{ fontFamily }}
+        style={inputStyle}
         className={`block max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 ${inputClass}`}
       />
       <button
@@ -54,7 +66,8 @@ export default function SharedChatComposer({
         onClick={hasText ? (onSearch || onComingSoon) : (onCamera || onComingSoon)}
         disabled={disabled}
         aria-label={label(hasText ? 'searchMessages' : 'camera')}
-        className={`absolute inset-y-0 left-[7px] my-auto flex h-8 w-8 items-center justify-center rounded-full transition active:scale-90 disabled:opacity-45 ${accent}`}
+        style={buttonStyle(end)}
+        className={`absolute inset-y-0 left-[7px] my-auto flex h-8 w-8 items-center justify-center rounded-full transition active:scale-90 disabled:opacity-45`}
       >
         {hasText ? <Search size={19} /> : <Camera size={20} />}
       </button>
@@ -74,7 +87,8 @@ export default function SharedChatComposer({
         onClick={hasText ? onSend : (onEmoji || onComingSoon)}
         disabled={disabled}
         aria-label={label(hasText ? (editing ? 'saveEdit' : 'sendMessage') : 'emoji')}
-        className={`absolute inset-y-0 right-[7px] my-auto flex h-8 w-8 items-center justify-center transition active:scale-90 disabled:opacity-45 ${hasText ? `rounded-full ${sendAccent}` : `bg-transparent ${iconColor}`}`}
+        style={hasText ? buttonStyle(support ? end : '#a78bfa') : undefined}
+        className={`absolute inset-y-0 right-[7px] my-auto flex h-8 w-8 items-center justify-center transition active:scale-90 disabled:opacity-45 ${hasText ? 'rounded-full' : `bg-transparent ${iconColor}`}`}
       >
         {sending ? <LoaderCircle size={19} className="animate-spin" /> : hasText ? (editing ? <Check size={20} /> : <Send size={19} strokeWidth={2.2} />) : <Smile size={20} />}
       </button>
