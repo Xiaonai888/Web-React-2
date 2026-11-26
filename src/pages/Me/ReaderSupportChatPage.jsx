@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BadgeCheck, Check, ChevronDown, ChevronLeft, Copy, CornerUpLeft, LoaderCircle, MoreHorizontal, Pencil, Send, Trash2, X } from 'lucide-react'
+import { BadgeCheck, Check, CheckCheck, ChevronDown, ChevronLeft, Copy, CornerUpLeft, LoaderCircle, MoreHorizontal, Pencil, Send, Trash2, X } from 'lucide-react'
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../../components/common/PagePrimitives'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
@@ -547,6 +547,11 @@ export default function ReaderSupportChatPage() {
                       <div className={`mt-1 flex items-center justify-end gap-2 text-[10px] ${mine ? 'text-[#8C7352]' : 'text-[var(--shadow-text-tertiary)]'}`}>
                         {item.edited_at && !deleted && <span>{t('readerSupportChatPage.edited')}</span>}
                         <span>{displayTime(item.created_at)}</span>
+{mine && !deleted && (
+  item.seen_at
+    ? <CheckCheck size={15} className="shrink-0 text-green-600" />
+    : <Check size={15} className="shrink-0 opacity-70" />
+)}
                       </div>
                     </div>
                     {!deleted && (
