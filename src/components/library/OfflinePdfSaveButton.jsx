@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { savePurchasedPdfOffline } from '../../utils/savePurchasedPdfOffline'
+import { getOfflineReaderAccountId } from '../../utils/offlineReaderContent'
+import { getPurchasedPdfUpdateState } from '../../utils/purchasedPdfUpdate'
 
 registerTranslationNamespace('offlinePdfSave', {
   en: { action: 'Save offline', checking: 'Checking access…', downloading: 'Saving PDF…', saving: 'Finishing…', saved: 'Saved offline', open: 'Open offline downloads' },
@@ -12,7 +14,7 @@ registerTranslationNamespace('offlinePdfSave', {
   ko: { action: '오프라인으로 저장', checking: '접근 권한 확인 중…', downloading: 'PDF 저장 중…', saving: '마무리 중…', saved: '오프라인 저장 완료', open: '오프라인 다운로드 열기' },
 })
 
-export default function OfflinePdfSaveButton({ pdfId }) {
+export default function OfflinePdfSaveButton({ pdfId, latestVersion = 0 }) {
   const { t } = useDisplayTranslation()
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
@@ -22,7 +24,7 @@ export default function OfflinePdfSaveButton({ pdfId }) {
     setStatus('idle')
     setError('')
     return () => requestRef.current?.abort()
-  }, [pdfId])
+  }, [pdfId, latestVersion])
 
   async function save() {
     if (!pdfId || requestRef.current) return
@@ -50,6 +52,13 @@ export default function OfflinePdfSaveButton({ pdfId }) {
   }
 
   const busy = ['checking', 'downloading', 'saving'].includes(status)
+  const update = getPurchasedPdfUpdateState({
+  accountId: getOfflineReaderAccountId(),
+  productId: pdfId,
+  latestVersion,
+  canDownload: true,
+  kind: 'offline',
+})
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <button
@@ -58,7 +67,9 @@ export default function OfflinePdfSaveButton({ pdfId }) {
         disabled={!pdfId || busy || status === 'saved'}
         className="rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-soft)] px-3 py-2 text-[10px] font-extrabold text-[var(--shadow-text-primary)] disabled:opacity-60"
       >
-        {t(`offlinePdfSave.${busy || status === 'saved' ? status : 'action'}`)}
+       {update.updateAvailable && !busy && status !== 'saved'
+  ? 'Save latest PDF'
+  : t(`offlinePdfSave.${busy || status === 'saved' ? status : 'action'}`)}
       </button>
       {status === 'saved' ? <Link to="/library/manage/offline-downloads" className="text-[10px] font-bold text-[var(--shadow-text-secondary)] underline">{t('offlinePdfSave.open')}</Link> : null}
       {error ? <p role="alert" className="max-w-[220px] break-words text-[10px] text-red-600">{error}</p> : null}
