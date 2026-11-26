@@ -6,6 +6,7 @@ import SharedChatMessageBubble from '../../components/chat/SharedChatMessageBubb
 import SharedChatComposer from '../../components/chat/SharedChatComposer'
 import SharedMessageActionMenu from '../../components/chat/SharedMessageActionMenu'
 import SupportChatPrivateImage from '../../components/chat/SupportChatPrivateImage'
+import SupportChatForwardDialog, { supportForwardText } from '../../components/chat/SupportChatForwardDialog'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
@@ -25,6 +26,7 @@ import {
 
 registerTranslationNamespace('readerSupportChatPage', {
   en: {
+    forward: "Forward text", forwardRecipient: "Choose a recipient", forwardNote: "Only the text below will be sent as a new message from your account. Private images and attachments are not shared. Check the recipient and cancel if the text contains sensitive information.", forwardEmpty: "No available direct chats.", forwardLoadError: "Could not load recipients.", forwardSendError: "Delivery could not be confirmed. Check the recipient chat before trying again.", forwardSuccess: "Text sent.", forwardLimit: "Choose text messages totaling at most 2,000 characters.",
     title: 'Chat with Shadow Admin', subtitle: 'Private support messages', back: 'Back',
     verified: 'Verified Shadow Admin', waiting: 'Shadow Support', onlineNote: 'Messages are answered when our team is available.',
     loading: 'Loading your support chat...', loadError: 'Unable to load support chat', retry: 'Retry',
@@ -44,6 +46,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     pin: 'Pin', unpin: 'Unpin', pinned: 'Pinned messages', pinError: 'Pinned messages unavailable. Retry.', pinLimit: 'You can pin up to 50 messages.', select: 'Select', selected: 'Selected', copySelected: 'Copy selected', selectionLimit: 'Select up to 50 messages.',
   },
   km: {
+    forward: "បញ្ជូនអត្ថបទបន្ត", forwardRecipient: "ជ្រើសអ្នកទទួល", forwardNote: "អត្ថបទខាងក្រោមនឹងផ្ញើជាសារថ្មីពីគណនីរបស់អ្នក។ រូបភាពឯកជន និងឯកសារភ្ជាប់មិនត្រូវបានបញ្ជូនទេ។ សូមពិនិត្យអ្នកទទួល និងព័ត៌មានរសើបមុនផ្ញើ។", forwardEmpty: "មិនមាន Chat ផ្ទាល់ដែលអាចផ្ញើបានទេ។", forwardLoadError: "មិនអាចផ្ទុកអ្នកទទួលបានទេ។", forwardSendError: "មិនអាចបញ្ជាក់ការផ្ញើបានទេ។ សូមពិនិត្យ Chat អ្នកទទួលមុនសាកម្ដងទៀត។", forwardSuccess: "បានផ្ញើអត្ថបទ។", forwardLimit: "ជ្រើសសារអត្ថបទសរុបមិនលើស 2,000 តួអក្សរ។",
     title: 'ឆាតជាមួយ Shadow Admin', subtitle: 'សារជំនួយឯកជន', back: 'ត្រឡប់ក្រោយ',
     verified: 'Shadow Admin បានផ្ទៀងផ្ទាត់', waiting: 'ក្រុមជំនួយ Shadow', onlineNote: 'ក្រុមការងារនឹងឆ្លើយតបនៅពេលអាចធ្វើបាន។',
     loading: 'កំពុងផ្ទុកឆាតជំនួយ...', loadError: 'មិនអាចផ្ទុកឆាតជំនួយបានទេ', retry: 'ព្យាយាមម្ដងទៀត',
@@ -63,6 +66,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     pin: 'Pin', unpin: 'ដក Pin', pinned: 'សារដែលបាន Pin', pinError: 'មិនអាចផ្ទុកសារ Pin។ សូមព្យាយាមម្តងទៀត។', pinLimit: 'អាច Pin បានអតិបរមា 50 សារ។', select: 'ជ្រើស', selected: 'បានជ្រើស', copySelected: 'ចម្លងសារដែលបានជ្រើស', selectionLimit: 'អាចជ្រើសបានអតិបរមា 50 សារ។',
   },
   zh: {
+    forward: "转发文本", forwardRecipient: "选择接收者", forwardNote: "以下文本将以你的账号作为新消息发送。不会共享私密图片或附件。发送前请确认接收者并检查敏感信息。", forwardEmpty: "没有可用的私聊。", forwardLoadError: "无法加载接收者。", forwardSendError: "无法确认是否送达。请先检查接收者聊天再重试。", forwardSuccess: "文本已发送。", forwardLimit: "请选择总计不超过2000字符的文本消息。",
     title: '联系 Shadow Admin', subtitle: '私人客服消息', back: '返回',
     verified: '已认证 Shadow Admin', waiting: 'Shadow 客服', onlineNote: '我们的团队将在有空时回复。',
     loading: '正在加载客服聊天...', loadError: '无法加载客服聊天', retry: '重试',
@@ -82,6 +86,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     pin: '置顶', unpin: '取消置顶', pinned: '置顶消息', pinError: '无法加载置顶消息，请重试。', pinLimit: '最多置顶50条消息。', select: '选择', selected: '已选择', copySelected: '复制所选', selectionLimit: '最多选择50条消息。',
   },
   ja: {
+    forward: "テキストを転送", forwardRecipient: "送信先を選択", forwardNote: "以下のテキストをあなたのアカウントから新しいメッセージとして送信します。非公開の画像や添付ファイルは共有されません。送信前に送信先と機密情報をご確認ください。", forwardEmpty: "利用可能な個別チャットがありません。", forwardLoadError: "送信先を読み込めませんでした。", forwardSendError: "配信を確認できませんでした。再試行する前に送信先のチャットをご確認ください。", forwardSuccess: "テキストを送信しました。", forwardLimit: "合計2000文字以内のテキストメッセージを選択してください。",
     title: 'Shadow Admin にチャット', subtitle: '非公開サポートメッセージ', back: '戻る',
     verified: '認証済み Shadow Admin', waiting: 'Shadow サポート', onlineNote: '担当者が対応可能になり次第返信します。',
     loading: 'サポートチャットを読み込み中...', loadError: 'サポートチャットを読み込めません', retry: '再試行',
@@ -101,6 +106,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     pin: 'ピン留め', unpin: 'ピン解除', pinned: 'ピン留め済みメッセージ', pinError: 'ピン留めの読み込みに失敗しました。再試行してください。', pinLimit: '最大50件までピン留めできます。', select: '選択', selected: '選択済み', copySelected: '選択したメッセージをコピー', selectionLimit: '最大50件まで選択できます。',
   },
   ko: {
+    forward: "텍스트 전달", forwardRecipient: "받는 사람 선택", forwardNote: "아래 텍스트를 내 계정의 새 메시지로 보냅니다. 비공개 이미지와 첨부 파일은 공유되지 않습니다. 보내기 전에 받는 사람과 민감한 정보를 확인하세요.", forwardEmpty: "사용 가능한 개인 채팅이 없습니다.", forwardLoadError: "받는 사람을 불러오지 못했습니다.", forwardSendError: "전송 여부를 확인할 수 없습니다. 다시 시도하기 전에 받는 사람의 채팅을 확인하세요.", forwardSuccess: "텍스트를 보냈습니다.", forwardLimit: "총 2,000자 이하의 텍스트 메시지를 선택하세요.",
     title: 'Shadow Admin과 채팅', subtitle: '비공개 지원 메시지', back: '뒤로',
     verified: '인증된 Shadow Admin', waiting: 'Shadow 지원팀', onlineNote: '담당자가 가능한 시간에 답변드립니다.',
     loading: '지원 채팅을 불러오는 중...', loadError: '지원 채팅을 불러올 수 없습니다', retry: '다시 시도',
@@ -168,6 +174,7 @@ function allowedActions(message, archived, blocked, pinReady = false) {
   if (message.sender_kind === 'reader' && !archived && message.message_text && !blocked) actions.push('edit')
   if (!archived && !blocked && pinReady) actions.push('pin', 'unpin')
   if (message.message_text) actions.push('copy')
+  if (!archived && !blocked && supportForwardText([message])) actions.push('forward')
   actions.push('select')
   if (message.sender_kind === 'reader') {
     if (!archived) actions.push('delete')
@@ -188,6 +195,7 @@ export default function ReaderSupportChatPage() {
   const [pinRefresh, setPinRefresh] = useState(0)
   const [pinListOpen, setPinListOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
+  const [forwardText, setForwardText] = useState('')
   const pinWriteRef = useRef(false)
   const pinEpochRef = useRef(0)
   const pinAbortRef = useRef(null)
@@ -438,6 +446,7 @@ export default function ReaderSupportChatPage() {
   const conversationId = conversation?.id || ''
   useEffect(() => {
     setSelectedIds([])
+    setForwardText('')
     setPinListOpen(false)
     setPins([])
     setPinReadyFor('')
@@ -468,13 +477,15 @@ export default function ReaderSupportChatPage() {
   const pinnedIds = new Set(activePins.map(pin => pin.message_id))
   const selectionMode = selectedIds.length > 0
   const selectedText = messages.filter(message => selectedIds.includes(message.id) && !message.deleted_at && message.message_text).map(message => message.message_text).join('\n\n')
+  const selectedForwardText = supportForwardText(messages.filter(message => selectedIds.includes(message.id)))
   const archived = conversation?.status === 'archived'
-  const composeDisabled = selectionMode || loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
+  useEffect(() => { if (loginRequired || archived || blocked) setForwardText('') }, [loginRequired, archived, blocked])
+  const composeDisabled = Boolean(forwardText) || selectionMode || loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
   const bubbleLabels = {
     message: tr('message'), messageOptions: tr('menu'), originalUnavailable: tr('originalUnavailable'),
     originalMessage: tr('message'), messageDeleted: tr('deleted'), edited: tr('edited'), read: tr('read'), sentStatus: tr('sent'),
   }
-  const menuLabels = { reply: tr('reply'), edit: tr('edit'), copy: tr('copy'), delete: tr('delete'), info: tr('info'), close: tr('closeMenu'), pin: tr('pin'), unpin: tr('unpin'), select: tr('select') }
+  const menuLabels = { reply: tr('reply'), edit: tr('edit'), copy: tr('copy'), delete: tr('delete'), info: tr('info'), close: tr('closeMenu'), pin: tr('pin'), unpin: tr('unpin'), select: tr('select'), forward: tr('forward') }
   const composerLabels = { camera: tr('camera'), image: tr('image'), searchMessages: tr('search'), emoji: tr('emoji'), saveEdit: tr('save'), sendMessage: tr('send') }
   const mediaLabels = { image: tr('image'), retry: tr('retry'), close: tr('close') }
 
@@ -548,6 +559,12 @@ export default function ReaderSupportChatPage() {
     setMenu(null)
     if (!allowedActions(message, archived, blocked, pinReady).includes(action)) return
     if (action === 'select') { toggleSelection(message.id); return }
+    if (action === 'forward') {
+      const text = supportForwardText([message])
+      if (text) setForwardText(text)
+      else setError(tr('forwardLimit'))
+      return
+    }
     if (action === 'pin' || action === 'unpin') { await changePin(message.id, action === 'pin'); return }
     if (action === 'info') { setInfoTarget(message); return }
     if (action === 'copy') {
@@ -773,12 +790,13 @@ export default function ReaderSupportChatPage() {
           )}
           <input ref={cameraRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" capture="environment" onChange={selectedImage} className="hidden" />
           <input ref={galleryRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" onChange={selectedImage} className="hidden" />
-          {selectionMode ? <div className="flex items-center gap-2 px-3 pt-2"><button type="button" onClick={() => setSelectedIds([])} aria-label={tr('cancel')} className="flex h-9 w-9 items-center justify-center rounded-full"><X size={19} /></button><span className="min-w-0 flex-1 text-[12px] font-semibold">{tr('selected')}: {selectedIds.length}</span><button type="button" disabled={!selectedText} onClick={() => void copySelection()} className="rounded-xl bg-amber-500 px-3 py-2 text-[12px] font-bold text-white disabled:opacity-40">{tr('copySelected')}</button></div> : <div className="px-3 pt-2">
+          {selectionMode ? <div className="flex items-center gap-2 px-3 pt-2"><button type="button" onClick={() => setSelectedIds([])} aria-label={tr('cancel')} className="flex h-9 w-9 items-center justify-center rounded-full"><X size={19} /></button><span className="min-w-0 flex-1 text-[12px] font-semibold">{tr('selected')}: {selectedIds.length}</span><button type="button" disabled={!selectedText} onClick={() => void copySelection()} className="rounded-xl bg-amber-500 px-3 py-2 text-[12px] font-bold text-white disabled:opacity-40">{tr('copySelected')}</button>{!archived && !blocked && <button type="button" disabled={sending || Boolean(busyAction) || imageRetry} onClick={() => selectedForwardText ? setForwardText(selectedForwardText) : setError(tr('forwardLimit'))} className="rounded-xl border border-amber-500 px-3 py-2 text-[12px] font-bold text-amber-600 disabled:opacity-40">{tr('forward')}</button>}</div> : <div className="px-3 pt-2">
             <SharedChatComposer variant="support" labels={composerLabels} textareaRef={composerRef} text={draft} onChange={setDraft} canSend={!composeDisabled} sending={sending} editing={Boolean(editTarget)} placeholder={tr(blocked ? 'blocked' : archived ? 'archived' : 'placeholder')} onSend={submit} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) void submit(event) }} onCamera={() => chooseImage(cameraRef)} onGallery={() => chooseImage(galleryRef)} onComingSoon={() => setError(tr('comingSoon'))} />
           </div>}
         </div>
       </div>
       <SharedMessageActionMenu state={menu} variant="support" labels={menuLabels} isPinned={pinnedIds.has(menu?.message?.id)} allowedActions={allowedActions(menu?.message, archived, blocked, pinReady)} busy={busyAction || (sending ? 'sending' : '')} onClose={() => setMenu(null)} onAction={chooseAction} />
+      {forwardText && !loginRequired && !archived && !blocked && <SupportChatForwardDialog text={forwardText} labels={{ title: tr('forward'), recipient: tr('forwardRecipient'), note: tr('forwardNote'), empty: tr('forwardEmpty'), loadError: tr('forwardLoadError'), sendError: tr('forwardSendError'), success: tr('forwardSuccess'), close: tr('close'), send: tr('send') }} onClose={() => setForwardText('')} onDone={() => setSelectedIds([])} />}
       {deleteTarget && (
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/50 px-5">
           <div role="alertdialog" aria-modal="true" aria-labelledby="support-delete-title" className="w-full max-w-[340px] rounded-2xl bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
