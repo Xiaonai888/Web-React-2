@@ -4,6 +4,9 @@ import { BadgeCheck, ChevronDown, ChevronLeft, CornerUpLeft, LoaderCircle, Penci
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../../components/common/PagePrimitives'
 import SharedChatMessageBubble from '../../components/chat/SharedChatMessageBubble'
 import SharedChatComposer from '../../components/chat/SharedChatComposer'
+import ReaderSupportChatProfile from '../../components/chat/ReaderSupportChatProfile'
+import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
+import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 import SharedMessageActionMenu from '../../components/chat/SharedMessageActionMenu'
 import SupportChatPrivateImage from '../../components/chat/SupportChatPrivateImage'
 import SupportChatForwardDialog, { supportForwardText } from '../../components/chat/SupportChatForwardDialog'
@@ -129,6 +132,21 @@ registerTranslationNamespace('readerSupportChatPage', {
 
 const LOGO = '/assets/Icons/Logo%20Shadow%203.png'
 
+const SUPPORT_APPEARANCE_CSS = `
+.support-chat-history [data-chat-bubble] { font-family: var(--conversation-font, inherit); }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble]:not([data-chat-bubble="deleted"]) { border: var(--cs-bubble-border, none) !important; border-radius: var(--cs-radius, 20px) !important; box-shadow: var(--cs-bubble-shadow, none) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="incoming"] { color: var(--cs-text) !important; border-bottom-left-radius: var(--cs-corner, 6px) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"] { color: var(--cs-outgoing-text) !important; border-bottom-right-radius: var(--cs-corner, 6px) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="incoming"]:not(.cs-style-bubble) { background: var(--cs-soft) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"]:not(.cs-style-bubble) { background: linear-gradient(115deg, var(--cs-outgoing), var(--cs-outgoing-end)) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"] [class~="text-[#8C7352]"], .support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"] [class~="text-[#9A6700]"] { color: var(--cs-outgoing-text) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="incoming"] [class~="text-[var(--shadow-text-tertiary)]"] { color: var(--cs-muted) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"] button[class*="border-l-"] { background: #00000012 !important; border-color: currentColor !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="incoming"] button[class*="border-l-"] { background: #80808018 !important; border-color: currentColor !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="incoming"] [class~="text-[#9A6700]"] { color: var(--cs-text) !important; }
+.support-chat-history[data-support-theme="custom"] [data-chat-bubble="outgoing"] [class~="text-green-600"] { color: #22c55e !important; }
+`
+
 function displayTime(value) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return ''
@@ -188,6 +206,11 @@ export default function ReaderSupportChatPage() {
   const { t } = useDisplayTranslation()
   const tr = key => t(`readerSupportChatPage.${key}`)
   const [conversation, setConversation] = useState(null)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileOpenRef = useRef(false)
+  const profileJumpRef = useRef('')
+  const appearance = useConversationAppearance(conversation?.id || '', 'support')
+  const customTheme = Boolean(conversation?.id && !appearance.isSupportDefault)
   const [messages, setMessages] = useState([])
   const [pins, setPins] = useState([])
   const [pinReadyFor, setPinReadyFor] = useState('')
@@ -292,7 +315,7 @@ export default function ReaderSupportChatPage() {
 
   const markVisibleRead = useCallback(async () => {
     const target = latestIncomingRef.current
-    if (!target || document.hidden || !nearBottomRef.current || seenRef.current === target.id) return
+    if (!target || profileOpenRef.current || document.hidden || !nearBottomRef.current || seenRef.current === target.id) return
     const node = messageRefs.current.get(target.id)
     const box = scrollBoxRef.current
     if (!node || !box) return
@@ -445,6 +468,17 @@ export default function ReaderSupportChatPage() {
 
   const conversationId = conversation?.id || ''
   useEffect(() => {
+    if (loginRequired) { profileJumpRef.current = ''; setProfileOpen(false) }
+  }, [loginRequired])
+  useLayoutEffect(() => {
+    profileOpenRef.current = profileOpen
+    if (profileOpen) return
+    const id = profileJumpRef.current
+    profileJumpRef.current = ''
+    if (id) { nearBottomRef.current = false; jumpToReply(id) }
+    else if (!loading && !loginRequired) void markVisibleRead()
+  }, [profileOpen])
+  useEffect(() => {
     setSelectedIds([])
     setForwardText('')
     setPinListOpen(false)
@@ -480,7 +514,7 @@ export default function ReaderSupportChatPage() {
   const selectedForwardText = supportForwardText(messages.filter(message => selectedIds.includes(message.id)))
   const archived = conversation?.status === 'archived'
   useEffect(() => { if (loginRequired || archived || blocked) setForwardText('') }, [loginRequired, archived, blocked])
-  const composeDisabled = Boolean(forwardText) || selectionMode || loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
+  const composeDisabled = profileOpen || Boolean(forwardText) || selectionMode || loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
   const bubbleLabels = {
     message: tr('message'), messageOptions: tr('menu'), originalUnavailable: tr('originalUnavailable'),
     originalMessage: tr('message'), messageDeleted: tr('deleted'), edited: tr('edited'), read: tr('read'), sentStatus: tr('sent'),
@@ -706,6 +740,19 @@ export default function ReaderSupportChatPage() {
     setError('')
   }
 
+  function openProfile() {
+    if (loading || loginRequired || sending || busyAction || imageRetry || selectionMode || forwardText || deleteTarget || infoTarget) return
+    profileOpenRef.current = true
+    composerRef.current?.blur()
+    setMenu(null)
+    setProfileOpen(true)
+  }
+
+  function closeProfile(id = '') {
+    profileJumpRef.current = id
+    setProfileOpen(false)
+  }
+
   function onMediaLayout() {
     const node = scrollBoxRef.current
     if (node && nearBottomRef.current) node.scrollTop = node.scrollHeight
@@ -717,11 +764,13 @@ export default function ReaderSupportChatPage() {
       <header className="z-10 shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[64px] w-full max-w-[720px] items-center gap-2 px-2 sm:px-4">
           <button type="button" onClick={() => navigate(-1)} aria-label={tr('back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"><ChevronLeft size={26} /></button>
-          <img src={LOGO} alt="Shadow Admin" className="h-11 w-11 shrink-0 rounded-full border border-[var(--shadow-border)] object-cover" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5"><span className="truncate text-[15px] font-bold">Shadow Admin</span><BadgeCheck size={17} className="shrink-0 text-blue-500" aria-label={tr('verified')} /></div>
-            <p className="truncate text-[11px] text-[var(--shadow-text-secondary)]">{tr('subtitle')}</p>
-          </div>
+          <button type="button" onClick={openProfile} disabled={loading || loginRequired || sending || Boolean(busyAction) || imageRetry || selectionMode || Boolean(forwardText)} className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-default" aria-label="Shadow Admin">
+            <img src={LOGO} alt="" className="h-11 w-11 shrink-0 rounded-full border border-[var(--shadow-border)] object-cover" />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5"><span className="truncate text-[15px] font-bold">Shadow Admin</span><BadgeCheck size={17} className="shrink-0 text-blue-500" aria-label={tr('verified')} /></span>
+              <span className="block truncate text-[11px] text-[var(--shadow-text-secondary)]">{tr('subtitle')}</span>
+            </span>
+          </button>
         </div>
       </header>
       {!loading && !loginRequired && pinError && <button type="button" onClick={() => setPinRefresh(value => value + 1)} className="shrink-0 px-3 py-2 text-center text-[11px] text-amber-700">{tr('pinError')}</button>}
@@ -735,12 +784,13 @@ export default function ReaderSupportChatPage() {
           {pinListOpen && <div className="mx-auto max-h-[30vh] max-w-[720px] overflow-y-auto px-4 pb-2">{activePins.map(pin => <div key={pin.message_id} className="flex items-center gap-2 border-t border-[var(--shadow-border)] py-2"><button type="button" className="min-w-0 flex-1 truncate text-left text-[12px]" onClick={() => { setPinListOpen(false); jumpToReply(pin.message_id) }}>{pin.message_text || tr(pin.has_attachment ? 'image' : 'message')}</button>{!archived && !blocked && <button type="button" disabled={Boolean(busyAction) || sending || imageRetry} onClick={() => void changePin(pin.message_id, false)} aria-label={tr('unpin')} className="rounded-full p-2 text-amber-600 disabled:opacity-40"><PinOff size={15} /></button>}</div>)}</div>}
         </div>
       )}
-      <main ref={scrollBoxRef} onScroll={event => {
+      <style>{SUPPORT_APPEARANCE_CSS + (customTheme ? CHAT_THEME_STYLE_CSS : '')}</style>
+      <main data-support-theme={customTheme ? 'custom' : 'default'} data-chat-style={customTheme ? appearance.theme.styleId : undefined} style={{ ...(customTheme ? appearance.themeStyle : {}), '--conversation-font': appearance.font.family }} ref={scrollBoxRef} onScroll={event => {
         const node = event.currentTarget
         nearBottomRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120
         if (menu) setMenu(null)
         void markVisibleRead()
-      }} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]">
+      }} className="support-chat-history min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]">
         <div className="mx-auto flex min-h-full w-full max-w-[720px] flex-col px-3 py-4 sm:px-4">
           <p className="mb-5 text-center text-[11px] text-[var(--shadow-text-tertiary)]">{tr('private')}</p>
           {loading && <PageLoadingState label={tr('loading')} rows={3} />}
@@ -768,7 +818,7 @@ export default function ReaderSupportChatPage() {
                     {images.map((src, index) => <a key={`${src}-${index}`} href={src} target="_blank" rel="noopener noreferrer" className={images.length === 1 ? 'col-span-2' : ''}><img src={src} alt={tr('image')} loading="lazy" onLoad={onMediaLayout} className="max-h-[240px] w-full rounded-xl object-cover" /></a>)}
                   </div>
                 ) : null)
-                return <SharedChatMessageBubble key={item.id} message={bubble} variant="support" labels={bubbleLabels} media={media} isPinned={pinnedIds.has(item.id)} selected={selectedIds.includes(item.id)} selectionMode={selectionMode} onToggleSelection={toggleSelection} isRead={Boolean(item.seen_at)} highlighted={highlighted === item.id} setMessageRef={(id, node) => { if (node) messageRefs.current.set(id, node); else messageRefs.current.delete(id) }} onOpenMenu={openMenu} onJumpToReply={jumpToReply} />
+                return <SharedChatMessageBubble key={item.id} message={bubble} variant="support" appearanceEnabled={customTheme} appearanceExtended={customTheme && Boolean(appearance.theme.extendedStyle)} labels={bubbleLabels} media={media} isPinned={pinnedIds.has(item.id)} selected={selectedIds.includes(item.id)} selectionMode={selectionMode} onToggleSelection={toggleSelection} isRead={Boolean(item.seen_at)} highlighted={highlighted === item.id} setMessageRef={(id, node) => { if (node) messageRefs.current.set(id, node); else messageRefs.current.delete(id) }} onOpenMenu={openMenu} onJumpToReply={jumpToReply} />
               })}
             </div>
           )}
@@ -791,10 +841,11 @@ export default function ReaderSupportChatPage() {
           <input ref={cameraRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" capture="environment" onChange={selectedImage} className="hidden" />
           <input ref={galleryRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" onChange={selectedImage} className="hidden" />
           {selectionMode ? <div className="flex items-center gap-2 px-3 pt-2"><button type="button" onClick={() => setSelectedIds([])} aria-label={tr('cancel')} className="flex h-9 w-9 items-center justify-center rounded-full"><X size={19} /></button><span className="min-w-0 flex-1 text-[12px] font-semibold">{tr('selected')}: {selectedIds.length}</span><button type="button" disabled={!selectedText} onClick={() => void copySelection()} className="rounded-xl bg-amber-500 px-3 py-2 text-[12px] font-bold text-white disabled:opacity-40">{tr('copySelected')}</button>{!archived && !blocked && <button type="button" disabled={sending || Boolean(busyAction) || imageRetry} onClick={() => selectedForwardText ? setForwardText(selectedForwardText) : setError(tr('forwardLimit'))} className="rounded-xl border border-amber-500 px-3 py-2 text-[12px] font-bold text-amber-600 disabled:opacity-40">{tr('forward')}</button>}</div> : <div className="px-3 pt-2">
-            <SharedChatComposer variant="support" labels={composerLabels} textareaRef={composerRef} text={draft} onChange={setDraft} canSend={!composeDisabled} sending={sending} editing={Boolean(editTarget)} placeholder={tr(blocked ? 'blocked' : archived ? 'archived' : 'placeholder')} onSend={submit} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) void submit(event) }} onCamera={() => chooseImage(cameraRef)} onGallery={() => chooseImage(galleryRef)} onComingSoon={() => setError(tr('comingSoon'))} />
+            <SharedChatComposer variant="support" labels={composerLabels} fontFamily={appearance.font.family} textareaRef={composerRef} text={draft} onChange={setDraft} canSend={!composeDisabled} sending={sending} editing={Boolean(editTarget)} placeholder={tr(blocked ? 'blocked' : archived ? 'archived' : 'placeholder')} onSend={submit} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) void submit(event) }} onCamera={() => chooseImage(cameraRef)} onGallery={() => chooseImage(galleryRef)} onComingSoon={() => setError(tr('comingSoon'))} />
           </div>}
         </div>
       </div>
+      {profileOpen && !loginRequired && <ReaderSupportChatProfile key={conversationId || 'new'} conversationId={conversationId} messages={messages} hasMore={hasMore} olderLoading={olderLoading} error={error} blocked={blocked} archived={archived} onLoadOlder={loadOlder} onJump={id => closeProfile(id)} onRefresh={() => setRefreshIndex(count => count + 1)} onClose={() => closeProfile()} />}
       <SharedMessageActionMenu state={menu} variant="support" labels={menuLabels} isPinned={pinnedIds.has(menu?.message?.id)} allowedActions={allowedActions(menu?.message, archived, blocked, pinReady)} busy={busyAction || (sending ? 'sending' : '')} onClose={() => setMenu(null)} onAction={chooseAction} />
       {forwardText && !loginRequired && !archived && !blocked && <SupportChatForwardDialog text={forwardText} labels={{ title: tr('forward'), recipient: tr('forwardRecipient'), note: tr('forwardNote'), empty: tr('forwardEmpty'), loadError: tr('forwardLoadError'), sendError: tr('forwardSendError'), success: tr('forwardSuccess'), close: tr('close'), send: tr('send') }} onClose={() => setForwardText('')} onDone={() => setSelectedIds([])} />}
       {deleteTarget && (
