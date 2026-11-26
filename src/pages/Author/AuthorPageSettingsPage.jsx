@@ -5,7 +5,7 @@ import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { API_BASE_URL, getAuthToken } from '../../config/api'
 import CustomDeliveryCompanySheet from '../../components/author/CustomDeliveryCompanySheet'
 import { fetchCustomDeliveryCompany } from '../../services/customDeliveryCompanyApi'
-
+import { useAuthorMenuReturn } from '../../utils/authorMenuNavigation'
 
 const CUSTOM_DELIVERY_SETTINGS_LABELS = Object.freeze({
   en: {
@@ -712,6 +712,7 @@ function ToolRow({ icon, label, subtext, onClick }) {
 export default function AuthorPageSettingsPage() {
   useDisplayTranslation()
   const navigate = useNavigate()
+  const returnToAuthorMenu = useAuthorMenuReturn()
   const [message, setMessage] = useState('')
   const [settingsView, setSettingsView] = useState('home')
 
@@ -1077,13 +1078,13 @@ async function handleSaveDeliveryFees() {
           <button
             type="button"
             onClick={() => {
-              if (settingsView !== 'home') {
-                setSettingsView('home')
-                return
-              }
+  if (settingsView !== 'home') {
+    setSettingsView('home')
+    return
+  }
 
-              navigate(-1)
-            }}
+  returnToAuthorMenu(() => navigate(-1))
+}}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-hover)]"
             aria-label={settingsText('back')}
           >
