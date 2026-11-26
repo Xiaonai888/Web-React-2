@@ -1697,6 +1697,9 @@ galleryImages: formatGalleryImagesForUi(product.gallery_images),
     preOrder: Boolean(product.pre_order),
    pdfFileUrl: product.pdf_file_url || '',
 pdfFileName: product.pdf_file_name || '',
+pdfVersion: Number(product.pdf_version) || 0,
+pdfUpdatedAt: product.pdf_updated_at || null,
+pdfUpdateNote: product.pdf_update_note || '',
 pageCount: product.page_count || '',
 accessRule: product.access_rule || 'Read online only',
     
@@ -2083,6 +2086,7 @@ async function attachPrivatePdfToProduct(productId, pdf) {
         pdf_file_name: pdf.file_name,
         pdf_mime_type: pdf.mime_type,
         pdf_file_size_bytes: pdf.file_size_bytes,
+        pdf_update_note: pdf.pdf_update_note || '',
       }),
     }
   )
@@ -4593,6 +4597,7 @@ function AddProductPage({ categories, productToEdit = null, onBack, onSave, onNo
   const [preOrder, setPreOrder] = useState(Boolean(productToEdit?.preOrder))
   const [pdfFileName, setPdfFileName] = useState(productToEdit?.pdfFileName || '')
   const [pdfFile, setPdfFile] = useState(null)
+  const [pdfUpdateNote, setPdfUpdateNote] = useState('')
   const [pdfFileUrl, setPdfFileUrl] = useState(productToEdit?.pdfFileUrl || '')
   const [pageCount, setPageCount] = useState(productToEdit?.pageCount || '')
   const [accessRule, setAccessRule] = useState(productToEdit?.accessRule || 'Read online only')
@@ -5069,8 +5074,9 @@ stock,
         deliveryNote,
         preOrder,
         pdfFile,
-        uploadedPdf,
-        pdfFileName,
+uploadedPdf,
+pdfUpdateNote,
+pdfFileName,
 pdfFileUrl,
 pageCount,
 accessRule,
@@ -5470,6 +5476,27 @@ accessRule,
                   <div className="mt-2 text-[11px] font-bold text-[var(--shadow-text-secondary)]">{storeText('pdfAttached')}</div>
                 ) : null}
               </div>
+              {productToEdit?.pdfVersion > 0 && (
+  <div className="sm:col-span-2 text-xs font-bold text-[var(--shadow-text-secondary)]">
+    PDF Version {productToEdit.pdfVersion}
+  </div>
+)}
+{productToEdit?.id && uploadedPdf?.storage_key && (
+  <div className="sm:col-span-2">
+    <FieldLabel>Update Note (Optional)</FieldLabel>
+    <textarea
+      value={pdfUpdateNote}
+      onChange={(event) => setPdfUpdateNote(event.target.value)}
+      maxLength={500}
+      rows={3}
+      disabled={saving}
+      className="w-full rounded-xl border border-[var(--shadow-border)] bg-[var(--shadow-input-bg)] p-3 text-sm text-[var(--shadow-text-primary)]"
+    />
+    <div className="mt-1 text-right text-[10px] text-[var(--shadow-text-secondary)]">
+      {pdfUpdateNote.length}/500
+    </div>
+  </div>
+)}
               <div>
                 <FieldLabel>{storeText('pageCount')}</FieldLabel>
                 <TextInput value={pageCount} onChange={setPageCount} placeholder={storeText('pageCountPdfPlaceholder')} type="number" />
@@ -6134,7 +6161,10 @@ const saveCategoryOrder = async () => {
 
       if (hasNewPrivatePdf) {
         onPdfUploadProgress?.('processing', 100)
-        const attached = await attachPrivatePdfToProduct(savedProduct.id, product.uploadedPdf)
+       const attached = await attachPrivatePdfToProduct(savedProduct.id, {
+  ...product.uploadedPdf,
+  pdf_update_note: product.pdfUpdateNote || '',
+})
         if (
           String(attached?.id || '') !== String(savedProduct.id) ||
           attached?.pdf_storage_provider !== 'r2' ||
@@ -6143,7 +6173,14 @@ const saveCategoryOrder = async () => {
           throw new Error(storeText('pdfAttachNotConfirmed'))
         }
         pdfAttached = true
-        savedProduct = { ...savedProduct, pdfFileName: attached.pdf_file_name, pdfFileUrl: '' }
+        savedProduct = {
+  ...savedProduct,
+  pdfFileName: attached.pdf_file_name,
+  pdfFileUrl: '',
+  pdfVersion: Number(attached.pdf_version) || 0,
+  pdfUpdatedAt: attached.pdf_updated_at || null,
+  pdfUpdateNote: attached.pdf_update_note || '',
+}
         onPdfUploadProgress?.('verifying', 100)
 
         if (!isEditing && product.status !== 'Draft') {
