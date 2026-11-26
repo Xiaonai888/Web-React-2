@@ -5,6 +5,7 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import { describeReaderLoadFailure } from '../utils/readerLoadDiagnosis'
 import CommentsModal from '../components/story-detail/CommentsModal'
+import SignUpRequiredPopup from './SignUpRequiredPopup'
 import EchoShareSheetV2Connected from '../components/social/EchoShareSheetV2Connected'
 import EchoV2Count from '../components/social/EchoV2Count'
 import ReactionAction from '../components/social/reactions/ReactionAction'
@@ -5897,6 +5898,23 @@ function ContinuousEpisodeBlock({
 }
 
 export default function ReaderPage() {
+  const navigate = useNavigate()
+
+  if (!getReaderToken()) {
+    return (
+      <div className="app-page min-h-screen">
+        <SignUpRequiredPopup
+          open={true}
+          onClose={() => window.history.state?.idx > 0 ? navigate(-1) : navigate('/', { replace: true })}
+        />
+      </div>
+    )
+  }
+
+  return <ReaderPageContent />
+}
+
+function ReaderPageContent() {
   const { t } = useDisplayTranslation()
   const SHOW_READER_COVER = false
   const SHOW_READER_INFO = false
