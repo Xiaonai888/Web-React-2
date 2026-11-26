@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import AuthorMenuSheet from '../../components/author/AuthorMenuSheet'
+import { readAuthorMenuRestore, useAuthorMenuRestore } from '../../utils/authorMenuNavigation'
 import { useAuthorPageFooterVisibility } from '../../components/AuthorPageFooterShell'
 import { SalesReportsSettingsMenuItem, SalesReportsSettingsPage } from './SalesReportsSettings'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
@@ -3091,77 +3093,11 @@ function getAuthorMenuProfile() {
     readerUser.avatar_url ||
     ''
 
-  return {
-    name,
-    avatarUrl,
-    letter: String(name || 'A').slice(0, 1).toUpperCase(),
-  }
-}
-
-function AuthorStoreMenuSheet({ open, onClose, onSwitchProfile, onFinance, onSettings }) {
-  if (!open) return null
-
-  const profile = getAuthorMenuProfile()
-
-  return (
-    <div className="fixed inset-0 z-[400] bg-black/25">
-      <button
-        type="button"
-        aria-label={storeText('closeMenu')}
-        onClick={onClose}
-        className="absolute inset-0"
-      />
-
-      <aside className="relative h-full w-[82%] max-w-[340px] bg-[var(--shadow-bg-surface)] px-4 py-4 shadow-2xl">
-        <div className="text-[14px] font-black text-[var(--shadow-text-primary)]">{storeText('authorMenu')}</div>
-
-        <button
-          type="button"
-          onClick={onSwitchProfile}
-          className="mt-6 flex w-full items-center gap-3 rounded-2xl text-left active:opacity-70"
-        >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[16px] font-black text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border-strong)]">
-            {profile.avatarUrl ? (
-              <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
-            ) : (
-              profile.letter
-            )}
-          </div>
-
-          <div className="min-w-0">
-            <div className="line-clamp-1 text-[14px] font-black text-[var(--shadow-text-primary)]">{profile.name}</div>
-            <div className="mt-0.5 text-[11px] font-semibold text-[var(--shadow-text-tertiary)]">{storeText('switchProfile')}</div>
-          </div>
-        </button>
-
-        <div className="mt-8 space-y-2">
-          <button
-            type="button"
-            onClick={onFinance}
-            className="flex h-12 w-full items-center gap-4 rounded-2xl px-1 text-left text-[14px] font-semibold text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
-          >
-            <i className="fa-solid fa-wallet w-7 text-center text-[15px]" / >
-            {storeText('finance')}
-          </button>
-
-          <button
-            type="button"
-            onClick={onSettings}
-            className="flex h-12 w-full items-center gap-4 rounded-2xl px-1 text-left text-[14px] font-semibold text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
-          >
-            <i className="fa-solid fa-gear w-7 text-center text-[15px]" / >
-            {storeText('settings')}
-          </button>
-        </div>
-
-        <div className="absolute bottom-8 left-0 right-0 text-center">
-          <div className="text-[18px] font-black tracking-[-0.05em] text-[var(--shadow-text-primary)]">
-            SHADOW <span className="text-[14px]">☠</span>
-          </div>
-        </div>
-      </aside>
-    </div>
-  )
+return {
+  id: authorPage.id || authorPage.author_page_id,
+  page_name: name,
+  avatar_url: avatarUrl,
+  is_owner: Boolean(getAuthToken() && (authorPage.id || authorPage.author_page_id)),
 }
 
 function DeliveryLogo({ type }) {
@@ -3235,6 +3171,7 @@ function StoreManagerHome({
   orderActionLoadingId,
 }) {
 const navigate = useNavigate()
+const location = useLocation()
 const [recordFilterOpen, setRecordFilterOpen] = useState(false)
 const [orderFilterOpen, setOrderFilterOpen] = useState(false)
 const [openCategoryMenuId, setOpenCategoryMenuId] = useState('')
@@ -5577,7 +5514,10 @@ export default function AuthorStoreManagerPage() {
   const [mode, setMode] = useState('manager')
   useAuthorPageFooterVisibility(mode === 'manager')
   const [editingProduct, setEditingProduct] = useState(null)
-  const [activeTab, setActiveTab] = useState('Records')
+  const [activeTab, setActiveTab] = useState(() => {
+  const restore = readAuthorMenuRestore(location, 'store')
+  return restore?.activeTab === 'Orders' ? 'Orders' : 'Records'
+})
   const recordDefaults = useMemo(getStoredProductViewOptions, [])
   const [activeType, setActiveType] = useState(recordDefaults.type)
   const [recordQuery, setRecordQuery] = useState(recordDefaults.q)
@@ -5936,6 +5876,13 @@ export default function AuthorStoreManagerPage() {
       orderSummaryRequestIdRef.current += 1
     }
   }, [activeTab, loadOrderReport, loadOrderSummary])
+
+  useAuthorMenuRestore({
+  source: 'store',
+  ready: mode === 'manager' && !loading && !orderLoading,
+  setActiveTab,
+  setMenuOpen: setAuthorMenuOpen,
+})
 
   const loadCategories = useCallback(async () => {
     const apply = (nextCategories) => {
@@ -6304,20 +6251,15 @@ await loadOrderReport({ silent: true, force: true })
         </div>
       ) : null}
 
-<AuthorStoreMenuSheet
+<AuthorMenuSheet
   open={authorMenuOpen}
+  author={authorMenuOpen ? getAuthorMenuProfile() : null}
+  source="store"
+  activeTab={activeTab}
   onClose={() => setAuthorMenuOpen(false)}
   onSwitchProfile={() => {
     setAuthorMenuOpen(false)
     navigate('/author/page')
-  }}
-  onFinance={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page/finance')
-  }}
-  onSettings={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page-settings')
   }}
 />
       <div className="sticky top-0 z-40 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] backdrop-blur">
