@@ -68,7 +68,7 @@ export default function SharedMessageActionMenu({
               type="button"
               onClick={() => onAction(key, message)}
               disabled={Boolean(busy)}
-              className={`flex h-10 w-full items-center gap-3 rounded-[12px] px-3 text-left text-[12px] font-extrabold transition disabled:opacity-45 ${destructive ? 'text-[#c7353d] hover:bg-[#fff1f1]' : support ? 'text-[var(--shadow-text-primary)] hover:bg-[var(--shadow-bg-soft)]' : 'text-[#282832] hover:bg-[#f6f4f9]'}`}
+              className={`flex h-10 w-full items-center gap-3 rounded-[12px] px-3 text-left text-[12px] font-normal transition disabled:opacity-45 ${destructive ? 'text-[#c7353d] hover:bg-[#fff1f1]' : support ? 'text-[var(--shadow-text-primary)] hover:bg-[var(--shadow-bg-soft)]' : 'text-[#282832] hover:bg-[#f6f4f9]'}`}
             >
               {busy === key ? <LoaderCircle size={16} className="animate-spin" /> : <Icon size={16} />}
               {title}
