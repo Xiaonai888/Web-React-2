@@ -149,3 +149,48 @@ export function useAuthorMenuReturn() {
     })
   }
 }
+
+export function useAuthorMenuRestore({
+  source,
+  ready,
+  setActiveTab,
+  setMenuOpen,
+}) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!ready) return undefined
+
+    const restore = readAuthorMenuRestore(location, source)
+    if (!restore) return undefined
+
+    const tabs = source === 'store'
+      ? ['Records', 'Orders']
+      : ['Posts', 'Works', 'Reel', 'Store']
+
+    if (tabs.includes(restore.activeTab)) {
+      setActiveTab(restore.activeTab)
+    }
+
+    let secondFrame = 0
+
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        window.scrollTo(0, restore.scrollY || 0)
+        setMenuOpen(true)
+
+        consumeAuthorMenuRestore({
+          navigate,
+          location,
+          source,
+        })
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      window.cancelAnimationFrame(secondFrame)
+    }
+  }, [location, navigate, source, ready, setActiveTab, setMenuOpen])
+}
