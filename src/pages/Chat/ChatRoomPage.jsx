@@ -1040,11 +1040,7 @@ function RequestPanel({
             ? t('chatRoomPage.messagePlaceholder')
             : t('chatRoomPage.waitingRequest')}
         </p>
-        {showCounter ? (
-          <p className="mt-1 text-[11px] font-semibold text-[#705b9d]">
-            {Math.min(limit, Math.max(0, sent))}/{limit}
-          </p>
-               ) : null}
+        
       </section>
     )
   }
@@ -3737,12 +3733,6 @@ export default function ChatRoomPage() {
                 </button>
               </div>
             ) : null}
-
-                        {showCounter ? (
-  <p className="mt-1 text-[11px] font-semibold text-[#705b9d]">
-    {Math.min(limit, Math.max(0, sent))}/{limit}
-  </p>
-) : null}
 
             <div className="relative">
               <textarea
