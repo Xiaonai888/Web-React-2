@@ -48,6 +48,7 @@ function metadataFromRecord(record) {
     access: record.access,
     expiresAt: record.expiresAt,
     savedAt: record.savedAt,
+    pdfVersion: Number(record.pdfVersion) || 0,
   }
 }
 
@@ -327,6 +328,7 @@ export async function saveOfflinePdf({
     access,
     expiresAt,
     savedAt: Date.now(),
+    pdfVersion: Number(grant.pdf_version) || 0,
   }
 
   const metadata = metadataFromRecord(record)
