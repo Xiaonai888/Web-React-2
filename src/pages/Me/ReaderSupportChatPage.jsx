@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BadgeCheck, ChevronDown, ChevronLeft, CornerUpLeft, LoaderCircle, Pencil, X } from 'lucide-react'
+import { BadgeCheck, ChevronDown, ChevronLeft, CornerUpLeft, LoaderCircle, Pencil, Pin, PinOff, X } from 'lucide-react'
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../../components/common/PagePrimitives'
 import SharedChatMessageBubble from '../../components/chat/SharedChatMessageBubble'
 import SharedChatComposer from '../../components/chat/SharedChatComposer'
@@ -15,6 +15,8 @@ import {
   getMySupportBlock,
   getMySupportConversation,
   getMySupportMessages,
+  getMySupportPins,
+  setMySupportPin,
   markMySupportRead,
   markMySupportSeen,
   replyMySupportMessage,
@@ -39,6 +41,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     blocked: 'Shadow Support has restricted messaging.', imageError: 'Could not send the image.', imageMode: 'Finish or cancel editing or replying before sending an image.',
     compress: 'Compressing image...', prepare: 'Preparing upload...', upload: 'Uploading image...', finalize: 'Sending image...', done: 'Image sent',
     originalUnavailable: 'Original message unavailable', info: 'Message info', close: 'Close', imageExpired: 'Upload session expired. Select the image again.',
+    pin: 'Pin', unpin: 'Unpin', pinned: 'Pinned messages', pinError: 'Pinned messages unavailable. Retry.', pinLimit: 'You can pin up to 50 messages.', select: 'Select', selected: 'Selected', copySelected: 'Copy selected', selectionLimit: 'Select up to 50 messages.',
   },
   km: {
     title: 'ឆាតជាមួយ Shadow Admin', subtitle: 'សារជំនួយឯកជន', back: 'ត្រឡប់ក្រោយ',
@@ -57,6 +60,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     blocked: 'Shadow Support បានកំណត់ការផ្ញើសារ។', imageError: 'មិនអាចផ្ញើរូបភាពបានទេ។', imageMode: 'សូមបញ្ចប់ ឬបោះបង់ការកែ ឬឆ្លើយតប មុនផ្ញើរូបភាព។',
     compress: 'កំពុងបង្រួមរូបភាព...', prepare: 'កំពុងរៀបចំ...', upload: 'កំពុង Upload រូបភាព...', finalize: 'កំពុងផ្ញើរូបភាព...', done: 'បានផ្ញើរូបភាព',
     originalUnavailable: 'សារដើមមិនអាចមើលបាន', info: 'ព័ត៌មានសារ', close: 'បិទ', imageExpired: 'ការផ្ញើរូបភាពផុតកំណត់។ សូមជ្រើសរូបម្តងទៀត។',
+    pin: 'Pin', unpin: 'ដក Pin', pinned: 'សារដែលបាន Pin', pinError: 'មិនអាចផ្ទុកសារ Pin។ សូមព្យាយាមម្តងទៀត។', pinLimit: 'អាច Pin បានអតិបរមា 50 សារ។', select: 'ជ្រើស', selected: 'បានជ្រើស', copySelected: 'ចម្លងសារដែលបានជ្រើស', selectionLimit: 'អាចជ្រើសបានអតិបរមា 50 សារ។',
   },
   zh: {
     title: '联系 Shadow Admin', subtitle: '私人客服消息', back: '返回',
@@ -75,6 +79,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     blocked: 'Shadow 客服已限制发送消息。', imageError: '无法发送图片。', imageMode: '请先完成或取消编辑或回复，再发送图片。',
     compress: '正在压缩图片...', prepare: '正在准备上传...', upload: '正在上传图片...', finalize: '正在发送图片...', done: '图片已发送',
     originalUnavailable: '原消息不可用', info: '消息信息', close: '关闭', imageExpired: '上传会话已过期，请重新选择图片。',
+    pin: '置顶', unpin: '取消置顶', pinned: '置顶消息', pinError: '无法加载置顶消息，请重试。', pinLimit: '最多置顶50条消息。', select: '选择', selected: '已选择', copySelected: '复制所选', selectionLimit: '最多选择50条消息。',
   },
   ja: {
     title: 'Shadow Admin にチャット', subtitle: '非公開サポートメッセージ', back: '戻る',
@@ -93,6 +98,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     blocked: 'Shadow サポートはメッセージの送信を制限しています。', imageError: '画像を送信できませんでした。', imageMode: '編集や返信を完了またはキャンセルしてから画像を送信してください。',
     compress: '画像を圧縮中...', prepare: 'アップロードを準備中...', upload: '画像をアップロード中...', finalize: '画像を送信中...', done: '画像を送信しました',
     originalUnavailable: '元のメッセージは利用できません', info: 'メッセージ情報', close: '閉じる', imageExpired: 'アップロードの期限切れです。画像を再選択してください。',
+    pin: 'ピン留め', unpin: 'ピン解除', pinned: 'ピン留め済みメッセージ', pinError: 'ピン留めの読み込みに失敗しました。再試行してください。', pinLimit: '最大50件までピン留めできます。', select: '選択', selected: '選択済み', copySelected: '選択したメッセージをコピー', selectionLimit: '最大50件まで選択できます。',
   },
   ko: {
     title: 'Shadow Admin과 채팅', subtitle: '비공개 지원 메시지', back: '뒤로',
@@ -111,6 +117,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     blocked: 'Shadow 지원팀이 메시지 전송을 제한했습니다.', imageError: '이미지를 보내지 못했습니다.', imageMode: '수정이나 답장을 완료하거나 취소한 뒤 이미지를 보내세요.',
     compress: '이미지 압축 중...', prepare: '업로드 준비 중...', upload: '이미지 업로드 중...', finalize: '이미지 전송 중...', done: '이미지를 보냈습니다',
     originalUnavailable: '원본 메시지를 사용할 수 없음', info: '메시지 정보', close: '닫기', imageExpired: '업로드 시간이 만료되었습니다. 이미지를 다시 선택하세요.',
+    pin: '고정', unpin: '고정 해제', pinned: '고정된 메시지', pinError: '고정 메시지를 불러오지 못했습니다. 다시 시도하세요.', pinLimit: '최대 50개까지 고정할 수 있습니다.', select: '선택', selected: '선택됨', copySelected: '선택한 메시지 복사', selectionLimit: '최대 50개까지 선택할 수 있습니다.',
   },
 })
 
@@ -154,12 +161,14 @@ function messageKey(item) {
   return item ? `${item.id}:${item.last_message_at || ''}:${item.status || ''}:${item.updated_at || ''}` : ''
 }
 
-function allowedActions(message, archived, blocked) {
+function allowedActions(message, archived, blocked, pinReady = false) {
   if (!message || message.deleted_at) return []
   const actions = []
   if (!archived && !blocked) actions.push('reply')
   if (message.sender_kind === 'reader' && !archived && message.message_text && !blocked) actions.push('edit')
+  if (!archived && !blocked && pinReady) actions.push('pin', 'unpin')
   if (message.message_text) actions.push('copy')
+  actions.push('select')
   if (message.sender_kind === 'reader') {
     if (!archived) actions.push('delete')
     actions.push('info')
@@ -173,6 +182,15 @@ export default function ReaderSupportChatPage() {
   const tr = key => t(`readerSupportChatPage.${key}`)
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
+  const [pins, setPins] = useState([])
+  const [pinReadyFor, setPinReadyFor] = useState('')
+  const [pinError, setPinError] = useState(false)
+  const [pinRefresh, setPinRefresh] = useState(0)
+  const [pinListOpen, setPinListOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const pinWriteRef = useRef(false)
+  const pinEpochRef = useRef(0)
+  const pinAbortRef = useRef(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [loginRequired, setLoginRequired] = useState(false)
@@ -216,6 +234,7 @@ export default function ReaderSupportChatPage() {
     window.clearTimeout(copyTimerRef.current)
     window.clearTimeout(highlightTimerRef.current)
     imageAbortRef.current?.abort()
+    pinAbortRef.current?.abort()
   }, [])
 
   useEffect(() => {
@@ -416,19 +435,52 @@ export default function ReaderSupportChatPage() {
     } finally { setOlderLoading(false) }
   }
 
+  const conversationId = conversation?.id || ''
+  useEffect(() => {
+    setSelectedIds([])
+    setPinListOpen(false)
+    setPins([])
+    setPinReadyFor('')
+    setPinError(false)
+    if (!conversationId || loginRequired) return undefined
+    const controller = new AbortController()
+    const epoch = ++pinEpochRef.current
+    getMySupportPins({ signal: controller.signal }).then(data => {
+      if (controller.signal.aborted || epoch !== pinEpochRef.current) return
+      if (data.conversation_id !== conversationId) throw new Error('Support conversation changed')
+      setPins(data.pins)
+      setPinReadyFor(conversationId)
+    }).catch(err => {
+      if (!controller.signal.aborted && epoch === pinEpochRef.current) {
+        if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
+        else setPinError(true)
+      }
+    })
+    return () => { controller.abort(); pinAbortRef.current?.abort() }
+  }, [conversationId, loginRequired, refreshIndex, pinRefresh])
+
+  useEffect(() => {
+    setSelectedIds(current => current.filter(id => messages.some(message => message.id === id && !message.deleted_at)))
+  }, [messages])
+
+  const pinReady = Boolean(conversationId && !loginRequired && pinReadyFor === conversationId)
+  const activePins = pinReady ? pins.filter(pin => !messages.some(message => message.id === pin.message_id && message.deleted_at)) : []
+  const pinnedIds = new Set(activePins.map(pin => pin.message_id))
+  const selectionMode = selectedIds.length > 0
+  const selectedText = messages.filter(message => selectedIds.includes(message.id) && !message.deleted_at && message.message_text).map(message => message.message_text).join('\n\n')
   const archived = conversation?.status === 'archived'
-  const composeDisabled = loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
+  const composeDisabled = selectionMode || loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
   const bubbleLabels = {
     message: tr('message'), messageOptions: tr('menu'), originalUnavailable: tr('originalUnavailable'),
     originalMessage: tr('message'), messageDeleted: tr('deleted'), edited: tr('edited'), read: tr('read'), sentStatus: tr('sent'),
   }
-  const menuLabels = { reply: tr('reply'), edit: tr('edit'), copy: tr('copy'), delete: tr('delete'), info: tr('info'), close: tr('closeMenu') }
+  const menuLabels = { reply: tr('reply'), edit: tr('edit'), copy: tr('copy'), delete: tr('delete'), info: tr('info'), close: tr('closeMenu'), pin: tr('pin'), unpin: tr('unpin'), select: tr('select') }
   const composerLabels = { camera: tr('camera'), image: tr('image'), searchMessages: tr('search'), emoji: tr('emoji'), saveEdit: tr('save'), sendMessage: tr('send') }
   const mediaLabels = { image: tr('image'), retry: tr('retry'), close: tr('close') }
 
   function openMenu(message, x, y) {
-    if (!message || message.deleted_at || busyAction || sending || imageRetry) return
-    const count = allowedActions(message, archived, blocked).length
+    if (!message || message.deleted_at || busyAction || sending || imageRetry || selectionMode) return
+    const count = allowedActions(message, archived, blocked, pinReady).filter(action => action !== (pinnedIds.has(message.id) ? 'pin' : 'unpin')).length
     if (!count) return
     setMenu({ message, x: Math.max(8, Math.min(x, window.innerWidth - 228 - 8)), y: Math.max(8, Math.min(y, window.innerHeight - count * 40 - 24)) })
   }
@@ -449,9 +501,54 @@ export default function ReaderSupportChatPage() {
     highlightTimerRef.current = window.setTimeout(() => setHighlighted(''), 1800)
   }
 
+  function toggleSelection(id) {
+    if (selectedIds.includes(id)) setSelectedIds(current => current.filter(value => value !== id))
+    else if (selectedIds.length >= 50) setError(tr('selectionLimit'))
+    else if (messages.some(message => message.id === id && !message.deleted_at)) setSelectedIds(current => current.includes(id) || current.length >= 50 ? current : [...current, id])
+  }
+
+  async function copySelection() {
+    if (!selectedText) return
+    try {
+      await navigator.clipboard.writeText(selectedText)
+      setSelectedIds([])
+      setCopied(true)
+      window.clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 1800)
+    } catch { setError(tr('actionError')) }
+  }
+
+  async function changePin(id, pinned) {
+    if (!pinReady || archived || blocked || busyAction || sending || imageRetry || pinWriteRef.current) return
+    pinWriteRef.current = true
+    const controller = new AbortController()
+    pinAbortRef.current = controller
+    const epoch = ++pinEpochRef.current
+    setBusyAction(pinned ? 'pin' : 'unpin')
+    setError('')
+    try {
+      const data = await setMySupportPin(id, pinned, { signal: controller.signal })
+      if (!controller.signal.aborted && epoch === pinEpochRef.current) {
+        if (data.conversation_id !== conversationId) throw new Error('Support conversation changed')
+        setPins(data.pins)
+      }
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        if (err.code === 'SUPPORT_PIN_LIMIT') setError(tr('pinLimit'))
+        else handleFailure(err, 'actionError')
+      }
+    } finally {
+      if (pinAbortRef.current === controller) pinAbortRef.current = null
+      pinWriteRef.current = false
+      setBusyAction('')
+    }
+  }
+
   async function chooseAction(action, message) {
     setMenu(null)
-    if (!allowedActions(message, archived, blocked).includes(action)) return
+    if (!allowedActions(message, archived, blocked, pinReady).includes(action)) return
+    if (action === 'select') { toggleSelection(message.id); return }
+    if (action === 'pin' || action === 'unpin') { await changePin(message.id, action === 'pin'); return }
     if (action === 'info') { setInfoTarget(message); return }
     if (action === 'copy') {
       if (!message.message_text) return
@@ -495,6 +592,7 @@ export default function ReaderSupportChatPage() {
       setMessages(current => current.map(message => message.id === id
         ? { ...message, ...result.message, message_text: null, attachments: [], deleted_at: result.message?.deleted_at || new Date().toISOString() }
         : message))
+      setPins(current => current.filter(pin => pin.message_id !== id))
       if (editTarget?.id === id || replyTarget?.id === id) clearCompose()
       setDeleteTarget(null)
     } catch (err) { handleFailure(err, 'actionError') }
@@ -609,6 +707,17 @@ export default function ReaderSupportChatPage() {
           </div>
         </div>
       </header>
+      {!loading && !loginRequired && pinError && <button type="button" onClick={() => setPinRefresh(value => value + 1)} className="shrink-0 px-3 py-2 text-center text-[11px] text-amber-700">{tr('pinError')}</button>}
+      {!loading && !loginRequired && activePins.length > 0 && (
+        <div className="z-10 shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]">
+          <div className="mx-auto flex max-w-[720px] items-center gap-2 px-4 py-2">
+            <button type="button" onClick={() => jumpToReply(activePins[0].message_id)} className="min-w-0 flex-1 border-l-[3px] border-amber-500 pl-3 text-left"><span className="flex items-center gap-1 text-[10px] font-bold text-amber-600"><Pin size={12} />{tr('pinned')} · {activePins.length}</span><span className="block truncate text-[12px]">{activePins[0].message_text || tr(activePins[0].has_attachment ? 'image' : 'message')}</span></button>
+            <button type="button" onClick={() => setPinListOpen(value => !value)} aria-label={tr('pinned')} aria-expanded={pinListOpen} className="flex h-8 w-8 items-center justify-center rounded-full"><ChevronDown size={18} /></button>
+            {!archived && !blocked && <button type="button" disabled={Boolean(busyAction) || sending || imageRetry} onClick={() => void changePin(activePins[0].message_id, false)} aria-label={tr('unpin')} className="flex h-8 w-8 items-center justify-center rounded-full text-amber-600 disabled:opacity-40"><PinOff size={16} /></button>}
+          </div>
+          {pinListOpen && <div className="mx-auto max-h-[30vh] max-w-[720px] overflow-y-auto px-4 pb-2">{activePins.map(pin => <div key={pin.message_id} className="flex items-center gap-2 border-t border-[var(--shadow-border)] py-2"><button type="button" className="min-w-0 flex-1 truncate text-left text-[12px]" onClick={() => { setPinListOpen(false); jumpToReply(pin.message_id) }}>{pin.message_text || tr(pin.has_attachment ? 'image' : 'message')}</button>{!archived && !blocked && <button type="button" disabled={Boolean(busyAction) || sending || imageRetry} onClick={() => void changePin(pin.message_id, false)} aria-label={tr('unpin')} className="rounded-full p-2 text-amber-600 disabled:opacity-40"><PinOff size={15} /></button>}</div>)}</div>}
+        </div>
+      )}
       <main ref={scrollBoxRef} onScroll={event => {
         const node = event.currentTarget
         nearBottomRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120
@@ -642,7 +751,7 @@ export default function ReaderSupportChatPage() {
                     {images.map((src, index) => <a key={`${src}-${index}`} href={src} target="_blank" rel="noopener noreferrer" className={images.length === 1 ? 'col-span-2' : ''}><img src={src} alt={tr('image')} loading="lazy" onLoad={onMediaLayout} className="max-h-[240px] w-full rounded-xl object-cover" /></a>)}
                   </div>
                 ) : null)
-                return <SharedChatMessageBubble key={item.id} message={bubble} variant="support" labels={bubbleLabels} media={media} isRead={Boolean(item.seen_at)} highlighted={highlighted === item.id} setMessageRef={(id, node) => { if (node) messageRefs.current.set(id, node); else messageRefs.current.delete(id) }} onOpenMenu={openMenu} onJumpToReply={jumpToReply} />
+                return <SharedChatMessageBubble key={item.id} message={bubble} variant="support" labels={bubbleLabels} media={media} isPinned={pinnedIds.has(item.id)} selected={selectedIds.includes(item.id)} selectionMode={selectionMode} onToggleSelection={toggleSelection} isRead={Boolean(item.seen_at)} highlighted={highlighted === item.id} setMessageRef={(id, node) => { if (node) messageRefs.current.set(id, node); else messageRefs.current.delete(id) }} onOpenMenu={openMenu} onJumpToReply={jumpToReply} />
               })}
             </div>
           )}
@@ -664,12 +773,12 @@ export default function ReaderSupportChatPage() {
           )}
           <input ref={cameraRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" capture="environment" onChange={selectedImage} className="hidden" />
           <input ref={galleryRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" onChange={selectedImage} className="hidden" />
-          <div className="px-3 pt-2">
+          {selectionMode ? <div className="flex items-center gap-2 px-3 pt-2"><button type="button" onClick={() => setSelectedIds([])} aria-label={tr('cancel')} className="flex h-9 w-9 items-center justify-center rounded-full"><X size={19} /></button><span className="min-w-0 flex-1 text-[12px] font-semibold">{tr('selected')}: {selectedIds.length}</span><button type="button" disabled={!selectedText} onClick={() => void copySelection()} className="rounded-xl bg-amber-500 px-3 py-2 text-[12px] font-bold text-white disabled:opacity-40">{tr('copySelected')}</button></div> : <div className="px-3 pt-2">
             <SharedChatComposer variant="support" labels={composerLabels} textareaRef={composerRef} text={draft} onChange={setDraft} canSend={!composeDisabled} sending={sending} editing={Boolean(editTarget)} placeholder={tr(blocked ? 'blocked' : archived ? 'archived' : 'placeholder')} onSend={submit} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) void submit(event) }} onCamera={() => chooseImage(cameraRef)} onGallery={() => chooseImage(galleryRef)} onComingSoon={() => setError(tr('comingSoon'))} />
-          </div>
+          </div>}
         </div>
       </div>
-      <SharedMessageActionMenu state={menu} variant="support" labels={menuLabels} allowedActions={allowedActions(menu?.message, archived, blocked)} busy={busyAction || (sending ? 'sending' : '')} onClose={() => setMenu(null)} onAction={chooseAction} />
+      <SharedMessageActionMenu state={menu} variant="support" labels={menuLabels} isPinned={pinnedIds.has(menu?.message?.id)} allowedActions={allowedActions(menu?.message, archived, blocked, pinReady)} busy={busyAction || (sending ? 'sending' : '')} onClose={() => setMenu(null)} onAction={chooseAction} />
       {deleteTarget && (
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/50 px-5">
           <div role="alertdialog" aria-modal="true" aria-labelledby="support-delete-title" className="w-full max-w-[340px] rounded-2xl bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
