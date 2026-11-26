@@ -4,7 +4,9 @@ const TTL_MS = 30_000
 const MAX_ENTRIES = 24
 const MAX_ENTRY_BYTES = 128 * 1024
 const MAX_TOTAL_BYTES = 1024 * 1024
+const MAX_INFLIGHT = 8
 const SKIP_QUERY_KEYS = new Set(['q', 'search', 'keyword', 'cursor', 'offset', 'genre_pagination', 'new_arrivals_pagination', 'genre_filter'])
+const SHARE_INIT_KEYS = new Set(['method', 'cache', 'credentials', 'mode', 'headers', 'signal'])
 
 function tokenIsUsable(token) {
   if (!token) return true
@@ -37,14 +39,40 @@ function cacheableUrl(input, init, apiOrigin) {
   }
 }
 
+function abortError(signal) {
+  return signal?.reason ?? new DOMException('Request cancelled', 'AbortError')
+}
+
+function waitForRequest(pending, signal) {
+  if (!signal) return pending.then(() => undefined, () => undefined)
+  if (signal.aborted) return Promise.reject(abortError(signal))
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      signal.removeEventListener('abort', onAbort)
+      reject(abortError(signal))
+    }
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      if (signal.aborted) reject(abortError(signal))
+      else resolve()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    pending.then(finish, finish)
+  })
+}
+
 export function createPublicStoriesNavigationFetch(apiFetch, apiOrigin) {
   const entries = new Map()
+  const inflight = new Map()
   let scope = null
+  let generation = 0
   let totalBytes = 0
 
   function clear() {
     entries.clear()
+    inflight.clear()
     totalBytes = 0
+    generation += 1
   }
 
   function remove(key) {
@@ -62,39 +90,73 @@ export function createPublicStoriesNavigationFetch(apiFetch, apiOrigin) {
     return token
   }
 
-  return async function navigationFetch(input, init = {}) {
-    const token = syncScope()
-    const key = cacheableUrl(input, init, apiOrigin)
-    if (!key || !tokenIsUsable(token)) return apiFetch(input, init)
-
-    const now = Date.now()
-    for (const [entryKey, entry] of entries) {
-      if (entry.expiresAt <= now) remove(entryKey)
-    }
+  function readCached(key) {
     const cached = entries.get(key)
-    if (cached) {
-      entries.delete(key)
-      entries.set(key, cached)
-      return new Response(cached.body, {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Shadow-Home-Cache': 'NAVIGATION_HIT' },
-      })
+    if (!cached) return null
+    if (cached.expiresAt <= Date.now()) {
+      remove(key)
+      return null
     }
+    entries.delete(key)
+    entries.set(key, cached)
+    return new Response(cached.body, {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'X-Shadow-Home-Cache': 'NAVIGATION_HIT' },
+    })
+  }
 
+  async function load(input, init, key, token, requestGeneration) {
     const response = await apiFetch(input, init)
-    if (response.status !== 200 || !response.ok || init.signal?.aborted || syncScope() !== token) return response
+    if (response.status !== 200 || !response.ok || init.signal?.aborted || syncScope() !== token || generation !== requestGeneration) return response
     try {
       const body = await response.clone().text()
       const bytes = new TextEncoder().encode(body).byteLength
       if (!bytes || bytes > MAX_ENTRY_BYTES) return response
       const data = JSON.parse(body)
       if (data?.ok !== true || !Array.isArray(data.stories) || !data.stories.length || !data.stories.every((story) => story && story.is_adult === false)) return response
-      if (init.signal?.aborted || syncScope() !== token || !tokenIsUsable(token)) return response
+      if (init.signal?.aborted || syncScope() !== token || generation !== requestGeneration || !tokenIsUsable(token)) return response
       remove(key)
       entries.set(key, { body, bytes, expiresAt: Date.now() + TTL_MS })
       totalBytes += bytes
       while (entries.size > MAX_ENTRIES || totalBytes > MAX_TOTAL_BYTES) remove(entries.keys().next().value)
     } catch {}
     return response
+  }
+
+  return async function navigationFetch(input, init = {}) {
+    const token = syncScope()
+    const key = cacheableUrl(input, init, apiOrigin)
+    if (!key || !tokenIsUsable(token)) return apiFetch(input, init)
+    const requestGeneration = generation
+    const now = Date.now()
+    for (const [entryKey, entry] of entries) {
+      if (entry.expiresAt <= now) remove(entryKey)
+    }
+    const cached = readCached(key)
+    if (cached) return cached
+
+    const shareable = Boolean(token) && Object.keys(init).every((name) => SHARE_INIT_KEYS.has(name))
+    if (!shareable) return load(input, init, key, token, requestGeneration)
+
+    const pending = inflight.get(key)
+    if (pending) {
+      await waitForRequest(pending, init.signal)
+      if (init.signal?.aborted) throw abortError(init.signal)
+      if (syncScope() !== token || generation !== requestGeneration) throw abortError()
+      if (tokenIsUsable(token)) {
+        const shared = readCached(key)
+        if (shared) return shared
+      }
+      return load(input, init, key, token, requestGeneration)
+    }
+
+    if (inflight.size >= MAX_INFLIGHT) return load(input, init, key, token, requestGeneration)
+    const request = load(input, init, key, token, requestGeneration)
+    inflight.set(key, request)
+    try {
+      return await request
+    } finally {
+      if (inflight.get(key) === request) inflight.delete(key)
+    }
   }
 }
