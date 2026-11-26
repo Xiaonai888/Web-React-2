@@ -1,0 +1,130 @@
+name: Story Video Compression Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: story-video-compression-candidate
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare reviewed changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp package.json "$RUNNER_TEMP/story-package-before.json"
+          cp package-lock.json "$RUNNER_TEMP/story-lock-before.json"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          wrapper = Path('src/utils/storyVideoCompression.js')
+          worker = Path('src/utils/storyVideoCompression.worker.js')
+          path = Path('src/components/stories/StoryComposer.jsx')
+          if not wrapper.is_file() or not worker.is_file():
+              raise SystemExit('Missing Story video compression files')
+          if 'compressStoryVideoOnDevice' not in wrapper.read_text() or "from 'mediabunny'" not in worker.read_text():
+              raise SystemExit('Unexpected compression file content')
+          original = path.read_text(encoding='utf-8')
+          old_import = "import { uploadStoryImageDirect } from '../../utils/storyImageDirectUpload'\n"
+          new_import = "import { compressStoryVideoOnDevice } from '../../utils/storyVideoCompression'\n"
+          old = '''async function uploadStoryVideoDirect({ config, file, textOverlay, token, onProgress }) {
+            const prepared = await requestStoryVideoUpload({
+              initPath: config.videoUploadInitPath,
+              file,
+              token,
+            })
+
+            await uploadVideoDirectToR2({
+              uploadUrl: prepared.upload_url,
+              file,
+              onProgress,
+            })'''
+          new = '''async function uploadStoryVideoDirect({ config, file, textOverlay, token, onProgress }) {
+            const uploadFile = await compressStoryVideoOnDevice(file, {
+              onProgress: value => onProgress(Math.round(value * 20)),
+            })
+            onProgress(20)
+            const prepared = await requestStoryVideoUpload({
+              initPath: config.videoUploadInitPath,
+              file: uploadFile,
+              token,
+            })
+
+            await uploadVideoDirectToR2({
+              uploadUrl: prepared.upload_url,
+              file: uploadFile,
+              onProgress: value => onProgress(20 + Math.round(value * 73 / 93)),
+            })'''
+          if original.count(old_import) != 1 or original.count(old) != 1 or new_import in original:
+              raise SystemExit('StoryComposer changed or already connected; no patch applied')
+          result = original.replace(old_import, old_import + new_import, 1).replace(old, new, 1)
+          path.write_text(result, encoding='utf-8')
+          PY
+          npm install mediabunny@1.65.2 --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify dependency scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          import { isDeepStrictEqual } from 'node:util'
+          const read = path => JSON.parse(fs.readFileSync(path, 'utf8'))
+          const before = read(`${process.env.RUNNER_TEMP}/story-package-before.json`)
+          const oldLock = read(`${process.env.RUNNER_TEMP}/story-lock-before.json`)
+          const after = read('package.json')
+          const newLock = read('package-lock.json')
+          before.dependencies.mediabunny = '1.65.2'
+          if (!isDeepStrictEqual(before, after)) throw new Error('Unexpected manifest changes')
+          for (const section of ['dependencies', 'devDependencies']) {
+            if (!isDeepStrictEqual(after[section], newLock.packages[''][section])) throw new Error(`Lock mismatch: ${section}`)
+          }
+          if (newLock.packages['node_modules/mediabunny']?.version !== '1.65.2') throw new Error('Unexpected Mediabunny version')
+          for (const [key, old] of Object.entries(oldLock.packages)) {
+            if (!key) continue
+            const next = newLock.packages[key]
+            if (!next || old.version !== next.version || old.integrity !== next.integrity || old.resolved !== next.resolved) throw new Error(`Unrelated package changed: ${key}`)
+          }
+          NODE
+          git diff --check
+      - name: Install and verify build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          node --input-type=module <<'NODE'
+          import { Input, MP4, QTFF, BlobSource, Output, Mp4OutputFormat, BufferTarget, Conversion, Quality } from 'mediabunny'
+          if (![Input, MP4, QTFF, BlobSource, Output, Mp4OutputFormat, BufferTarget, Conversion, Quality].every(Boolean)) throw new Error('Missing Mediabunny API')
+          new Quality({ bitrate: 1500000 })
+          NODE
+          node --check src/utils/storyVideoCompression.js
+          node --check src/utils/storyVideoCompression.worker.js
+          npm run build
+          npm audit --omit=dev --audit-level=high
+      - name: Publish review branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git add package.json package-lock.json src/components/stories/StoryComposer.jsx
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Connect device-first Story video compression'
+          branch="story-video-compression-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh auth setup-git
+          git push origin "HEAD:refs/heads/$branch"
+          printf 'Review branch: `%s`\n' "$branch" >> "$GITHUB_STEP_SUMMARY"
+          printf '[Compare changes](https://github.com/%s/compare/%s?expand=1)\n' "$GITHUB_REPOSITORY" "$branch" >> "$GITHUB_STEP_SUMMARY"
