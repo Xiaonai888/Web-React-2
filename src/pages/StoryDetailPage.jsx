@@ -154,7 +154,7 @@ const API_BASE_URL =
 
 
 function getReaderToken() {
-  return sessionStorage.getItem('shadow_reader_token') || localStorage.getItem('shadow_reader_token') || ''
+  return getActiveReaderToken()
 }
 
 function getCurrentReaderId() {
@@ -1024,6 +1024,16 @@ useEffect(() => {
   }
 
   if (diagnostic?.kind === 'restricted') {
+    if (diagnostic?.kind === 'login' || (!getReaderToken() && diagnostic?.kind === 'restricted')) {
+  return (
+    <div className="story-detail-page app-page min-h-screen">
+      <SignUpRequiredPopup
+        open={true}
+        onClose={() => navigate(-1)}
+      />
+    </div>
+  )
+}
   return (
     <div className="story-detail-page app-page min-h-screen px-4 py-8">
       <div className="app-card app-shadow mx-auto mt-8 max-w-md rounded-[28px] border p-6 text-center">
