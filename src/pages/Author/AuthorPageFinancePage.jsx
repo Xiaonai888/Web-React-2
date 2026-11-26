@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { useAuthorMenuReturn } from '../../utils/authorMenuNavigation'
 
 registerTranslationNamespace('authorPageFinance', {
   "en": {
@@ -73,6 +74,7 @@ function MenuRow({ icon, title, text, onClick }) {
 
 export default function AuthorPageFinancePage() {
   const navigate = useNavigate()
+  const returnToAuthorMenu = useAuthorMenuReturn()
   const { t } = useDisplayTranslation()
 
   return (
@@ -81,10 +83,7 @@ export default function AuthorPageFinancePage() {
         <div className="mx-auto flex h-14 max-w-[720px] items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => {
-  sessionStorage.setItem('shadow_open_author_menu', '1')
-  navigate('/author/page')
-}}
+           onClick={() => returnToAuthorMenu(() => navigate('/author/page'))}
             className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--shadow-text-primary)] active:bg-[var(--shadow-bg-soft)]"
             aria-label={t('authorPageFinance.back')}
           >
