@@ -6,6 +6,7 @@ import { listOfflineEpisodes, loadOfflineEpisode } from '../../utils/offlineRead
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import { isReaderForceOnline } from '../../utils/readerOfflineControl'
+import { getPurchasedPdfUpdateState, rememberPurchasedPdfVersion, readPurchasedPdfResponse } from '../../utils/purchasedPdfUpdate'
 
 registerTranslationNamespace('librarySections', {
   en: { purchased: 'Purchased', downloads: 'Downloads', purchasedInfo: 'Your purchased PDF and eBooks', downloadsInfo: 'Stories saved on this device', viewAll: 'View All', noPurchases: 'No purchased books yet', noDownloads: 'No downloaded stories yet', login: 'Sign in to view your purchases and downloads.', loading: 'Loading downloads…', failed: 'Unable to load downloaded stories', novel: 'Novel', manga: 'Manga', chat: 'Chat Story', episodes: '{{count}} episodes', read: 'Read online', download: 'Download file', open: 'Open offline downloads', offlineTitle: 'Offline mode', offlineInfo: 'Only content saved on this device can be opened without internet.', offlineTypes: 'Novel, Manga, Chat Story and saved PDF are available offline.', internetRequired: 'Purchased items that were not saved offline and other Shadow pages require internet.', pdfDownloadFailed: 'Unable to download this PDF', pdfUnavailable: 'PDF is unavailable' },
@@ -63,6 +64,13 @@ function PurchasedBook({ item, t, onRead }) {
   const productId = String(story.id || story.product_id || item.product_id || '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const accountId = getOfflineReaderAccountId()
+  const update = getPurchasedPdfUpdateState({
+  accountId,
+  productId,
+  latestVersion: story.pdf_version,
+  canDownload: rights.download,
+})
   const iconClass = 'absolute right-1.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--shadow-bg-elevated)] text-[var(--shadow-text-primary)] shadow-sm disabled:opacity-50'
 
   async function downloadPrivatePdf() {
@@ -109,7 +117,7 @@ function PurchasedBook({ item, t, onRead }) {
         )
       }
 
-      const pdf = await response.blob()
+      const { blob: pdf, version } = await readPurchasedPdfResponse(response)
 
       if (
         !pdf.size ||
@@ -127,7 +135,8 @@ function PurchasedBook({ item, t, onRead }) {
       ).split(/[\\/]/).pop()
       document.body.appendChild(anchor)
       anchor.click()
-      anchor.remove()
+anchor.remove()
+rememberPurchasedPdfVersion(accountId, productId, version)
 
       window.setTimeout(
         () => URL.revokeObjectURL(blobUrl),
@@ -198,6 +207,11 @@ function PurchasedBook({ item, t, onRead }) {
         >
           {error}
         </p>
+      {update.updateAvailable && (
+  <div className="mt-1 text-[10px] font-bold text-[#16a34a]">
+    Update Available · V{update.latestVersion}
+  </div>
+)}
       ) : null}
     </article>
   )
