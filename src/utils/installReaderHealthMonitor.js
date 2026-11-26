@@ -13,7 +13,7 @@ const MAX_EVENTS_PER_REPORT = 6
 const MAX_PENDING = 8
 const MIN_SEND_GAP_MS = 60000
 const DEDUP_MS = 30 * 60 * 1000
-const CRITICAL = new Set(['js_error', 'promise_rejection', 'script_load_failure'])
+const CRITICAL = new Set(['js_error', 'promise_rejection', 'script_load_failure', 'ui_popup_issue'])
 
 function randomId() {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
@@ -200,6 +200,12 @@ export function installReaderHealthMonitor() {
   }
 
   window.addEventListener('error', onError, true)
+  window.addEventListener('shadow-popup-ui-diagnostic', (event) => {
+  const { kind, code } = event.detail || {}
+  const prefix = { 'episode-list': 'EL', 'story-comments': 'SC', 'post-comments': 'PC' }[kind]
+  const suffix = { UI_BACKGROUND_MISSING: 'BG_MISSING', UI_THEME_TOKEN_MISSING: 'TOKEN_MISSING' }[code]
+  if (prefix && suffix) record('ui_popup_issue', `${prefix}_${suffix}`)
+})
   window.addEventListener('shadow-reader-health-react-error', (event) => {
     record('js_error', fingerprint(`react:${event.detail?.code || 'UI-UNKNOWN'}`))
   })
