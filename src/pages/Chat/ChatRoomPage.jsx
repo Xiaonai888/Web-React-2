@@ -1033,13 +1033,6 @@ function RequestPanel({
       )
     }
 
-       const sent = Number(conversation.pending_messages_sent)
-    const limit = Number(conversation.pending_message_limit)
-    const showCounter =
-      Number.isFinite(sent) &&
-      Number.isFinite(limit) &&
-      limit > 0
-
     return (
       <section className="mx-4 mt-4 rounded-[18px] bg-[#f4efff] px-4 py-3 text-center">
         <p className="text-[11px] font-normal leading-5 text-[#705b9d]">
@@ -3745,13 +3738,11 @@ export default function ChatRoomPage() {
               </div>
             ) : null}
 
-                        {conversation?.request_status === 'accepted' &&
-              conversation?.chat_send_limit_mode ? (
-                <div className="mb-1.5 text-right text-[10px] font-medium text-[#705b9d]">
-                  {Number(conversation.chat_send_sent || 0)}/
-                  {Number(conversation.chat_send_limit || 0)}
-                </div>
-              ) : null}
+                        {showCounter ? (
+  <p className="mt-1 text-[11px] font-semibold text-[#705b9d]">
+    {Math.min(limit, Math.max(0, sent))}/{limit}
+  </p>
+) : null}
 
             <div className="relative">
               <textarea
