@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BadgeCheck, Check, CheckCheck, ChevronDown, ChevronLeft, Copy, CornerUpLeft, LoaderCircle, MoreHorizontal, Pencil, Send, Trash2, X } from 'lucide-react'
+import { BadgeCheck, ChevronDown, ChevronLeft, CornerUpLeft, LoaderCircle, Pencil, X } from 'lucide-react'
 import { PageEmptyState, PageErrorState, PageLoadingState } from '../../components/common/PagePrimitives'
+import SharedChatMessageBubble from '../../components/chat/SharedChatMessageBubble'
+import SharedChatComposer from '../../components/chat/SharedChatComposer'
+import SharedMessageActionMenu from '../../components/chat/SharedMessageActionMenu'
+import SupportChatPrivateImage from '../../components/chat/SupportChatPrivateImage'
 import { useDisplayTranslation } from '../../utils/displayLanguage'
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import {
+  createMySupportImageUpload,
   deleteMySupportMessage,
   editMySupportMessage,
+  getMySupportBlock,
   getMySupportConversation,
   getMySupportMessages,
   markMySupportRead,
+  markMySupportSeen,
   replyMySupportMessage,
   sendMySupportMessage,
 } from '../../services/readerSupportChatApi'
@@ -28,6 +35,10 @@ registerTranslationNamespace('readerSupportChatPage', {
     edited: 'Edited', deleted: 'Message deleted', editing: 'Editing message', replying: 'Replying to',
     save: 'Save', cancel: 'Cancel', confirmDelete: 'Delete message?', deleteNote: 'This message will be removed from the chat.',
     message: 'Message', actionError: 'Could not update the message.', menu: 'Message options', closeMenu: 'Close message options',
+    camera: 'Camera', image: 'Image', emoji: 'Emoji', search: 'Search messages', comingSoon: 'Coming soon', sent: 'Sent', read: 'Read',
+    blocked: 'Shadow Support has restricted messaging.', imageError: 'Could not send the image.', imageMode: 'Finish or cancel editing or replying before sending an image.',
+    compress: 'Compressing image...', prepare: 'Preparing upload...', upload: 'Uploading image...', finalize: 'Sending image...', done: 'Image sent',
+    originalUnavailable: 'Original message unavailable', info: 'Message info', close: 'Close', imageExpired: 'Upload session expired. Select the image again.',
   },
   km: {
     title: 'ឆាតជាមួយ Shadow Admin', subtitle: 'សារជំនួយឯកជន', back: 'ត្រឡប់ក្រោយ',
@@ -42,6 +53,10 @@ registerTranslationNamespace('readerSupportChatPage', {
     edited: 'បានកែ', deleted: 'សារត្រូវបានលុប', editing: 'កំពុងកែសារ', replying: 'ឆ្លើយតបទៅ',
     save: 'រក្សាទុក', cancel: 'បោះបង់', confirmDelete: 'លុបសារនេះ?', deleteNote: 'សារនេះនឹងត្រូវលុបចេញពីការសន្ទនា។',
     message: 'សារ', actionError: 'មិនអាចកែប្រែសារបានទេ។', menu: 'ជម្រើសសារ', closeMenu: 'បិទជម្រើសសារ',
+    camera: 'កាមេរ៉ា', image: 'រូបភាព', emoji: 'Emoji', search: 'ស្វែងរកសារ', comingSoon: 'នឹងមកដល់ឆាប់ៗ', sent: 'បានផ្ញើ', read: 'បានអាន',
+    blocked: 'Shadow Support បានកំណត់ការផ្ញើសារ។', imageError: 'មិនអាចផ្ញើរូបភាពបានទេ។', imageMode: 'សូមបញ្ចប់ ឬបោះបង់ការកែ ឬឆ្លើយតប មុនផ្ញើរូបភាព។',
+    compress: 'កំពុងបង្រួមរូបភាព...', prepare: 'កំពុងរៀបចំ...', upload: 'កំពុង Upload រូបភាព...', finalize: 'កំពុងផ្ញើរូបភាព...', done: 'បានផ្ញើរូបភាព',
+    originalUnavailable: 'សារដើមមិនអាចមើលបាន', info: 'ព័ត៌មានសារ', close: 'បិទ', imageExpired: 'ការផ្ញើរូបភាពផុតកំណត់។ សូមជ្រើសរូបម្តងទៀត។',
   },
   zh: {
     title: '联系 Shadow Admin', subtitle: '私人客服消息', back: '返回',
@@ -56,6 +71,10 @@ registerTranslationNamespace('readerSupportChatPage', {
     edited: '已编辑', deleted: '消息已删除', editing: '正在编辑消息', replying: '回复',
     save: '保存', cancel: '取消', confirmDelete: '删除消息？', deleteNote: '此消息将从对话中删除。',
     message: '消息', actionError: '无法更新消息。', menu: '消息选项', closeMenu: '关闭消息选项',
+    camera: '相机', image: '图片', emoji: '表情', search: '搜索消息', comingSoon: '即将推出', sent: '已发送', read: '已读',
+    blocked: 'Shadow 客服已限制发送消息。', imageError: '无法发送图片。', imageMode: '请先完成或取消编辑或回复，再发送图片。',
+    compress: '正在压缩图片...', prepare: '正在准备上传...', upload: '正在上传图片...', finalize: '正在发送图片...', done: '图片已发送',
+    originalUnavailable: '原消息不可用', info: '消息信息', close: '关闭', imageExpired: '上传会话已过期，请重新选择图片。',
   },
   ja: {
     title: 'Shadow Admin にチャット', subtitle: '非公開サポートメッセージ', back: '戻る',
@@ -70,6 +89,10 @@ registerTranslationNamespace('readerSupportChatPage', {
     edited: '編集済み', deleted: 'メッセージは削除されました', editing: 'メッセージを編集中', replying: '返信先',
     save: '保存', cancel: 'キャンセル', confirmDelete: 'メッセージを削除しますか？', deleteNote: 'このメッセージを会話から削除します。',
     message: 'メッセージ', actionError: 'メッセージを更新できませんでした。', menu: 'メッセージ操作', closeMenu: '操作を閉じる',
+    camera: 'カメラ', image: '画像', emoji: '絵文字', search: 'メッセージを検索', comingSoon: '近日公開', sent: '送信済み', read: '既読',
+    blocked: 'Shadow サポートはメッセージの送信を制限しています。', imageError: '画像を送信できませんでした。', imageMode: '編集や返信を完了またはキャンセルしてから画像を送信してください。',
+    compress: '画像を圧縮中...', prepare: 'アップロードを準備中...', upload: '画像をアップロード中...', finalize: '画像を送信中...', done: '画像を送信しました',
+    originalUnavailable: '元のメッセージは利用できません', info: 'メッセージ情報', close: '閉じる', imageExpired: 'アップロードの期限切れです。画像を再選択してください。',
   },
   ko: {
     title: 'Shadow Admin과 채팅', subtitle: '비공개 지원 메시지', back: '뒤로',
@@ -84,6 +107,10 @@ registerTranslationNamespace('readerSupportChatPage', {
     edited: '수정됨', deleted: '삭제된 메시지', editing: '메시지 수정 중', replying: '답장 대상',
     save: '저장', cancel: '취소', confirmDelete: '메시지를 삭제할까요?', deleteNote: '이 메시지가 대화에서 삭제됩니다.',
     message: '메시지', actionError: '메시지를 변경할 수 없습니다.', menu: '메시지 옵션', closeMenu: '메시지 옵션 닫기',
+    camera: '카메라', image: '이미지', emoji: '이모지', search: '메시지 검색', comingSoon: '곧 제공 예정', sent: '보냄', read: '읽음',
+    blocked: 'Shadow 지원팀이 메시지 전송을 제한했습니다.', imageError: '이미지를 보내지 못했습니다.', imageMode: '수정이나 답장을 완료하거나 취소한 뒤 이미지를 보내세요.',
+    compress: '이미지 압축 중...', prepare: '업로드 준비 중...', upload: '이미지 업로드 중...', finalize: '이미지 전송 중...', done: '이미지를 보냈습니다',
+    originalUnavailable: '원본 메시지를 사용할 수 없음', info: '메시지 정보', close: '닫기', imageExpired: '업로드 시간이 만료되었습니다. 이미지를 다시 선택하세요.',
   },
 })
 
@@ -107,9 +134,43 @@ function imageSource(attachment) {
   return value
 }
 
+function privateImage(item) {
+  return Array.isArray(item.attachments) && item.attachments.some(a => a?.type === 'image' && typeof a.storage_key === 'string')
+}
+
+function toBubble(item, repliedTo) {
+  return {
+    ...item,
+    is_mine: item.sender_kind === 'reader',
+    is_deleted: Boolean(item.deleted_at),
+    body: item.message_text || '',
+    reply_to_message_id: item.deleted_at ? null : item.reply_to_message_id,
+    reply_to: repliedTo ? { body: repliedTo.message_text, is_deleted: Boolean(repliedTo.deleted_at) } : null,
+    edited_at: item.deleted_at ? null : item.edited_at,
+  }
+}
+
+function messageKey(item) {
+  return item ? `${item.id}:${item.last_message_at || ''}:${item.status || ''}:${item.updated_at || ''}` : ''
+}
+
+function allowedActions(message, archived, blocked) {
+  if (!message || message.deleted_at) return []
+  const actions = []
+  if (!archived && !blocked) actions.push('reply')
+  if (message.sender_kind === 'reader' && !archived && message.message_text && !blocked) actions.push('edit')
+  if (message.message_text) actions.push('copy')
+  if (message.sender_kind === 'reader') {
+    if (!archived) actions.push('delete')
+    actions.push('info')
+  }
+  return actions
+}
+
 export default function ReaderSupportChatPage() {
   const navigate = useNavigate()
   const { t } = useDisplayTranslation()
+  const tr = key => t(`readerSupportChatPage.${key}`)
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -126,21 +187,35 @@ export default function ReaderSupportChatPage() {
   const [replyTarget, setReplyTarget] = useState(null)
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [infoTarget, setInfoTarget] = useState(null)
   const [busyAction, setBusyAction] = useState('')
   const [copied, setCopied] = useState(false)
+  const [blocked, setBlocked] = useState(false)
+  const [imageStage, setImageStage] = useState('')
+  const [imageRetry, setImageRetry] = useState(false)
+  const [highlighted, setHighlighted] = useState('')
   const scrollBoxRef = useRef(null)
   const composerRef = useRef(null)
   const restoreScrollRef = useRef(null)
   const nearBottomRef = useRef(true)
   const pendingSendRef = useRef(null)
   const lastMessageKeyRef = useRef('')
-  const pressTimerRef = useRef(null)
-  const pressStartRef = useRef(null)
   const copyTimerRef = useRef(null)
+  const highlightTimerRef = useRef(null)
+  const messageRefs = useRef(new Map())
+  const cameraRef = useRef(null)
+  const galleryRef = useRef(null)
+  const imageJobRef = useRef(null)
+  const imageAbortRef = useRef(null)
+  const sendingRef = useRef(false)
+  const seenRef = useRef('')
+  const seenAttemptRef = useRef({ id: '', time: 0 })
+  const latestIncomingRef = useRef(null)
 
   useEffect(() => () => {
-    window.clearTimeout(pressTimerRef.current)
     window.clearTimeout(copyTimerRef.current)
+    window.clearTimeout(highlightTimerRef.current)
+    imageAbortRef.current?.abort()
   }, [])
 
   useEffect(() => {
@@ -174,9 +249,41 @@ export default function ReaderSupportChatPage() {
   useLayoutEffect(() => {
     const element = composerRef.current
     if (!element) return
-    element.style.height = '44px'
-    element.style.height = `${Math.min(element.scrollHeight, 128)}px`
-  }, [draft])
+    element.style.height = '46px'
+    element.style.height = `${Math.min(element.scrollHeight, 124)}px`
+    element.style.overflowY = element.scrollHeight > 124 ? 'auto' : 'hidden'
+  }, [draft, loading, loginRequired])
+
+  const updateBlock = useCallback(async signal => {
+    try {
+      const result = await getMySupportBlock({ signal })
+      if (!signal?.aborted) setBlocked(result.blocked === true)
+    } catch (err) {
+      if (!signal?.aborted && (err.status === 401 || err.code === 'LOGIN_REQUIRED')) setLoginRequired(true)
+    }
+  }, [])
+
+  const markVisibleRead = useCallback(async () => {
+    const target = latestIncomingRef.current
+    if (!target || document.hidden || !nearBottomRef.current || seenRef.current === target.id) return
+    const node = messageRefs.current.get(target.id)
+    const box = scrollBoxRef.current
+    if (!node || !box) return
+    const rect = node.getBoundingClientRect()
+    const bounds = box.getBoundingClientRect()
+    if (rect.bottom <= bounds.top || rect.top >= bounds.bottom) return
+    if (seenAttemptRef.current.id === target.id && Date.now() - seenAttemptRef.current.time < 12000) return
+    seenAttemptRef.current = { id: target.id, time: Date.now() }
+    seenRef.current = target.id
+    try {
+      await markMySupportSeen(target.id)
+    } catch (err) {
+      try {
+        if (err.status === 404 && err.code !== 'SUPPORT_SEEN_NOT_FOUND') await markMySupportRead()
+        else if (seenRef.current === target.id) seenRef.current = ''
+      } catch { if (seenRef.current === target.id) seenRef.current = '' }
+    }
+  }, [])
 
   const reload = useCallback(async signal => {
     const data = await getMySupportConversation({ signal })
@@ -184,21 +291,26 @@ export default function ReaderSupportChatPage() {
     const item = data.conversation || null
     if (!item) {
       lastMessageKeyRef.current = ''
+      latestIncomingRef.current = null
+      seenRef.current = ''
       setConversation(null)
       setMessages([])
       setBefore('')
       setHasMore(false)
+      setBlocked(false)
       return
     }
     const history = await getMySupportMessages({ signal })
     if (signal?.aborted) return
-    lastMessageKeyRef.current = `${item.id}:${item.last_message_at || ''}:${item.status || ''}:${item.updated_at || ''}`
+    const incoming = history.messages || []
+    lastMessageKeyRef.current = messageKey(item)
+    latestIncomingRef.current = [...incoming].reverse().find(message => message.sender_kind !== 'reader' && !message.deleted_at && !message.seen_at) || null
     setConversation(item)
-    setMessages(history.messages || [])
+    setMessages(incoming)
     setBefore(history.next_before || '')
     setHasMore(Boolean(history.has_more))
-    if (item.unread_for_reader > 0) markMySupportRead().catch(() => {})
-  }, [])
+    await updateBlock(signal)
+  }, [updateBlock])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -220,7 +332,6 @@ export default function ReaderSupportChatPage() {
     const controller = new AbortController()
     let checking = false
     let lastChecked = Date.now()
-
     const checkIncoming = async () => {
       if (controller.signal.aborted || checking || document.hidden || Date.now() - lastChecked < 12000) return
       lastChecked = Date.now()
@@ -229,12 +340,13 @@ export default function ReaderSupportChatPage() {
         const data = await getMySupportConversation({ signal: controller.signal })
         if (controller.signal.aborted) return
         const item = data.conversation || null
-        const key = item ? `${item.id}:${item.last_message_at || ''}:${item.status || ''}:${item.updated_at || ''}` : ''
+        const key = messageKey(item)
         if (key !== lastMessageKeyRef.current) {
           const sameConversation = Boolean(item && lastMessageKeyRef.current.startsWith(`${item.id}:`))
           const history = item ? await getMySupportMessages({ signal: controller.signal }) : null
           if (controller.signal.aborted) return
           const incoming = Array.isArray(history?.messages) ? history.messages : []
+          latestIncomingRef.current = [...incoming].reverse().find(message => message.sender_kind !== 'reader' && !message.deleted_at && !message.seen_at) || null
           if (sameConversation) {
             setMessages(previous => {
               const latest = new Map(incoming.map(message => [message.id, message]))
@@ -243,23 +355,23 @@ export default function ReaderSupportChatPage() {
               return [...previous.map(message => latest.get(message.id) || message), ...additions]
             })
           } else {
+            seenRef.current = ''
             setMessages(incoming)
             setBefore(history?.next_before || '')
             setHasMore(Boolean(history?.has_more))
           }
           lastMessageKeyRef.current = key
           setConversation(item)
+          if (item) await updateBlock(controller.signal)
+          else setBlocked(false)
         }
-        if (item?.unread_for_reader > 0) void markMySupportRead().catch(() => {})
+        void markVisibleRead()
       } catch (err) {
         if (!controller.signal.aborted && (err.status === 401 || err.code === 'LOGIN_REQUIRED')) setLoginRequired(true)
-      } finally {
-        checking = false
-      }
+      } finally { checking = false }
     }
-
-    const onVisibility = () => { if (!document.hidden) void checkIncoming() }
-    const onFocus = () => { void checkIncoming() }
+    const onVisibility = () => { if (!document.hidden) { void markVisibleRead(); void checkIncoming() } }
+    const onFocus = () => { void markVisibleRead(); void checkIncoming() }
     const interval = window.setInterval(() => { void checkIncoming() }, 60000)
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('focus', onFocus)
@@ -269,7 +381,7 @@ export default function ReaderSupportChatPage() {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', onFocus)
     }
-  }, [loading, loginRequired, sending])
+  }, [loading, loginRequired, sending, updateBlock, markVisibleRead])
 
   useLayoutEffect(() => {
     const element = scrollBoxRef.current
@@ -281,7 +393,8 @@ export default function ReaderSupportChatPage() {
     } else if (nearBottomRef.current) {
       element.scrollTop = element.scrollHeight
     }
-  }, [messages, loading])
+    if (!loading && !loginRequired) void markVisibleRead()
+  }, [messages, loading, loginRequired, markVisibleRead])
 
   async function loadOlder() {
     if (!hasMore || !before || olderLoading) return
@@ -299,30 +412,25 @@ export default function ReaderSupportChatPage() {
       setBefore(data.next_before || '')
     } catch (err) {
       restoreScrollRef.current = null
-      setError(err.message || t('readerSupportChatPage.loadError'))
-    } finally {
-      setOlderLoading(false)
-    }
+      setError(err.message || tr('loadError'))
+    } finally { setOlderLoading(false) }
   }
 
   const archived = conversation?.status === 'archived'
-  const composeDisabled = loading || loginRequired || archived || sending || Boolean(busyAction)
-
-  function clearPress() {
-    window.clearTimeout(pressTimerRef.current)
-    pressTimerRef.current = null
-    pressStartRef.current = null
+  const composeDisabled = loading || loginRequired || archived || blocked || sending || Boolean(busyAction) || imageRetry
+  const bubbleLabels = {
+    message: tr('message'), messageOptions: tr('menu'), originalUnavailable: tr('originalUnavailable'),
+    originalMessage: tr('message'), messageDeleted: tr('deleted'), edited: tr('edited'), read: tr('read'), sentStatus: tr('sent'),
   }
+  const menuLabels = { reply: tr('reply'), edit: tr('edit'), copy: tr('copy'), delete: tr('delete'), info: tr('info'), close: tr('closeMenu') }
+  const composerLabels = { camera: tr('camera'), image: tr('image'), searchMessages: tr('search'), emoji: tr('emoji'), saveEdit: tr('save'), sendMessage: tr('send') }
+  const mediaLabels = { image: tr('image'), retry: tr('retry'), close: tr('close') }
 
   function openMenu(message, x, y) {
-    if (!message || message.deleted_at || busyAction || (archived && !message.message_text)) return
-    const width = 202
-    const height = message.sender_kind === 'reader' && !archived ? (message.message_text ? 178 : 142) : archived ? 60 : message.message_text ? 102 : 60
-    setMenu({
-      message,
-      x: Math.max(8, Math.min(x, window.innerWidth - width - 8)),
-      y: Math.max(8, Math.min(y, window.innerHeight - height - 8)),
-    })
+    if (!message || message.deleted_at || busyAction || sending || imageRetry) return
+    const count = allowedActions(message, archived, blocked).length
+    if (!count) return
+    setMenu({ message, x: Math.max(8, Math.min(x, window.innerWidth - 228 - 8)), y: Math.max(8, Math.min(y, window.innerHeight - count * 40 - 24)) })
   }
 
   function clearCompose() {
@@ -332,8 +440,19 @@ export default function ReaderSupportChatPage() {
     pendingSendRef.current = null
   }
 
+  function jumpToReply(id) {
+    const node = messageRefs.current.get(id)
+    if (!node) { setError(tr('originalUnavailable')); return }
+    node.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    setHighlighted(id)
+    window.clearTimeout(highlightTimerRef.current)
+    highlightTimerRef.current = window.setTimeout(() => setHighlighted(''), 1800)
+  }
+
   async function chooseAction(action, message) {
     setMenu(null)
+    if (!allowedActions(message, archived, blocked).includes(action)) return
+    if (action === 'info') { setInfoTarget(message); return }
     if (action === 'copy') {
       if (!message.message_text) return
       try {
@@ -341,12 +460,10 @@ export default function ReaderSupportChatPage() {
         setCopied(true)
         window.clearTimeout(copyTimerRef.current)
         copyTimerRef.current = window.setTimeout(() => setCopied(false), 1800)
-      } catch {
-        setError(t('readerSupportChatPage.actionError'))
-      }
+      } catch { setError(tr('actionError')) }
       return
     }
-    if (archived || message.deleted_at || busyAction) return
+    if (archived || message.deleted_at || busyAction || sending || imageRetry) return
     if (action === 'reply') {
       clearCompose()
       setReplyTarget(message)
@@ -359,9 +476,13 @@ export default function ReaderSupportChatPage() {
       setEditTarget(message)
       setDraft(message.message_text)
       composerRef.current?.focus()
-    } else if (action === 'delete') {
-      setDeleteTarget(message)
-    }
+    } else if (action === 'delete') setDeleteTarget(message)
+  }
+
+  function handleFailure(err, fallback) {
+    if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
+    if (err.code === 'SUPPORT_CHAT_BLOCKED') setBlocked(true)
+    setError(err.code === 'SUPPORT_CHAT_BLOCKED' ? tr('blocked') : err.message || tr(fallback))
   }
 
   async function removeMessage() {
@@ -376,33 +497,26 @@ export default function ReaderSupportChatPage() {
         : message))
       if (editTarget?.id === id || replyTarget?.id === id) clearCompose()
       setDeleteTarget(null)
-    } catch (err) {
-      if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
-      setError(err.message || t('readerSupportChatPage.actionError'))
-    } finally {
-      setBusyAction('')
-    }
+    } catch (err) { handleFailure(err, 'actionError') }
+    finally { setBusyAction('') }
   }
 
   async function submit(event) {
-    event.preventDefault()
+    event?.preventDefault()
     const content = draft.trim()
-    if (!content || content.length > 2000 || composeDisabled) return
+    if (!content || content.length > 2000 || composeDisabled || sendingRef.current) return
     const editing = editTarget
     const replying = replyTarget
+    sendingRef.current = true
     setSending(true)
     setError('')
     const requestKey = `${replying ? `reply:${replying.id}` : 'send'}:${content}`
-    const requestId = pendingSendRef.current?.key === requestKey
-      ? pendingSendRef.current.requestId
-      : globalThis.crypto?.randomUUID?.()
+    const requestId = pendingSendRef.current?.key === requestKey ? pendingSendRef.current.requestId : globalThis.crypto?.randomUUID?.()
     if (!editing) pendingSendRef.current = { key: requestKey, requestId }
     try {
       if (editing) {
         const result = await editMySupportMessage(editing.id, content)
-        setMessages(current => current.map(message => message.id === editing.id
-          ? { ...message, ...result.message }
-          : message))
+        setMessages(current => current.map(message => message.id === editing.id ? { ...message, ...result.message } : message))
       } else if (replying) {
         await replyMySupportMessage(replying.id, content, requestId)
         nearBottomRef.current = true
@@ -413,242 +527,163 @@ export default function ReaderSupportChatPage() {
       clearCompose()
       if (!editing) {
         try { await reload() }
-        catch (err) { setError(err.message || t('readerSupportChatPage.loadError')) }
+        catch (err) { setError(err.message || tr('loadError')) }
       }
+    } catch (err) { handleFailure(err, 'sendError') }
+    finally { sendingRef.current = false; setSending(false) }
+  }
+
+  function chooseImage(ref) {
+    if (composeDisabled || sendingRef.current) return
+    if (editTarget || replyTarget) { setError(tr('imageMode')); return }
+    ref.current?.click()
+  }
+
+  async function runImage() {
+    if (!imageJobRef.current || sendingRef.current || loading || loginRequired || archived || blocked) return
+    const controller = new AbortController()
+    imageAbortRef.current = controller
+    sendingRef.current = true
+    setSending(true)
+    setImageRetry(false)
+    setError('')
+    try {
+      const result = await imageJobRef.current.run({ signal: controller.signal, onStage: setImageStage })
+      if (controller.signal.aborted) return
+      imageJobRef.current = null
+      setImageStage('')
+      nearBottomRef.current = true
+      clearCompose()
+      if (result.message) setMessages(current => [...current.filter(item => item.id !== result.message.id), result.message])
+      try { await reload() }
+      catch (err) { handleFailure(err, 'loadError') }
     } catch (err) {
-      if (err.status === 401 || err.code === 'LOGIN_REQUIRED') setLoginRequired(true)
-      setError(err.message || t('readerSupportChatPage.sendError'))
+      if (controller.signal.aborted) return
+      const expired = ['SUPPORT_IMAGE_UPLOAD_EXPIRED', 'SUPPORT_IMAGE_FINALIZE_EXPIRED'].includes(err.code)
+      const permanent = expired || [400, 401, 403, 413].includes(err.status)
+      if (permanent) imageJobRef.current = null
+      setImageRetry(!permanent)
+      setImageStage('')
+      handleFailure(err, 'imageError')
+      if (expired) setError(tr('imageExpired'))
     } finally {
-      setSending(false)
+      if (imageAbortRef.current === controller) imageAbortRef.current = null
+      sendingRef.current = false
+      if (!controller.signal.aborted) setSending(false)
     }
   }
 
+  function selectedImage(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || composeDisabled || sendingRef.current || editTarget || replyTarget) return
+    try {
+      imageJobRef.current = createMySupportImageUpload(file)
+      void runImage()
+    } catch (err) { handleFailure(err, 'imageError') }
+  }
+
+  function cancelImage() {
+    if (sendingRef.current) return
+    imageJobRef.current = null
+    setImageRetry(false)
+    setImageStage('')
+    setError('')
+  }
+
+  function onMediaLayout() {
+    const node = scrollBoxRef.current
+    if (node && nearBottomRef.current) node.scrollTop = node.scrollHeight
+    void markVisibleRead()
+  }
+
   return (
-    <div
-      className="fixed inset-x-0 top-0 z-[100] flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]"
-      style={viewport ? { top: `${viewport.top}px`, height: `${viewport.height}px` } : undefined}
-    >
+    <div className="fixed inset-x-0 top-0 z-[100] flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[var(--shadow-bg-page)] text-[var(--shadow-text-primary)]" style={viewport ? { top: `${viewport.top}px`, height: `${viewport.height}px` } : undefined}>
       <header className="z-10 shrink-0 border-b border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[64px] w-full max-w-[720px] items-center gap-2 px-2 sm:px-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label={t('readerSupportChatPage.back')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"
-          >
-            <ChevronLeft size={26} />
-          </button>
+          <button type="button" onClick={() => navigate(-1)} aria-label={tr('back')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-[var(--shadow-bg-hover)]"><ChevronLeft size={26} /></button>
           <img src={LOGO} alt="Shadow Admin" className="h-11 w-11 shrink-0 rounded-full border border-[var(--shadow-border)] object-cover" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="truncate text-[15px] font-bold">Shadow Admin</span>
-              <BadgeCheck size={17} className="shrink-0 text-blue-500" aria-label={t('readerSupportChatPage.verified')} />
-            </div>
-            <p className="truncate text-[11px] text-[var(--shadow-text-secondary)]">{t('readerSupportChatPage.subtitle')}</p>
+            <div className="flex items-center gap-1.5"><span className="truncate text-[15px] font-bold">Shadow Admin</span><BadgeCheck size={17} className="shrink-0 text-blue-500" aria-label={tr('verified')} /></div>
+            <p className="truncate text-[11px] text-[var(--shadow-text-secondary)]">{tr('subtitle')}</p>
           </div>
         </div>
       </header>
-
-      <main
-        ref={scrollBoxRef}
-        onScroll={event => {
-          const node = event.currentTarget
-          nearBottomRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120
-          if (menu) setMenu(null)
-        }}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]"
-      >
+      <main ref={scrollBoxRef} onScroll={event => {
+        const node = event.currentTarget
+        nearBottomRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120
+        if (menu) setMenu(null)
+        void markVisibleRead()
+      }} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--shadow-bg-page)]">
         <div className="mx-auto flex min-h-full w-full max-w-[720px] flex-col px-3 py-4 sm:px-4">
-          <p className="mb-5 text-center text-[11px] text-[var(--shadow-text-tertiary)]">{t('readerSupportChatPage.private')}</p>
-          {loading && <PageLoadingState label={t('readerSupportChatPage.loading')} rows={3} />}
+          <p className="mb-5 text-center text-[11px] text-[var(--shadow-text-tertiary)]">{tr('private')}</p>
+          {loading && <PageLoadingState label={tr('loading')} rows={3} />}
           {!loading && loginRequired && (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12">
-              <PageEmptyState title={t('readerSupportChatPage.signIn')} body={t('readerSupportChatPage.private')} />
-              <button type="button" onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white">
-                {t('readerSupportChatPage.goLogin')}
-              </button>
+              <PageEmptyState title={tr('signIn')} body={tr('private')} />
+              <button type="button" onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-white">{tr('goLogin')}</button>
             </div>
           )}
           {!loading && !loginRequired && error && messages.length === 0 && (
-            <div className="flex flex-1 items-center justify-center py-12">
-              <PageErrorState title={t('readerSupportChatPage.loadError')} body={error} actionLabel={t('readerSupportChatPage.retry')} onAction={() => setRefreshIndex(count => count + 1)} />
-            </div>
+            <div className="flex flex-1 items-center justify-center py-12"><PageErrorState title={tr('loadError')} body={error} actionLabel={tr('retry')} onAction={() => setRefreshIndex(count => count + 1)} /></div>
           )}
           {!loading && !loginRequired && !error && messages.length === 0 && (
-            <div className="flex flex-1 items-center justify-center py-12">
-              <PageEmptyState title={t('readerSupportChatPage.empty')} body={t('readerSupportChatPage.emptyText')} />
-            </div>
+            <div className="flex flex-1 items-center justify-center py-12"><PageEmptyState title={tr('empty')} body={tr('emptyText')} /></div>
           )}
           {!loading && !loginRequired && messages.length > 0 && (
-            <div className="space-y-3">
-              {hasMore && (
-                <div className="pb-2 text-center">
-                  <button type="button" disabled={olderLoading} onClick={loadOlder} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-semibold disabled:opacity-60">
-                    {olderLoading ? <LoaderCircle size={15} className="animate-spin" /> : <ChevronDown size={15} />}
-                    {olderLoading ? t('readerSupportChatPage.loadingOlder') : t('readerSupportChatPage.loadOlder')}
-                  </button>
-                </div>
-              )}
+            <div className="space-y-2">
+              {hasMore && <div className="pb-2 text-center"><button type="button" disabled={olderLoading} onClick={loadOlder} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-semibold disabled:opacity-60">{olderLoading ? <LoaderCircle size={15} className="animate-spin" /> : <ChevronDown size={15} />}{tr(olderLoading ? 'loadingOlder' : 'loadOlder')}</button></div>}
               {messages.map(item => {
-                const mine = item.sender_kind === 'reader'
-                const deleted = Boolean(item.deleted_at)
-                const images = !deleted && Array.isArray(item.attachments) ? item.attachments.map(imageSource).filter(Boolean) : []
                 const repliedTo = item.reply_to_message_id ? messages.find(message => message.id === item.reply_to_message_id) : null
-                return (
-                  <div key={item.id} className={`group flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`relative max-w-[82%] rounded-[18px] px-3.5 py-2.5 shadow-sm ${mine ? 'rounded-br-[6px] bg-[#FFF4D9] text-[#28211C] ring-1 ring-[#F6DB98]' : 'rounded-bl-[6px] bg-[var(--shadow-bg-surface)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]'}`}
-                      onContextMenu={event => {
-                        if (deleted) return
-                        event.preventDefault()
-                        clearPress()
-                        openMenu(item, event.clientX, event.clientY)
-                      }}
-                      onPointerDown={event => {
-                        if (deleted || !['touch', 'pen'].includes(event.pointerType) || event.target.closest('button, a')) return
-                        clearPress()
-                        const { clientX, clientY } = event
-                        pressStartRef.current = { x: clientX, y: clientY }
-                        pressTimerRef.current = window.setTimeout(() => {
-                          openMenu(item, clientX, clientY)
-                          clearPress()
-                        }, 550)
-                      }}
-                      onPointerMove={event => {
-                        if (!pressStartRef.current) return
-                        if (Math.hypot(event.clientX - pressStartRef.current.x, event.clientY - pressStartRef.current.y) > 12) clearPress()
-                      }}
-                      onPointerUp={clearPress}
-                      onPointerCancel={clearPress}
-                      onPointerLeave={clearPress}
-                    >
-                      {item.reply_to_message_id && !deleted && (
-                        <div className={`mb-2 rounded-lg border-l-[3px] px-2 py-1.5 text-[11px] ${mine ? 'border-amber-500 bg-white/60' : 'border-blue-400 bg-[var(--shadow-bg-soft)]'}`}>
-                          <div className="mb-0.5 flex items-center gap-1 font-bold"><CornerUpLeft size={12} />{t('readerSupportChatPage.reply')}</div>
-                          <p className="line-clamp-2 break-words opacity-75">{repliedTo?.deleted_at ? t('readerSupportChatPage.deleted') : repliedTo?.message_text || t('readerSupportChatPage.message')}</p>
-                        </div>
-                      )}
-                      {deleted ? (
-                        <p className="text-[12px] italic opacity-60">{t('readerSupportChatPage.deleted')}</p>
-                      ) : (
-                        <>
-                          {item.message_text && <p className="whitespace-pre-wrap break-words text-[13px] leading-5">{item.message_text}</p>}
-                          {images.length > 0 && (
-                            <div className="mt-2 grid max-w-[250px] grid-cols-2 gap-1.5">
-                              {images.map((src, index) => (
-                                <a key={`${src}-${index}`} href={src} target="_blank" rel="noopener noreferrer" className={images.length === 1 ? 'col-span-2' : ''}>
-                                  <img src={src} alt="Chat attachment" loading="lazy" className="max-h-[240px] w-full rounded-xl object-cover" />
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <div className={`mt-1 flex items-center justify-end gap-2 text-[10px] ${mine ? 'text-[#8C7352]' : 'text-[var(--shadow-text-tertiary)]'}`}>
-                        {item.edited_at && !deleted && <span>{t('readerSupportChatPage.edited')}</span>}
-                        <span>{displayTime(item.created_at)}</span>
-{mine && !deleted && (
-  item.seen_at
-    ? <CheckCheck size={15} className="shrink-0 text-green-600" />
-    : <Check size={15} className="shrink-0 opacity-70" />
-)}
-                      </div>
-                    </div>
-                    {!deleted && (
-                      <button
-                        type="button"
-                        aria-label={t('readerSupportChatPage.menu')}
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--shadow-text-secondary)] opacity-70 hover:bg-[var(--shadow-bg-soft)] sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 ${mine ? 'order-first' : ''}`}
-                        onClick={event => {
-                          const rect = event.currentTarget.getBoundingClientRect()
-                          openMenu(item, rect.left, rect.bottom + 4)
-                        }}
-                      >
-                        <MoreHorizontal size={17} />
-                      </button>
-                    )}
+                const bubble = toBubble(item, repliedTo)
+                const images = Array.isArray(item.attachments) ? item.attachments.map(imageSource).filter(Boolean) : []
+                const media = !item.deleted_at && (privateImage(item) ? <SupportChatPrivateImage key={item.id} messageId={item.id} labels={mediaLabels} onLayout={onMediaLayout} /> : images.length > 0 ? (
+                  <div className="mt-2 grid max-w-[250px] grid-cols-2 gap-1.5">
+                    {images.map((src, index) => <a key={`${src}-${index}`} href={src} target="_blank" rel="noopener noreferrer" className={images.length === 1 ? 'col-span-2' : ''}><img src={src} alt={tr('image')} loading="lazy" onLoad={onMediaLayout} className="max-h-[240px] w-full rounded-xl object-cover" /></a>)}
                   </div>
-                )
+                ) : null)
+                return <SharedChatMessageBubble key={item.id} message={bubble} variant="support" labels={bubbleLabels} media={media} isRead={Boolean(item.seen_at)} highlighted={highlighted === item.id} setMessageRef={(id, node) => { if (node) messageRefs.current.set(id, node); else messageRefs.current.delete(id) }} onOpenMenu={openMenu} onJumpToReply={jumpToReply} />
               })}
             </div>
           )}
         </div>
       </main>
-
       <div className="z-10 shrink-0 border-t border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)]" style={{ paddingBottom: viewport?.keyboard ? '8px' : 'max(10px, env(safe-area-inset-bottom))' }}>
         <div className="mx-auto w-full max-w-[720px]">
-          {archived && <p className="mx-3 mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-900">{t('readerSupportChatPage.archived')}</p>}
+          {archived && <p className="mx-3 mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-900">{tr('archived')}</p>}
+          {blocked && <p className="mx-3 mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-900">{tr('blocked')}</p>}
           {!loginRequired && error && messages.length > 0 && <p role="alert" className="mx-3 mt-2 text-[12px] text-red-600">{error}</p>}
+          {imageStage && <div role="status" className="mx-3 mt-2 flex items-center gap-2 rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-[12px]"><LoaderCircle size={16} className="animate-spin text-amber-600" />{tr(imageStage)}</div>}
+          {imageRetry && <div className="mx-3 mt-2 flex items-center justify-end gap-2"><button type="button" onClick={cancelImage} className="rounded-xl bg-[var(--shadow-bg-soft)] px-3 py-2 text-[12px]">{tr('cancel')}</button><button type="button" disabled={blocked || archived || loginRequired} onClick={() => void runImage()} className="rounded-xl bg-amber-500 px-3 py-2 text-[12px] font-bold text-white disabled:opacity-50">{tr('retry')}</button></div>}
           {(editTarget || replyTarget) && (
             <div className="mx-3 mt-2 flex items-center gap-2 rounded-xl border-l-[3px] border-amber-500 bg-[var(--shadow-bg-soft)] px-3 py-2">
               {editTarget ? <Pencil size={15} className="shrink-0 text-amber-600" /> : <CornerUpLeft size={15} className="shrink-0 text-amber-600" />}
-              <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-bold">{t(editTarget ? 'readerSupportChatPage.editing' : 'readerSupportChatPage.replying')}</p>
-                <p className="truncate text-[11px] text-[var(--shadow-text-secondary)]">{(editTarget || replyTarget)?.message_text || t('readerSupportChatPage.message')}</p>
-              </div>
-              <button type="button" onClick={clearCompose} aria-label={t('readerSupportChatPage.cancel')} className="flex h-8 w-8 items-center justify-center rounded-full"><X size={17} /></button>
+              <div className="min-w-0 flex-1"><p className="text-[12px] font-bold">{tr(editTarget ? 'editing' : 'replying')}</p><p className="truncate text-[11px] text-[var(--shadow-text-secondary)]">{(editTarget || replyTarget)?.message_text || tr('message')}</p></div>
+              <button type="button" onClick={clearCompose} aria-label={tr('cancel')} className="flex h-8 w-8 items-center justify-center rounded-full"><X size={17} /></button>
             </div>
           )}
-          <form onSubmit={submit} className="flex items-end gap-2 px-3 pt-2">
-            <textarea
-              ref={composerRef}
-              className="min-h-11 max-h-32 min-w-0 flex-1 resize-none overflow-y-auto rounded-[20px] bg-[var(--shadow-input-bg)] px-4 py-3 text-[13px] leading-5 text-[var(--shadow-text-primary)] outline-none placeholder:text-[var(--shadow-placeholder)] disabled:opacity-60"
-              rows={1}
-              maxLength={2000}
-              value={draft}
-              onChange={event => setDraft(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault()
-                  event.currentTarget.form?.requestSubmit()
-                }
-              }}
-              placeholder={t('readerSupportChatPage.placeholder')}
-              aria-label={t('readerSupportChatPage.placeholder')}
-              disabled={composeDisabled}
-            />
-            <button
-              type="submit"
-              disabled={!draft.trim() || composeDisabled}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E9AD4B] text-white active:scale-95 disabled:opacity-40"
-              aria-label={t(editTarget ? 'readerSupportChatPage.save' : 'readerSupportChatPage.send')}
-            >
-              {sending ? <LoaderCircle size={19} className="animate-spin" /> : editTarget ? <Check size={19} /> : <Send size={19} />}
-            </button>
-          </form>
+          <input ref={cameraRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" capture="environment" onChange={selectedImage} className="hidden" />
+          <input ref={galleryRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif" onChange={selectedImage} className="hidden" />
+          <div className="px-3 pt-2">
+            <SharedChatComposer variant="support" labels={composerLabels} textareaRef={composerRef} text={draft} onChange={setDraft} canSend={!composeDisabled} sending={sending} editing={Boolean(editTarget)} placeholder={tr(blocked ? 'blocked' : archived ? 'archived' : 'placeholder')} onSend={submit} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) void submit(event) }} onCamera={() => chooseImage(cameraRef)} onGallery={() => chooseImage(galleryRef)} onComingSoon={() => setError(tr('comingSoon'))} />
+          </div>
         </div>
       </div>
-
-      {menu && (
-        <>
-          <button type="button" className="fixed inset-0 z-[140] cursor-default" aria-label={t('readerSupportChatPage.closeMenu')} onClick={() => setMenu(null)} />
-          <div role="menu" aria-label={t('readerSupportChatPage.menu')} className="fixed z-[150] w-[202px] rounded-2xl border border-[var(--shadow-border)] bg-[var(--shadow-bg-surface)] p-1.5 shadow-[0_12px_42px_rgba(0,0,0,.18)]" style={{ left: menu.x, top: menu.y }}>
-            {[
-              ...(!archived ? [['reply', CornerUpLeft]] : []),
-              ...(menu.message.sender_kind === 'reader' && !archived && menu.message.message_text ? [['edit', Pencil]] : []),
-              ...(menu.message.message_text ? [['copy', Copy]] : []),
-              ...(menu.message.sender_kind === 'reader' && !archived ? [['delete', Trash2]] : []),
-            ].map(([action, Icon]) => (
-              <button key={action} type="button" role="menuitem" disabled={Boolean(busyAction)} onClick={() => void chooseAction(action, menu.message)} className={`flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-[13px] font-semibold hover:bg-[var(--shadow-bg-soft)] disabled:opacity-50 ${action === 'delete' ? 'text-red-600' : 'text-[var(--shadow-text-primary)]'}`}>
-                <Icon size={16} />{t(`readerSupportChatPage.${action}`)}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      <SharedMessageActionMenu state={menu} variant="support" labels={menuLabels} allowedActions={allowedActions(menu?.message, archived, blocked)} busy={busyAction || (sending ? 'sending' : '')} onClose={() => setMenu(null)} onAction={chooseAction} />
       {deleteTarget && (
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/50 px-5">
           <div role="alertdialog" aria-modal="true" aria-labelledby="support-delete-title" className="w-full max-w-[340px] rounded-2xl bg-[var(--shadow-bg-surface)] p-5 text-[var(--shadow-text-primary)] shadow-2xl">
-            <h2 id="support-delete-title" className="text-[16px] font-bold">{t('readerSupportChatPage.confirmDelete')}</h2>
-            <p className="mt-2 text-[13px] text-[var(--shadow-text-secondary)]">{t('readerSupportChatPage.deleteNote')}</p>
+            <h2 id="support-delete-title" className="text-[16px] font-bold">{tr('confirmDelete')}</h2>
+            <p className="mt-2 text-[13px] text-[var(--shadow-text-secondary)]">{tr('deleteNote')}</p>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" disabled={Boolean(busyAction)} onClick={() => setDeleteTarget(null)} className="rounded-xl bg-[var(--shadow-bg-soft)] px-4 py-2.5 text-[13px] font-semibold">{t('readerSupportChatPage.cancel')}</button>
-              <button type="button" disabled={Boolean(busyAction)} onClick={() => void removeMessage()} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60">{busyAction && <LoaderCircle size={15} className="animate-spin" />}{t('readerSupportChatPage.delete')}</button>
+              <button type="button" disabled={Boolean(busyAction)} onClick={() => setDeleteTarget(null)} className="rounded-xl bg-[var(--shadow-bg-soft)] px-4 py-2.5 text-[13px] font-semibold">{tr('cancel')}</button>
+              <button type="button" disabled={Boolean(busyAction)} onClick={() => void removeMessage()} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60">{busyAction && <LoaderCircle size={15} className="animate-spin" />}{tr('delete')}</button>
             </div>
           </div>
         </div>
       )}
-      {copied && <div role="status" className="fixed bottom-24 left-1/2 z-[170] -translate-x-1/2 rounded-full bg-[#282832] px-4 py-2 text-[12px] font-semibold text-white shadow-lg">{t('readerSupportChatPage.copied')}</div>}
+      {infoTarget && <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/50 px-5" onClick={() => setInfoTarget(null)}><div role="dialog" aria-modal="true" aria-label={tr('info')} onClick={event => event.stopPropagation()} className="w-full max-w-[340px] rounded-2xl bg-[var(--shadow-bg-surface)] p-5 shadow-xl"><div className="mb-4 flex items-center justify-between"><h2 className="text-[15px] font-bold">{tr('info')}</h2><button type="button" onClick={() => setInfoTarget(null)} aria-label={tr('close')}><X size={20} /></button></div><div className="space-y-2 text-[13px]"><p>{tr('sent')}: {displayTime(infoTarget.created_at)}</p>{infoTarget.edited_at && <p>{tr('edited')}: {displayTime(infoTarget.edited_at)}</p>}{infoTarget.seen_at && <p>{tr('read')}: {displayTime(infoTarget.seen_at)}</p>}</div></div></div>}
+      {copied && <div role="status" className="fixed bottom-24 left-1/2 z-[170] -translate-x-1/2 rounded-full bg-[#282832] px-4 py-2 text-[12px] font-semibold text-white shadow-lg">{tr('copied')}</div>}
     </div>
   )
 }
