@@ -27,6 +27,8 @@ import { useAuthorPageNotifications } from '../../providers/AuthorPageNotificati
 import { API_BASE_URL, getAuthToken } from '../../config/api'
 import { loadCountrySettings } from '../../utils/countrySettings'
 import { canAccessAuthorPreOrder, authorPreOrderText } from '../../utils/authorPreOrderRules'
+import AuthorMenuSheet from '../../components/author/AuthorMenuSheet'
+import { readAuthorMenuRestore, useAuthorMenuRestore } from '../../utils/authorMenuNavigation'
 
 
 registerTranslationNamespace('authorPublicPage', {
@@ -1576,149 +1578,6 @@ function FollowSettingsSheet({ open, author, loading, onClose, onSeeFirst, onMut
   )
 }
 
-function AuthorOwnerMenuSheet({
-  open,
-  onClose,
-  author,
-  onSwitchProfile,
-  onOpenFinance,
-  onOpenStoreSetting,
-}) {
-  
-const { t, language } = useDisplayTranslation()
-const navigate = useNavigate()
-const [preOrderAllowed, setPreOrderAllowed] = useState(false)
-
-useEffect(() => {
-  if (!open || !author?.is_owner) {
-    setPreOrderAllowed(false)
-    return undefined
-  }
-
-  let active = true
-  const token = getAuthToken()
-
-  setPreOrderAllowed(false)
-
-  loadCountrySettings()
-    .then(settings => {
-      if (active && token === getAuthToken()) {
-        setPreOrderAllowed(canAccessAuthorPreOrder(settings))
-      }
-    })
-    .catch(() => {
-      if (active) setPreOrderAllowed(false)
-    })
-
-  return () => {
-    active = false
-  }
-}, [open, author?.is_owner, author?.id])
-
-if (!open) return null
-
-
-  const pageName = author?.page_name || t('authorPublicPage.authorPage')
-  const pageLogo = author?.avatar_url || ''
-  const pageLetter = pageName.charAt(0).toUpperCase() || 'A'
-
-
-  return (
-    <div className="fixed inset-0 z-[235]">
-      <button
-        type="button"
-        aria-label={t('authorPublicPage.closeAuthorMenu')}
-        onClick={onClose}
-        className="absolute inset-0 bg-black/35"
-      />
-
-      <aside className="absolute bottom-0 left-0 top-0 w-[84vw] max-w-[390px] overflow-y-auto bg-[var(--shadow-bg-surface)] px-4 pb-8 pt-4 shadow-2xl">
-        <div className="mb-4">
-          <h2 className="text-[15px] font-black text-[var(--shadow-text-primary)]">{t('authorPublicPage.authorMenu')}</h2>
-        </div>
-
-        <div className="bg-[var(--shadow-bg-surface)] px-0 py-3">
-          <button
-            type="button"
-            onClick={onSwitchProfile}
-            className="flex w-full items-center gap-3 text-left active:scale-[0.99]"
-          >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--shadow-bg-soft)] text-[var(--shadow-text-primary)] ring-1 ring-[var(--shadow-border)]">
-              {pageLogo ? (
-                <img src={pageLogo} alt={pageName} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-[20px] font-extrabold">{pageLetter}</span>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="line-clamp-1 text-[16px] font-black text-[var(--shadow-text-primary)]">{pageName}</div>
-              <div className="mt-1 text-[11.5px] font-semibold text-[var(--shadow-text-secondary)]">
-                {t('authorPublicPage.switchProfile')}
-              </div>
-            </div>
-          </button>
-        </div>
-
-        
-
-<div className="mt-5 space-y-1">
-  {preOrderAllowed ? (
-    <button
-      type="button"
-      onClick={() => {
-        onClose()
-        navigate('/author/page/pre-order')
-      }}
-      className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
-    >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
-        <i className="fa-solid fa-book-open text-[17px]" />
-      </span>
-
-      <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
-        {authorPreOrderText(language, 'pageTitle')}
-      </span>
-    </button>
-  ) : null}
-
-  <button
-  type="button"
-  onClick={onOpenStoreSetting}
-  className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
->
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
-      <i className="fa-solid fa-wallet text-[17px]" />
-    </span>
-
-    <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
-      {t('authorPublicPage.finance')}
-    </span>
-  </button>
-
-  <button
-  type="button"
-  onClick={onOpenStoreSetting}
-  className="flex w-full items-center gap-3 px-0 py-2.5 text-left active:opacity-70"
->
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center text-[var(--shadow-text-primary)]">
-      <i className="fa-solid fa-gear text-[17px]" />
-    </span>
-
-    <span className="text-[15px] font-normal text-[var(--shadow-text-primary)]">
-      {t('authorPublicPage.settings')}
-    </span>
-  </button>
-</div>
-
-        <div className="pointer-events-none mx-auto mt-5 flex h-12 w-32 items-center justify-center">
-          <img src="/assets/Icons/Logo Shadow 2.svg" alt="" className="h-10 w-auto object-contain opacity-90" />
-        </div>
-      </aside>
-    </div>
-  )
-}
-
 function SwitchingAccountScreen({ open, name, avatarUrl, avatarLetter }) {
   const { t } = useDisplayTranslation()
 
@@ -1801,9 +1660,11 @@ export default function AuthorPublicPage() {
     : ''
 
   const [author, setAuthor] = useState(null)
-  const [activeTab, setActiveTab] = useState(
-    tabs.includes(location.state?.activeTab) ? location.state.activeTab : 'Posts'
-  )
+  const [activeTab, setActiveTab] = useState(() => {
+  const restore = readAuthorMenuRestore(location, 'page')
+  const tab = restore?.activeTab || location.state?.activeTab
+  return tabs.includes(tab) ? tab : 'Posts'
+})
   const [worksVisitedKey, setWorksVisitedKey] = useState('')
   useEffect(() => {
     if (activeTab === 'Works') setWorksVisitedKey(pageUsername || 'owner')
@@ -2020,20 +1881,13 @@ useEffect(() => {
     window.scrollTo(0, scrollY)
   }
 }, [reviewPopupOpen])
-
   
-
-
-useEffect(() => {
-  if (sessionStorage.getItem('shadow_open_author_menu') !== '1') return
-  if (!ownerResolved) return
-
-  sessionStorage.removeItem('shadow_open_author_menu')
-
-  if (author?.is_owner) {
-    setAuthorMenuOpen(true)
-  }
-}, [ownerResolved, author?.is_owner])
+useAuthorMenuRestore({
+  source: 'page',
+  ready: ownerResolved && !loading && Boolean(author?.is_owner),
+  setActiveTab,
+  setMenuOpen: setAuthorMenuOpen,
+})
   
   useEffect(() => {
   if (!authorMenuOpen) return undefined
@@ -3128,19 +2982,13 @@ function ReviewStarIcon({ className = 'h-[31px] w-[31px]' }) {
   />
 </div>
 
-<AuthorOwnerMenuSheet
+<AuthorMenuSheet
   open={Boolean(displayAuthor?.is_owner) && authorMenuOpen}
   author={displayAuthor}
+  source="page"
+  activeTab={activeTab}
   onClose={() => setAuthorMenuOpen(false)}
   onSwitchProfile={() => setMenuSwitcherOpen(true)}
-  onOpenFinance={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page/finance')
-  }}
-  onOpenStoreSetting={() => {
-    setAuthorMenuOpen(false)
-    navigate('/author/page-settings')
-  }}
 />
       <SwitchingAccountScreen
   open={switchingToReader}
