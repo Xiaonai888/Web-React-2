@@ -125,7 +125,10 @@ export default function SharedChatMessageBubble({
             {message.edited_at && <span>{label('edited')}</span>}
             <span>{formatMessageTime(message.created_at)}</span>
             {mine && !message.is_deleted && (
-              <span className={support && isRead ? 'text-green-600' : undefined} aria-label={label(isRead ? 'read' : 'sentStatus')}>
+              <span
+  style={{ color: appearanceEnabled ? 'var(--cs-outgoing-text, currentColor)' : support ? '#795017' : '#FFFFFF' }}
+  aria-label={label(isRead ? 'read' : 'sentStatus')}
+>
                 {isRead ? '✓✓' : '✓'}
               </span>
             )}
