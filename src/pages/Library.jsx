@@ -1097,7 +1097,6 @@ export default function Library() {
   }, [accountId])
 
   useEffect(() => {
-    if (activeTab !== 'Downloads' || offline || !isLoggedIn || downloadedRef.current) return undefined
     if (activeTab !== 'Downloads' || offline || !isLoggedIn) return undefined
     const controller = new AbortController()
     let active = true
