@@ -64,6 +64,8 @@ import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderC
 import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
 import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 import MessageActionMenu from '../../components/chat/SharedMessageActionMenu'
+import MessageBubble from '../../components/chat/SharedChatMessageBubble'
+import SharedChatComposer from '../../components/chat/SharedChatComposer'
 
 registerTranslationNamespace('chatRoomPage', {
   en: {
@@ -764,19 +766,6 @@ const REPORT_REASONS = [
   ['privacy', 'reasonPrivacy'],
   ['other', 'reasonOther'],
 ]
-
-function formatMessageTime(value) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  return new Intl.DateTimeFormat(getDisplayLanguageId(), {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date)
-}
 
 function formatFullDate(value) {
   const date = new Date(value)
@@ -1649,281 +1638,6 @@ function DeleteConversationModal({
         )}
       </div>
     </ModalShell>
-  )
-}
-
-function MessageBubble({
-  message,
-  selected,
-  selectionMode,
-  highlighted,
-  isPinned,
-  isRead,
-  setMessageRef,
-  onOpenMenu,
-  onToggleSelection,
-  onJumpToReply,
-  appearanceEnabled = false,
-  appearanceExtended = false,
-}) {
-  const { t } = useDisplayTranslation()
-  const longPressTimerRef = useRef(null)
-  const pointerStartRef = useRef(null)
-
-  const clearLongPress = () => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(
-        longPressTimerRef.current
-      )
-      longPressTimerRef.current = null
-    }
-  }
-
-  const handlePointerDown = (event) => {
-    if (
-      message.is_deleted ||
-      event.pointerType !== 'touch'
-    ) {
-      return
-    }
-
-    pointerStartRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-    }
-
-    longPressTimerRef.current =
-      window.setTimeout(() => {
-        onOpenMenu(
-          message,
-          event.clientX,
-          event.clientY
-        )
-        longPressTimerRef.current = null
-      }, 550)
-  }
-
-  const handlePointerMove = (event) => {
-    const start = pointerStartRef.current
-
-    if (!start) return
-
-    if (
-      Math.abs(event.clientX - start.x) > 12 ||
-      Math.abs(event.clientY - start.y) > 12
-    ) {
-      clearLongPress()
-    }
-  }
-
-  const handleContextMenu = (event) => {
-    if (message.is_deleted) return
-
-    event.preventDefault()
-    onOpenMenu(
-      message,
-      event.clientX,
-      event.clientY
-    )
-  }
-
-  const handleClick = () => {
-    if (
-      selectionMode &&
-      !message.is_deleted
-    ) {
-      onToggleSelection(message.id)
-    }
-  }
-
-  const senderName =
-    message.reply_to?.sender?.name ||
-    t('chatRoomPage.message')
-
-  return (
-    <div
-      ref={(node) => setMessageRef(message.id, node)}
-      data-message-id={message.id}
-      onContextMenu={handleContextMenu}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={clearLongPress}
-      onPointerCancel={clearLongPress}
-      onPointerLeave={clearLongPress}
-      onClick={handleClick}
-      className={`group flex scroll-mt-[150px] rounded-[16px] px-1 py-0.5 transition ${
-        message.is_mine
-          ? 'justify-end'
-          : 'justify-start'
-      } ${
-        selectionMode && !message.is_deleted
-          ? 'cursor-pointer'
-          : ''
-      } ${
-        selected
-          ? 'bg-[#e9e0ff]'
-          : highlighted
-            ? 'bg-[#fff0a8]'
-            : ''
-      }`}
-    >
-      <div
-        className={`flex max-w-[88%] items-center gap-1.5 ${
-          message.is_mine
-            ? 'flex-row-reverse'
-            : 'flex-row'
-        }`}
-      >
-        {!message.is_deleted ? (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              const rect =
-                event.currentTarget.getBoundingClientRect()
-              onOpenMenu(
-                message,
-                message.is_mine
-                  ? rect.left - 220
-                  : rect.right + 4,
-                rect.top
-              )
-            }}
-            aria-label={t('chatRoomPage.messageOptions')}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#8c8c96] opacity-0 transition hover:bg-white active:scale-90 group-hover:opacity-100 focus:opacity-100"
-          >
-            <EllipsisVertical size={17} />
-          </button>
-        ) : null}
-
-        <div
-          data-chat-bubble={message.is_deleted ? 'deleted' : message.is_mine ? 'outgoing' : 'incoming'}
-          data-side={message.is_mine ? 'right' : 'left'}
-          className={`min-w-0 max-w-full rounded-[20px] px-4 py-2.5 shadow-sm ${appearanceEnabled && appearanceExtended && !message.is_deleted ? 'cs-style-bubble' : ''} ${
-            message.is_mine
-              ? 'rounded-br-[6px] bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white'
-              : 'rounded-bl-[6px] bg-white text-[#24242c]'
-          } ${
-            message.is_deleted
-              ? 'border border-[#e4e4e8] bg-[#f2f2f4] text-[#8e8e97] shadow-none'
-              : ''
-          }`}
-        >
-          {message.is_forwarded ? (
-            <p
-              className={`mb-1 flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide ${
-                message.is_mine
-                  ? 'text-white/70'
-                  : 'text-[#7b5bc5]'
-              }`}
-            >
-              <Forward size={11} />
-              {t('chatRoomPage.forwarded')}
-              {message.forwarded_from?.name
-                ? ` ${t('chatRoomPage.fromPerson', { name: message.forwarded_from.name })}`
-                : ''}
-            </p>
-          ) : null}
-
-          {message.reply_to_message_id ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                onJumpToReply(
-                  message.reply_to_message_id
-                )
-              }}
-              className={`mb-2 block w-full rounded-[10px] border-l-[3px] px-2.5 py-2 text-left ${
-                message.is_mine
-                  ? 'border-white/70 bg-white/15'
-                  : 'border-[#7c3aed] bg-[#f5f1ff]'
-              }`}
-            >
-              <span
-                className={`block truncate text-[9px] font-extrabold ${
-                  message.is_mine
-                    ? 'text-white/85'
-                    : 'text-[#7552c6]'
-                }`}
-              >
-                {senderName}
-              </span>
-              <span
-                className={`mt-0.5 block truncate text-[10px] font-semibold ${
-                  message.is_mine
-                    ? 'text-white/70'
-                    : 'text-[#6f6b78]'
-                }`}
-              >
-                {message.reply_to?.is_deleted
-                  ? t('chatRoomPage.originalUnavailable')
-                  : message.reply_to?.body ||
-                    t('chatRoomPage.originalMessage')}
-              </span>
-            </button>
-          ) : null}
-
-          <p
-            className={`whitespace-pre-wrap break-words text-[13px] leading-5 ${
-              message.is_deleted
-                ? 'italic'
-                : ''
-            }`}
-          >
-            {message.is_deleted
-              ? t('chatRoomPage.messageDeleted')
-              : message.body}
-          </p>
-
-          <div
-            className={`mt-1 flex items-center justify-end gap-1.5 text-[9px] font-semibold ${
-              message.is_mine &&
-              !message.is_deleted
-                ? 'text-white/75'
-                : 'text-[#9b9ba4]'
-            }`}
-          >
-            {isPinned ? (
-              <Pin size={10} />
-            ) : null}
-            {message.edited_at ? (
-              <span>{t('chatRoomPage.edited')}</span>
-            ) : null}
-            <span>
-              {formatMessageTime(
-                message.created_at
-              )}
-            </span>
-            {message.is_mine &&
-            !message.is_deleted ? (
-              <span
-                aria-label={
-                  isRead
-                    ? t('chatRoomPage.read')
-                    : t('chatRoomPage.sentStatus')
-                }
-              >
-                {isRead ? '✓✓' : '✓'}
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        {selectionMode &&
-        !message.is_deleted ? (
-          <span
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-              selected
-                ? 'border-[#7c3aed] bg-[#7c3aed] text-white'
-                : 'border-[#bbb9c2] bg-white text-transparent'
-            }`}
-          >
-            <Check size={13} />
-          </span>
-        ) : null}
-      </div>
-    </div>
   )
 }
 
@@ -3734,114 +3448,35 @@ export default function ChatRoomPage() {
               </div>
             ) : null}
 
-            <div className="relative">
-              <textarea
-  ref={textareaRef}
-  value={text}
-  onChange={(event) =>
-    setText(
-      event.target.value.slice(0, 2000)
-    )
-  }
-  onKeyDown={handleKeyDown}
-  disabled={!canSend || sending}
-  rows={1}
-  placeholder={
-    canSend
-      ? editTarget
-        ? t('chatRoomPage.editPlaceholder')
-        : replyTarget
-          ? t('chatRoomPage.replyPlaceholder')
-          : t('chatRoomPage.messagePlaceholder')
-      : conversation?.request_status === 'pending' && conversation?.can_decide
-        ? t('chatRoomPage.waitingApproval')
-        : conversation?.chat_send_limit_mode === 'first_reply'
-          ? t('chatRoomPage.waitFirstReply')
-          : conversation?.chat_send_limit_mode === 'daily_unanswered'
-            ? t('chatRoomPage.waitNextDayOrReply')
-            : conversation?.request_status === 'pending'
-              ? t('chatRoomPage.waitingApproval')
-              : t('chatRoomPage.messagesUnavailable')
-  }
-  style={{
-    fontFamily: ENABLE_READER_CHAT_APPEARANCE
-      ? chatAppearance.font.family
-      : "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif",
-  }}
-  className="block max-h-[124px] min-h-[46px] w-full resize-none overflow-y-hidden rounded-[24px] border border-[#dedee4] bg-[#f7f7f9] py-[12px] pl-[52px] pr-[52px] text-[13px] leading-5 text-[#111827] outline-none transition focus:border-[#9b7be8] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-/>
-
-              <button
-                type="button"
-                onClick={() => setNotice(getDisplayText('chatRoomPage.comingSoon'))}
-                disabled={!canSend || sending}
-                aria-label={
-                  text.trim()
-                    ? t('chatRoomPage.searchMessages')
-                    : t('chatRoomPage.camera')
-                }
-                className="absolute inset-y-0 left-[7px] my-auto flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#7c3aed] to-[#9b6df2] text-white transition active:scale-90 disabled:opacity-45"
-              >
-                {text.trim() ? (
-                  <Search size={19} />
-                ) : (
-                  <Camera size={20} />
-                )}
-              </button>
-
-              {!text.trim() ? (
-  <button
-    type="button"
-    onClick={() => setNotice(getDisplayText('chatRoomPage.comingSoon'))}
-    disabled={!canSend || sending}
-    aria-label={t('chatRoomPage.image')}
-    className="absolute inset-y-0 right-[39px] my-auto flex h-8 w-8 items-center justify-center bg-transparent text-[#111827] transition active:scale-90 disabled:opacity-45"
-  >
-    <Image size={20} />
-  </button>
-) : null}
-
-              <button
-                type="button"
-                onClick={
-                  text.trim()
-                    ? handleSend
-                    : () =>
-                        setNotice(getDisplayText('chatRoomPage.comingSoon'))
-                }
-                disabled={!canSend || sending}
-                aria-label={
-                  text.trim()
-                    ? editTarget
-                      ? t('chatRoomPage.saveEdit')
-                      : t('chatRoomPage.sendMessage')
-                    : t('chatRoomPage.emoji')
-                }
-                className={`absolute inset-y-0 right-[7px] my-auto flex h-8 w-8 items-center justify-center transition active:scale-90 disabled:opacity-45 ${
-  text.trim()
-    ? 'rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] text-white'
-    : 'bg-transparent text-[#111827]'
-}`}
-              >
-                {sending ? (
-                  <LoaderCircle
-                    size={19}
-                    className="animate-spin"
-                  />
-                ) : text.trim() ? (
-                  editTarget ? (
-                    <Check size={20} />
-                  ) : (
-                    <Send
-                      size={19}
-                      strokeWidth={2.2}
-                    />
-                  )
-                ) : (
-                  <Smile size={20} />
-                )}
-              </button>
-            </div>
+            <SharedChatComposer
+              textareaRef={textareaRef}
+              text={text}
+              onChange={setText}
+              onKeyDown={handleKeyDown}
+              canSend={canSend}
+              sending={sending}
+              editing={Boolean(editTarget)}
+              placeholder={
+                canSend
+                  ? editTarget
+                    ? t('chatRoomPage.editPlaceholder')
+                    : replyTarget
+                      ? t('chatRoomPage.replyPlaceholder')
+                      : t('chatRoomPage.messagePlaceholder')
+                  : conversation?.request_status === 'pending' && conversation?.can_decide
+                    ? t('chatRoomPage.waitingApproval')
+                    : conversation?.chat_send_limit_mode === 'first_reply'
+                      ? t('chatRoomPage.waitFirstReply')
+                      : conversation?.chat_send_limit_mode === 'daily_unanswered'
+                        ? t('chatRoomPage.waitNextDayOrReply')
+                        : conversation?.request_status === 'pending'
+                          ? t('chatRoomPage.waitingApproval')
+                          : t('chatRoomPage.messagesUnavailable')
+              }
+              fontFamily={ENABLE_READER_CHAT_APPEARANCE ? chatAppearance.font.family : "'Kantumruy Pro', 'Noto Sans Khmer', sans-serif"}
+              onSend={handleSend}
+              onComingSoon={() => setNotice(getDisplayText('chatRoomPage.comingSoon'))}
+            />
           </div>
         </div>
       ) : null}
