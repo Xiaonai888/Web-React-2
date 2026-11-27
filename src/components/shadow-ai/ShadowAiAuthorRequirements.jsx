@@ -30,7 +30,7 @@ export default function ShadowAiAuthorRequirements({ campaignId, instruction = '
     }).catch(() => { if (!controller.signal.aborted) setError(true) }).finally(() => { if (!controller.signal.aborted) setBusy(false) })
     return () => controller.abort()
   }, [campaignId])
-  useEffect(() => { setPreview(null) }, [instruction, savedInstruction])
+  useEffect(() => { setPreview(null); setConfirmed(false) }, [instruction, savedInstruction])
   async function act(confirm) {
     if (!clean || !editable || disabled || request.current?.pending) return
     if (confirm && (!preview || preview.needs_review?.length || preview.source_instruction !== savedInstruction.trim())) return
