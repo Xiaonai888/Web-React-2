@@ -29,6 +29,7 @@ import { loadCountrySettings } from '../../utils/countrySettings'
 import { canAccessAuthorPreOrder, authorPreOrderText } from '../../utils/authorPreOrderRules'
 import AuthorMenuSheet from '../../components/author/AuthorMenuSheet'
 import { readAuthorMenuRestore, useAuthorMenuRestore } from '../../utils/authorMenuNavigation'
+import { getReaderNotificationUnreadCount } from '../../services/readerNotificationUnreadCount'
 
 
 registerTranslationNamespace('authorPublicPage', {
@@ -1936,16 +1937,11 @@ useEffect(() => {
   let ignore = false
 
   async function loadReaderNotificationCount() {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/notifications/unread-count`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: 'no-store',
-        }
-      )
+  try {
+    const count = await getReaderNotificationUnreadCount(API_BASE_URL, token)
+    if (!ignore) setReaderNotificationCount(count)
+  } catch {}
+}
 
       const data = await response.json().catch(() => ({}))
 
