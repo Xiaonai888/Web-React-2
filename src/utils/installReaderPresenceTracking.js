@@ -104,7 +104,7 @@ if (document.visibilityState !== 'visible' && !forceInactive) return
     const payload = {
       session_id: getSessionId(),
       current_path: window.location.pathname || '/',
-      visibility_state: document.visibilityState,
+      visibility_state: forceInactive ? 'hidden' : document.visibilityState,
       is_active:
         !forceInactive &&
         document.visibilityState === 'visible' &&
