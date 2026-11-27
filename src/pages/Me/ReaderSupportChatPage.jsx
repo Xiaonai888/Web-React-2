@@ -7,6 +7,7 @@ import SharedChatComposer from '../../components/chat/SharedChatComposer'
 import ReaderSupportChatProfile from '../../components/chat/ReaderSupportChatProfile'
 import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
 import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
+import { createChatDeletionSync, applySupportDeletedRows } from '../../services/chatDeletionSync'
 import SharedMessageActionMenu from '../../components/chat/SharedMessageActionMenu'
 import SupportChatPrivateImage from '../../components/chat/SupportChatPrivateImage'
 import SupportChatForwardDialog, { supportForwardText } from '../../components/chat/SupportChatForwardDialog'
@@ -260,6 +261,12 @@ export default function ReaderSupportChatPage() {
   const seenRef = useRef('')
   const seenAttemptRef = useRef({ id: '', time: 0 })
   const latestIncomingRef = useRef(null)
+  const deletionSyncRef = useRef(null)
+  if (!deletionSyncRef.current) deletionSyncRef.current = createChatDeletionSync()
+  const deletionSnapshotRef = useRef({ scope: '', messages: [], pins: [] })
+  useLayoutEffect(() => {
+    deletionSnapshotRef.current = { scope: conversation?.id || '', messages, pins }
+  }, [conversation?.id, messages, pins])
 
   useEffect(() => () => {
     window.clearTimeout(copyTimerRef.current)
@@ -336,6 +343,7 @@ export default function ReaderSupportChatPage() {
   }, [])
 
   const reload = useCallback(async signal => {
+    deletionSyncRef.current.reset('')
     const data = await getMySupportConversation({ signal })
     if (signal?.aborted) return
     const item = data.conversation || null
@@ -387,22 +395,37 @@ export default function ReaderSupportChatPage() {
       lastChecked = Date.now()
       checking = true
       try {
-        const data = await getMySupportConversation({ signal: controller.signal })
+        const snapshot = deletionSnapshotRef.current
+        const batch = deletionSyncRef.current.next(snapshot.scope, snapshot.messages, snapshot.pins.map(pin => pin.message_id))
+        const data = await getMySupportConversation({ signal: controller.signal, deletionCheckIds: batch.checkIds })
         if (controller.signal.aborted) return
         const item = data.conversation || null
+        const changes = item?.id === batch.scope ? deletionSyncRef.current.accept(batch, data.deletion_sync) : new Map()
+        if (changes.size) {
+          setMessages(current => applySupportDeletedRows(current, changes))
+          setPins(current => current.filter(pin => !changes.has(String(pin.message_id))))
+          setSelectedIds(current => current.filter(id => !changes.has(String(id))))
+          setMenu(current => changes.has(String(current?.message?.id)) ? null : current)
+          setReplyTarget(current => changes.has(String(current?.id)) ? null : current)
+          setEditTarget(current => changes.has(String(current?.id)) ? null : current)
+          setDeleteTarget(current => changes.has(String(current?.id)) ? null : current)
+          setInfoTarget(current => changes.has(String(current?.id)) ? null : current)
+          setForwardText('')
+          if (changes.has(String(latestIncomingRef.current?.id))) latestIncomingRef.current = null
+        }
         const key = messageKey(item)
         if (key !== lastMessageKeyRef.current) {
           const sameConversation = Boolean(item && lastMessageKeyRef.current.startsWith(`${item.id}:`))
           const history = item ? await getMySupportMessages({ signal: controller.signal }) : null
           if (controller.signal.aborted) return
           const incoming = Array.isArray(history?.messages) ? history.messages : []
-          latestIncomingRef.current = [...incoming].reverse().find(message => message.sender_kind !== 'reader' && !message.deleted_at && !message.seen_at) || null
+          latestIncomingRef.current = [...incoming].reverse().find(message => message.sender_kind !== 'reader' && !message.deleted_at && !message.seen_at && !changes.has(String(message.id))) || null
           if (sameConversation) {
             setMessages(previous => {
               const latest = new Map(incoming.map(message => [message.id, message]))
               const seen = new Set(previous.map(message => message.id))
               const additions = incoming.filter(message => !seen.has(message.id))
-              return [...previous.map(message => latest.get(message.id) || message), ...additions]
+              return applySupportDeletedRows([...previous.map(message => message.deleted_at && !latest.get(message.id)?.deleted_at ? message : latest.get(message.id) || message), ...additions], changes)
             })
           } else {
             seenRef.current = ''
