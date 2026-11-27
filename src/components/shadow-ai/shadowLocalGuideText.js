@@ -1,0 +1,11 @@
+import { registerTranslationNamespace } from '../../i18n/registerTranslations'
+import { useDisplayTranslation } from '../../utils/displayLanguage'
+const packs={
+  km:{heading:'បំពេញព័ត៌មានម្តងមួយ',hint:'ជ្រើសរើស ឬបំពេញព័ត៌មាន រួចពិនិត្យសារមុនផ្ញើ។',entry:'បំពេញព័ត៌មាន',compose:'ដាក់ក្នុងប្រអប់សារ',yes:'យក',no:'មិនយក',authorHeading:'របៀបសរសេរលក្ខខណ្ឌ',authorHint:'ប្រើភាសាខ្មែរ ឬអង់គ្លេស។ សរសេរលក្ខខណ្ឌមួយក្នុងមួយបន្ទាត់ ឬបំបែកដោយសញ្ញា ;។ ប្រើជម្រើសខាងលើបើអត្ថបទមិនច្បាស់។',reviewHint:'AI មិនទាន់យល់លក្ខខណ្ឌខ្លះ។ សូមកែការណែនាំ រក្សាទុក ហើយវិភាគម្តងទៀត។',example:'ឧទាហរណ៍',privacy:'កុំបញ្ចូលលេខសម្ងាត់ ឬ OTP។'},
+  en:{heading:'Fill in one detail at a time',hint:'Choose or enter a detail, then check the message before sending.',entry:'Enter detail',compose:'Add to message',yes:'Yes',no:'No',authorHeading:'How to write requirements',authorHint:'Use Khmer or English. Write one requirement per line or separate them with ;. Use the templates above when a sentence is unclear.',reviewHint:'Some requirements were not understood. Edit the instructions, save and analyze again.',example:'Example',privacy:'Do not enter passwords or OTPs.'},
+  zh:{heading:'逐项填写信息',hint:'选择或填写信息，发送前请检查消息。',entry:'填写信息',compose:'添加到消息',yes:'需要',no:'不需要',authorHeading:'如何编写要求',authorHint:'使用高棉语或英语。每行写一项要求，或使用 ; 分隔。句子不明确时请使用上方模板。',reviewHint:'部分要求无法识别。请修改说明，保存后重新分析。',example:'示例',privacy:'不要输入密码或验证码。'},
+  ja:{heading:'情報を一つずつ入力',hint:'情報を選択または入力し、送信前にメッセージを確認してください。',entry:'情報を入力',compose:'メッセージに追加',yes:'はい',no:'いいえ',authorHeading:'条件の書き方',authorHint:'クメール語または英語を使い、条件ごとに改行するか ; で区切ってください。不明確な場合は上のテンプレートを使ってください。',reviewHint:'一部の条件を理解できませんでした。説明を修正し、保存してから再分析してください。',example:'例',privacy:'パスワードや認証コードは入力しないでください。'},
+  ko:{heading:'정보를 하나씩 입력',hint:'정보를 선택하거나 입력한 뒤 전송 전에 메시지를 확인하세요.',entry:'정보 입력',compose:'메시지에 추가',yes:'예',no:'아니요',authorHeading:'요구사항 작성 방법',authorHint:'크메르어 또는 영어를 사용하세요. 요구사항마다 줄을 바꾸거나 ; 로 구분하세요. 문장이 모호하면 위의 템플릿을 사용하세요.',reviewHint:'일부 요구사항을 이해하지 못했습니다. 설명을 수정하고 저장한 후 다시 분석하세요.',example:'예시',privacy:'비밀번호나 인증 코드를 입력하지 마세요.'}
+}
+registerTranslationNamespace('shadowLocalGuide',packs)
+export function useShadowLocalGuideText(){const {t}=useDisplayTranslation();return key=>t(`shadowLocalGuide.${key}`)}
