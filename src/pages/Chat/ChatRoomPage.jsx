@@ -61,6 +61,8 @@ import { getDisplayLanguageId, getDisplayText, useDisplayTranslation } from '../
 import { registerTranslationNamespace } from '../../i18n/registerTranslations'
 import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatBridge'
 import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
+import ShadowAiBookingButton from '../../components/shadow-ai/ShadowAiBookingButton'
+import { getShadowAiCampaigns } from '../../services/shadowAiPreOrderApi'
 import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
 import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
 import { createChatDeletionSync, applyChatDeletedRows } from '../../services/chatDeletionSync'
@@ -1694,6 +1696,7 @@ export default function ChatRoomPage() {
   const roomLoadingRef = useRef(false)
   const lastVisibilityRefreshAtRef = useRef(0)
   const [conversation, setConversation] = useState(null)
+  const [aiEligibility, setAiEligibility] = useState(null)
   const [blockStatus, setBlockStatus] = useState({
     is_blocked: false,
     viewer_has_blocked: false,
@@ -2925,8 +2928,18 @@ export default function ChatRoomPage() {
         blockStatus.viewer_is_blocked &&
         !blockStatus.viewer_has_blocked
     )
+const aiAllowed = conversation?.id === conversationId && conversation?.conversation_type === 'reader_author' && conversation?.viewer_role === 'reader' && ['accepted', 'pending'].includes(conversation?.request_status) && !isGroup && !blockStatus.is_blocked
 
+useEffect(() => {
+  setAiEligibility(null)
+  if (!aiAllowed) return
+  const controller = new AbortController()
+  getShadowAiCampaigns(conversationId, { signal: controller.signal }).then(data => { if (!controller.signal.aborted) setAiEligibility(data) }).catch(() => {})
+  return () => controller.abort()
+}, [conversationId, aiAllowed])
+  
   const readTimeValue =
+    
     !isGroup &&
     conversation?.counterpart_last_read_at
       ? new Date(
@@ -3267,6 +3280,8 @@ export default function ChatRoomPage() {
                         : t('chatRoomPage.messageRequest')}
                 </p>
               </button>
+
+              <ShadowAiBookingButton conversationId={conversationId} eligibility={aiEligibility} disabled={!aiAllowed} />
 
               {conversation?.conversation_type === 'reader_author' && conversation?.request_status === 'accepted' ? (
                 <BookOrderChatNoticeBell
