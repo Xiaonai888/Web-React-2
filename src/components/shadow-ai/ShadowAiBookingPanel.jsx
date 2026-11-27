@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sparkles, Send, X } from 'lucide-react'
 import { openShadowAiSession, sendShadowAiMessage, reviewShadowAiBooking } from '../../services/shadowAiPreOrderApi'
 import { useShadowAiText } from './shadowAiPreOrderText'
+import ShadowLocalBookingGuide from './ShadowLocalBookingGuide'
 
 const money = n => Number.isFinite(Number(n)) ? `$${Number(n).toFixed(2)}` : '—'
 function DateValue({ value }) { const date = new Date(value || ''); return Number.isFinite(date.getTime()) ? <time dateTime={value}>{date.toLocaleString(undefined, { timeZone:'Asia/Phnom_Penh' })}</time> : null }
@@ -90,6 +91,7 @@ export default function ShadowAiBookingPanel({ conversationId, campaigns, onClos
       {session && <p className="app-soft rounded-xl p-3">{tr('hello')}</p>}
       {turns.map((turn,i) => <div key={i} className="space-y-2"><div className="flex justify-end"><p className="max-w-[90%] whitespace-pre-wrap break-words rounded-xl bg-[#7951d1] p-3 text-white">{turn.sent}</p></div>{turn.intent === 'unrelated' && <p className="app-soft rounded-xl p-3">{tr('unrelated')}</p>}{turn.intent === 'unclear' && <p className="app-soft rounded-xl p-3">{tr('unclear')}</p>}<ContextAnswer question={turn.question} context={turn.questionContext} rules={session?.rules} tr={tr}/></div>)}
       {validation && <div className="app-soft space-y-1 rounded-xl p-3">{validation.ready ? <p>{tr('ready')}</p> : <>{validation.missing?.length > 0 && <><p className="font-bold">{tr('missing')}</p>{validation.missing.map(field => <p key={field}>• <FieldName field={field} context={session.context} tr={tr}/></p>)}</>}{(validation.issues?.length > 0 || validation.pending_requirements?.length > 0) && <p className="app-warning">{tr('issue')}</p>}</>}</div>}
+      {session && !result && error !== 'stale' && <ShadowLocalBookingGuide session={session} disabled={busy || Boolean(message.trim())} onCompose={value => setMessage(old => old.trim() ? old : value)}/>}
       {error && <div role="alert" className="app-danger rounded-xl p-2">{tr(error)}{(!session || error === 'stale') && <button type="button" disabled={busy} onClick={() => setReload(x => x+1)} className="ml-2 underline">{tr('retry')}</button>}</div>}
       {busy && <p role="status" className="app-muted">{tr('loading')}</p>}
       <Review result={result} tr={tr}/><div ref={bottom}/>
