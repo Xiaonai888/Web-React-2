@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { getShadowAiRequirements, previewShadowAiRequirements, confirmShadowAiRequirements } from '../../services/shadowAiPreOrderApi'
 import { useShadowAiText } from './shadowAiPreOrderText'
+import ShadowLocalAuthorGuide from './ShadowLocalAuthorGuide'
 
 const fields = ['second_phone','telegram_username','facebook_link','detailed_address','english_buyer_name','english_signature_name','buyer_note']
 const conditions = ['always','limited','standard','signed','outside_phnom_penh']
@@ -56,6 +57,7 @@ export default function ShadowAiAuthorRequirements({ campaignId, instruction = '
     <h3 className="app-title flex items-center gap-2 font-bold"><Sparkles size={17} className="text-[#7951d1]" />{tr('requirements')}</h3>
     {['name','phone_number','delivery_address'].map(field => <label key={field} className="flex gap-2 items-center"><input type="checkbox" checked disabled />{tr(field)}</label>)}
     {fields.map(field => { const matches = rules.filter(rule => rule.field === field); return <div key={field} className="flex items-center gap-2 flex-wrap"><label className="flex flex-1 items-center gap-2"><input type="checkbox" checked={matches.length > 0} disabled={locked} onChange={e => toggle(field,e.target.checked)} />{tr(field)}</label>{matches.length > 0 && <select aria-label={tr(field)} className="app-input app-border max-w-[150px] rounded-lg border p-1" disabled={locked} value={matches.length === 1 ? matches[0].condition : ''} onChange={e => condition(field,e.target.value)}>{matches.length > 1 && <option value="" disabled>{matches.map(x => tr(x.condition)).join(' / ')}</option>}{options(field).map(c => <option key={c} value={c}>{tr(c)}</option>)}</select>}</div> })}
+    {editable && <ShadowLocalAuthorGuide needsReview={Boolean(preview?.needs_review?.length)}/>}
     {!clean && <p className="app-muted">{tr('saveFirst')}</p>}
     {!editable && <p className="app-muted">{tr('notEditable')}</p>}
     {error && <p role="alert" className="app-danger">{tr('error')}</p>}
