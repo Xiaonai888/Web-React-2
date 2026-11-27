@@ -2162,12 +2162,17 @@ export default function ChatRoomPage() {
     [pins]
   )
 
+  const renderableMessages = useMemo(
+    () => messages.filter((message) => !message.is_deleted && !message.deleted_at),
+    [messages]
+  )
+
   const selectedMessages = useMemo(
     () =>
-      messages.filter((message) =>
+      renderableMessages.filter((message) =>
         selectedIds.has(String(message.id))
       ),
-    [messages, selectedIds]
+    [renderableMessages, selectedIds]
   )
 
   const selectionMode = selectedIds.size > 0
@@ -2716,7 +2721,6 @@ export default function ChatRoomPage() {
       )
       setSelectedIds(new Set())
       setMessageMenu(null)
-      setNotice(getDisplayText('chatRoomPage.messageDeletedNotice'))
       notifyChatUpdated()
     } catch (deleteError) {
       setError(
@@ -3367,8 +3371,8 @@ export default function ChatRoomPage() {
                 </div>
               ) : null}
 
-              {messages.length ? (
-                messages.map((message) => (
+              {renderableMessages.length ? (
+                renderableMessages.map((message) => (
                   <MessageBubble
                     key={message.id}
                     message={message}
