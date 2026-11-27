@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { invalidateReaderNotificationUnreadCount } from '../services/readerNotificationUnreadCount'
 
 registerTranslationNamespace('notificationPage', {
   en: {
@@ -801,6 +802,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
       if (!response.ok) throw new Error(`HTTP_${response.status}`)
       const data = await response.json().catch(() => ({}))
       if (!data.ok) throw new Error('NOTIFICATION_MARK_ALL_REJECTED')
+      invalidateReaderNotificationUnreadCount(token)
     } catch (error) {
       console.warn('NOTIFICATION_MARK_ALL_FAILED', String(error?.message || 'NetworkError').slice(0, 60))
       mutationNeedsRefreshRef.current = true
@@ -848,6 +850,7 @@ export default function NotificationPage({ isOpen = true, onClose, mode = 'popup
       if (!response.ok) throw new Error(`HTTP_${response.status}`)
       const data = await response.json().catch(() => ({}))
       if (!data.ok) throw new Error('NOTIFICATION_MARK_READ_REJECTED')
+      invalidateReaderNotificationUnreadCount(token)
       readCompletedRef.current.add(notificationId)
     } catch (error) {
       console.warn('NOTIFICATION_MARK_READ_FAILED', String(error?.message || 'NetworkError').slice(0, 60))
