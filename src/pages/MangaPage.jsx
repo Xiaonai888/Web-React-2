@@ -259,12 +259,6 @@ export default function MangaPage() {
 } catch {
   setNotificationUnreadCount(0)
 }
-      const data = await response.json().catch(() => ({}))
-
-      setNotificationUnreadCount(data?.ok ? Number(data.unread_count || 0) : 0)
-    } catch {
-      setNotificationUnreadCount(0)
-    }
   }
 
   useEffect(() => {
