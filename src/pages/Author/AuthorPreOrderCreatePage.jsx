@@ -12,6 +12,7 @@ import {
   uploadAuthorPreOrderImage, verifyAuthorPreOrderAccess,
 } from '../../services/authorPreOrder.service'
 import AuthorPreOrderDeliverySection from '../../components/author/preorder/AuthorPreOrderDeliverySection'
+import ShadowAiAuthorRequirements from '../../components/shadow-ai/ShadowAiAuthorRequirements'
 import {
   fetchAuthorPreOrderDeliveryCompanies,
   findUnavailablePreOrderDeliveryKeys,
@@ -105,6 +106,7 @@ export default function AuthorPreOrderCreatePage() {
   const text = key => authorPreOrderText(language, key)
   const [campaign, setCampaign] = useState(emptyPreOrderCampaign)
   const [recordId, setRecordId] = useState(campaignId || '')
+  const [savedInstruction, setSavedInstruction] = useState(null)
   const [access, setAccess] = useState('checking')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -123,6 +125,7 @@ export default function AuthorPreOrderCreatePage() {
     }).then(data => {
       if (!mounted) return
       if (data) setCampaign(normalizeLoadedCampaign(data))
+setSavedInstruction(data ? String(data.buyer_note_instruction || '') : null)
       setAccess('allowed')
     }).catch(err => {
       if (!mounted) return
@@ -219,6 +222,7 @@ export default function AuthorPreOrderCreatePage() {
       const ready = await uploadPendingImages(campaign)
       const saved = await saveAuthorPreOrderDraft(ready, { id: recordId })
       setRecordId(saved.id)
+      setSavedInstruction(String(saved.buyer_note_instruction || ''))
       setCampaign(current => ({ ...current, id: saved.id }))
       if (publish) {
         await publishAuthorPreOrder(saved.id)
@@ -298,6 +302,7 @@ export default function AuthorPreOrderCreatePage() {
               />
               <Field label={`${text('deliveryNote')} (${text('optional')})`} multiline value={campaign.delivery_note} onChange={delivery_note => patch({ delivery_note })} placeholder={text('deliveryHint')} maxLength={300} />
               <Field label={`${text('buyerNote')} (${text('optional')})`} multiline value={campaign.buyer_note_instruction} onChange={buyer_note_instruction => patch({ buyer_note_instruction })} placeholder={text('buyerHint')} maxLength={300} />
+            <ShadowAiAuthorRequirements campaignId={recordId} instruction={campaign.buyer_note_instruction} savedInstruction={savedInstruction} disabled={busy || !recordId} />
             </Section>
             <Section icon={BookOpen} title={text('preview')}>
               {campaign.banner_url || imagePreviews.banner ? <img alt="" src={imagePreviews.banner || campaign.banner_url} className="max-h-[280px] w-full rounded-xl bg-[#f7f7f7] object-contain" /> : <div className="flex h-[100px] items-center justify-center rounded-xl bg-[#f7f7f7] text-[12px] text-[#999]">{text('emptyPreview')}</div>}
