@@ -549,6 +549,8 @@ function normalizeReadingMission(mission = {}, index = 0) {
     claimable: Boolean(mission.claimable) || (completed && !claimed),
     completed_at: mission.completed_at || null,
     claimed_at: mission.claimed_at || null,
+    smart_auto: Boolean(mission.smart_auto),
+    smart_auto_expires_at: Number(mission.smart_auto_expires_at || 0),
   }
 }
 
@@ -1169,7 +1171,7 @@ function ReadingRewardCard({ readingReward, onRead, onClaim, claiming }) {
   )
 }
 
-function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }) {
+function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim, now }) {
   const { t } = useDisplayTranslation()
 
   if (!task?.is_active) return null
@@ -1183,6 +1185,10 @@ function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }
   const claimed = Boolean(task.claimed)
   const claimable = Boolean(task.claimable)
   const claiming = claimingMissionId === task.id
+  const deadline = Number(task.smart_auto_expires_at || 0)
+  const showCountdown = task.smart_auto && !claimed && deadline > 0
+  const expired = showCountdown && now >= deadline
+  const countdown = showCountdown ? formatDuration(deadline - now) : ''
   const fallbackTitle = `Read ${targetMinutes} minutes`
   const displayTitle = !task.title || task.title === fallbackTitle
     ? t('taskCenterPage.readMinutes', { count: targetMinutes })
@@ -1209,8 +1215,13 @@ function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
+            <h3 className="text-[14px] font-black leading-5 text-[var(--shadow-text-primary)]">
               {displayTitle}
+              {showCountdown && (
+                <span className="ml-1.5 inline-block whitespace-nowrap text-[10px] font-semibold tabular-nums text-[#e11d48] dark:text-rose-400">
+                  {countdown}
+                </span>
+              )}
             </h3>
 
             <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4 text-[var(--shadow-text-secondary)]">
@@ -1225,7 +1236,7 @@ function AdminReadingMissionCard({ task, claimingMissionId = '', onGo, onClaim }
 
           <RewardButton
             tone={buttonTone}
-            disabled={claiming || claimed}
+            disabled={claiming || claimed || expired}
             onClick={claimable ? () => onClaim(task) : () => onGo(task)}
           >
             {claiming ? t('taskCenterPage.claiming') : buttonText}
@@ -1379,6 +1390,7 @@ export default function TaskCenterPage() {
   const smartRefreshChecksRef = useRef(0)
   const smartRefreshCooldownUntilRef = useRef(0)
   const loadTaskCenterRef = useRef(null)
+  const expiredMissionRefreshRef = useRef(new Set())
   const token = getReaderToken()
   const storedUser = getStoredUser()
   const isLoggedIn = Boolean(token)
@@ -2453,6 +2465,25 @@ navigate(targetPath, {
 }, [])
 
   useEffect(() => {
+  if (!isLoggedIn || document.visibilityState !== 'visible') return
+
+  const deadlines = readingMissions
+    .filter(m => m.smart_auto && m.is_active && !m.claimed)
+    .map(m => Number(m.smart_auto_expires_at))
+    .filter(at => at > 0 && at <= chestTick && !expiredMissionRefreshRef.current.has(at))
+
+  if (!deadlines.length) return
+
+  deadlines.forEach(at => expiredMissionRefreshRef.current.add(at))
+
+  loadTaskCenterRef.current?.({
+    silent: true,
+    force: true,
+    source: 'smart-auto-expired',
+  })
+}, [chestTick, readingMissions, isLoggedIn])
+
+  useEffect(() => {
     function handleScroll() {
       const coverHeight = coverRef.current?.offsetHeight || 220
       setScrolledPastCover(window.scrollY > coverHeight - 56)
@@ -2851,6 +2882,7 @@ navigate(targetPath, {
                 <AdminReadingMissionCard
                   key={mission.id}
                   task={mission}
+                  now={chestTick}
                   claimingMissionId={missionClaimingId}
                   onGo={goToReadingMission}
                   onClaim={claimReadingMissionReward}
