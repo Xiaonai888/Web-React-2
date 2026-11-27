@@ -1943,15 +1943,6 @@ useEffect(() => {
   } catch {}
 }
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok || data.ok === false || ignore) return
-
-      setReaderNotificationCount(
-  Math.max(0, Number(data.unread_count || 0))
-)
-    } catch {}
-  }
 
   loadReaderNotificationCount()
 
