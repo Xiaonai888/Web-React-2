@@ -19,6 +19,7 @@ import NotificationPage from './NotificationPage'
 import { getHomeCacheKey, loadHomeCache, saveHomeCache } from '../utils/homeDataCache'
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
+import { getReaderNotificationUnreadCount } from '../services/readerNotificationUnreadCount'
 
 registerTranslationNamespace('mangaPage', {
   en: {
@@ -252,10 +253,12 @@ export default function MangaPage() {
       return
     }
 
-    try {
-      const response = await fetch(`${API_URL}/api/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+   try {
+  const count = await getReaderNotificationUnreadCount(API_URL, token)
+  setNotificationUnreadCount(count)
+} catch {
+  setNotificationUnreadCount(0)
+}
       const data = await response.json().catch(() => ({}))
 
       setNotificationUnreadCount(data?.ok ? Number(data.unread_count || 0) : 0)
