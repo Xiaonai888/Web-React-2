@@ -149,6 +149,7 @@ export async function getAuthorChatMessages(
   {
     before = '',
     after = '',
+    deletionCheckIds = '',
     limit = 50,
     signal,
   } = {}
@@ -170,6 +171,10 @@ export async function getAuthorChatMessages(
 
   if (after) {
     query.set('after', after)
+  }
+
+  if (after && deletionCheckIds) {
+    query.set('deletion_check_ids', deletionCheckIds)
   }
 
   const data = await authorChatRequest(
