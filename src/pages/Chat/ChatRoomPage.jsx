@@ -63,6 +63,7 @@ import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatB
 import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
 import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
 import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
+import { createChatDeletionSync, applyChatDeletedRows } from '../../services/chatDeletionSync'
 import MessageActionMenu from '../../components/chat/SharedMessageActionMenu'
 import MessageBubble from '../../components/chat/SharedChatMessageBubble'
 import SharedChatComposer from '../../components/chat/SharedChatComposer'
@@ -792,7 +793,10 @@ function mergeMessages(current, incoming) {
     ...(incoming || []),
   ]) {
     if (message?.id) {
-      messageMap.set(String(message.id), message)
+      const key = String(message.id)
+      const previous = messageMap.get(key)
+      if (previous && (previous.is_deleted || previous.deleted_at) && !message.is_deleted && !message.deleted_at) continue
+      messageMap.set(key, message)
     }
   }
 
@@ -1717,6 +1721,12 @@ export default function ChatRoomPage() {
   const [highlightedId, setHighlightedId] = useState('')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const deletionSyncRef = useRef(null)
+  if (!deletionSyncRef.current) deletionSyncRef.current = createChatDeletionSync()
+  const deletionSnapshotRef = useRef({ scope: '', messages: [], pins: [] })
+  useEffect(() => {
+    deletionSnapshotRef.current = { scope: conversationId, messages, pins }
+  }, [conversationId, messages, pins])
 
   const notifyChatUpdated = useCallback(() => {
     window.dispatchEvent(
@@ -1920,11 +1930,14 @@ export default function ChatRoomPage() {
       incrementalLoadingRef.current = true
 
       try {
+        const snapshot = deletionSnapshotRef.current
+        const batch = deletionSyncRef.current.next(conversationId, snapshot.scope === conversationId ? snapshot.messages : [], snapshot.scope === conversationId ? snapshot.pins.map(pin => pin.message_id) : [])
         const data = await getChatMessages(
           conversationId,
           {
             after,
             limit: 20,
+            deletionCheckIds: batch.checkIds,
             signal,
           }
         )
@@ -1934,19 +1947,25 @@ export default function ChatRoomPage() {
             ? data.messages
             : []
 
-        if (!incomingMessages.length) {
-          return
-        }
+        if (signal?.aborted) return
+        const changes = deletionSyncRef.current.accept(batch, data.deletion_sync)
+        if (!incomingMessages.length && !changes.size) return
 
         shouldScrollBottomRef.current =
           isNearPageBottom()
 
-        setMessages((current) =>
-          mergeMessages(
-            current,
-            incomingMessages
-          )
-        )
+        setMessages(current => applyChatDeletedRows(mergeMessages(current, incomingMessages), changes))
+        if (changes.size) {
+          setPins(current => current.filter(pin => !changes.has(String(pin.message_id))))
+          setSelectedIds(current => new Set([...current].filter(id => !changes.has(String(id)))))
+          setMessageMenu(current => changes.has(String(current?.message?.id)) ? null : current)
+          setReplyTarget(current => changes.has(String(current?.id)) ? null : current)
+          setEditTarget(current => changes.has(String(current?.id)) ? null : current)
+          setInfoTarget(current => changes.has(String(current?.id)) ? null : current)
+          setReportTarget(current => changes.has(String(current?.id)) ? null : current)
+          setForwardIds(current => current.filter(id => !changes.has(String(id))))
+          notifyChatUpdated()
+        }
 
         pollCursorRef.current =
           getLatestMessageCursor(
@@ -2010,6 +2029,7 @@ export default function ChatRoomPage() {
     const controller = new AbortController()
 
     pollCursorRef.current = ''
+    deletionSyncRef.current.reset(conversationId)
     incrementalLoadingRef.current = false
     lastVisibilityRefreshAtRef.current = Date.now()
     loadRoom({
@@ -2697,20 +2717,12 @@ export default function ChatRoomPage() {
         (data.deleted_message_ids || ids).map(String)
       )
 
-      setMessages((current) =>
-        current.map((message) =>
-          deletedIds.has(String(message.id))
-            ? {
-                ...message,
-                body: '',
-                is_deleted: true,
-                deleted_at:
-                  data.deleted_at ||
-                  new Date().toISOString(),
-              }
-            : message
-        )
-      )
+      const changes = new Map([...deletedIds].map(id => [id, data.deleted_at || new Date().toISOString()]))
+      setMessages(current => applyChatDeletedRows(current, changes))
+      setReplyTarget(current => deletedIds.has(String(current?.id)) ? null : current)
+      setEditTarget(current => deletedIds.has(String(current?.id)) ? null : current)
+      setInfoTarget(current => deletedIds.has(String(current?.id)) ? null : current)
+      setForwardIds(current => current.filter(id => !deletedIds.has(String(id))))
       setPins((current) =>
         current.filter(
           (pin) =>
