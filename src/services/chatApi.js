@@ -234,6 +234,7 @@ export function getChatMessages(
   {
     before = '',
     after = '',
+    deletionCheckIds = '',
     limit = 50,
     signal,
   } = {}
@@ -256,6 +257,10 @@ export function getChatMessages(
 
   if (after) {
     query.set('after', after)
+  }
+
+  if (deletionCheckIds) {
+    query.set('deletion_check_ids', deletionCheckIds)
   }
 
   return chatRequest(
