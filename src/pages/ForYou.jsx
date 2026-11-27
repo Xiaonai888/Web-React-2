@@ -417,15 +417,6 @@ export default function ForYou({
 } catch {
   setNotificationUnreadCount(0)
 }
-
-    const data = await response.json().catch(() => ({}))
-
-    if (data?.ok) {
-      setNotificationUnreadCount(Number(data.unread_count || 0))
-    }
-  } catch {
-    setNotificationUnreadCount(0)
-  }
 }
 
   const navigate = useNavigate()
