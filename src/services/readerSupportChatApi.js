@@ -45,8 +45,9 @@ async function request(path, { method = 'GET', body, signal, expectedToken = get
   return data
 }
 
-export function getMySupportConversation({ signal } = {}) {
-  return request('/mine', { signal })
+export function getMySupportConversation({ signal, deletionCheckIds = '' } = {}) {
+  const params = deletionCheckIds ? `?${new URLSearchParams({ deletion_check_ids: deletionCheckIds })}` : ''
+  return request(`/mine${params}`, { signal })
 }
 
 export function getMySupportMessages({ before = '', signal } = {}) {
