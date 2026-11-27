@@ -28,6 +28,7 @@ import {
 import { getDisplayLanguageId, useDisplayTranslation } from '../utils/displayLanguage'
 import { registerTranslationNamespace } from '../i18n/registerTranslations'
 import GoogleAdBanner from '../components/ads/GoogleAdBanner'
+import { getReaderNotificationUnreadCount } from '../services/readerNotificationUnreadCount'
 
 registerTranslationNamespace('forYouPage', {
   en: {
@@ -410,12 +411,12 @@ export default function ForYou({
     return
   }
 
-  try {
-    const response = await fetch(`${API_URL}/api/notifications/unread-count`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+ try {
+  const count = await getReaderNotificationUnreadCount(API_URL, token)
+  setNotificationUnreadCount(count)
+} catch {
+  setNotificationUnreadCount(0)
+}
 
     const data = await response.json().catch(() => ({}))
 
