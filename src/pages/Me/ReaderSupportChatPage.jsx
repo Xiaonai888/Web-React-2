@@ -40,7 +40,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     signIn: 'Please sign in to contact Shadow Support.', private: 'This conversation is private.', goLogin: 'Sign in',
     reply: 'Reply', edit: 'Edit', delete: 'Delete', copy: 'Copy text', copied: 'Copied',
     edited: 'Edited', deleted: 'Message deleted', editing: 'Editing message', replying: 'Replying to',
-    save: 'Save', cancel: 'Cancel', confirmDelete: 'Delete message?', deleteNote: 'This message will be removed from the chat.',
+    save: 'Save', cancel: 'Cancel', confirmDelete: 'Delete message?', deleteNote: 'This message will disappear from your chat. Authorized Shadow administrators may review its content for 30 days after deletion.',
     message: 'Message', actionError: 'Could not update the message.', menu: 'Message options', closeMenu: 'Close message options',
     camera: 'Camera', image: 'Image', emoji: 'Emoji', search: 'Search messages', comingSoon: 'Coming soon', sent: 'Sent', read: 'Read',
     blocked: 'Shadow Support has restricted messaging.', imageError: 'Could not send the image.', imageMode: 'Finish or cancel editing or replying before sending an image.',
@@ -60,7 +60,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     signIn: 'សូមចូលគណនី ដើម្បីទាក់ទង Shadow Support។', private: 'ការសន្ទនានេះជាឯកជន។', goLogin: 'ចូលគណនី',
     reply: 'ឆ្លើយតប', edit: 'កែសារ', delete: 'លុបសារ', copy: 'ចម្លងអត្ថបទ', copied: 'បានចម្លង',
     edited: 'បានកែ', deleted: 'សារត្រូវបានលុប', editing: 'កំពុងកែសារ', replying: 'ឆ្លើយតបទៅ',
-    save: 'រក្សាទុក', cancel: 'បោះបង់', confirmDelete: 'លុបសារនេះ?', deleteNote: 'សារនេះនឹងត្រូវលុបចេញពីការសន្ទនា។',
+    save: 'រក្សាទុក', cancel: 'បោះបង់', confirmDelete: 'លុបសារនេះ?', deleteNote: 'សារនេះនឹងបាត់ពីការសន្ទនារបស់អ្នក។ Admin របស់ Shadow ដែលមានសិទ្ធិអាចមើលខ្លឹមសាររយៈពេល ៣០ ថ្ងៃបន្ទាប់ពីការលុប។',
     message: 'សារ', actionError: 'មិនអាចកែប្រែសារបានទេ។', menu: 'ជម្រើសសារ', closeMenu: 'បិទជម្រើសសារ',
     camera: 'កាមេរ៉ា', image: 'រូបភាព', emoji: 'Emoji', search: 'ស្វែងរកសារ', comingSoon: 'នឹងមកដល់ឆាប់ៗ', sent: 'បានផ្ញើ', read: 'បានអាន',
     blocked: 'Shadow Support បានកំណត់ការផ្ញើសារ។', imageError: 'មិនអាចផ្ញើរូបភាពបានទេ។', imageMode: 'សូមបញ្ចប់ ឬបោះបង់ការកែ ឬឆ្លើយតប មុនផ្ញើរូបភាព។',
@@ -80,7 +80,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     signIn: '请先登录，再联系 Shadow 客服。', private: '这是私人对话。', goLogin: '登录',
     reply: '回复', edit: '编辑', delete: '删除', copy: '复制文本', copied: '已复制',
     edited: '已编辑', deleted: '消息已删除', editing: '正在编辑消息', replying: '回复',
-    save: '保存', cancel: '取消', confirmDelete: '删除消息？', deleteNote: '此消息将从对话中删除。',
+    save: '保存', cancel: '取消', confirmDelete: '删除消息？', deleteNote: '此消息将从您的对话中消失。获授权的 Shadow 管理员可在删除后 30 天内查看其内容。',
     message: '消息', actionError: '无法更新消息。', menu: '消息选项', closeMenu: '关闭消息选项',
     camera: '相机', image: '图片', emoji: '表情', search: '搜索消息', comingSoon: '即将推出', sent: '已发送', read: '已读',
     blocked: 'Shadow 客服已限制发送消息。', imageError: '无法发送图片。', imageMode: '请先完成或取消编辑或回复，再发送图片。',
@@ -100,7 +100,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     signIn: 'Shadow サポートに連絡するにはログインしてください。', private: 'この会話は非公開です。', goLogin: 'ログイン',
     reply: '返信', edit: '編集', delete: '削除', copy: 'テキストをコピー', copied: 'コピーしました',
     edited: '編集済み', deleted: 'メッセージは削除されました', editing: 'メッセージを編集中', replying: '返信先',
-    save: '保存', cancel: 'キャンセル', confirmDelete: 'メッセージを削除しますか？', deleteNote: 'このメッセージを会話から削除します。',
+    save: '保存', cancel: 'キャンセル', confirmDelete: 'メッセージを削除しますか？', deleteNote: 'このメッセージはあなたの会話から消えます。権限のある Shadow 管理者は削除後30日間、内容を確認できます。',
     message: 'メッセージ', actionError: 'メッセージを更新できませんでした。', menu: 'メッセージ操作', closeMenu: '操作を閉じる',
     camera: 'カメラ', image: '画像', emoji: '絵文字', search: 'メッセージを検索', comingSoon: '近日公開', sent: '送信済み', read: '既読',
     blocked: 'Shadow サポートはメッセージの送信を制限しています。', imageError: '画像を送信できませんでした。', imageMode: '編集や返信を完了またはキャンセルしてから画像を送信してください。',
@@ -120,7 +120,7 @@ registerTranslationNamespace('readerSupportChatPage', {
     signIn: 'Shadow 지원팀에 문의하려면 로그인하세요.', private: '이 대화는 비공개입니다.', goLogin: '로그인',
     reply: '답장', edit: '수정', delete: '삭제', copy: '텍스트 복사', copied: '복사됨',
     edited: '수정됨', deleted: '삭제된 메시지', editing: '메시지 수정 중', replying: '답장 대상',
-    save: '저장', cancel: '취소', confirmDelete: '메시지를 삭제할까요?', deleteNote: '이 메시지가 대화에서 삭제됩니다.',
+    save: '저장', cancel: '취소', confirmDelete: '메시지를 삭제할까요?', deleteNote: '이 메시지는 회원님의 대화에서 사라집니다. 권한이 있는 Shadow 관리자는 삭제 후 30일 동안 내용을 확인할 수 있습니다.',
     message: '메시지', actionError: '메시지를 변경할 수 없습니다.', menu: '메시지 옵션', closeMenu: '메시지 옵션 닫기',
     camera: '카메라', image: '이미지', emoji: '이모지', search: '메시지 검색', comingSoon: '곧 제공 예정', sent: '보냄', read: '읽음',
     blocked: 'Shadow 지원팀이 메시지 전송을 제한했습니다.', imageError: '이미지를 보내지 못했습니다.', imageMode: '수정이나 답장을 완료하거나 취소한 뒤 이미지를 보내세요.',
@@ -506,6 +506,7 @@ export default function ReaderSupportChatPage() {
     setSelectedIds(current => current.filter(id => messages.some(message => message.id === id && !message.deleted_at)))
   }, [messages])
 
+  const visibleMessages = messages.filter(message => !message.deleted_at)
   const pinReady = Boolean(conversationId && !loginRequired && pinReadyFor === conversationId)
   const activePins = pinReady ? pins.filter(pin => !messages.some(message => message.id === pin.message_id && message.deleted_at)) : []
   const pinnedIds = new Set(activePins.map(pin => pin.message_id))
@@ -803,13 +804,13 @@ export default function ReaderSupportChatPage() {
           {!loading && !loginRequired && error && messages.length === 0 && (
             <div className="flex flex-1 items-center justify-center py-12"><PageErrorState title={tr('loadError')} body={error} actionLabel={tr('retry')} onAction={() => setRefreshIndex(count => count + 1)} /></div>
           )}
-          {!loading && !loginRequired && !error && messages.length === 0 && (
+          {!loading && !loginRequired && !error && visibleMessages.length === 0 && !hasMore && (
             <div className="flex flex-1 items-center justify-center py-12"><PageEmptyState title={tr('empty')} body={tr('emptyText')} /></div>
           )}
-          {!loading && !loginRequired && messages.length > 0 && (
+          {!loading && !loginRequired && (visibleMessages.length > 0 || hasMore) && (
             <div className="space-y-2">
               {hasMore && <div className="pb-2 text-center"><button type="button" disabled={olderLoading} onClick={loadOlder} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[var(--shadow-bg-soft)] px-4 py-2 text-[12px] font-semibold disabled:opacity-60">{olderLoading ? <LoaderCircle size={15} className="animate-spin" /> : <ChevronDown size={15} />}{tr(olderLoading ? 'loadingOlder' : 'loadOlder')}</button></div>}
-              {messages.map(item => {
+              {visibleMessages.map(item => {
                 const repliedTo = item.reply_to_message_id ? messages.find(message => message.id === item.reply_to_message_id) : null
                 const bubble = toBubble(item, repliedTo)
                 const images = Array.isArray(item.attachments) ? item.attachments.map(imageSource).filter(Boolean) : []
