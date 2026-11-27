@@ -30,6 +30,7 @@ import BookOrderChatBridge from '../../components/book-order-chat/BookOrderChatB
 import BookOrderChatNoticeBell from '../../components/book-order-chat/BookOrderChatNoticeBell'
 import { useConversationAppearance } from '../../components/chat/ChatAppearanceInfoRow'
 import { CHAT_THEME_STYLE_CSS } from '../../services/chatStoryThemes'
+import { createChatDeletionSync, applyChatDeletedRows } from '../../services/chatDeletionSync'
 
 registerTranslationNamespace('authorChatRoom', {
   "en": {
@@ -162,7 +163,10 @@ function mergeMessages(current, incoming) {
   )
 
   for (const message of incoming) {
-    merged.set(String(message.id), message)
+    const id = String(message.id)
+    const previous = merged.get(id)
+    if (previous && (previous.is_deleted || previous.deleted_at) && !message.is_deleted && !message.deleted_at) continue
+    merged.set(id, message)
   }
 
   return [...merged.values()].sort(
@@ -222,6 +226,12 @@ export default function AuthorChatRoomPage() {
   const [sending, setSending] = useState(false)
   const [busyRequest, setBusyRequest] = useState('')
   const [error, setError] = useState('')
+  const deletionSyncRef = useRef(null)
+  if (!deletionSyncRef.current) deletionSyncRef.current = createChatDeletionSync()
+  const deletionSnapshotRef = useRef({ scope: '', messages: [] })
+  useEffect(() => {
+    deletionSnapshotRef.current = { scope: conversationId, messages }
+  }, [conversationId, messages])
 
   const loadRoom = useCallback(
     async ({
@@ -351,11 +361,14 @@ export default function AuthorChatRoomPage() {
       incrementalLoadingRef.current = true
 
       try {
+        const snapshot = deletionSnapshotRef.current
+        const batch = deletionSyncRef.current.next(conversationId, snapshot.scope === conversationId ? snapshot.messages : [])
         const data = await getAuthorChatMessages(
           conversationId,
           {
             after,
             limit: 20,
+            deletionCheckIds: batch.checkIds,
             signal,
           }
         )
@@ -365,9 +378,9 @@ export default function AuthorChatRoomPage() {
             ? data.messages
             : []
 
-        if (!incomingMessages.length) {
-          return
-        }
+        if (signal?.aborted) return
+        const changes = deletionSyncRef.current.accept(batch, data.deletion_sync)
+        if (!incomingMessages.length && !changes.size) return
 
         const hasNewIncoming =
           incomingMessages.some(
@@ -380,12 +393,8 @@ export default function AuthorChatRoomPage() {
           )
         }
 
-        setMessages((current) =>
-          mergeMessages(
-            current,
-            incomingMessages
-          )
-        )
+        setMessages(current => applyChatDeletedRows(mergeMessages(current, incomingMessages), changes))
+        if (changes.size) window.dispatchEvent(new CustomEvent('shadow-chat-updated'))
 
         pollCursorRef.current =
           getLatestMessageCursor(
@@ -471,6 +480,9 @@ export default function AuthorChatRoomPage() {
     scrollRestoreRef.current = null
     setNextBefore(null)
     knownMessageIdsRef.current = new Set()
+    deletionSyncRef.current.reset(conversationId)
+    deletionSnapshotRef.current = { scope: conversationId, messages: [] }
+    setMessages([])
     pollCursorRef.current = ''
     incrementalLoadingRef.current = false
     lastVisibilityRefreshAtRef.current = Date.now()
@@ -569,7 +581,7 @@ export default function AuthorChatRoomPage() {
   const visibleMessages = useMemo(
     () =>
       messages.filter(
-        (message) => !message.is_deleted
+        (message) => !message.is_deleted && !message.deleted_at
       ),
     [messages]
   )
