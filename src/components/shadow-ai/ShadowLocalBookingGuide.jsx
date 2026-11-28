@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useShadowAiText } from './shadowAiPreOrderText'
 import { useShadowLocalGuideText } from './shadowLocalGuideText'
-import { getShadowLocalBookingGuide,composeShadowLocalGuideMessage } from './shadowLocalBookingGuide'
+import { getShadowLocalBookingGuide,composeShadowLocalGuideMessage } from './shadowLocalBookingGuide.js'
 
 function GuideField({guide,disabled,onCompose}){
   const tr=useShadowAiText(),t=useShadowLocalGuideText()
