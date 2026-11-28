@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sparkles, Send, X } from 'lucide-react'
 import { openShadowAiSession, sendShadowAiMessage, reviewShadowAiBooking } from '../../services/shadowAiPreOrderApi'
 import { useShadowAiText } from './shadowAiPreOrderText'
-import ShadowLocalBookingGuide from './ShadowLocalBookingGuide'
+import ShadowLocalBookingGuide from './ShadowLocalBookingGuide.jsx'
 import { getDisplayLanguageId } from '../../utils/displayLanguage'
 import { readShadowAiTurnReply, resolveShadowAiQuestionSession } from './shadowAiQuestionSession'
 
