@@ -20,7 +20,7 @@ const campaign = (conversationId, campaignId) => `/conversations/${id(conversati
 const requirements = campaignId => `/author/campaigns/${id(campaignId)}/requirements`
 export const getShadowAiCampaigns = (conversationId, { offset = 0, signal } = {}) => request(`/conversations/${id(conversationId)}/campaigns?offset=${encodeURIComponent(offset)}`, { signal })
 export const openShadowAiSession = (conversationId, campaignId, signal) => request(`${campaign(conversationId, campaignId)}/session`, { signal })
-export const sendShadowAiMessage = (conversationId, campaignId, message, revision, signal) => request(`${campaign(conversationId, campaignId)}/message`, { method: 'POST', body: { message, revision }, signal })
+export const sendShadowAiMessage = (conversationId, campaignId, message, revision, signal, locale) => request(`${campaign(conversationId, campaignId)}/message`, { method: 'POST', body: { message, revision, ...(typeof locale === 'string' && locale.length <= 32 ? { locale } : {}) }, signal })
 export const reviewShadowAiBooking = (conversationId, campaignId, revision, signal) => request(`${campaign(conversationId, campaignId)}/review`, { method: 'POST', body: { revision }, signal })
 export const getShadowAiRequirements = (campaignId, signal) => request(requirements(campaignId), { signal })
 export const previewShadowAiRequirements = (campaignId, templateRules, signal) => request(`${requirements(campaignId)}/preview`, { method: 'POST', body: { template_rules: templateRules }, signal })
