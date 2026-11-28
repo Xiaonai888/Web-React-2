@@ -3,6 +3,8 @@ import { Sparkles, Send, X } from 'lucide-react'
 import { openShadowAiSession, sendShadowAiMessage, reviewShadowAiBooking } from '../../services/shadowAiPreOrderApi'
 import { useShadowAiText } from './shadowAiPreOrderText'
 import ShadowLocalBookingGuide from './ShadowLocalBookingGuide'
+import { getDisplayLanguageId } from '../../utils/displayLanguage'
+import { readShadowAiTurnReply, resolveShadowAiQuestionSession } from './shadowAiQuestionSession'
 
 const money = n => Number.isFinite(Number(n)) ? `$${Number(n).toFixed(2)}` : '—'
 function DateValue({ value }) { const date = new Date(value || ''); return Number.isFinite(date.getTime()) ? <time dateTime={value}>{date.toLocaleString(undefined, { timeZone:'Asia/Phnom_Penh' })}</time> : null }
@@ -68,16 +70,20 @@ export default function ShadowAiBookingPanel({ conversationId, campaigns, onClos
         const data = await reviewShadowAiBooking(conversationId,campaignId,session.revision,controller.signal)
         if (!controller.signal.aborted) setResult(data)
       } else {
-        const data = await sendShadowAiMessage(conversationId,campaignId,sent,session.revision,controller.signal)
+        const locale = getDisplayLanguageId()
+        const data = await sendShadowAiMessage(conversationId,campaignId,sent,session.revision,controller.signal,locale)
         if (controller.signal.aborted) return
-        let questionContext = null
+        let questionContext = null, questionRules = null
         if (data.intent === 'question' && data.question) {
-          const fresh = await openShadowAiSession(conversationId,campaignId,controller.signal)
+          const fresh = await resolveShadowAiQuestionSession({ data, previousSession:session, campaignId, signal:controller.signal, loadSession:() => openShadowAiSession(conversationId,campaignId,controller.signal) })
           if (controller.signal.aborted) return
+          if (!fresh) throw new Error('Invalid AI question response')
           questionContext = fresh.context
+          questionRules = fresh.rules
           setSession(fresh)
         } else setSession(old => ({ ...old, draft:data.draft, revision:data.revision, validation:data.validation, expires_at:data.expires_at }))
-        setTurns(old => [...old.slice(-9),{ sent, intent:data.intent, question:data.question, questionContext }]); setMessage('')
+        const replyText = readShadowAiTurnReply(data,locale)
+        setTurns(old => [...old.slice(-9),{ sent, intent:data.intent, question:data.question, questionContext, questionRules, replyText }]); setMessage('')
       }
     } catch(e) { if (!controller.signal.aborted) setError(e?.code === 'SHADOW_AI_DRAFT_CONFLICT' ? 'stale' : 'error') }
     finally { if (!controller.signal.aborted) { lock.current = false; setBusy(false) } }
@@ -89,7 +95,7 @@ export default function ShadowAiBookingPanel({ conversationId, campaigns, onClos
     <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 text-[13px]">
       <p className="app-muted text-[11px]">{tr('private')}</p>
       {session && <p className="app-soft rounded-xl p-3">{tr('hello')}</p>}
-      {turns.map((turn,i) => <div key={i} className="space-y-2"><div className="flex justify-end"><p className="max-w-[90%] whitespace-pre-wrap break-words rounded-xl bg-[#7951d1] p-3 text-white">{turn.sent}</p></div>{turn.intent === 'unrelated' && <p className="app-soft rounded-xl p-3">{tr('unrelated')}</p>}{turn.intent === 'unclear' && <p className="app-soft rounded-xl p-3">{tr('unclear')}</p>}<ContextAnswer question={turn.question} context={turn.questionContext} rules={session?.rules} tr={tr}/></div>)}
+      {turns.map((turn,i) => <div key={i} className="space-y-2"><div className="flex justify-end"><p className="max-w-[90%] whitespace-pre-wrap break-words rounded-xl bg-[#7951d1] p-3 text-white">{turn.sent}</p></div>{turn.replyText ? <p className="app-soft whitespace-pre-wrap break-words rounded-xl p-3">{turn.replyText}</p> : <>{turn.intent === 'unrelated' && <p className="app-soft rounded-xl p-3">{tr('unrelated')}</p>}{turn.intent === 'unclear' && <p className="app-soft rounded-xl p-3">{tr('unclear')}</p>}</>}<ContextAnswer question={turn.question} context={turn.questionContext} rules={turn.questionRules} tr={tr}/></div>)}
       {validation && <div className="app-soft space-y-1 rounded-xl p-3">{validation.ready ? <p>{tr('ready')}</p> : <>{validation.missing?.length > 0 && <><p className="font-bold">{tr('missing')}</p>{validation.missing.map(field => <p key={field}>• <FieldName field={field} context={session.context} tr={tr}/></p>)}</>}{(validation.issues?.length > 0 || validation.pending_requirements?.length > 0) && <p className="app-warning">{tr('issue')}</p>}</>}</div>}
       {session && !result && error !== 'stale' && <ShadowLocalBookingGuide session={session} disabled={busy || Boolean(message.trim())} onCompose={value => setMessage(old => old.trim() ? old : value)}/>}
       {error && <div role="alert" className="app-danger rounded-xl p-2">{tr(error)}{(!session || error === 'stale') && <button type="button" disabled={busy} onClick={() => setReload(x => x+1)} className="ml-2 underline">{tr('retry')}</button>}</div>}
